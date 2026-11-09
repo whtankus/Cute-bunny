@@ -9,6 +9,9 @@
   "orientation": "portrait",
   "background_color": "#fdf8f1",
   "theme_color": "#fdf1ea",
-  "icons": [{ "src": "bunny-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "icons": [
+    { "src": "bunny-logo-192.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any" },
+    { "src": "bunny-logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
+  ]
 }
 
