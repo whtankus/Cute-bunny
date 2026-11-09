@@ -94,9 +94,6 @@ body[data-mode="dark"] .streak-widget{background:linear-gradient(115deg,#3a2d3c,
 .streak-day.is-filled{box-shadow:0 0 8px 2px #ee9fba88,0 0 15px 4px #f3d5e155;animation:dot-glow 1.8s ease-in-out infinite alternate}
 @keyframes dot-glow{to{box-shadow:0 0 12px 3px #e890b688,0 0 20px 6px #f3d5e177;transform:scale(1.12)}}
 body[data-mode="dark"] .streak-day.is-filled{box-shadow:0 0 9px 2px #f5a4ceaa,0 0 17px 5px #d79af066}
-.install-help{max-width:100%;overflow-wrap:anywhere}
-.welcome-card .install-app{margin:14px auto 0}
-.welcome-card .install-help{margin:8px auto 0;max-width:280px}
 @media(prefers-reduced-motion:reduce){.streak-day.is-filled{animation:none!important}}
 .welcome-signin{display:block;margin:0 auto 4px}
 
