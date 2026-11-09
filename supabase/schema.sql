@@ -4,7 +4,7 @@ create table if not exists public.profiles (
   username text not null unique check (username ~ '^[a-z0-9_]{3,24}$'),
   display_name text not null check (char_length(display_name) between 1 and 60),
   bio text not null default '' check (char_length(bio) <= 300),
-  theme text not null default 'rose' check (theme in ('rose','lavender','mint','sky','peach','berry','midnight')),
+  theme text not null default 'rose' check (theme in ('rose','lavender','mint','sky')),
   mascot text not null default '🐰' check (mascot in ('🐰','🐱','🐻','🐸')),
   created_at timestamptz not null default now()
 );
