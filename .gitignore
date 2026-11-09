@@ -1,0 +1,5 @@
+# Build outputs and local IDE settings
+backend/target/
+backend/uploads/
+.idea/
+
