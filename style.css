@@ -154,3 +154,17 @@ body[data-mode="dark"] .theme-picker-label{color:#e2cddd}body[data-mode="dark"] 
 @media(max-width:390px){.memory-action-card{padding:18px 15px 14px;border-radius:24px}.theme-choice{padding:8px;gap:7px;font-size:.72rem}.theme-swatch{flex-basis:30px;height:30px}}
 @media(prefers-reduced-motion:reduce){.theme-choice,.memory-action-card{animation:none!important;transition:none!important}.feed-item .tile.is-loved.heart-tap::after{animation:none!important}}
 
+
+/* Clear one-tap saves sit quietly at the lower edge of each media card. */
+.photo-frame{position:relative;min-width:0;margin-bottom:9px;border-radius:16px;overflow:hidden;background:linear-gradient(140deg,#fae4ec,#eee6f7);}
+.photo-frame .feed-photo{margin:0;display:block;}
+.photo-download{position:absolute;right:9px;bottom:9px;display:flex;align-items:center;gap:5px;min-height:34px;padding:6px 11px;border:1px solid #fff9;border-radius:99px;background:rgba(255,250,247,.94);color:#92546f;font:900 .72rem Nunito,sans-serif;box-shadow:0 4px 13px #45314a30;backdrop-filter:blur(8px);transition:transform .18s,box-shadow .18s;}
+.photo-download:active,.song-download:active{transform:scale(.95);}
+.photo-download>span:first-child,.song-download>span:first-child{font-size:1.05rem;line-height:1;}
+.song-download-row{display:flex;justify-content:flex-end;margin-top:8px;}
+.song-download{display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:6px 12px;border:1px solid #ead7e1;border-radius:99px;background:linear-gradient(145deg,#fff8fb,#f8f1ff);color:#92546f;font:900 .72rem Nunito,sans-serif;transition:transform .18s,box-shadow .18s;}
+.download-spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;animation:download-spin .7s linear infinite;}@keyframes download-spin{to{transform:rotate(360deg)}}
+body{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}input,textarea,[contenteditable="true"]{user-select:text;-webkit-user-select:text;-webkit-touch-callout:default}img{-webkit-user-drag:none;user-drag:none}.feed-photo{touch-action:manipulation}
+body[data-mode="dark"] .photo-download{background:rgba(55,43,62,.95);border-color:#76576f;color:#ffe8f1}body[data-mode="dark"] .song-download{background:linear-gradient(145deg,#443349,#392e47);border-color:#634c64;color:#ffe8f1}
+@media(prefers-reduced-motion:reduce){.download-spinner{animation:none!important}.photo-download,.song-download{transition:none!important}}
+
