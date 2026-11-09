@@ -44,3 +44,7 @@ The included workflow publishes only the static website files. It creates `supab
 The workflow follows GitHub's Pages artifact deployment flow. The Supabase publishable key is designed for frontend use; access must remain protected by the Row Level Security policies in `supabase/schema.sql`.
 
 
+## Phone full-screen use
+
+The site fills the phone viewport and includes a standalone app manifest. In your phone browser, use **Add to Home Screen** (or **Install app**) to open Cute Bunny without the usual browser tabs and address bar.
+
