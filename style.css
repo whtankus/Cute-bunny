@@ -55,3 +55,20 @@ body[data-theme="sky"]{background-color:#f3f9fc;background-image:radial-gradient
 body[data-mode="dark"]{color:#f1e8ef;background:#241e2c!important;background-image:radial-gradient(#55435e 1px,transparent 1px)!important}body[data-mode="dark"] .app{background-color:#241e2c;background-image:radial-gradient(#55435e 1px,transparent 1px)}body[data-mode="dark"] .app header,body[data-mode="dark"] .app #nav{background:rgba(43,35,51,.96);border-color:#51425a}body[data-mode="dark"] .crumb,body[data-mode="dark"] .tile,body[data-mode="dark"] .daily,body[data-mode="dark"] .empty,body[data-mode="dark"] .friend-row,body[data-mode="dark"] .note-compose{background:#342b3c;color:#f1e8ef;border-color:#55465e}body[data-mode="dark"] .heading h2,body[data-mode="dark"] .toolbar h3,body[data-mode="dark"] .tile h3,body[data-mode="dark"] .crumb b,body[data-mode="dark"] .friend-row b{color:#f4ddea}body[data-mode="dark"] .heading p,body[data-mode="dark"] .tile p,body[data-mode="dark"] .friend-row small,body[data-mode="dark"] .daily p,body[data-mode="dark"] .toolbar span{color:#c5b2c8}body[data-mode="dark"] .app #nav button{color:#c7b3ca}body[data-mode="dark"] .app #nav button.active{background:#59435e;color:#ffe8f1;box-shadow:0 4px 0 #3f3046}body[data-mode="dark"] .note-compose .input,body[data-mode="dark"] .friend-search .input{background:#2d2535;border-color:#594a61;color:#fff}body[data-mode="dark"] .feed-item .tile.note{background:#392e40;color:#f5e4eb;border-color:#604c66}body[data-mode="dark"] .tile-art{filter:brightness(.82)}
 
 
+/* Phone fit, warm tap feedback, and safe-area friendly full-screen layout */
+html,body{width:100%;min-width:0;min-height:100%;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+button,a,input,textarea,select,label,.tile-art,#nav{-webkit-tap-highlight-color:transparent}
+button:focus:not(:focus-visible),a:focus:not(:focus-visible){outline:none}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #d58eaa;outline-offset:2px}
+.app,.welcome{width:100%;min-height:100vh;min-height:100dvh;overflow-x:clip}
+.app #nav{left:0;right:0;width:100%;max-width:none;gap:clamp(3px,1.8vw,10px);padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right));padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.app #nav button{flex:1 1 0;min-width:0;max-width:116px;padding-inline:clamp(3px,1.5vw,12px);white-space:nowrap}
+.app #nav button span{font-size:clamp(.62rem,2.4vw,.74rem)}
+.app main,#content,#content>*{width:100%;min-width:0;max-width:100%}
+#content{margin-inline:auto}
+#content img,#content audio,#content video{max-width:100%}
+.primary{max-width:100%;overflow-wrap:anywhere}
+.auth-gate{padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+.auth-card{width:min(420px,100%);max-height:calc(100dvh - 20px);overflow-y:auto}
+@media(max-width:390px){.app .crumb{display:none!important}.app header{padding-left:12px;padding-right:12px}#content{padding-left:12px;padding-right:12px}.hero{gap:4px}.hero>div:first-child{max-width:calc(100% - 88px)}.hero-art{width:84px;height:112px;flex-basis:84px;margin-right:0}.app #nav{gap:3px}.app #nav button{padding-inline:2px}.friend-row{min-width:0}.friend-row .primary{max-width:44%;white-space:normal;line-height:1.15}}
+
