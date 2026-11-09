@@ -8,7 +8,7 @@ A mobile-friendly shared scrapbook. The hosted app uses Supabase Auth, PostgreSQ
 2. In **SQL Editor**, run `supabase/schema.sql`.
 3. In **Project Settings → API**, copy the Project URL and the publishable key (or legacy anon key) into `supabase-config.js`.
 4. In **Authentication → URL Configuration**, add your future GitHub Pages URL to the allowed redirect URLs.
-5. Users register with a real email, username, display name, and password. Deploy `supabase/functions/username-login` and set that function to skip JWT verification; users can then sign in with username or email and password. Email-free signup is not supported by Supabase Auth.
+5. Users register with a real email, username, display name, and password. Deploy `supabase/functions/username-login` and set that function to skip JWT verification; users can then sign in with username or email and password. Email-free signup is not supported by Supabase Auth. Run `supabase/login-streak.sql` in the SQL Editor to sync the streak across devices; until then, it is saved on this device.
 6. Host the project root with GitHub Pages. In repository Settings → Pages, choose the main branch and root folder.
 
 The publishable/anon key is intended for the browser. Never put a `service_role` key in frontend files. Database access is protected by Row Level Security, and the media bucket is private. Follow permissions allow friends to see each other's memories; users can delete only their own memories.
