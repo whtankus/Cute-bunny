@@ -84,3 +84,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 body[data-mode="dark"] .streak-widget{background:linear-gradient(115deg,#3a2d3c,#373041 58%,#322d42);border-color:#59465e}body[data-mode="dark"] .streak-copy strong{color:#f4ddea}body[data-mode="dark"] .streak-copy p{color:#c5b2c8}body[data-mode="dark"] .streak-mascot{background:#47374a;box-shadow:inset 0 0 0 1px #604e62}body[data-mode="dark"] .streak-day{background:#514456;color:#c9b6ca}body[data-mode="dark"] .streak-day.is-filled{background:#79506a;color:#ffe4ef}
 @media(prefers-reduced-motion:reduce){.streak-mascot>span,.streak-mascot i,.streak-heart{animation:none!important}}
 
+/* Keep song titles, audio controls, and streak dots inside their cards. */
+#content,.grid,.media-grid,.media-grid>* ,.feed-item,.tile,.song-card{min-width:0;max-width:100%}
+.song-card{overflow:hidden;overflow-wrap:anywhere;word-break:break-word}
+.song-card>b,.song-card small{display:block;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+.song-card audio{display:block;width:100%;min-width:0;max-width:100%}
+.streak-progress{flex-wrap:wrap;gap:6px;padding:3px 0}
+.streak-day{flex:0 0 18px;box-shadow:0 0 0 0 #ee9fba00;transition:box-shadow .3s ease,transform .3s ease,background .3s ease}
+.streak-day.is-filled{box-shadow:0 0 8px 2px #ee9fba88,0 0 15px 4px #f3d5e155;animation:dot-glow 1.8s ease-in-out infinite alternate}
+@keyframes dot-glow{to{box-shadow:0 0 12px 3px #e890b688,0 0 20px 6px #f3d5e177;transform:scale(1.12)}}
+body[data-mode="dark"] .streak-day.is-filled{box-shadow:0 0 9px 2px #f5a4ceaa,0 0 17px 5px #d79af066}
+.install-help{max-width:100%;overflow-wrap:anywhere}
+.welcome-card .install-app{margin:14px auto 0}
+.welcome-card .install-help{margin:8px auto 0;max-width:280px}
+@media(prefers-reduced-motion:reduce){.streak-day.is-filled{animation:none!important}}
+.welcome-signin{display:block;margin:0 auto 4px}
+
