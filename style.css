@@ -111,3 +111,19 @@ body[data-mode="dark"] .song-picks{background:#342b3c;border-color:#55465e}body[
 @media(max-width:390px){.song-picks-grid{grid-template-columns:1fr}.song-pick{padding:7px}.song-pick b{font-size:.72rem}.song-pick-art{flex-basis:31px;height:31px}.friend-row{padding:9px;gap:6px}.friend-avatar{width:36px;height:36px;flex:0 0 36px}.friend-row .follow-btn{max-width:92px;padding:7px 9px;font-size:.69rem}.friend-copy small{font-size:.67rem}}
 @media(prefers-reduced-motion:reduce){.session-restore span,.heart-tap,.love-tap{animation:none!important}.song-pick{transition:none!important}}
 
+/* One gentle heart in the corner for a double-tapped memory. */
+.feed-item .tile{transition:transform .24s cubic-bezier(.2,.75,.25,1),box-shadow .24s ease;transform-origin:center;}
+.feed-item .tile:active{transform:scale(.992);}
+.feed-item .tile.heart-tap{animation:memory-tap .36s cubic-bezier(.2,.8,.25,1);}
+.feed-item .tile.heart-tap::after{content:'♡';position:absolute;z-index:4;top:9px;right:10px;left:auto;bottom:auto;display:grid!important;place-items:center;width:30px;height:30px;border:0!important;border-radius:50%;background:#fffaf2eF;color:#e978a1;font:700 1.35rem/1 Nunito,sans-serif;box-shadow:0 3px 12px #b85b8233;animation:corner-heart .82s cubic-bezier(.18,.78,.2,1) both;pointer-events:none;}
+.feed-item .tile.note.heart-tap::before{display:none;}
+@keyframes memory-tap{0%,100%{transform:scale(1)}35%{transform:scale(1.018)}68%{transform:scale(.997)}}
+@keyframes corner-heart{0%{opacity:0;transform:scale(.2) rotate(-22deg)}28%{opacity:1;transform:scale(1.2) rotate(10deg)}52%{transform:scale(.94) rotate(-5deg)}100%{opacity:.95;transform:scale(1) rotate(0)}}
+.history-list{padding-bottom:14px}.history-hint{margin:-4px 0 12px;color:#a18b9e;font-size:.76rem;}
+.feed-by{display:flex;align-items:center;gap:5px;min-width:0;}.sender-pet{flex:0 0 auto}.feed-by b{min-width:0;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.feed-by small{min-width:0;max-width:43%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.memory-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;min-width:0;max-width:100%;line-height:1.35;margin-top:8px;}
+.feed-item .tile.note{overflow-wrap:anywhere;word-break:break-word;}
+.song-card{min-width:0;}.song-card audio{max-width:100%;}
+button,.feed-item .tile{touch-action:manipulation;}
+@media(prefers-reduced-motion:reduce){.feed-item .tile,.feed-item .tile.heart-tap,.feed-item .tile.heart-tap::after{animation:none!important;transition:none!important}}
+
