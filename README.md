@@ -8,15 +8,14 @@ A mobile-friendly shared scrapbook. The hosted app uses Supabase Auth, PostgreSQ
 2. In **SQL Editor**, run `supabase/schema.sql`.
 3. In **Project Settings → API**, copy the Project URL and the publishable key (or legacy anon key) into `supabase-config.js`.
 4. In **Authentication → URL Configuration**, add your future GitHub Pages URL to the allowed redirect URLs.
-5. New users register with an email, username, display name, and password. After deploying `supabase/functions/username-login`, users can sign in with either username or email plus password. The function resolves usernames privately on the server; never expose the service-role key in frontend code.
-6. In Supabase Edge Functions, deploy the `username-login` function and turn off JWT verification for this function because it is called before login. Supabase provides the URL, anon key, and service-role key to Edge Functions as environment variables.
-7. Host the project root with GitHub Pages. In repository Settings → Pages, choose the main branch and root folder.
+5. New users can register with an email, username, display name, and password, or choose username-only registration. Email confirmation should be disabled for username-only accounts. Username-only accounts cannot receive password recovery emails. Sign in with the registered email or username plus password.
+6. Host the project root with GitHub Pages. In repository Settings → Pages, choose the main branch and root folder.
 
 The publishable/anon key is intended for the browser. Never put a `service_role` key in frontend files. Database access is protected by Row Level Security, and the media bucket is private. Follow permissions allow friends to see each other's memories; users can delete only their own memories.
 
 ## Features
 
-- Email registration with username-or-email sign-in
+- Email or username-only registration with username/email and password sign-in
 - Profiles, themes, mascots, username search, follow/unfollow
 - Shared notes, photos, and audio files
 - Private photo/audio storage with friend-aware access
