@@ -1,0 +1,14 @@
+{
+  "id": "./",
+  "name": "Cute Bunny",
+  "short_name": "Cute Bunny",
+  "description": "A cozy little scrapbook for you and your friend.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf8f1",
+  "theme_color": "#fdf1ea",
+  "icons": [{ "src": "bunny-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
+
