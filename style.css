@@ -2127,3 +2127,15 @@ body:has(.chat-page) #content {
 .chat-page .chat-bubble.heart-tap .memory-heart-toggle {
   animation:notes-heart-pop .34s ease-out!important;
 }
+
+
+/* Hide the visible scrollbar controls in the Notes writing field without disabling scrolling. */
+.chat-page .chat-composer textarea {
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+.chat-page .chat-composer textarea::-webkit-scrollbar {
+  display:none!important;
+  width:0!important;
+  height:0!important;
+}
