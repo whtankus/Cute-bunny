@@ -47,12 +47,12 @@ body[data-theme="mint"]{background-color:#f3faf4;background-image:radial-gradien
 body[data-theme="sky"]{background-color:#f3f9fc;background-image:radial-gradient(#cbdfea 1px,transparent 1px)}body[data-theme="sky"] .app header,body[data-theme="sky"] .app #nav{background-color:#f3f9fced}body[data-theme="sky"] .app #nav button.active{background:linear-gradient(#d7eaf3,#bfdce9);box-shadow:0 4px 0 #9ebfce;color:#486577}body[data-theme="sky"] .primary{background:linear-gradient(#91bfd4,#6da6c0);box-shadow:0 4px 0 #5689a1;color:white}
 .memory-remove{margin:4px 5px 10px;padding:8px 13px;border:1px solid #ecd8e0;border-radius:99px;background:#fff8fa;color:#9f617e;font:800 .75rem Nunito,sans-serif;cursor:pointer;transition:.15s}.memory-remove:hover{background:#f7e3eb;transform:translateY(-1px)}
 .primary:disabled{opacity:.65;cursor:wait;transform:none}.auth-card{animation:auth-in .22s ease-out}@keyframes auth-in{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}.auth-gate{overscroll-behavior:contain}.auth-card{max-height:92dvh;overflow-y:auto}.upload-label{cursor:pointer;touch-action:manipulation}.feed-photo{min-height:90px;background:linear-gradient(140deg,#fae4ec,#eee6f7);object-fit:cover}.tile-art img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}.feed-item{animation:feed-in .25s ease-out}@keyframes feed-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.auth-card,.feed-item{animation:none!important}.primary,.tile,.app #nav button{transition:none!important}}
-.note-prompt{margin:0 0 14px;padding:15px 16px;border:1px dashed #e6cfdb;border-radius:20px;background:linear-gradient(135deg,#fff9ed,#fff1f5)}.note-prompt>span{display:block;margin-bottom:10px;font:600 1.1rem Caveat,cursive;color:#89677e}.starter-chips{display:flex;flex-wrap:wrap;gap:7px}.starter-chips button{border:1px solid #edd9e2;border-radius:99px;background:#fffdfb;padding:8px 12px;color:#88677e;font:700 .76rem Nunito,sans-serif;transition:transform .15s,background .15s}.starter-chips button:hover{transform:translateY(-2px);background:#fff}.starter-chips button:active{transform:scale(.97)}.note-compose{padding:16px 17px;background:repeating-linear-gradient(#fffdf8 0 31px,#f5e9e8 32px,#fffdf8 33px);border:1px solid #ead9d5;box-shadow:0 8px 18px #8b68800d}.note-label{display:block;font:700 1.25rem Caveat,cursive;color:#785b77;margin-bottom:8px}.note-compose .input{background:#ffffffd9;border-color:#efdee4;line-height:1.55;resize:vertical}.note-compose-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px}.note-compose-bottom small{color:#987f91;font-size:.72rem}.note-compose-bottom .primary{flex:none}.feed-list>h3{margin:0 0 10px;color:#70546d}.feed-item .tile.note{position:relative;padding:18px 20px 18px 25px;background:linear-gradient(135deg,#fff9e8,#fff3f6);border:1px solid #efdee0;border-radius:7px 19px 15px 17px;font:600 1.18rem/1.55 Caveat,cursive;color:#715b70;box-shadow:2px 5px 0 #ead8db}.feed-item:nth-child(even) .tile.note{background:linear-gradient(135deg,#f7f1ff,#fffafa);transform:rotate(.35deg)}.feed-item:nth-child(odd) .tile.note{transform:rotate(-.3deg)}.feed-item .tile.note:before{content:'♡';position:absolute;right:13px;top:6px;color:#cf92aa;font:1rem Caveat}.feed-item .tile.note:after{content:'';position:absolute;left:11px;top:12px;bottom:12px;border-left:2px dotted #e9c9d4}
+.note-prompt{margin:0 0 14px;padding:15px 16px;border:1px dashed #e6cfdb;border-radius:20px;background:linear-gradient(135deg,#fff9ed,#fff1f5)}.note-prompt>span{display:block;margin-bottom:10px;font:600 1.1rem Caveat,cursive;color:#89677e}.starter-chips{display:flex;flex-wrap:wrap;gap:7px}.starter-chips button{border:1px solid #edd9e2;border-radius:99px;background:#fffdfb;padding:8px 12px;color:#88677e;font:700 .76rem Nunito,sans-serif;transition:transform .15s,background .15s}.starter-chips button:hover{transform:translateY(-2px);background:#fff}.starter-chips button:active{transform:scale(.97)}.note-compose{padding:16px 17px;background:repeating-linear-gradient(#fffdf8 0 31px,#f5e9e8 32px,#fffdf8 33px);border:1px solid #ead9d5;box-shadow:0 8px 18px #8b68800d}.note-label{display:block;font:700 1.25rem Caveat,cursive;color:#785b77;margin-bottom:8px}.note-compose .input{background:#ffffffd9;border-color:#efdee4;line-height:1.55;resize:vertical}.note-compose-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px}.note-compose-bottom small{color:#987f91;font-size:.72rem}.note-compose-bottom .primary{flex:none}.feed-list>h3{margin:0 0 10px;color:#70546d}
 @media(max-width:520px){.starter-chips{flex-wrap:nowrap;overflow-x:auto;padding:2px 0 7px;scroll-snap-type:x proximity}.starter-chips button{white-space:nowrap;scroll-snap-align:start}.note-prompt{padding:13px}.note-compose-bottom{align-items:flex-end}.note-compose-bottom small{max-width:60%}}
 /* Calm note editor: one clear writing space, no extra prompt clutter */
-.note-prompt,.note-label,.note-compose-bottom{display:none!important}.note-compose{padding:16px;background:#fffdfa;border:1px solid #eee0e5;box-shadow:0 6px 16px #8b68800b}.note-compose .input{min-height:112px;background:#fff;border:1px solid #eadde3;box-shadow:none;line-height:1.55}.note-compose .primary{display:block;margin-left:auto;min-width:128px}.feed-item .tile.note,.feed-item:nth-child(even) .tile.note,.feed-item:nth-child(odd) .tile.note{transform:none;background:#fffaf0;border:1px solid #efe2d3;box-shadow:0 4px 12px #8b68800a;border-radius:16px;padding:15px 19px 15px 22px}.feed-item:nth-child(even) .tile.note{background:#fbf8ff;border-color:#e9e1f0}.feed-item .tile.note:after{display:none}
+.note-prompt,.note-label,.note-compose-bottom{display:none!important}.note-compose{padding:16px;background:#fffdfa;border:1px solid #eee0e5;box-shadow:0 6px 16px #8b68800b}.note-compose .input{min-height:112px;background:#fff;border:1px solid #eadde3;box-shadow:none;line-height:1.55}.note-compose .primary{display:block;margin-left:auto;min-width:128px}
 .photo-art:after{animation:photo-heart 1.55s ease-in-out infinite;transform-origin:center}@keyframes photo-heart{0%,100%{transform:scale(1) rotate(12deg)}50%{transform:scale(1.3) rotate(4deg)}}.note-art:after{content:'♡';position:absolute;right:19px;top:17px;color:#d58ca7;font-size:1.5rem;animation:note-heart 1.8s ease-in-out infinite}.note-art:before{content:'✦';position:absolute;left:22px;top:18px;color:#d0a5bc;font-size:1rem;animation:twinkle 1.4s ease-in-out infinite alternate}@keyframes note-heart{50%{transform:translateY(-5px) rotate(12deg);color:#b96e8d}}.music-art>span{animation:noteFloat 1.15s ease-in-out infinite alternate}
-body[data-mode="dark"]{color:#f1e8ef;background:#241e2c!important;background-image:radial-gradient(#55435e 1px,transparent 1px)!important}body[data-mode="dark"] .app{background-color:#241e2c;background-image:radial-gradient(#55435e 1px,transparent 1px)}body[data-mode="dark"] .app header,body[data-mode="dark"] .app #nav{background:rgba(43,35,51,.96);border-color:#51425a}body[data-mode="dark"] .crumb,body[data-mode="dark"] .tile,body[data-mode="dark"] .daily,body[data-mode="dark"] .empty,body[data-mode="dark"] .friend-row,body[data-mode="dark"] .note-compose{background:#342b3c;color:#f1e8ef;border-color:#55465e}body[data-mode="dark"] .heading h2,body[data-mode="dark"] .toolbar h3,body[data-mode="dark"] .tile h3,body[data-mode="dark"] .crumb b,body[data-mode="dark"] .friend-row b{color:#f4ddea}body[data-mode="dark"] .heading p,body[data-mode="dark"] .tile p,body[data-mode="dark"] .friend-row small,body[data-mode="dark"] .daily p,body[data-mode="dark"] .toolbar span{color:#c5b2c8}body[data-mode="dark"] .app #nav button{color:#c7b3ca}body[data-mode="dark"] .app #nav button.active{background:#59435e;color:#ffe8f1;box-shadow:0 4px 0 #3f3046}body[data-mode="dark"] .note-compose .input,body[data-mode="dark"] .friend-search .input{background:#2d2535;border-color:#594a61;color:#fff}body[data-mode="dark"] .feed-item .tile.note{background:#392e40;color:#f5e4eb;border-color:#604c66}body[data-mode="dark"] .tile-art{filter:brightness(.82)}
+body[data-mode="dark"]{color:#f1e8ef;background:#241e2c!important;background-image:radial-gradient(#55435e 1px,transparent 1px)!important}body[data-mode="dark"] .app{background-color:#241e2c;background-image:radial-gradient(#55435e 1px,transparent 1px)}body[data-mode="dark"] .app header,body[data-mode="dark"] .app #nav{background:rgba(43,35,51,.96);border-color:#51425a}body[data-mode="dark"] .crumb,body[data-mode="dark"] .tile,body[data-mode="dark"] .daily,body[data-mode="dark"] .empty,body[data-mode="dark"] .friend-row,body[data-mode="dark"] .note-compose{background:#342b3c;color:#f1e8ef;border-color:#55465e}body[data-mode="dark"] .heading h2,body[data-mode="dark"] .toolbar h3,body[data-mode="dark"] .tile h3,body[data-mode="dark"] .crumb b,body[data-mode="dark"] .friend-row b{color:#f4ddea}body[data-mode="dark"] .heading p,body[data-mode="dark"] .tile p,body[data-mode="dark"] .friend-row small,body[data-mode="dark"] .daily p,body[data-mode="dark"] .toolbar span{color:#c5b2c8}body[data-mode="dark"] .app #nav button{color:#c7b3ca}body[data-mode="dark"] .app #nav button.active{background:#59435e;color:#ffe8f1;box-shadow:0 4px 0 #3f3046}body[data-mode="dark"] .note-compose .input,body[data-mode="dark"] .friend-search .input{background:#2d2535;border-color:#594a61;color:#fff}body[data-mode="dark"] .tile-art{filter:brightness(.82)}
 
 
 /* Phone fit, warm tap feedback, and safe-area friendly full-screen layout */
@@ -85,7 +85,7 @@ body[data-mode="dark"] .streak-widget{background:linear-gradient(115deg,#3a2d3c,
 @media(prefers-reduced-motion:reduce){.streak-mascot>span,.streak-mascot i,.streak-heart{animation:none!important}}
 
 /* Keep song titles, audio controls, and streak dots inside their cards. */
-#content,.grid,.media-grid,.media-grid>* ,.feed-item,.tile,.song-card{min-width:0;max-width:100%}
+#content,.grid,.media-grid,.media-grid>*,.feed-item,.tile,.song-card{min-width:0;max-width:100%}
 .song-card{overflow:hidden;overflow-wrap:anywhere;word-break:break-word}
 .song-card>b,.song-card small{display:block;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
 
@@ -116,13 +116,13 @@ body[data-mode="dark"] .song-picks{background:#342b3c;border-color:#55465e}body[
 .feed-item .tile:active{transform:scale(.992);}
 .feed-item .tile.heart-tap{animation:memory-tap .36s cubic-bezier(.2,.8,.25,1);}
 .feed-item .tile.heart-tap::after{content:'♡';position:absolute;z-index:4;top:9px;right:10px;left:auto;bottom:auto;display:grid!important;place-items:center;width:30px;height:30px;border:0!important;border-radius:50%;background:#fffaf2eF;color:#e978a1;font:700 1.35rem/1 Nunito,sans-serif;box-shadow:0 3px 12px #b85b8233;animation:corner-heart .82s cubic-bezier(.18,.78,.2,1) both;pointer-events:none;}
-.feed-item .tile.note.heart-tap::before{display:none;}
+
 @keyframes memory-tap{0%,100%{transform:scale(1)}35%{transform:scale(1.018)}68%{transform:scale(.997)}}
 @keyframes corner-heart{0%{opacity:0;transform:scale(.2) rotate(-22deg)}28%{opacity:1;transform:scale(1.2) rotate(10deg)}52%{transform:scale(.94) rotate(-5deg)}100%{opacity:.95;transform:scale(1) rotate(0)}}
 .history-list{padding-bottom:14px}.history-hint{margin:-4px 0 12px;color:#a18b9e;font-size:.76rem;}
 .feed-by{display:flex;align-items:center;gap:5px;min-width:0;}.sender-pet{flex:0 0 auto}.feed-by b{min-width:0;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.feed-by small{min-width:0;max-width:43%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .memory-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;min-width:0;max-width:100%;line-height:1.35;margin-top:8px;}
-.feed-item .tile.note{overflow-wrap:anywhere;word-break:break-word;}
+
 .song-card{min-width:0;}.song-card audio{max-width:100%;}
 button,.feed-item .tile{touch-action:manipulation;}
 @media(prefers-reduced-motion:reduce){.feed-item .tile,.feed-item .tile.heart-tap,.feed-item .tile.heart-tap::after{animation:none!important;transition:none!important}}
@@ -131,7 +131,7 @@ button,.feed-item .tile{touch-action:manipulation;}
 /* Persistent little hearts, themed downloads, and friendly color choices. */
 .feed-item .tile.is-loved::after{content:'♥';position:absolute;z-index:4;top:9px;right:10px;left:auto;bottom:auto;display:grid!important;place-items:center;width:30px;height:30px;border:0!important;border-radius:50%;background:#fffaf2ef;color:#e978a1;font:700 1.2rem/1 Nunito,sans-serif;box-shadow:0 3px 12px #b85b8233;pointer-events:none;}
 .feed-item .tile.is-loved.heart-tap::after{animation:corner-heart .78s cubic-bezier(.18,.78,.2,1) both;}
-.feed-item .tile.note.is-loved::before{display:none;}
+
 .theme-picker-label{display:block;margin:12px 0 7px;color:#7c687e;font-weight:800;font-size:.8rem;text-align:left;}
 .theme-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:7px 0 12px;}
 .theme-choice{display:flex;align-items:center;gap:9px;min-width:0;padding:9px;border:1px solid #eadde4;border-radius:16px;background:#fffdfb;color:#735c73;text-align:left;font:800 .78rem Nunito,sans-serif;transition:transform .18s,background .2s,border-color .2s,box-shadow .2s;touch-action:manipulation;}
@@ -182,35 +182,35 @@ body[data-mode="dark"] .feed-item.tone-lavender>.tile{background:#40364f!importa
 .friend-row.is-online .friend-copy:after{content:'Online now';display:block;margin-top:3px;color:#45a974;font-size:.68rem;font-weight:900}
 .feed-item{-webkit-touch-callout:none}.feed-item .note{-webkit-touch-callout:none}
 /* Notes behave like chat bubbles: short messages stay small; long ones wrap. */
-.feed-item>.tile.note{display:flex!important;flex-direction:column;align-items:flex-start;gap:7px;width:fit-content!important;min-width:min(148px,72vw);max-width:min(88%,42rem);padding:12px 16px 9px!important;white-space:normal;line-height:1.35;}
-.feed-item.tone-peach>.tile.note{margin-right:auto;background:#fff0e8!important;border-color:#f0d9cd!important;}
-.feed-item.tone-lavender>.tile.note{margin-left:auto;background:#f0eaff!important;border-color:#e0d7f2!important;}
-.note-message-text{display:block;max-width:100%;overflow-wrap:anywhere;word-break:break-word;white-space:pre-wrap;}
-.note-time{align-self:flex-end;color:#a18b9c;font:700 .66rem/1.2 Nunito,sans-serif;letter-spacing:.01em;white-space:nowrap;}
-body[data-mode="dark"] .feed-item.tone-peach>.tile.note{background:#493638!important;color:#fff0e8!important;border-color:#76545a!important;}
-body[data-mode="dark"] .feed-item.tone-lavender>.tile.note{background:#40364f!important;color:#f3eaff!important;border-color:#655779!important;}
-body[data-mode="dark"] .note-time{color:#c8b2c5;}
-@media(max-width:520px){.feed-item>.tile.note{max-width:88%;min-width:min(138px,72vw);padding:10px 14px 8px!important;}}
+
+
+
+
+
+
+
+
+@media(max-width:520px){}
 /* Cleaner scrapbook cards and message sides. */
 .app{padding-bottom:0!important}.app main{padding-bottom:86px!important}
 .media-grid{gap:5px!important}.media-grid .feed-item{margin:0!important}.music-grid{margin-top:5px!important;gap:7px!important}.shared-songs-title{margin:7px 2px 3px!important}
 .song-card{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;gap:9px;min-height:78px;padding:9px!important}.song-card .album-art.play-song{position:relative;display:grid;place-items:center;width:58px!important;height:58px!important;margin:0!important;padding:0;border:1px solid #ecd7e5;border-radius:17px;background:linear-gradient(145deg,#fbe5ef,#ece5fa);color:#9c658f;cursor:pointer;box-shadow:0 4px 0 #e3cede;transition:transform .18s,box-shadow .18s}.song-glyph{font-size:1.55rem;line-height:1}.song-note{position:absolute;right:5px;top:2px;color:#d477a1;font-size:.8rem;opacity:0;transform:translateY(4px)}.song-card .album-art.is-playing{animation:song-bob .72s ease-in-out infinite alternate;box-shadow:0 2px 0 #e3cede}.song-card .album-art.is-playing .song-note{opacity:1;animation:note-float .8s ease-in-out infinite alternate}@keyframes song-bob{to{transform:translateY(-2px) rotate(2deg)}}@keyframes note-float{to{transform:translateY(-5px) rotate(12deg)}}
 .song-card .memory-title{min-width:0;max-width:100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font-size:.82rem;line-height:1.3}
-.feed-item[data-kind="note"]{display:flex;flex-direction:column}.feed-item[data-kind="note"].tone-peach .feed-by{align-self:flex-end;text-align:right}.feed-item[data-kind="note"].tone-lavender .feed-by{align-self:flex-start;text-align:left}
-.feed-item[data-kind="note"].tone-peach>.tile.note{margin-left:auto;margin-right:0}.feed-item[data-kind="note"].tone-lavender>.tile.note{margin-left:0;margin-right:auto}
-.feed-item .tile.note{width:fit-content!important;max-width:min(88%,42rem);min-width:min(148px,72vw);align-self:flex-start}.feed-item[data-kind="note"].tone-peach>.tile.note{align-self:flex-end}
+
+
+
 @media(max-width:520px){.app main{padding-bottom:78px!important}.media-grid{gap:4px!important}.music-grid{gap:6px!important}.song-card{grid-template-columns:52px minmax(0,1fr);min-height:68px;padding:7px!important;gap:8px}.song-card .album-art.play-song{width:52px!important;height:52px!important;border-radius:15px}}
 .media-grid .feed-item[data-kind="photo"]>.tile{padding:4px!important}.media-grid .feed-item[data-kind="photo"] .photo-frame{margin-bottom:0!important;border-radius:13px}
 /* Keep the saved heart above the note text and make every double tap feel plush. */
 .feed-item .tile.is-loved::after,.feed-item .tile.heart-tap::after{top:-12px!important;right:8px!important;width:30px;height:30px;background:#fffaf2f5;color:#e66f9a;box-shadow:0 3px 8px #b85b8230,0 0 0 3px #fff9;animation:memory-heart-bloom .92s cubic-bezier(.18,.88,.25,1) both}
 .feed-item .tile.heart-tap::before{content:"";display:block!important;position:absolute;z-index:3;top:-14px;right:6px;left:auto;bottom:auto;width:34px;height:34px;border:2px solid #ec8eb1;border-radius:50%;background:transparent;pointer-events:none;animation:memory-heart-ring .8s ease-out both}
-.feed-item .tile.note.heart-tap::before{display:block!important;content:"";position:absolute;z-index:3;top:-14px;right:6px;left:auto;bottom:auto;width:34px;height:34px;border:2px solid #ec8eb1;border-radius:50%;background:transparent;animation:memory-heart-ring .8s ease-out both}
+
 @keyframes memory-heart-bloom{0%{opacity:0;transform:translateY(7px) scale(.18) rotate(-24deg)}24%{opacity:1;transform:translateY(-4px) scale(1.32) rotate(12deg)}43%{transform:translateY(1px) scale(.9) rotate(-6deg)}64%{transform:translateY(-1px) scale(1.12) rotate(5deg)}82%{transform:scale(.97) rotate(-2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
 @keyframes memory-heart-ring{0%{opacity:.85;transform:scale(.35)}65%{opacity:.38;transform:scale(1.65)}100%{opacity:0;transform:scale(1.95)}}
 @media(prefers-reduced-motion:reduce){.feed-item .tile.heart-tap::before,.feed-item .tile.heart-tap::after{animation:none!important}}
 .feed-item .tile.is-loved.heart-tap::after{top:-12px!important;right:8px!important;animation:memory-heart-bloom .92s cubic-bezier(.18,.88,.25,1) both}
 @media(prefers-reduced-motion:reduce){.feed-item .tile.is-loved.heart-tap::after{animation:none!important}}
-.feed-item[data-kind="note"]>.tile.note{margin-top:6px}
+
 .feed-item[data-kind="song"] .tile.is-loved::after,.feed-item[data-kind="song"] .tile.heart-tap::after,.feed-item[data-kind="song"] .tile.is-loved.heart-tap::after{top:6px!important;right:6px!important}
 .song-card .memory-title{padding-right:24px}
 .feed-item[data-kind="song"] .tile.song-card{overflow:visible!important}
@@ -270,11 +270,11 @@ body[data-mode="dark"] .notification-badge{background:#cf6b8b;border-color:#342b
 .app header{background:transparent!important}
 .header-actions .round{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
 .header-actions .round:active{box-shadow:none!important}
-.feed-item .tile.note{margin-top:17px!important;padding-top:13px!important}
-.feed-item .tile.note::before{content:"♡"!important;display:grid!important;position:absolute;z-index:5;top:-16px!important;right:9px!important;left:auto!important;bottom:auto!important;width:26px;height:26px;place-items:center;border:1px solid #f2d8e2;border-radius:50%;background:#fffaf5;color:#cf829f;font:800 1.05rem/1 Nunito,sans-serif;box-shadow:0 3px 9px #9f70841a;pointer-events:none}
+
+
 .feed-item[data-kind="photo"] .tile::before,.feed-item[data-kind="song"] .tile::before{content:"♡";display:grid;position:absolute;z-index:5;top:-12px;right:8px;width:26px;height:26px;place-items:center;border:1px solid #f2d8e2;border-radius:50%;background:#fffaf5;color:#cf829f;font:800 1.05rem/1 Nunito,sans-serif;box-shadow:0 3px 9px #9f70841a;pointer-events:none}
-.feed-item .tile.note.is-loved::before{content:"♡"!important;display:grid!important;top:-16px!important;right:9px!important;width:26px;height:26px;border:1px solid #f2d8e2;border-radius:50%;background:#fffaf5;color:#cf829f}
-.feed-item .tile.note.heart-tap::before{content:""!important;top:-17px!important;right:5px!important;width:34px;height:34px;border:2px solid #ec8eb1;border-radius:50%;background:transparent;box-shadow:none}
+
+
 .feed-item .tile.is-loved::after,.feed-item .tile.heart-tap::after{top:-12px!important;right:8px!important}
 .feed-item[data-kind="song"] .tile.song-card{grid-template-columns:52px minmax(0,1fr) auto;gap:8px;overflow:visible!important;padding:10px 9px!important}
 .song-title-button{min-width:0;width:100%;padding:2px 0 0;border:0;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer;overflow:hidden}
@@ -317,12 +317,12 @@ body[data-mode="dark"] .photo-lightbox-card,body[data-mode="dark"] .notification
 body[data-mode="dark"] .music-player-card{background:#342b3c;border-color:#5a485f;color:#f1e8ef}
 body[data-mode="dark"] .notification-row,body[data-mode="dark"] .notification-settings{background:#2d2535;border-color:#55465e;color:#f1e8ef}
 body[data-mode="dark"] .notification-row small,body[data-mode="dark"] .notification-row time,body[data-mode="dark"] .notification-tools{color:#c5b2c8}
-body[data-mode="dark"] .feed-item .tile.note::before,body[data-mode="dark"] .feed-item[data-kind="photo"] .tile::before,body[data-mode="dark"] .feed-item[data-kind="song"] .tile::before{background:#403448;border-color:#654f68;color:#f2bbd0}
-body[data-mode="dark"] .feed-item .tile.note.is-loved::before{background:#403448;border-color:#654f68;color:#f2bbd0}
+body[data-mode="dark"] .feed-item[data-kind="photo"] .tile::before,body[data-mode="dark"] .feed-item[data-kind="song"] .tile::before{background:#403448;border-color:#654f68;color:#f2bbd0}
+
 @media(max-width:420px){.feed-item[data-kind="song"] .tile.song-card{grid-template-columns:46px minmax(0,1fr) auto;gap:6px;padding:9px 8px!important}.feed-item[data-kind="song"] .tile.song-card .album-art.play-song{width:46px!important;height:46px!important}.card-song-save{min-height:29px;padding:4px 8px;font-size:.66rem}.photo-lightbox-card{padding:20px 10px 12px}.photo-lightbox-card>img{max-width:94vw}.notification-card{padding:21px 14px 14px}}
 @media(prefers-reduced-motion:reduce){.music-player-art.is-playing>span,.music-player-art.is-playing>i{animation:none!important}}
 
-.feed-item[data-kind="note"]>.tile.note.is-loved::after,.feed-item[data-kind="note"]>.tile.note.heart-tap::after{top:-20px!important;right:6px!important}
+
 
 
 /* Streaks live with the happy things and travel with each profile. */
@@ -376,15 +376,15 @@ body[data-mode="dark"] .memory-upload-status{background:#403448ed;border-color:#
 
 /* Memory hearts stay simple and toggle cleanly on every double tap. */
 .feed-item .tile:not(.heart-tap)::before{content:"♡"!important;display:block!important;position:absolute;z-index:5;top:-12px;right:8px;left:auto;bottom:auto;width:auto;height:auto;border:0!important;border-radius:0!important;background:transparent!important;color:#cf829f;font:700 1.2rem/1 Nunito,sans-serif;box-shadow:none!important;pointer-events:none}
-.feed-item .tile.note:not(.heart-tap)::before{top:-16px!important;right:9px!important}
+
 .feed-item .tile.is-loved::before{display:none!important}
 .feed-item .tile.is-loved::after,.feed-item .tile.heart-tap::after{display:block!important;position:absolute;z-index:6;top:-12px!important;right:8px!important;left:auto;bottom:auto;width:auto!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#e75f91!important;font:800 1.35rem/1 Nunito,sans-serif;box-shadow:none!important;pointer-events:none;animation:memory-heart-bloom .78s cubic-bezier(.18,.88,.25,1) both}
 .feed-item .tile.is-loved::after{content:"♥"!important}
 .feed-item .tile.heart-tap:not(.is-loved)::after{content:"♡"!important;color:#e75f91!important}
-.feed-item .tile.note.is-loved::after,.feed-item .tile.note.heart-tap::after{top:-20px!important;right:6px!important}
+
 .feed-item[data-kind="song"] .tile.song-card.is-loved::after,.feed-item[data-kind="song"] .tile.song-card.heart-tap::after{top:-12px!important;right:8px!important}
 .feed-item .tile.heart-tap::before{content:""!important;display:block!important;position:absolute;z-index:5;top:-14px;right:4px;left:auto;bottom:auto;width:30px;height:30px;border:1px solid #ec8eb1;border-radius:50%;background:transparent;box-shadow:none;pointer-events:none;animation:memory-heart-ring .8s ease-out both}
-.feed-item .tile.note.heart-tap::before{top:-18px!important;right:2px!important;width:30px;height:30px}
+
 /* Keep the home streak card complete and easy to reach from the happy-things grid. */
 .happy-things-grid .streak-widget{grid-column:1/-1;display:flex;gap:14px;padding:16px 18px!important;background:linear-gradient(110deg,#fff0f5,#fff9ed 55%,#f1edff)}
 .streak-top{width:100%;gap:13px;padding-right:0}.streak-mascot{flex-basis:58px;width:58px;height:58px}.streak-copy strong{font-size:1.18rem}.streak-copy p{margin:4px 0 0;color:#927c90;font-size:.76rem;line-height:1.4}.streak-top .streak-badge{margin-left:auto;max-width:42%;white-space:normal;text-align:center}.streak-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding-left:71px}.streak-progress{gap:7px}.streak-day{width:21px;height:21px;flex:0 0 21px;font-size:.76rem}.streak-profile-link{flex:none;padding:8px 12px;border:1px solid #efd9e3;border-radius:999px;background:#fff9;color:#98617c;font-size:.72rem;font-weight:900;transition:transform .18s,background .18s}.streak-profile-link:active{transform:scale(.96);background:#fceaf1}
@@ -418,13 +418,13 @@ body[data-mode="dark"] .profile-streak{background:linear-gradient(135deg,#3b2d3d
 
 /* Note threads: day labels and timestamps sit beside each message bubble. */
 .note-day-heading{margin:21px 4px 10px;color:#9d7b91;font:900 .68rem Nunito,sans-serif;letter-spacing:.8px;text-transform:uppercase;text-align:center}
-.note-row{display:flex;align-items:flex-end;gap:7px;width:100%;margin:4px 0 12px}
-.feed-item[data-kind="note"].tone-peach .note-row{justify-content:flex-end}
-.feed-item[data-kind="note"].tone-lavender .note-row{justify-content:flex-start}
-.note-row>.note-time{flex:none;margin:0 0 5px;color:#a28b9b;font:700 .62rem Nunito,sans-serif;white-space:nowrap}
-.note-row>.tile.note{min-width:0;max-width:min(78%,42rem);margin:0!important}
-@media(max-width:520px){.note-row{gap:6px;margin:3px 0 10px}.note-row>.tile.note{max-width:78%}.note-row>.note-time{font-size:.58rem}}
-body[data-mode="dark"] .note-day-heading{color:#d1aec7}body[data-mode="dark"] .note-row>.note-time{color:#c5b2c8}
+
+
+
+
+
+@media(max-width:520px){}
+body[data-mode="dark"] .note-day-heading{color:#d1aec7}
 /* On a heart tap, hide the resting outline before showing the animated filled heart. */
 .feed-item .tile.heart-tap::before{content:""!important}
 .feed-item .tile.heart-tap.is-loved::after{content:"♥"!important;color:#e75f91!important;text-shadow:0 0 8px #ec74a788,0 0 17px #ed84b566}
@@ -459,13 +459,13 @@ body[data-mode="dark"] .notification-card .auth-close{background:linear-gradient
 .profile-title-row h2{margin:0!important}.profile-handle{color:#a17e94;font-size:.8rem;font-weight:800}
 .profile-card .auth-bunny{margin:0 auto 2px}
 /* Own notes sit right with their time on the left; friends sit left with time on the right. */
-.note-row{align-items:center!important;max-width:100%}
-.note-row.is-mine{justify-content:flex-end!important}
-.note-row:not(.is-mine){justify-content:flex-start!important}
-.note-row:not(.is-mine)>.note-time{order:2}
-.note-row>.note-time{align-self:center;margin:0 2px!important}
-.note-row>.tile.note{max-width:min(72%,38rem)!important;padding:9px 13px!important;line-height:1.28}
-@media(max-width:520px){.note-row>.tile.note{max-width:74%!important;padding:8px 11px!important}.note-row>.note-time{font-size:.56rem!important}}
+
+
+
+
+
+
+@media(max-width:520px){}
 /* A liked item has exactly one resting heart: its filled heart. */
 .feed-item .tile.is-loved::before{content:none!important;display:none!important}
 .feed-item .tile.heart-tap.is-loved::before{content:none!important;display:none!important}
@@ -494,17 +494,17 @@ body[data-mode="dark"] .happy-things-grid .streak-mascot{background:#47374a;box-
 .profile-streak{padding:12px!important;border-radius:18px;background:#fff8fb}
 .profile-streak-top{gap:8px}.profile-streak-icon{width:38px;height:38px;flex-basis:38px}
 .profile-streak-progress{gap:5px}.profile-streak-dot{width:20px;height:20px}
-.feed-item .tile.note{padding-top:27px!important}
-.feed-item .tile.note::before,.feed-item .tile.note.is-loved::after{top:5px!important;right:9px!important}
-.feed-item .tile.note.heart-tap::before{display:none!important;content:none!important}
-.feed-item .tile.note.heart-tap::after{top:4px!important;right:8px!important}
+
+
+
+
 @media(max-width:520px){.happy-things-grid .streak-widget{gap:8px;padding:11px!important}.happy-things-grid .streak-copy small{font-size:.55rem}.happy-things-grid .streak-copy strong{font-size:.92rem}.happy-things-grid .streak-widget>p{font-size:.64rem}}
-.feed-item .tile.note:not(.heart-tap)::before{top:5px!important;right:9px!important}
+
 /* Final sizing: keep hearts in the note without adding height to the bubble. */
-.feed-item .tile.note{padding-top:11px!important}
-.feed-item .tile.note:not(.heart-tap)::before{content:"♡"!important;display:block!important;top:6px!important;right:8px!important;left:auto!important;width:auto!important;height:auto!important;border:0!important;border-radius:0!important;background:transparent!important}
-.feed-item .tile.note.is-loved::before,.feed-item .tile.note.heart-tap::before{content:none!important;display:none!important}
-.feed-item .tile.note.is-loved::after,.feed-item .tile.note.heart-tap.is-loved::after{top:6px!important;right:8px!important}
+
+
+
+
 /* Make Home's streak feel like a matching scrapbook card, not a dashboard. */
 .happy-things-grid .streak-widget{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:11px!important;border:1px solid #eedfe6;border-radius:22px;background:#fffdfa;box-shadow:0 7px 18px #8b68800b}
 .happy-things-grid .streak-top{display:flex;flex-direction:column;gap:7px;width:100%;padding:0}
@@ -558,7 +558,7 @@ body[data-mode="dark"] .happy-things-grid .streak-mascot{background:linear-gradi
 body[data-mode="dark"] .happy-things-grid .streak-copy small,body[data-mode="dark"] .profile-streak-copy small{color:#ead4e3!important}
 @media(max-width:520px){.happy-things-grid .streak-mascot{height:82px!important;flex-basis:82px!important}}
 /* Lift the note heart just over the bubble edge without reserving extra text space. */
-.feed-item .tile.note:not(.heart-tap)::before,.feed-item .tile.note.is-loved::after,.feed-item .tile.note.heart-tap.is-loved::after{top:-8px!important;right:8px!important}
+
 /* The home streak uses the same tile shell, art size, and button as its siblings. */
 .happy-things-grid>.streak-widget{display:flex!important;flex-direction:column!important;align-items:stretch!important;align-self:stretch!important;gap:0!important;min-width:0!important;min-height:0!important;margin:0!important;padding:13px!important;border:1px solid #eddde3!important;border-radius:21px!important;background:rgba(255,253,249,.95)!important;box-shadow:0 7px 18px #8b68800c!important;overflow:hidden}
 .happy-things-grid>.streak-widget .streak-top{display:contents!important}
@@ -586,7 +586,7 @@ body[data-mode="dark"] .happy-things-grid>.streak-widget>p{color:#c5b2c8!importa
 /* Unlike in place: keep one outline heart in its resting corner, with a tiny scale-in. */
 .feed-item .tile.heart-tap:not(.is-loved)::after{content:none!important;display:none!important;animation:none!important}
 .feed-item .tile.heart-tap:not(.is-loved)::before{content:"♡"!important;display:block!important;position:absolute!important;z-index:6!important;top:-12px!important;right:8px!important;left:auto!important;bottom:auto!important;width:auto!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#cf829f!important;font:700 1.2rem/1 Nunito,sans-serif!important;box-shadow:none!important;pointer-events:none!important;animation:unlike-heart-return .22s ease-out both!important}
-.feed-item .tile.note.heart-tap:not(.is-loved)::before{top:-8px!important;right:8px!important}
+
 @keyframes unlike-heart-return{from{opacity:.65;transform:scale(.84);transform-origin:top right}to{opacity:1;transform:scale(1);transform-origin:top right}}
 body[data-mode="dark"] .feed-item .tile.heart-tap:not(.is-loved)::before{color:#f2a9c5!important}
 @media(prefers-reduced-motion:reduce){.feed-item .tile.heart-tap:not(.is-loved)::before{animation:none!important}}
@@ -673,7 +673,7 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 .memory-heart-toggle{position:absolute;z-index:9;top:7px;right:8px;display:grid;place-items:center;width:30px;height:30px;min-height:30px;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#c77999!important;font:700 1.3rem/1 Nunito,sans-serif!important;box-shadow:none!important;text-shadow:0 1px 2px #fff9;transition:transform .18s,color .18s,text-shadow .18s}
 .memory-heart-toggle:hover{transform:scale(1.12)}
 .memory-heart-toggle[aria-pressed="true"]{color:#e75f91!important;text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566;animation:heart-button-pop .26s ease-out}
-.tile.note .memory-heart-toggle{top:-10px;right:8px}
+
 .memory-heart-toggle:focus-visible{outline:2px solid #c8799c!important;outline-offset:2px;border-radius:50%!important}
 @keyframes heart-button-pop{50%{transform:scale(1.28)}}
 @media(prefers-reduced-motion:reduce){.memory-heart-toggle,.memory-heart-toggle[aria-pressed="true"]{animation:none!important;transition:none!important}}
@@ -681,7 +681,7 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 /* Make the existing corner heart itself tappable, with no decorative duplicate. */
 #content .feed-item .tile::before,#content .feed-item .tile::after{content:none!important;display:none!important}
 .memory-heart-toggle{top:-12px!important}
-#content .feed-item .tile.note .memory-heart-toggle{top:-8px!important}
+
 #content .feed-item .tile.heart-tap .memory-heart-toggle{animation:heart-button-pop .34s ease-out}
 /* A compact Dynamic Island-style music pill and top player. */
 .now-playing-island{position:fixed;z-index:95;top:max(7px,calc(env(safe-area-inset-top) + 3px));left:50%;display:grid;justify-items:center;gap:7px;width:max-content;max-width:calc(100vw - 150px);transform:translateX(-50%);pointer-events:none}
@@ -699,14 +699,14 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 @media(prefers-reduced-motion:reduce){.island-wave i,.now-playing-panel{animation:none!important}}
 
 /* Chat sides follow authorship for every viewer, including new friends. */
-.feed-item[data-kind="note"] .note-row{justify-content:flex-start!important}
-.feed-item[data-kind="note"] .note-row.is-mine{justify-content:flex-end!important}
-.feed-item[data-kind="note"] .note-row:not(.is-mine)>.note-time{order:2}
-.feed-item[data-kind="note"] .note-row.is-mine>.note-time{order:0}
-.feed-item[data-kind="note"] .note-row>.tile.note{align-self:auto!important}
+
+
+
+
+
 /* Float the one tappable heart 40% above the note edge and tilt it right. */
-.feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle{top:0!important;transform:translateY(-40%) rotate(10deg)!important;transform-origin:top right}
-.feed-item[data-kind="note"] .note-row>.tile.note:hover .memory-heart-toggle{transform:translateY(-40%) rotate(10deg) scale(1.12)!important}
+
+
 @keyframes heart-button-pop{50%{transform:translateY(-40%) rotate(10deg) scale(1.28)}}
 /* Owner photo controls sit together at the lower right. */
 .tile.has-photo-delete .photo-download{right:52px}
@@ -735,11 +735,9 @@ body[data-mode="dark"] .photo-delete-keep{background:#443649;color:#f4ddea;borde
 /* Keep song save and delete actions compact and side by side. */
 #memoryActionGate .memory-action-buttons{display:grid;gap:7px;width:100%;margin-top:2px}
 #memoryActionGate .memory-action-card.is-song .memory-action-buttons{display:flex;align-items:stretch;justify-content:center;gap:8px}
-#memoryActionGate .memory-action-card.is-song #memoryDownload,
-#memoryActionGate .memory-action-card.is-song #memoryDelete{display:block;flex:1 1 0;width:auto;min-width:0;min-height:40px;margin:0;padding:8px 11px;border:1px solid #f0d4e1;border-radius:999px;background:linear-gradient(145deg,#df9fba,#c77799);color:#fff;box-shadow:0 4px 0 #a85f80;font:900 .76rem Nunito,sans-serif;white-space:nowrap}
+#memoryActionGate .memory-action-card.is-song #memoryDownload,#memoryActionGate .memory-action-card.is-song #memoryDelete{display:block;flex:1 1 0;width:auto;min-width:0;min-height:40px;margin:0;padding:8px 11px;border:1px solid #f0d4e1;border-radius:999px;background:linear-gradient(145deg,#df9fba,#c77799);color:#fff;box-shadow:0 4px 0 #a85f80;font:900 .76rem Nunito,sans-serif;white-space:nowrap}
 #memoryActionGate .memory-action-card.is-song #memoryDelete.hidden{display:none!important}
-body[data-mode="dark"] #memoryActionGate .memory-action-card.is-song #memoryDownload,
-body[data-mode="dark"] #memoryActionGate .memory-action-card.is-song #memoryDelete{border-color:#73576e;background:linear-gradient(145deg,#a86d8b,#805a82);color:#fff}
+body[data-mode="dark"] #memoryActionGate .memory-action-card.is-song #memoryDownload,body[data-mode="dark"] #memoryActionGate .memory-action-card.is-song #memoryDelete{border-color:#73576e;background:linear-gradient(145deg,#a86d8b,#805a82);color:#fff}
 
 /* Float the music capsule over the feed; opening it never shifts page content. */
 #app.music-island-open main{padding-top:0!important;transition:none!important}
@@ -756,11 +754,11 @@ body[data-mode="dark"] .photo-lightbox-action{border-color:#76576f!important;bac
 @media(prefers-reduced-motion:reduce){.now-playing-panel{transition:none!important}}
 
 /* Final message-heart placement: the same floating control used by photos and songs. */
-#content .feed-item[data-kind="note"] .note-row>.tile.note{display:block!important;margin-top:16px!important;padding:9px 13px!important}
-#content .feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle{position:absolute!important;inset:auto!important;top:-12px!important;right:8px!important;width:30px!important;height:30px!important;min-height:30px!important;margin:0!important;padding:0!important;transform:none!important;font-size:1.3rem!important;line-height:1!important}
-#content .feed-item[data-kind="note"] .note-row>.tile.note:hover .memory-heart-toggle{transform:scale(1.12)!important}
-#content .feed-item[data-kind="note"] .note-row>.tile.note .note-message-text{display:block!important;width:auto!important;text-align:left}
-#content .feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle[aria-pressed="true"]{animation:heart-button-pop .26s ease-out}
+
+
+
+
+
 
 /* A tidy, responsive photo garden with one calm square crop for each memory. */
 .photo-garden-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:16px}
@@ -804,8 +802,8 @@ body[data-mode="dark"] .input,body[data-mode="dark"] input,body[data-mode="dark"
 body[data-mode="dark"] input::placeholder,body[data-mode="dark"] textarea::placeholder{color:#a890a5!important}
 body[data-mode="dark"] .round,body[data-mode="dark"] .daily-icon,body[data-mode="dark"] .friend-avatar,body[data-mode="dark"] .notification-avatar{background:#413448!important;color:#ffd4e5!important}
 body[data-mode="dark"] #nav button{color:#cbb8c9!important}body[data-mode="dark"] #nav button.active{background:#4b354b!important;color:#ffe5ef!important;box-shadow:inset 0 -2px #c77b9c!important}
-body[data-mode="dark"] .feed-by,body[data-mode="dark"] .feed-by small,body[data-mode="dark"] .note-row>.note-time{color:#d0bdce!important}
-body[data-mode="dark"] .feed-item .tile.note{background:linear-gradient(135deg,#423144,#372e42)!important;border-color:#654e63!important;color:#faeaf1!important;box-shadow:2px 5px 0 #241d2c!important}
+body[data-mode="dark"] .feed-by,body[data-mode="dark"] .feed-by small{color:#d0bdce!important}
+
 body[data-mode="dark"] .photo-frame,body[data-mode="dark"] .album-art,body[data-mode="dark"] .tile-art{border-color:#645166!important;background:linear-gradient(145deg,#47354b,#36364d)!important}
 body[data-mode="dark"] .notification-empty{background:#29222f!important;border-color:#5c4961!important;color:#ead9e5!important}
 body[data-mode="dark"] .notification-settings summary{color:#f3ddea!important}body[data-mode="dark"] .notification-preferences{background:transparent!important;color:#f5eaf1!important}
