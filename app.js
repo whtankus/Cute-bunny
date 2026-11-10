@@ -622,7 +622,7 @@ function renderNotesPage() {
         <div class="chat-bubble-wrap">
           <div class="tile chat-bubble" tabindex="0" data-chat-message-id="${esc(id)}">
             <button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>
-            <span class="note-message-text">${text}</span>
+            <p class="note-message-text" dir="auto">${text}</p>
           </div>
         </div>
       </article>
@@ -651,15 +651,7 @@ function renderNotesPage() {
   `;
 
   const thread = $('#chatThread');
-  requestAnimationFrame(() => {
-    if (thread) thread.scrollTop = thread.scrollHeight;
-    const composer = $('#chatInput');
-    if (composer) {
-      composer.focus({ preventScroll: true });
-      const end = composer.value.length;
-      composer.setSelectionRange(end, end);
-    }
-  });
+  if (thread) requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
 }
 
 function render() {
@@ -1427,7 +1419,8 @@ document.addEventListener('click', async e => {
 
   // Chat message press -> show Copy & Delete
   const bubble = e.target.closest('.chat-bubble');
-  if (bubble && !e.target.closest('button')) {
+  const selectedText = window.getSelection?.()?.toString().trim();
+  if (bubble && !e.target.closest('button') && !selectedText) {
     const id = bubble.dataset.chatMessageId;
     if (id) {
       if (activeMessageActionsId === id) hideMessageActions();
