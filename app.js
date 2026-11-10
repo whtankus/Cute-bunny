@@ -495,8 +495,9 @@ function popLoveHeart(card, e) {
       localStorage.setItem('cuteBunnyHearts:' + me?.username, JSON.stringify([...reactedMemories].slice(-2000)));
     } catch {}
     const likedNow = reactedMemories.has(key);
-    card.classList.toggle('is-loved', likedNow);
     const message = card.closest('.chat-message');
+    card.classList.toggle('is-loved', likedNow);
+    message?.classList.toggle('is-loved', likedNow);
     const control = card.closest('.feed-item')?.querySelector('[data-memory-heart]') || message?.querySelector('[data-memory-heart]');
     if (control) {
       control.textContent = likedNow ? '♥' : '♡';
