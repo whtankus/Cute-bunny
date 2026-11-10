@@ -1974,7 +1974,7 @@ body.notes-keyboard-open #nav {
     border-radius:22px 22px 30px 30px;
   }
 }
-.chat-page.is-continuation .chat-message-content {
+.chat-page .chat-message.is-continuation .chat-message-content {
   gap:0;
 }
 .chat-page .chat-message.is-continuation .chat-bubble-wrap {
