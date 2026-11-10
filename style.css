@@ -1987,6 +1987,12 @@ body.notes-keyboard-open #nav {
   min-width:0;
   flex:0 1 auto;
 }
+.chat-page .chat-message.is-continuation .chat-message-content {
+  gap:0;
+}
+.chat-page .chat-message.is-continuation .chat-bubble-wrap {
+  margin-top:4px;
+}
 .chat-page .chat-message.is-mine .chat-bubble .memory-heart-toggle {
   left:8px!important;
   right:auto!important;
