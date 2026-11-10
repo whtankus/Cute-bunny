@@ -2204,3 +2204,19 @@ body:has(.chat-page) #content {
 .home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {
   animation:notes-heart-pop .34s ease-out!important;
 }
+
+
+/* Restore clear button-like press feedback on Notes and Home note bubbles. */
+.chat-page .chat-bubble-wrap>.chat-bubble,
+.home-note-memory .chat-bubble-wrap>.chat-bubble {
+  cursor:pointer;
+  touch-action:pan-y;
+  transition:transform .12s ease,box-shadow .12s ease!important;
+}
+.chat-page .chat-bubble-wrap>.chat-bubble:active,
+.chat-page .chat-bubble-wrap>.chat-bubble.is-pressed,
+.home-note-memory .chat-bubble-wrap>.chat-bubble:active,
+.home-note-memory .chat-bubble-wrap>.chat-bubble.is-pressed {
+  transform:translateY(4px) scale(.99)!important;
+  box-shadow:0 2px 0 #b58bd8!important;
+}
