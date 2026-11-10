@@ -1723,15 +1723,6 @@ body[data-mode="dark"] .chat-actions-popup .chat-action-btn.delete-btn {
 
 
 /* Chat bubble sizing correction — keep the earlier handwritten type size. */
-.chat-message-line { align-items:center; }
-.chat-message.is-friend .chat-message-line {
-  flex-direction:row;
-  justify-content:flex-start;
-}
-.chat-message.is-mine .chat-message-line {
-  flex-direction:row-reverse;
-  justify-content:flex-start;
-}
 .chat-bubble-wrap {
   width:fit-content;
   max-width:min(335px,calc(100% - 4rem));
