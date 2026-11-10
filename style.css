@@ -1279,9 +1279,9 @@ body[data-mode="dark"] .chat-composer textarea { color:#f7edf4;background:#29233
   .chat-message-line { gap:7px; }
   .chat-bubble-wrap { max-width:calc(100% - 3.9rem); }
   .chat-bubble-wrap>.chat-bubble { padding:12px 17px 10px;border-width:2.5px;border-radius:29px;font-size:clamp(1.45rem,5vw,1.9rem); }
-  .chat-bubble .memory-heart-toggle { top:-22px;width:38px;height:38px;min-width:38px;min-height:38px;font-size:2.35rem; }
-  .chat-message.is-mine .chat-bubble .memory-heart-toggle { left:9px; }
-  .chat-message.is-friend .chat-bubble .memory-heart-toggle { right:9px; }
+  .chat-bubble .memory-heart-toggle { top:-22px!important;right:9px!important;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;font-size:2.35rem!important; }
+  .chat-message.is-mine .chat-bubble .memory-heart-toggle { right:auto!important;left:9px!important; }
+  .chat-message.is-friend .chat-bubble .memory-heart-toggle { right:9px!important;left:auto!important; }
 }
 @media(max-width:480px) {
   .chat-page { gap:10px;min-height:calc(100dvh - 138px);padding-bottom:calc(78px + env(safe-area-inset-bottom)); }
@@ -1298,9 +1298,9 @@ body[data-mode="dark"] .chat-composer textarea { color:#f7edf4;background:#29233
   .chat-message-line { gap:5px; }
   .chat-bubble-wrap { max-width:calc(100% - 3.4rem);margin-top:12px; }
   .chat-bubble-wrap>.chat-bubble { padding:10px 13px 9px;border-radius:25px;font-size:clamp(1.35rem,5.8vw,1.7rem);line-height:1.12; }
-  .chat-bubble .memory-heart-toggle { top:-19px;right:7px;width:33px;height:33px;min-width:33px;min-height:33px;font-size:2.05rem; }
-  .chat-message.is-mine .chat-bubble .memory-heart-toggle { left:7px; }
-  .chat-message.is-friend .chat-bubble .memory-heart-toggle { right:7px; }
+  .chat-bubble .memory-heart-toggle { top:-19px!important;right:7px!important;left:auto!important;width:33px!important;height:33px!important;min-width:33px!important;min-height:33px!important;font-size:2.05rem!important; }
+  .chat-message.is-mine .chat-bubble .memory-heart-toggle { right:auto!important;left:7px!important; }
+  .chat-message.is-friend .chat-bubble .memory-heart-toggle { right:7px!important;left:auto!important; }
   .chat-composer { bottom:calc(72px + env(safe-area-inset-bottom));gap:6px;padding:6px; }
   .chat-composer textarea { min-height:43px;max-height:104px;padding:10px 11px;font-size:16px; }
   .chat-composer .primary { min-width:56px;padding:8px 10px;font-size:.76rem; }
