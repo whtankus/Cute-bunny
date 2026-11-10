@@ -496,11 +496,12 @@ function popLoveHeart(card, e) {
     } catch {}
     const likedNow = reactedMemories.has(key);
     card.classList.toggle('is-loved', likedNow);
-    const control = card.closest('.feed-item')?.querySelector('[data-memory-heart]');
+    const message = card.closest('.chat-message');
+    const control = card.closest('.feed-item')?.querySelector('[data-memory-heart]') || message?.querySelector('[data-memory-heart]');
     if (control) {
       control.textContent = likedNow ? '♥' : '♡';
       control.setAttribute('aria-pressed', String(likedNow));
-      control.setAttribute('aria-label', likedNow ? 'Unlike memory' : 'Like memory');
+      control.setAttribute('aria-label', likedNow ? (message ? 'Unlike message' : 'Unlike memory') : (message ? 'Like message' : 'Like memory'));
     }
   }
   card.classList.remove('heart-tap');
@@ -552,53 +553,32 @@ function renderNotesPage() {
   const content = $('#content');
   if (!content) return;
 
-  // 1. Instagram Notes Tray items
   const myLatestNote = feed.find(m => m.kind === 'note' && String(m.author?.id || m.owner_id) === String(me?.id));
   const myBubbleText = myLatestNote ? esc(myLatestNote.text) : 'Share a thought…';
 
-  let friendsNotesHtml = '';
-  friends.forEach(f => {
-    const fNote = feed.find(m => m.kind === 'note' && String(m.author?.id || m.owner_id) === String(f.id));
-    const bubble = fNote ? `<div class="ig-thought-bubble"><span class="ig-thought-text">${esc(fNote.text)}</span></div>` : '';
-    friendsNotesHtml += `
-      <div class="ig-note-item" data-friend-profile="${esc(f.username)}">
-        <div class="ig-note-bubble-wrap">
-          ${bubble}
-          <div class="ig-note-avatar">
-            <span>${esc(f.mascot || '🐰')}</span>
-          </div>
-        </div>
-        <span class="ig-note-name">${esc(f.displayName || f.username)}</span>
-      </div>
-    `;
-  });
+  const friendsNotesHtml = friends.map(friend => {
+    const latest = feed.find(m => m.kind === 'note' && String(m.author?.id || m.owner_id) === String(friend.id));
+    const bubble = latest ? '<div class="ig-thought-bubble"><span class="ig-thought-text">' + esc(latest.text) + '</span></div>' : '';
+    return '<div class="ig-note-item" data-friend-profile="' + esc(friend.username) + '">' +
+      '<div class="ig-note-bubble-wrap">' + bubble +
+      '<div class="ig-note-avatar"><span>' + esc(friend.mascot || '🐰') + '</span></div></div>' +
+      '<span class="ig-note-name">' + esc(friend.displayName || friend.username) + '</span></div>';
+  }).join('');
 
-  const notesTray = `
-    <section class="ig-notes-tray" aria-label="Notes from friends">
-      <div class="ig-notes-scroll">
-        <div class="ig-note-item is-me" id="openMyNoteComposer">
-          <div class="ig-note-bubble-wrap">
-            <div class="ig-thought-bubble">
-              <span class="ig-thought-text">${myBubbleText}</span>
-            </div>
-            <div class="ig-note-avatar">
-              <span>${esc(me?.mascot || '🐰')}</span>
-              ${!myLatestNote ? '<span class="ig-note-plus">＋</span>' : ''}
-            </div>
-          </div>
-          <span class="ig-note-name">Your note</span>
-        </div>
-        ${friendsNotesHtml}
-      </div>
-    </section>
-  `;
+  const notesTray = '<section class="ig-notes-tray" aria-label="Notes from friends">' +
+    '<div class="ig-notes-scroll">' +
+      '<div class="ig-note-item is-me" id="openMyNoteComposer">' +
+        '<div class="ig-note-bubble-wrap"><div class="ig-thought-bubble"><span class="ig-thought-text">' + myBubbleText + '</span></div>' +
+        '<div class="ig-note-avatar"><span>' + esc(me?.mascot || '🐰') + '</span>' +
+        (!myLatestNote ? '<span class="ig-note-plus">＋</span>' : '') + '</div></div>' +
+        '<span class="ig-note-name">Your note</span></div>' + friendsNotesHtml +
+    '</div></section>';
 
-  // 2. Chat thread
   const chatNotes = feed.filter(m => m.kind === 'note' && !pendingDeleteTimers.has(String(m.id))).slice().reverse();
   let previousLabel = '';
   const messagesHtml = chatNotes.map(m => {
     const label = noteDayLabel(m.createdAt || m.created_at);
-    const divider = label === previousLabel ? '' : `<div class="chat-day-divider"><span>${esc(label)}</span></div>`;
+    const divider = label === previousLabel ? '' : '<div class="chat-day-divider"><span>' + esc(label) + '</span></div>';
     previousLabel = label;
 
     const owner = m.author || {};
@@ -608,47 +588,44 @@ function renderNotesPage() {
     const name = esc(owner.displayName || owner.username || 'Friend');
     const handle = esc(owner.username || 'friend');
     const pet = esc(owner.mascot || '🐰');
-    const text = esc(m.text || '');
+    const messageText = esc(m.text || '');
     const time = esc(formatNoteClock(m.createdAt || m.created_at));
 
-    return `${divider}
-      <article class="chat-message ${mine ? 'is-mine' : 'is-friend'}${liked ? ' is-loved' : ''}${m.isPending ? ' is-uploading' : ''}" data-kind="note" data-memory="${esc(id)}">
-        <div class="chat-meta">
-          <span class="sender-pet" aria-hidden="true">${pet}</span>
-          <b title="${name}">${name}</b>
-          <small>@${handle}</small>
-          <time datetime="${esc(m.createdAt || m.created_at || '')}">${time}</time>
-        </div>
-        <div class="chat-bubble-wrap">
-          <button type="button" class="memory-heart-toggle chat-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>
-          <div class="tile chat-bubble" tabindex="0" data-chat-message-id="${esc(id)}">
-            <p class="note-message-text" dir="auto">${text}</p>
-          </div>
-        </div>
-      </article>
-    `;
+    return divider +
+      '<article class="chat-message ' + (mine ? 'is-mine' : 'is-friend') + (liked ? ' is-loved' : '') + (m.isPending ? ' is-uploading' : '') + '" data-kind="note" data-memory="' + esc(id) + '">' +
+        '<div class="chat-message-content">' +
+          '<div class="chat-meta">' +
+            '<span class="sender-pet" aria-hidden="true">' + pet + '</span>' +
+            '<b title="' + name + '">' + name + '</b>' +
+            '<small>@' + handle + '</small>' +
+            '<time datetime="' + esc(m.createdAt || m.created_at || '') + '">' + time + '</time>' +
+          '</div>' +
+          '<div class="chat-bubble-wrap">' +
+            '<div class="chat-reaction-row">' +
+              '<button type="button" class="memory-heart-toggle chat-heart-toggle" data-memory-heart="' + esc(id) + '" aria-label="' + (liked ? 'Unlike' : 'Like') + ' message" aria-pressed="' + liked + '">' + (liked ? '♥' : '♡') + '</button>' +
+            '</div>' +
+            '<div class="tile chat-bubble" tabindex="0" data-chat-message-id="' + esc(id) + '">' +
+              '<p class="note-message-text" dir="auto">' + messageText + '</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
   }).join('');
 
-  content.innerHTML = `
-    <section class="chat-page" aria-label="Shared notes conversation">
-      <header class="chat-header">
-        <div>
-          <p class="eyebrow">YOUR LITTLE CIRCLE</p>
-          <h2>Notes & Messages</h2>
-          <p>Tap your note bubble to share a thought, or chat below ♡</p>
-        </div>
-        <span class="chat-header-buddy" aria-hidden="true">${esc(me?.mascot || '🐰')}</span>
-      </header>
-      ${notesTray}
-      <div class="chat-thread" id="chatThread" aria-live="polite">
-        ${messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your note garden starts here</b><small>Say hello to your circle or share what is on your mind ♡</small></div>'}
-      </div>
-      <form id="chatComposer" class="chat-composer">
-        <textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Message your circle…" aria-label="Message your circle"></textarea>
-        <button type="submit" class="primary" id="chatSend">Send ♡</button>
-      </form>
-    </section>
-  `;
+  content.innerHTML =
+    '<section class="chat-page" aria-label="Shared notes conversation">' +
+      '<header class="chat-header"><div><p class="eyebrow">YOUR LITTLE CIRCLE</p>' +
+        '<h2>Notes & Messages</h2><p>Tap your note bubble to share a thought, or chat below ♡</p></div>' +
+        '<span class="chat-header-buddy" aria-hidden="true">' + esc(me?.mascot || '🐰') + '</span></header>' +
+      notesTray +
+      '<div class="chat-thread" id="chatThread" aria-live="polite">' +
+        (messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your note garden starts here</b><small>Say hello to your circle or share what is on your mind ♡</small></div>') +
+      '</div>' +
+      '<form id="chatComposer" class="chat-composer">' +
+        '<textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Message your circle…" aria-label="Message your circle"></textarea>' +
+        '<button type="submit" class="primary" id="chatSend">Send ♡</button>' +
+      '</form>' +
+    '</section>';
 
   const thread = $('#chatThread');
   if (thread) requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
@@ -1412,7 +1389,7 @@ document.addEventListener('click', async e => {
   if (heart) {
     e.preventDefault();
     e.stopPropagation();
-    const card = heart.closest('.feed-item .tile, .chat-bubble');
+    const card = heart.closest('.chat-message')?.querySelector('.chat-bubble') || heart.closest('.feed-item .tile');
     if (card) popLoveHeart(card, e);
     return;
   }
