@@ -651,7 +651,15 @@ function renderNotesPage() {
   `;
 
   const thread = $('#chatThread');
-  if (thread) requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
+  requestAnimationFrame(() => {
+    if (thread) thread.scrollTop = thread.scrollHeight;
+    const composer = $('#chatInput');
+    if (composer) {
+      composer.focus({ preventScroll: true });
+      const end = composer.value.length;
+      composer.setSelectionRange(end, end);
+    }
+  });
 }
 
 function render() {
