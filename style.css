@@ -714,14 +714,6 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 .photo-delete:hover{transform:scale(1.08)}.photo-delete:active{transform:scale(.92)}
 body[data-mode="dark"] .photo-delete{background:rgba(55,43,62,.96);border-color:#76576f;color:#ffd8e7}
 
-/* Center the one interactive heart inside each note, above its writing line. */
-#content .feed-item[data-kind="note"] .note-row>.tile.note{display:flex!important;flex-direction:column!important;align-items:stretch!important;margin-top:0!important;padding-top:9px!important}
-#content .feed-item[data-kind="note"] .note-row>.tile.note:before{content:none!important;display:none!important}
-#content .feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle{position:relative!important;inset:auto!important;align-self:center!important;flex:0 0 21px!important;width:24px!important;height:21px!important;min-height:21px!important;margin:0 auto 2px!important;padding:0!important;transform:rotate(10deg)!important;transform-origin:center!important;font-size:1.08rem!important;line-height:1!important}
-#content .feed-item[data-kind="note"] .note-row>.tile.note .note-message-text{display:block!important;align-self:stretch!important;width:100%!important;min-width:0!important;text-align:left}
-#content .feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle[aria-pressed="true"]{animation:note-heart-center-pop .26s ease-out}
-@keyframes note-heart-center-pop{50%{transform:rotate(10deg) scale(1.24)}}
-
 /* Photo actions live only in the opened photo viewer. */
 .photo-lightbox-card{padding:62px 14px 14px!important}
 .photo-lightbox-card>img{max-height:calc(100dvh - 112px)!important}
@@ -762,3 +754,62 @@ body[data-mode="dark"] .photo-lightbox-action{border-color:#76576f!important;bac
 .now-playing-island{z-index:79!important}
 @media(max-width:240px){.now-playing-island:not(.hidden){display:none!important}}
 @media(prefers-reduced-motion:reduce){.now-playing-panel{transition:none!important}}
+
+/* Final message-heart placement: the same floating control used by photos and songs. */
+#content .feed-item[data-kind="note"] .note-row>.tile.note{display:block!important;margin-top:16px!important;padding:9px 13px!important}
+#content .feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle{position:absolute!important;inset:auto!important;top:-12px!important;right:8px!important;width:30px!important;height:30px!important;min-height:30px!important;margin:0!important;padding:0!important;transform:none!important;font-size:1.3rem!important;line-height:1!important}
+#content .feed-item[data-kind="note"] .note-row>.tile.note:hover .memory-heart-toggle{transform:scale(1.12)!important}
+#content .feed-item[data-kind="note"] .note-row>.tile.note .note-message-text{display:block!important;width:auto!important;text-align:left}
+#content .feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle[aria-pressed="true"]{animation:heart-button-pop .26s ease-out}
+
+/* A tidy, responsive photo garden with one calm square crop for each memory. */
+.photo-garden-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:16px}
+.photo-garden-grid .feed-item{display:flex;flex-direction:column;min-width:0;margin:0!important}
+.photo-garden-grid .feed-item>.tile{order:1;aspect-ratio:1/1;min-height:0;margin:0!important;padding:0!important;overflow:visible!important;border-radius:18px;box-shadow:0 6px 15px #76536c16;transform:none!important}
+.photo-garden-grid .photo-frame{height:100%;margin:0!important;border-radius:inherit;overflow:hidden}
+.photo-garden-grid .feed-photo{display:block;width:100%;height:100%;min-height:0!important;max-height:none!important;margin:0!important;border-radius:inherit;object-fit:cover}
+.photo-garden-grid .feed-by{order:2;display:flex;align-items:center;gap:3px;min-width:0;padding:6px 3px 1px;font-size:.68rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.photo-garden-grid .feed-by b,.photo-garden-grid .feed-by small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photo-garden-grid .feed-by small{margin-left:0}.photo-garden-grid .memory-owner-indicator,.photo-garden-grid .photo-download{display:none!important}
+@media(min-width:620px){.photo-garden-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}}
+@media(min-width:980px){.photo-garden-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}}
+
+/* Opened-photo actions sit together under the image. */
+.photo-lightbox-card{padding:52px 14px 16px!important}
+#photoLightboxClose{left:auto!important;right:12px!important;top:12px!important}
+.photo-lightbox-card>img{order:1;max-height:calc(100dvh - 156px)!important}
+.photo-lightbox-actions{position:static!important;order:2;display:flex!important;align-items:stretch;justify-content:center;gap:8px;width:min(286px,100%)!important;margin:0 auto!important}
+.photo-lightbox-action{display:block;flex:1 1 0;min-width:0;min-height:40px!important;margin:0!important;padding:8px 11px!important;border:1px solid #f0d4e1!important;border-radius:999px!important;background:linear-gradient(145deg,#df9fba,#c77799)!important;color:#fff!important;box-shadow:0 4px 0 #a85f80!important;font:900 .76rem Nunito,sans-serif!important;white-space:nowrap}
+.photo-lightbox-action:active{transform:translateY(2px) scale(.98)!important;box-shadow:0 2px 0 #a85f80!important}
+.photo-lightbox-delete.hidden{display:none!important}
+@media(max-width:520px){.photo-lightbox-card{padding:50px 10px 12px!important}.photo-lightbox-card>img{max-height:calc(100dvh - 144px)!important}.photo-lightbox-actions{width:min(280px,100%)!important}.photo-lightbox-action{min-height:38px!important;padding:7px 9px!important;font-size:.7rem!important}}
+
+/* Clear notification hierarchy, including a real no-activity state. */
+.notification-card h2{margin:7px 0 8px!important}.notification-tools{justify-content:flex-end!important;margin-bottom:2px}.notification-tools>span{margin-right:auto;font-weight:800;color:#a08095}.notification-empty{display:grid;place-items:center;gap:4px;min-height:130px;padding:22px 16px;border:1px dashed #ead9e3;border-radius:17px;background:#fffdfa;color:#806a7f;text-align:center}.notification-empty>span{font-size:1.55rem;color:#cf829f}.notification-empty b{font:800 .9rem Quicksand,sans-serif}.notification-empty small{color:#a28a9d;font-size:.75rem}.notification-settings{margin-top:12px}.notification-settings summary{font:900 .82rem Nunito,sans-serif}
+
+/* Dark mode is a complete color system, applied after every older light-only rule. */
+body[data-mode="dark"]{color-scheme:dark;--ink:#f5eaf1;--muted:#cbb8c9;--rose:#df91b1;--line:#614c64;background:#211b2a!important;background-image:radial-gradient(#5c475f88 .8px,transparent .8px)!important}
+body[data-mode="dark"] .app{background:#211b2a!important;background-image:radial-gradient(#5c475f88 .8px,transparent .8px)!important;color:var(--ink)}
+body[data-mode="dark"] .welcome{background:linear-gradient(180deg,#2e243c 0%,#2a2233 72%,#211b2a 100%)!important}
+body[data-mode="dark"] .welcome-card{background:linear-gradient(160deg,#3b3042ef,#30273aef)!important;border-color:#6b5269!important;box-shadow:0 24px 60px #09070c55,inset 0 0 0 7px #ffffff08!important}
+body[data-mode="dark"] .welcome h1,body[data-mode="dark"] .heading h2,body[data-mode="dark"] .toolbar h3,body[data-mode="dark"] .hero h3,body[data-mode="dark"] .feed-list>h3,body[data-mode="dark"] .tile h3{color:#f6e5ef!important}
+body[data-mode="dark"] .intro,body[data-mode="dark"] .heading p,body[data-mode="dark"] .hero p,body[data-mode="dark"] .toolbar span,body[data-mode="dark"] .tile p,body[data-mode="dark"] .signoff{color:#d2bbcd!important}
+body[data-mode="dark"] header,body[data-mode="dark"] #nav{background:#2a2233ed!important;border-color:#4f3f54!important}
+body[data-mode="dark"] .brand,body[data-mode="dark"] .crumb b{color:#f5eaf1!important}body[data-mode="dark"] .brand small,body[data-mode="dark"] .crumb{color:#cbb8c9!important}
+body[data-mode="dark"] .hero{background:linear-gradient(125deg,#493449,#3b354f 65%,#4a3941)!important;border-color:#70566f!important;box-shadow:0 7px 0 #2d2435!important}
+body[data-mode="dark"] .daily,body[data-mode="dark"] .tile,body[data-mode="dark"] .empty,body[data-mode="dark"] .friend-row,body[data-mode="dark"] .auth-card,body[data-mode="dark"] .memory-action-card,body[data-mode="dark"] .photo-lightbox-card,body[data-mode="dark"] .notification-card,body[data-mode="dark"] .notification-row,body[data-mode="dark"] .notification-settings,body[data-mode="dark"] .note-compose,body[data-mode="dark"] .profile-theme-preview,body[data-mode="dark"] .theme-choice,body[data-mode="dark"] .music-player-card{background:#30283a!important;border-color:#5c4961!important;color:#f5eaf1!important;box-shadow:0 8px 22px #09070c33!important}
+body[data-mode="dark"] .daily p,body[data-mode="dark"] .auth-card h2,body[data-mode="dark"] .memory-action-card h2,body[data-mode="dark"] .notification-card h2{color:#f5eaf1!important}
+body[data-mode="dark"] .auth-hint,body[data-mode="dark"] .memory-action-text,body[data-mode="dark"] .notification-tools,body[data-mode="dark"] .notification-row small,body[data-mode="dark"] .notification-row time,body[data-mode="dark"] .notification-empty small,body[data-mode="dark"] .friend-row small{color:#cbb8c9!important}
+body[data-mode="dark"] .input,body[data-mode="dark"] input,body[data-mode="dark"] textarea,body[data-mode="dark"] select{background:#241e2d!important;border-color:#5b475f!important;color:#f5eaf1!important;caret-color:#f1aac5!important}
+body[data-mode="dark"] input::placeholder,body[data-mode="dark"] textarea::placeholder{color:#a890a5!important}
+body[data-mode="dark"] .round,body[data-mode="dark"] .daily-icon,body[data-mode="dark"] .friend-avatar,body[data-mode="dark"] .notification-avatar{background:#413448!important;color:#ffd4e5!important}
+body[data-mode="dark"] #nav button{color:#cbb8c9!important}body[data-mode="dark"] #nav button.active{background:#4b354b!important;color:#ffe5ef!important;box-shadow:inset 0 -2px #c77b9c!important}
+body[data-mode="dark"] .feed-by,body[data-mode="dark"] .feed-by small,body[data-mode="dark"] .note-row>.note-time{color:#d0bdce!important}
+body[data-mode="dark"] .feed-item .tile.note{background:linear-gradient(135deg,#423144,#372e42)!important;border-color:#654e63!important;color:#faeaf1!important;box-shadow:2px 5px 0 #241d2c!important}
+body[data-mode="dark"] .photo-frame,body[data-mode="dark"] .album-art,body[data-mode="dark"] .tile-art{border-color:#645166!important;background:linear-gradient(145deg,#47354b,#36364d)!important}
+body[data-mode="dark"] .notification-empty{background:#29222f!important;border-color:#5c4961!important;color:#ead9e5!important}
+body[data-mode="dark"] .notification-settings summary{color:#f3ddea!important}body[data-mode="dark"] .notification-preferences{background:transparent!important;color:#f5eaf1!important}
+body[data-mode="dark"] .photo-garden-grid .feed-item>.tile{background:#30283a!important;border-color:#5c4961!important}
+body[data-mode="dark"] .photo-lightbox-action,body[data-mode="dark"] #memoryActionGate .memory-action-card.is-song #memoryDownload,body[data-mode="dark"] #memoryActionGate .memory-action-card.is-song #memoryDelete{border-color:#73576e!important;background:linear-gradient(145deg,#a86d8b,#805a82)!important;color:#fff!important;box-shadow:0 4px 0 #634760!important}
+body[data-mode="dark"] .now-playing-pill{background:linear-gradient(145deg,#624660,#332b42)!important;border-color:#ffffff22!important}body[data-mode="dark"] .now-playing-panel{background:#30283af5!important;border-color:#5c4961!important;color:#f5eaf1!important}.island-status-line{display:flex!important;align-items:center;gap:4px;min-width:0}.island-status-line>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{background:#443649!important;border-color:#684d66!important;color:#ffdbea!important}
