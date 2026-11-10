@@ -2148,3 +2148,59 @@ body:has(.chat-page) #content {
 .chat-page .chat-bubble.heart-tap {
   animation:none!important;
 }
+
+
+/* Home → Memory History note bubbles mirror the Notes conversation geometry and heart. */
+.home-note-memory .chat-bubble-wrap {
+  width:fit-content;
+  max-width:min(44ch,calc(100% - 4rem));
+  min-width:0;
+  margin-top:10px;
+}
+.home-note-memory .chat-bubble-wrap>.chat-bubble {
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  width:fit-content!important;
+  min-width:0!important;
+  max-width:100%;
+  border-radius:22px!important;
+}
+.home-note-memory .chat-message-text {
+  width:auto!important;
+  max-width:100%;
+  min-width:0;
+  flex:0 1 auto;
+}
+.home-note-memory .chat-bubble .memory-heart-toggle {
+  top:-12px!important;
+  right:8px!important;
+  left:auto!important;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  padding:0!important;
+  color:#c77999!important;
+  -webkit-text-stroke:0 transparent!important;
+  font:700 1.3rem/1 Nunito,sans-serif!important;
+  text-shadow:0 1px 2px #fff9!important;
+  transition:transform .18s,color .18s,text-shadow .18s!important;
+}
+.home-note-memory .chat-message.is-mine .chat-bubble .memory-heart-toggle {
+  left:8px!important;
+  right:auto!important;
+}
+.home-note-memory .chat-bubble .memory-heart-toggle[aria-pressed="true"] {
+  color:#e75f91!important;
+  text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
+}
+.home-note-memory .chat-bubble-wrap>.chat-bubble:active {
+  transform:none!important;
+}
+.home-note-memory .chat-bubble.heart-tap {
+  animation:none!important;
+}
+.home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {
+  animation:notes-heart-pop .34s ease-out!important;
+}
