@@ -12,6 +12,8 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
+const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false, suppressTimer:null };
+
 
 const kindLines = [
   'You make ordinary days feel special ☀',
@@ -1399,6 +1401,61 @@ document.addEventListener('click', e => {
   }
 });
 
+// Notes message gestures: tap to like, press and hold for Copy/Delete.
+document.addEventListener('pointerdown', e => {
+  const bubble = e.target.closest('.chat-page .chat-bubble');
+  if (!bubble || e.target.closest('button, .chat-actions-popup') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+
+  clearTimeout(messagePressState.timer);
+  clearTimeout(messagePressState.suppressTimer);
+  messagePressState.bubble = bubble;
+  messagePressState.pointerId = e.pointerId;
+  messagePressState.startX = e.clientX;
+  messagePressState.startY = e.clientY;
+  messagePressState.longPressed = false;
+  messagePressState.suppressClick = false;
+
+  messagePressState.timer = setTimeout(() => {
+    if (!messagePressState.bubble?.isConnected || messagePressState.pointerId !== e.pointerId) return;
+    const id = messagePressState.bubble.dataset.chatMessageId;
+    if (!id) return;
+    messagePressState.longPressed = true;
+    messagePressState.suppressClick = true;
+    showMessageActions(id, messagePressState.bubble);
+  }, 480);
+});
+
+document.addEventListener('pointermove', e => {
+  if (messagePressState.pointerId !== e.pointerId || !messagePressState.bubble) return;
+  const dx = e.clientX - messagePressState.startX;
+  const dy = e.clientY - messagePressState.startY;
+  if (Math.hypot(dx, dy) > 12) {
+    clearTimeout(messagePressState.timer);
+    messagePressState.timer = null;
+    messagePressState.bubble = null;
+    messagePressState.pointerId = null;
+  }
+});
+
+function finishNotesMessagePress(e) {
+  if (messagePressState.pointerId !== e.pointerId) return;
+  clearTimeout(messagePressState.timer);
+  messagePressState.timer = null;
+  messagePressState.bubble = null;
+  messagePressState.pointerId = null;
+  if (messagePressState.longPressed) {
+    messagePressState.suppressClick = true;
+    clearTimeout(messagePressState.suppressTimer);
+    messagePressState.suppressTimer = setTimeout(() => {
+      messagePressState.suppressClick = false;
+      messagePressState.longPressed = false;
+    }, 700);
+  }
+}
+
+document.addEventListener('pointerup', finishNotesMessagePress);
+document.addEventListener('pointercancel', finishNotesMessagePress);
+
 // Main delegation
 document.addEventListener('click', async e => {
   // Kindness card & button
@@ -1417,21 +1474,18 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // Chat message press -> show Copy & Delete
-  const bubble = e.target.closest('.chat-bubble');
+  // A short tap on a Notes bubble likes/unlikes it. Long-press is handled above.
+  const bubble = e.target.closest('.chat-page .chat-bubble');
   const selectedText = window.getSelection?.()?.toString().trim();
   if (bubble && !e.target.closest('button') && !selectedText) {
-    // Give the tapped bubble a brief, tactile press response before showing its actions.
-    bubble.classList.remove('is-pressed');
-    void bubble.offsetWidth;
-    bubble.classList.add('is-pressed');
-    setTimeout(() => bubble.classList.remove('is-pressed'), 190);
-
-    const id = bubble.dataset.chatMessageId;
-    if (id) {
-      if (activeMessageActionsId === id) hideMessageActions();
-      else showMessageActions(id, bubble);
+    if (messagePressState.suppressClick) {
+      messagePressState.suppressClick = false;
+      clearTimeout(messagePressState.suppressTimer);
+      messagePressState.suppressTimer = null;
+      messagePressState.longPressed = false;
+      return;
     }
+    popLoveHeart(bubble, e);
     return;
   }
 
