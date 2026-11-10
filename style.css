@@ -1735,8 +1735,9 @@ body[data-mode="dark"] .chat-actions-popup .chat-action-btn.delete-btn {
   margin-top:10px;
 }
 .chat-bubble-wrap>.chat-bubble {
-  display:grid;
-  place-items:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   box-sizing:border-box;
   width:fit-content;
   min-width:180px;
@@ -1766,7 +1767,9 @@ body[data-mode="dark"] .chat-actions-popup .chat-action-btn.delete-btn {
 }
 .chat-message-text {
   display:block;
+  width:100%;
   max-width:100%;
+  margin:0 auto;
   text-align:center;
   white-space:inherit;
   overflow-wrap:anywhere;
