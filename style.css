@@ -1068,6 +1068,7 @@ body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{b
 .chat-bubble-wrap>.chat-bubble,
 .chat-bubble-wrap>.chat-bubble:hover,
 .chat-bubble-wrap>.chat-bubble:active {
+  transform:none!important;
   transition:none!important;
 }
 .chat-bubble .memory-heart-toggle {
@@ -2067,7 +2068,6 @@ body:has(.chat-page) #content {
   -webkit-text-stroke:0!important;
   font:700 1.3rem/1 Nunito,sans-serif!important;
   text-shadow:0 1px 2px #fff9!important;
-  transform:none!important;
   transition:transform .18s,color .18s,text-shadow .18s!important;
 }
 .chat-page .chat-bubble .memory-heart-toggle[aria-pressed="true"] {
