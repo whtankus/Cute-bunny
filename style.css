@@ -1103,7 +1103,7 @@ body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{b
   left:12px!important;
 }
 .chat-bubble .memory-heart-toggle[aria-pressed="true"] { color:#ee83b0!important; }
-.chat-bubble .memory-heart-toggle:hover { transform:scale(1.08)!important; }
+.chat-bubble .memory-heart-toggle:hover { transform:scale(1.08); }
 .chat-bubble .memory-heart-toggle:focus-visible {
   outline:2px solid #c8799c;
   outline-offset:2px;
@@ -2068,7 +2068,6 @@ body:has(.chat-page) #content {
   -webkit-text-stroke:0!important;
   font:700 1.3rem/1 Nunito,sans-serif!important;
   text-shadow:0 1px 2px #fff9!important;
-  transform:none!important;
   transition:transform .18s,color .18s,text-shadow .18s!important;
 }
 .chat-page .chat-bubble .memory-heart-toggle[aria-pressed="true"] {
@@ -2117,4 +2116,14 @@ body:has(.chat-page) #content {
 /* Give the Notes heart the same pop animation as Photo and Music hearts. */
 .chat-page .chat-bubble.heart-tap .memory-heart-toggle {
   animation:heart-button-pop .34s ease-out!important;
+}
+
+
+/* Notes heart gets a slightly higher version of the Photo/Music pop. */
+@keyframes notes-heart-pop {
+  0%,100% { transform:translateY(0) rotate(0) scale(1); }
+  45% { transform:translateY(-52%) rotate(10deg) scale(1.28); }
+}
+.chat-page .chat-bubble.heart-tap .memory-heart-toggle {
+  animation:notes-heart-pop .34s ease-out!important;
 }
