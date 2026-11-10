@@ -536,104 +536,111 @@ function go(p) {
   }
 }
 
+
+/* One reusable note message structure for the Notes conversation and Home history. */
+function chatMessageMarkup(m) {
+  const owner = m.author || {};
+  const ownerId = owner.id || m.owner_id || '';
+  const mine = String(ownerId) === String(me?.id || '');
+  const id = String(m.id);
+  const liked = reactedMemories.has(id);
+  const name = esc(owner.displayName || owner.display_name || owner.username || 'Friend');
+  const handle = esc(owner.username || 'friend');
+  const pet = esc(owner.mascot || '🐰');
+  const messageText = esc(m.text || '');
+  const createdAt = m.createdAt || m.created_at || '';
+  const time = esc(formatNoteClock(createdAt));
+  const senderTag = mine ? 'div' : 'button';
+  const senderAttrs = mine ? '' : `type="button" data-friend-profile="${handle}" aria-label="Open ${name}'s profile"`;
+
+  return `
+    <div class="chat-message ${mine ? 'is-mine' : 'is-friend'}${liked ? ' is-loved' : ''}${m.isPending ? ' is-uploading' : ''}" data-kind="note" data-memory="${esc(id)}" data-owner="${esc(ownerId)}">
+      <div class="chat-message-content">
+        <${senderTag} class="chat-meta${mine ? '' : ' chat-sender-link'}" ${senderAttrs}>
+          <span class="sender-pet" aria-hidden="true">${pet}</span>
+          <b title="${name}">${name}</b>
+          <small>@${handle}</small>
+        </${senderTag}>
+        <div class="chat-message-line">
+          <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>
+          <div class="chat-bubble-wrap">
+            <div class="tile chat-bubble" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
+              <button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>
+              <span class="chat-message-text" dir="auto">${messageText}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${m.isPending ? '<span class="memory-upload-status" role="status">Sending your message…</span>' : ''}
+    </div>
+  `;
+}
+
 function memoryCard(m) {
-  const owner = m.author || {}, name = esc(owner.displayName || 'Friend'), handle = esc(owner.username || ''), pet = esc(owner.mascot || '🐰');
-  const title = String(m.text || m.fileName || 'A little memory'), safeTitle = esc(title);
+  const owner = m.author || {};
+  const name = esc(owner.displayName || owner.display_name || 'Friend');
+  const handle = esc(owner.username || '');
+  const pet = esc(owner.mascot || '🐰');
   const liked = reactedMemories.has(String(m.id)) ? ' is-loved' : '';
   const isLiked = reactedMemories.has(String(m.id));
   const heartButton = `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}">${isLiked ? '♥' : '♡'}</button>`;
   const sorted = [me?.id, ...friends.map(f => f.id)].filter(Boolean).map(String).sort();
-  const tone = sorted.indexOf(String(owner.id)) % 2 ? 'tone-lavender' : 'tone-peach';
+  const tone = sorted.indexOf(String(owner.id || m.owner_id || '')) % 2 ? 'tone-lavender' : 'tone-peach';
   const pending = pendingDeleteTimers.has(String(m.id)) ? ' is-pending-delete' : '';
   const uploading = m.isPending ? ' is-uploading' : '';
-  const mine = String(owner.id || '') === String(me?.id || '');
+  const mine = String(owner.id || m.owner_id || '') === String(me?.id || '');
 
   let body = '';
   if (m.kind === 'photo') {
-    body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
+    body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
   } else if (m.kind === 'song') {
     body = `<div class="tile song-card${liked}">${heartButton}<button class="album-art play-song" data-play-song="${esc(m.id)}" aria-label="Play ${esc(m.fileName || 'song')}" aria-pressed="false" ${m.isPending ? "disabled" : ""}><span class="song-glyph" aria-hidden="true">🎼</span><span class="song-note" aria-hidden="true">♫</span></button><span class="memory-title song-title-label" title="${esc(m.fileName || m.text || 'A little song')}">${esc(m.fileName || m.text || 'A little song')}</span>${m.isPending ? "" : `<button class="song-download card-song-save" type="button" data-memory-download="${esc(m.id)}" aria-label="Save song">Save</button>`}</div>`;
   } else {
-    body = `<div class="note-row${mine ? ' is-mine' : ''}"><time class="note-time" datetime="${esc(m.createdAt || m.created_at || '')}">${esc(formatNoteClock(m.createdAt || m.created_at))}</time><div class="tile note${liked}" tabindex="0">${heartButton}<span class="note-message-text">${safeTitle}</span></div></div>`;
+    body = chatMessageMarkup(m);
   }
 
-  return `<article class="feed-item ${tone}${pending}${uploading}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || '')}"><div class="feed-by"><span class="sender-pet" aria-label="${pet}">${pet}</span> <b title="${name}">${name}</b> <small>@${handle}</small></div>${body}${m.isPending ? '<span class="memory-upload-status" role="status">Adding to your garden…</span>' : ''}${mine ? `<span class="memory-owner-indicator" aria-hidden="true">Your memory</span>` : ''}</article>`;
+  const authorLine = m.kind === 'note' ? '' : `<div class="feed-by"><span class="sender-pet" aria-label="${pet}">${pet}</span> <b title="${name}">${name}</b> <small>@${handle}</small></div>`;
+  const ownerIndicator = mine && m.kind !== 'note' ? `<span class="memory-owner-indicator" aria-hidden="true">Your memory</span>` : '';
+  return `<article class="feed-item ${tone}${pending}${uploading}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
 }
 
-/* Instagram-style Notes tray & DM thread */
+/* Clean Notes conversation; message markup is shared with Home → Memory History. */
 function renderNotesPage() {
   const content = $('#content');
   if (!content) return;
 
-  const myLatestNote = feed.find(m => m.kind === 'note' && String(m.author?.id || m.owner_id) === String(me?.id));
-  const myBubbleText = myLatestNote ? esc(myLatestNote.text) : 'Share a thought…';
+  const chatNotes = feed
+    .filter(m => m.kind === 'note' && !pendingDeleteTimers.has(String(m.id)))
+    .slice()
+    .reverse();
 
-  const friendsNotesHtml = friends.map(friend => {
-    const latest = feed.find(m => m.kind === 'note' && String(m.author?.id || m.owner_id) === String(friend.id));
-    const bubble = latest ? '<div class="ig-thought-bubble"><span class="ig-thought-text">' + esc(latest.text) + '</span></div>' : '';
-    return '<div class="ig-note-item" data-friend-profile="' + esc(friend.username) + '">' +
-      '<div class="ig-note-bubble-wrap">' + bubble +
-      '<div class="ig-note-avatar"><span>' + esc(friend.mascot || '🐰') + '</span></div></div>' +
-      '<span class="ig-note-name">' + esc(friend.displayName || friend.username) + '</span></div>';
-  }).join('');
-
-  const notesTray = '<section class="ig-notes-tray" aria-label="Your little circle">' +
-    '<div class="ig-notes-scroll">' +
-      '<div class="ig-note-item is-me" id="openMyNoteComposer">' +
-        '<div class="ig-note-bubble-wrap"><div class="ig-thought-bubble"><span class="ig-thought-text">' + myBubbleText + '</span></div>' +
-        '<div class="ig-note-avatar"><span>' + esc(me?.mascot || '🐰') + '</span>' +
-        (!myLatestNote ? '<span class="ig-note-plus">＋</span>' : '') + '</div></div>' +
-        '<span class="ig-note-name">You</span></div>' + friendsNotesHtml +
-    '</div></section>';
-
-  const chatNotes = feed.filter(m => m.kind === 'note' && !pendingDeleteTimers.has(String(m.id))).slice().reverse();
   let previousLabel = '';
   const messagesHtml = chatNotes.map(m => {
     const label = noteDayLabel(m.createdAt || m.created_at);
-    const divider = label === previousLabel ? '' : '<div class="chat-day-divider"><span>' + esc(label) + '</span></div>';
+    const divider = label === previousLabel ? '' : `<div class="chat-day-divider"><span>${esc(label)}</span></div>`;
     previousLabel = label;
-
-    const owner = m.author || {};
-    const mine = String(owner.id || m.owner_id || '') === String(me?.id || '');
-    const id = String(m.id);
-    const liked = reactedMemories.has(id);
-    const name = esc(owner.displayName || owner.username || 'Friend');
-    const handle = esc(owner.username || 'friend');
-    const pet = esc(owner.mascot || '🐰');
-    const messageText = esc(m.text || '');
-    const time = esc(formatNoteClock(m.createdAt || m.created_at));
-
-    return divider +
-      '<article class="chat-message ' + (mine ? 'is-mine' : 'is-friend') + (liked ? ' is-loved' : '') + (m.isPending ? ' is-uploading' : '') + '" data-kind="note" data-memory="' + esc(id) + '">' +
-        '<div class="chat-message-content">' +
-          '<div class="chat-meta">' +
-            '<time datetime="' + esc(m.createdAt || m.created_at || '') + '">' + time + '</time>' +
-            '<span class="sender-pet" aria-hidden="true">' + pet + '</span>' +
-            '<b title="' + name + '">' + name + '</b>' +
-            '<small>@' + handle + '</small>' +
-          '</div>' +
-          '<div class="chat-bubble-wrap">' +
-            '<div class="tile chat-bubble' + (liked ? ' is-loved' : '') + '" tabindex="0" data-chat-message-id="' + esc(id) + '">' +
-              '<button type="button" class="memory-heart-toggle" data-memory-heart="' + esc(id) + '" aria-label="' + (liked ? 'Unlike' : 'Like') + ' message" aria-pressed="' + liked + '">' + (liked ? '♥' : '♡') + '</button>' +
-              '<p class="note-message-text" dir="auto">' + messageText + '</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</article>';
+    return divider + chatMessageMarkup(m);
   }).join('');
 
-  content.innerHTML =
-    '<section class="chat-page" aria-label="Notes conversation">' +
-      '<header class="chat-header"><h2>Your little circle</h2></header>' +
-      notesTray +
-      '<div class="chat-thread" id="chatThread" aria-live="polite">' +
-        (messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your messages will appear here</b><small>Send the first little hello ♡</small></div>') +
-      '</div>' +
-      '<form id="chatComposer" class="chat-composer">' +
-        '<textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Message…" aria-label="Write a message"></textarea>' +
-        '<button type="submit" class="primary" id="chatSend">Send ♡</button>' +
-      '</form>' +
-    '</section>';
+  content.innerHTML = `
+    <section class="chat-page" aria-label="Notes conversation">
+      <header class="chat-header">
+        <div class="chat-heading-copy">
+          <p class="eyebrow">A LITTLE CORNER FOR TWO</p>
+          <h2>Little Notes</h2>
+          <p>Words worth keeping close ♡</p>
+        </div>
+        <button type="button" class="chat-header-action" id="openMyNoteComposer">＋ Share a thought</button>
+      </header>
+      <div class="chat-thread" id="chatThread" aria-live="polite">
+        ${messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>'}
+      </div>
+      <form id="chatComposer" class="chat-composer">
+        <textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
+        <button type="submit" class="primary" id="chatSend">Send ♡</button>
+      </form>
+    </section>
+  `;
 
   const thread = $('#chatThread');
   if (thread) requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
