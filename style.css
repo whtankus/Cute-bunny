@@ -657,3 +657,14 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 @keyframes streak-counter-bob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.04)}}
 @keyframes streak-counter-fire{from{transform:rotate(-7deg) scale(.94)}to{transform:rotate(7deg) scale(1.08)}}
 @media(prefers-reduced-motion:reduce){.happy-things-grid>.streak-widget .streak-art-count,.happy-things-grid>.streak-widget .streak-art-count i{animation:none!important}}
+
+/* Compact, friendly one-line status toasts; buddy messages stay easy to read. */
+.toast{top:max(12px,env(safe-area-inset-top));left:50%;width:max-content;max-width:min(460px,calc(100vw - 24px));padding:10px 16px;border:1px solid #fff7;border-radius:999px;background:#70546df5;color:#fff;box-shadow:0 7px 22px #61485b33;font-size:.82rem;font-weight:800;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+#toast[role="status"]{pointer-events:none}
+@media(max-width:520px){.toast{max-width:calc(100vw - 24px);padding:9px 14px;font-size:.76rem}}
+.bunny-button{position:relative}
+.bunny-happy{filter:drop-shadow(0 5px 12px #d888a655)}
+.bunny-happy:after{content:"";position:absolute;left:50%;top:24%;width:14px;height:14px;border-radius:50%;background:#fff6;box-shadow:-36px 20px 0 -4px #f5a8c3,-22px -9px 0 -5px #fff;pointer-events:none;animation:buddy-sparkle .7s ease-out both}
+@keyframes buddy-sparkle{0%{opacity:0;transform:translate(-50%,10px) scale(.3)}35%{opacity:1;transform:translate(-50%,-5px) scale(1)}100%{opacity:0;transform:translate(-50%,-24px) scale(.5)}}
+@media(prefers-reduced-motion:reduce){.bunny-happy:after{animation:none!important;opacity:0}}
