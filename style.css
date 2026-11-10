@@ -668,3 +668,14 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 .bunny-happy:after{content:"";position:absolute;left:50%;top:24%;width:14px;height:14px;border-radius:50%;background:#fff6;box-shadow:-36px 20px 0 -4px #f5a8c3,-22px -9px 0 -5px #fff;pointer-events:none;animation:buddy-sparkle .7s ease-out both}
 @keyframes buddy-sparkle{0%{opacity:0;transform:translate(-50%,10px) scale(.3)}35%{opacity:1;transform:translate(-50%,-5px) scale(1)}100%{opacity:0;transform:translate(-50%,-24px) scale(.5)}}
 @media(prefers-reduced-motion:reduce){.bunny-happy:after{animation:none!important;opacity:0}}
+
+/* Tap hearts directly on photos, songs, and notes. */
+.feed-item .tile::before,.feed-item .tile::after{content:none!important;display:none!important}
+.feed-item .tile{overflow:visible}
+.memory-heart-toggle{position:absolute;z-index:9;top:7px;right:8px;display:grid;place-items:center;width:30px;height:30px;min-height:30px;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#c77999!important;font:700 1.3rem/1 Nunito,sans-serif!important;box-shadow:none!important;text-shadow:0 1px 2px #fff9;transition:transform .18s,color .18s,text-shadow .18s}
+.memory-heart-toggle:hover{transform:scale(1.12)}
+.memory-heart-toggle[aria-pressed="true"]{color:#e75f91!important;text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566;animation:heart-button-pop .26s ease-out}
+.tile.note .memory-heart-toggle{top:-10px;right:8px}
+.memory-heart-toggle:focus-visible{outline:2px solid #c8799c!important;outline-offset:2px;border-radius:50%!important}
+@keyframes heart-button-pop{50%{transform:scale(1.28)}}
+@media(prefers-reduced-motion:reduce){.memory-heart-toggle,.memory-heart-toggle[aria-pressed="true"]{animation:none!important;transition:none!important}}
