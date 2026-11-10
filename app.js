@@ -1712,16 +1712,6 @@ document.addEventListener('click', async e => {
   }
 });
 
-// Keep the conversation visible when the mobile keyboard opens.
-document.addEventListener('focusin', event => {
-  if (event.target.id !== 'chatInput') return;
-  requestAnimationFrame(() => {
-    const thread = $('#chatThread');
-    if (thread) thread.scrollTop = thread.scrollHeight;
-    $('#chatComposer')?.scrollIntoView({ block: 'end', behavior: 'smooth' });
-  });
-});
-
 document.addEventListener('input', event => {
   if (event.target.id !== 'chatInput') return;
   const field = event.target;
