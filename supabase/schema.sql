@@ -74,4 +74,3 @@ grant update (display_name,bio,theme,mascot) on public.profiles to authenticated
 grant select, insert, delete on public.follows to authenticated;
 grant select, insert, delete on public.memories to authenticated;
 grant usage, select on sequence public.memories_id_seq to authenticated;
-

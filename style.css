@@ -88,7 +88,7 @@ body[data-mode="dark"] .streak-widget{background:linear-gradient(115deg,#3a2d3c,
 #content,.grid,.media-grid,.media-grid>* ,.feed-item,.tile,.song-card{min-width:0;max-width:100%}
 .song-card{overflow:hidden;overflow-wrap:anywhere;word-break:break-word}
 .song-card>b,.song-card small{display:block;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
-.song-card audio{display:block;width:100%;min-width:0;max-width:100%}
+
 .streak-progress{flex-wrap:wrap;gap:6px;padding:3px 0}
 .streak-day{flex:0 0 18px;box-shadow:0 0 0 0 #ee9fba00;transition:box-shadow .3s ease,transform .3s ease,background .3s ease}
 .streak-day.is-filled{box-shadow:0 0 8px 2px #ee9fba88,0 0 15px 4px #f3d5e155;animation:dot-glow 1.8s ease-in-out infinite alternate}
@@ -102,7 +102,7 @@ body[data-mode="dark"] .streak-day.is-filled{box-shadow:0 0 9px 2px #f5a4ceaa,0 
 .session-restore{position:fixed;z-index:120;inset:0;display:grid;place-content:center;justify-items:center;gap:8px;background:linear-gradient(145deg,#fff8f4,#f7edff);color:#765b76;transition:opacity .25s ease}.session-restore span{font-size:2.5rem;animation:restore-hop .8s ease-in-out infinite alternate}.session-restore p{margin:0;font:600 1rem Quicksand,sans-serif}.is-restoring{overflow:hidden}.is-restoring .welcome,.is-restoring .app{visibility:hidden}@keyframes restore-hop{to{transform:translateY(-7px) rotate(8deg)}}
 #nav{display:flex!important;position:fixed!important;z-index:50;left:0;right:0;top:auto!important;bottom:0!important;width:100%;min-height:68px;padding:7px 10px max(7px,env(safe-area-inset-bottom));gap:5px;background:#fffaf2ed!important;backdrop-filter:blur(16px);border-top:1px solid #eddee2!important;border-bottom:0!important;box-shadow:0 -8px 24px #765b7610}.app{padding-bottom:calc(78px + env(safe-area-inset-bottom))!important}#nav button{flex:1;min-width:0;max-width:104px;min-height:48px;touch-action:manipulation}#nav button span{font-size:.68rem}@media(min-width:800px){.app{padding-bottom:calc(78px + env(safe-area-inset-bottom))!important}#nav{position:fixed!important;top:auto!important;bottom:0!important;max-width:none;margin:0}}
 .friend-section-title{display:flex;align-items:center;gap:9px;margin:25px 2px 8px}.friend-section-title h3,.shared-songs-title{margin:0;color:#70546d;font:700 1.08rem Quicksand,sans-serif}.friend-section-title>span{display:grid;place-items:center;min-width:24px;height:24px;padding:0 7px;border-radius:99px;background:#f7e6ed;color:#a56581;font-size:.72rem;font-weight:900}.friend-results-section,.following-list{min-width:0}.friend-row{min-width:0;gap:8px}.friend-main{display:flex;align-items:center;gap:10px;flex:1;min-width:0;padding:0;border:0;background:transparent;text-align:left;color:inherit;touch-action:manipulation}.friend-copy{display:block;flex:1;min-width:0}.friend-copy b,.friend-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.friend-copy small{font-size:.72rem}.friend-row .follow-btn{flex:0 0 auto;max-width:112px;white-space:nowrap}.friend-profile-bio{margin:0 auto 14px;max-width:34ch;color:#806c80;line-height:1.55;overflow-wrap:anywhere}.profile-created{margin-top:0}.profile-theme-preview{display:flex;align-items:center;gap:13px;padding:13px;margin:8px 0 15px;border:1px solid #eedee7;border-radius:18px;background:linear-gradient(120deg,#fff2f4,#fffaf0);text-align:left}.profile-theme-preview>span{display:grid;place-items:center;width:45px;height:45px;border-radius:15px;background:#f8dce7;font-size:1.5rem}.profile-theme-preview b,.profile-theme-preview small{display:block}.profile-theme-preview small{margin-top:2px;color:#9b8193;font-size:.74rem}.profile-theme-preview[data-theme-preview="lavender"]{background:linear-gradient(120deg,#f3ecff,#fffaff)}.profile-theme-preview[data-theme-preview="mint"]{background:linear-gradient(120deg,#e7f6eb,#fbfff8)}.profile-theme-preview[data-theme-preview="sky"]{background:linear-gradient(120deg,#e7f4fb,#fafdff)}.profile-theme-preview[data-theme-preview="peach"]{background:linear-gradient(120deg,#fff0df,#fff8ec)}.profile-theme-preview[data-theme-preview="berry"]{background:linear-gradient(120deg,#ffe5f0,#fff3f7)}.profile-theme-preview[data-theme-preview="midnight"]{background:linear-gradient(120deg,#35283e,#54405c);color:#fff0f7}.profile-theme-preview[data-theme-preview="midnight"] small{color:#e3c5dc}.profile-theme-preview[data-theme-preview="midnight"]>span{background:#70547a}
-.song-picks{margin:18px 0 22px;padding:14px;border:1px solid #efdee5;border-radius:22px;background:linear-gradient(145deg,#fff9f5,#fbf7ff);box-shadow:0 7px 18px #8b68800b}.song-picks-head{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}.song-picks-head small{color:#ae8198;font-size:.61rem;font-weight:900;letter-spacing:1.2px}.song-picks-head h3{margin:3px 0 0;color:#70546d;font:700 1.05rem Quicksand,sans-serif}.song-picks-head>span{color:#cb86a3;font-size:1.3rem}.song-picks-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.song-pick{display:flex;align-items:center;gap:8px;min-width:0;padding:8px;border:1px solid #f0e4e9;border-radius:14px;background:#fffdfb;color:#735c73;text-decoration:none;transition:transform .18s,box-shadow .18s}.song-pick:active{transform:scale(.98)}.song-pick-art{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:11px;background:linear-gradient(145deg,#f9dce7,#eee5fa);font-size:1.05rem}.song-pick>span:nth-child(2){min-width:0;flex:1}.song-pick b,.song-pick small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.song-pick b{font-size:.76rem}.song-pick small{margin-top:2px;color:#a18b9e;font-size:.65rem}.song-pick-arrow{color:#bd819c;font-size:.85rem}.song-picks-note{display:block;margin:9px 2px 0;color:#a18b9e;font-size:.68rem}.shared-songs-title{margin:10px 2px}.song-card{padding:10px}.album-art{height:58px!important;display:grid;place-items:center;border-radius:13px;margin-bottom:7px!important;font-size:1.7rem!important}.song-card audio{height:34px;margin-top:7px!important}.song-card>b{font-size:.86rem}.song-card small{font-size:.7rem}.song-card .feed-photo{max-height:270px}
+.song-picks{margin:18px 0 22px;padding:14px;border:1px solid #efdee5;border-radius:22px;background:linear-gradient(145deg,#fff9f5,#fbf7ff);box-shadow:0 7px 18px #8b68800b}.song-picks-head{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}.song-picks-head small{color:#ae8198;font-size:.61rem;font-weight:900;letter-spacing:1.2px}.song-picks-head h3{margin:3px 0 0;color:#70546d;font:700 1.05rem Quicksand,sans-serif}.song-picks-head>span{color:#cb86a3;font-size:1.3rem}.song-picks-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.song-pick{display:flex;align-items:center;gap:8px;min-width:0;padding:8px;border:1px solid #f0e4e9;border-radius:14px;background:#fffdfb;color:#735c73;text-decoration:none;transition:transform .18s,box-shadow .18s}.song-pick:active{transform:scale(.98)}.song-pick-art{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:11px;background:linear-gradient(145deg,#f9dce7,#eee5fa);font-size:1.05rem}.song-pick>span:nth-child(2){min-width:0;flex:1}.song-pick b,.song-pick small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.song-pick b{font-size:.76rem}.song-pick small{margin-top:2px;color:#a18b9e;font-size:.65rem}.song-pick-arrow{color:#bd819c;font-size:.85rem}.song-picks-note{display:block;margin:9px 2px 0;color:#a18b9e;font-size:.68rem}.shared-songs-title{margin:10px 2px}.song-card{padding:10px}.album-art{height:58px!important;display:grid;place-items:center;border-radius:13px;margin-bottom:7px!important;font-size:1.7rem!important}.song-card>b{font-size:.86rem}.song-card small{font-size:.7rem}.song-card .feed-photo{max-height:270px}
 .feed-item .tile{position:relative;touch-action:pan-y}.heart-tap{animation:card-heart .72s ease-out}@keyframes card-heart{0%,100%{transform:scale(1)}25%{transform:scale(1.025)}50%{transform:scale(.99)}}.love-tap{position:fixed;z-index:130;pointer-events:none;font-size:2rem;transform:translate(-50%,-50%);animation:love-float .9s cubic-bezier(.16,.78,.28,1) forwards;filter:drop-shadow(0 4px 8px #cc6e9d55)}@keyframes love-float{0%{opacity:0;scale:.35;rotate:-15deg}20%{opacity:1;scale:1.3;rotate:10deg}100%{opacity:0;translate:0 -78px;scale:.75;rotate:18deg}}
 body[data-theme="peach"]{background-color:#fff7ef!important;background-image:radial-gradient(#f4d8bf 1px,transparent 1px)!important}body[data-theme="peach"] .app{background-color:#fff7ef;background-image:radial-gradient(#f4d8bf 1px,transparent 1px)}body[data-theme="peach"] .primary{background:linear-gradient(#e8aa81,#d58b68);box-shadow:0 4px 0 #b66f52;color:#fff}body[data-theme="peach"] #nav button.active{background:#fae4d6;color:#9a5945;box-shadow:0 4px 0 #e4baa1}
 body[data-theme="berry"]{background-color:#fff4f8!important;background-image:radial-gradient(#f0c9dc 1px,transparent 1px)!important}body[data-theme="berry"] .app{background-color:#fff4f8;background-image:radial-gradient(#f0c9dc 1px,transparent 1px)}body[data-theme="berry"] .primary{background:linear-gradient(#d777a2,#bf5888);box-shadow:0 4px 0 #9e426e;color:#fff}body[data-theme="berry"] #nav button.active{background:#f8dce9;color:#99466d;box-shadow:0 4px 0 #e8afca}
@@ -167,4 +167,493 @@ body[data-mode="dark"] .theme-picker-label{color:#e2cddd}body[data-mode="dark"] 
 body{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}input,textarea,[contenteditable="true"]{user-select:text;-webkit-user-select:text;-webkit-touch-callout:default}img{-webkit-user-drag:none;user-drag:none}.feed-photo{touch-action:manipulation}
 body[data-mode="dark"] .photo-download{background:rgba(55,43,62,.95);border-color:#76576f;color:#ffe8f1}body[data-mode="dark"] .song-download{background:linear-gradient(145deg,#443349,#392e47);border-color:#634c64;color:#ffe8f1}
 @media(prefers-reduced-motion:reduce){.download-spinner{animation:none!important}.photo-download,.song-download{transition:none!important}}
+/* Feature upgrade: persistent playback, activity, and accessible memory actions. */
 
+#content .selection-toolbar{position:sticky;z-index:12;top:8px;display:flex;align-items:center;gap:7px;max-width:100%;overflow-x:auto;padding:9px 10px;margin:0 0 12px;border:1px solid #ead8e8;border-radius:18px;background:#fffaf4ee;backdrop-filter:blur(14px);box-shadow:0 8px 24px #61406616}
+.selection-toolbar b{white-space:nowrap;color:#70546d;font-size:.8rem;margin-right:auto}.selection-toolbar button{border:0;border-radius:12px;background:#f6e7f1;color:#73526e;font:800 .72rem Nunito,sans-serif;padding:8px 10px;white-space:nowrap}.selection-toolbar [data-selection=delete]{background:#fae2e8;color:#9b4962}
+.feed-item{position:relative;transition:transform .24s ease,opacity .24s ease,filter .24s ease}.feed-item.tone-lavender>.tile{background:#f0eaff}.feed-item.tone-peach>.tile{background:#fff0e8}.feed-item.is-selected{outline:2px solid #c17da5;outline-offset:3px;border-radius:20px}.feed-item.is-pending-delete{transform:translateX(24px);opacity:.25;filter:grayscale(.6);pointer-events:none}.feed-item .note{user-select:text;-webkit-user-select:text;-webkit-touch-callout:default}.memory-owner-indicator{display:none}.undo-toast{position:fixed;z-index:120;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);border:1px solid #e6cade;border-radius:999px;padding:12px 18px;background:#6f5477;color:white;box-shadow:0 8px 30px #39263e35;font:800 .85rem Nunito,sans-serif;animation:undoPop .25s ease both;white-space:nowrap}@keyframes undoPop{from{opacity:0;transform:translate(-50%,10px) scale(.95)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+.memory-option{display:block;width:100%;margin:7px 0;padding:12px;border:1px solid #eedee8;border-radius:14px;background:#fff9fc;color:#765671;font:800 .85rem Nunito,sans-serif}.memory-option.hidden{display:none!important}
+.notification-bell{position:relative;flex:0 0 auto}.notification-badge{position:absolute;right:-3px;top:-3px;min-width:18px;height:18px;padding:0 4px;display:grid;place-items:center;border-radius:999px;background:#cf6b8b;color:white;font:900 .62rem Nunito,sans-serif}.notification-badge.hidden{display:none}.notification-card{max-height:min(82dvh,760px);overflow:auto;text-align:left}.notification-card h2{text-align:center}.notification-preferences{padding:10px 12px;border-radius:16px;background:#fff2f5}.notification-preferences label{display:flex;align-items:center;gap:7px;margin:6px 0;font-size:.78rem}.notification-preferences input{accent-color:#bf7da2}.notification-list{display:grid;gap:8px;margin-top:12px}.notification-row{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;padding:12px;border:1px solid #f0e3e9;border-radius:15px;background:#fffdfb;color:#684f68}.notification-row.is-unread{background:#f7eefb;border-color:#e7d7ef}.notification-avatar{flex:0 0 38px;height:38px;display:grid;place-items:center;border-radius:13px;background:#fae7ef;font-size:1.25rem}.notification-row>span:nth-child(2){min-width:0;flex:1}.notification-row b,.notification-row small,.notification-row time{display:block;overflow-wrap:anywhere}.notification-row small{margin:3px 0;color:#7e687e;line-height:1.35}.notification-row time{color:#a08d9f;font-size:.67rem}.notification-row i{color:#ca7d9e}.username-preview{display:block;margin:-7px 0 9px;color:#9b7c95;font-size:.76rem}.friend-row.is-online .friend-avatar{box-shadow:0 0 0 3px #b9e7c9,0 0 12px #72cd9c77}.friend-row.is-online .friend-avatar:after{content:'●';position:absolute;color:#4bb77a;font-size:.62rem;transform:translate(17px,17px)}
+
+.friend-row .friend-avatar{position:relative}
+@media(max-width:520px){.selection-toolbar{width:100%}.notification-card{padding:23px 17px}.notification-preferences label{font-size:.72rem}}
+.feed-item.swipe-revealed{padding-right:12px;background:#f8e8ef;border-radius:20px}.swipe-delete-reveal{display:block;margin:4px 0 12px auto;padding:8px 13px;border:1px solid #efcbd9;border-radius:14px;background:#f9e4ed;color:#9b516f;font:800 .76rem Nunito,sans-serif;box-shadow:0 3px 12px #8c596211}.notification-preferences>#notificationsSave{width:100%;min-height:38px;margin:8px 0 2px;padding:8px}
+body[data-mode="dark"] .feed-item.tone-lavender>.tile{background:#40364f!important;color:#f3eaff;border-color:#655779}body[data-mode="dark"] .feed-item.tone-peach>.tile{background:#493638!important;color:#fff0e8;border-color:#76545a}body[data-mode="dark"] .notification-card{background:#342b3c;border-color:#59465e;color:#f1e8ef}body[data-mode="dark"] .notification-card h2{color:#f4ddea}body[data-mode="dark"] .notification-preferences{background:#403447;color:#f1e8ef}body[data-mode="dark"] .notification-row{background:#3c3043;border-color:#594a61;color:#f1e8ef}body[data-mode="dark"] .notification-row.is-unread{background:#49364c;border-color:#765878}body[data-mode="dark"] .notification-row small,body[data-mode="dark"] .notification-row time{color:#c5b2c8}body[data-mode="dark"] .memory-option{background:#443649;border-color:#634f68;color:#f4ddea}body[data-mode="dark"] .selection-toolbar{background:#342b3cf2;border-color:#59465e}body[data-mode="dark"] .selection-toolbar b{color:#f4ddea}body[data-mode="dark"] .selection-toolbar button{background:#49364c;color:#f4ddea}body[data-mode="dark"] .swipe-delete-reveal{background:#49364c;color:#ffe4ef;border-color:#765878}
+.friend-row.is-online .friend-copy:after{content:'Online now';display:block;margin-top:3px;color:#45a974;font-size:.68rem;font-weight:900}
+.feed-item{-webkit-touch-callout:none}.feed-item .note{-webkit-touch-callout:none}
+/* Notes behave like chat bubbles: short messages stay small; long ones wrap. */
+.feed-item>.tile.note{display:flex!important;flex-direction:column;align-items:flex-start;gap:7px;width:fit-content!important;min-width:min(148px,72vw);max-width:min(88%,42rem);padding:12px 16px 9px!important;white-space:normal;line-height:1.35;}
+.feed-item.tone-peach>.tile.note{margin-right:auto;background:#fff0e8!important;border-color:#f0d9cd!important;}
+.feed-item.tone-lavender>.tile.note{margin-left:auto;background:#f0eaff!important;border-color:#e0d7f2!important;}
+.note-message-text{display:block;max-width:100%;overflow-wrap:anywhere;word-break:break-word;white-space:pre-wrap;}
+.note-time{align-self:flex-end;color:#a18b9c;font:700 .66rem/1.2 Nunito,sans-serif;letter-spacing:.01em;white-space:nowrap;}
+body[data-mode="dark"] .feed-item.tone-peach>.tile.note{background:#493638!important;color:#fff0e8!important;border-color:#76545a!important;}
+body[data-mode="dark"] .feed-item.tone-lavender>.tile.note{background:#40364f!important;color:#f3eaff!important;border-color:#655779!important;}
+body[data-mode="dark"] .note-time{color:#c8b2c5;}
+@media(max-width:520px){.feed-item>.tile.note{max-width:88%;min-width:min(138px,72vw);padding:10px 14px 8px!important;}}
+/* Cleaner scrapbook cards and message sides. */
+.app{padding-bottom:0!important}.app main{padding-bottom:86px!important}
+.media-grid{gap:5px!important}.media-grid .feed-item{margin:0!important}.music-grid{margin-top:5px!important;gap:7px!important}.shared-songs-title{margin:7px 2px 3px!important}
+.song-card{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;gap:9px;min-height:78px;padding:9px!important}.song-card .album-art.play-song{position:relative;display:grid;place-items:center;width:58px!important;height:58px!important;margin:0!important;padding:0;border:1px solid #ecd7e5;border-radius:17px;background:linear-gradient(145deg,#fbe5ef,#ece5fa);color:#9c658f;cursor:pointer;box-shadow:0 4px 0 #e3cede;transition:transform .18s,box-shadow .18s}.song-glyph{font-size:1.55rem;line-height:1}.song-note{position:absolute;right:5px;top:2px;color:#d477a1;font-size:.8rem;opacity:0;transform:translateY(4px)}.song-card .album-art.is-playing{animation:song-bob .72s ease-in-out infinite alternate;box-shadow:0 2px 0 #e3cede}.song-card .album-art.is-playing .song-note{opacity:1;animation:note-float .8s ease-in-out infinite alternate}@keyframes song-bob{to{transform:translateY(-2px) rotate(2deg)}}@keyframes note-float{to{transform:translateY(-5px) rotate(12deg)}}
+.song-card .memory-title{min-width:0;max-width:100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font-size:.82rem;line-height:1.3}
+.feed-item[data-kind="note"]{display:flex;flex-direction:column}.feed-item[data-kind="note"].tone-peach .feed-by{align-self:flex-end;text-align:right}.feed-item[data-kind="note"].tone-lavender .feed-by{align-self:flex-start;text-align:left}
+.feed-item[data-kind="note"].tone-peach>.tile.note{margin-left:auto;margin-right:0}.feed-item[data-kind="note"].tone-lavender>.tile.note{margin-left:0;margin-right:auto}
+.feed-item .tile.note{width:fit-content!important;max-width:min(88%,42rem);min-width:min(148px,72vw);align-self:flex-start}.feed-item[data-kind="note"].tone-peach>.tile.note{align-self:flex-end}
+@media(max-width:520px){.app main{padding-bottom:78px!important}.media-grid{gap:4px!important}.music-grid{gap:6px!important}.song-card{grid-template-columns:52px minmax(0,1fr);min-height:68px;padding:7px!important;gap:8px}.song-card .album-art.play-song{width:52px!important;height:52px!important;border-radius:15px}}
+.media-grid .feed-item[data-kind="photo"]>.tile{padding:4px!important}.media-grid .feed-item[data-kind="photo"] .photo-frame{margin-bottom:0!important;border-radius:13px}
+/* Keep the saved heart above the note text and make every double tap feel plush. */
+.feed-item .tile.is-loved::after,.feed-item .tile.heart-tap::after{top:-12px!important;right:8px!important;width:30px;height:30px;background:#fffaf2f5;color:#e66f9a;box-shadow:0 3px 8px #b85b8230,0 0 0 3px #fff9;animation:memory-heart-bloom .92s cubic-bezier(.18,.88,.25,1) both}
+.feed-item .tile.heart-tap::before{content:"";display:block!important;position:absolute;z-index:3;top:-14px;right:6px;left:auto;bottom:auto;width:34px;height:34px;border:2px solid #ec8eb1;border-radius:50%;background:transparent;pointer-events:none;animation:memory-heart-ring .8s ease-out both}
+.feed-item .tile.note.heart-tap::before{display:block!important;content:"";position:absolute;z-index:3;top:-14px;right:6px;left:auto;bottom:auto;width:34px;height:34px;border:2px solid #ec8eb1;border-radius:50%;background:transparent;animation:memory-heart-ring .8s ease-out both}
+@keyframes memory-heart-bloom{0%{opacity:0;transform:translateY(7px) scale(.18) rotate(-24deg)}24%{opacity:1;transform:translateY(-4px) scale(1.32) rotate(12deg)}43%{transform:translateY(1px) scale(.9) rotate(-6deg)}64%{transform:translateY(-1px) scale(1.12) rotate(5deg)}82%{transform:scale(.97) rotate(-2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes memory-heart-ring{0%{opacity:.85;transform:scale(.35)}65%{opacity:.38;transform:scale(1.65)}100%{opacity:0;transform:scale(1.95)}}
+@media(prefers-reduced-motion:reduce){.feed-item .tile.heart-tap::before,.feed-item .tile.heart-tap::after{animation:none!important}}
+.feed-item .tile.is-loved.heart-tap::after{top:-12px!important;right:8px!important;animation:memory-heart-bloom .92s cubic-bezier(.18,.88,.25,1) both}
+@media(prefers-reduced-motion:reduce){.feed-item .tile.is-loved.heart-tap::after{animation:none!important}}
+.feed-item[data-kind="note"]>.tile.note{margin-top:6px}
+.feed-item[data-kind="song"] .tile.is-loved::after,.feed-item[data-kind="song"] .tile.heart-tap::after,.feed-item[data-kind="song"] .tile.is-loved.heart-tap::after{top:6px!important;right:6px!important}
+.song-card .memory-title{padding-right:24px}
+.feed-item[data-kind="song"] .tile.song-card{overflow:visible!important}
+.feed-item[data-kind="song"] .tile.song-card.is-loved::after,.feed-item[data-kind="song"] .tile.song-card.heart-tap::after,.feed-item[data-kind="song"] .tile.song-card.is-loved.heart-tap::after{top:-12px!important;right:8px!important}
+/* Use the same corner heart placement and shape on photo, music, and note cards. */
+.feed-item[data-kind="song"] .tile.song-card{overflow:visible!important}
+.feed-item[data-kind="song"] .tile.song-card.is-loved::after,.feed-item[data-kind="song"] .tile.song-card.heart-tap::after,.feed-item[data-kind="song"] .tile.song-card.is-loved.heart-tap::after{top:-12px!important;right:8px!important;width:30px;height:30px;border-radius:50%;background:#fffaf2f5;color:#e66f9a;box-shadow:0 3px 8px #b85b8230,0 0 0 3px #fff9}
+/* Final layout pass: align the shell, cards, and navigation across screens. */
+.app header{display:flex;align-items:center;gap:12px;min-width:0}
+.app header>.brand{flex:0 1 auto;min-width:0}
+.app header>.crumb{flex:0 1 auto;margin-inline:auto;min-width:0;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:0 0 auto}
+.header-actions .round{width:40px;height:40px;display:grid;place-items:center;border:1px solid #efdee5;background:linear-gradient(180deg,#fffdfa,#fbf0f5);box-shadow:0 3px 0 #e7d5df;color:#a66e89;font-size:1.18rem;line-height:1}
+.header-actions .mode-button{color:#90759d}
+.notification-bell{position:relative}
+.notification-badge{right:-4px;top:-4px;border:2px solid #fffaf6;z-index:2}
+.app #nav{gap:clamp(3px,1.4vw,9px);padding-inline:max(8px,env(safe-area-inset-left)) max(8px,env(safe-area-inset-right));}
+.app #nav button{flex:1 1 0;min-width:0;max-width:116px;min-height:54px;padding:7px 4px;gap:2px;border-radius:16px;white-space:nowrap}
+.app #nav button i{display:grid;place-items:center;width:24px;height:23px;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif;font-size:1.05rem;line-height:1}
+.app #nav button span{font-size:clamp(.62rem,2.4vw,.74rem);line-height:1.1}
+.app #nav button.active{transform:translateY(-1px)}
+.app #nav button:focus-visible,.header-actions .round:focus-visible{outline:3px solid #d58eaa;outline-offset:3px}
+#content{width:min(100%,760px);margin-inline:auto;padding:20px clamp(14px,3vw,22px) 32px}
+.heading{margin:10px 0 18px}.heading h2{line-height:1.18}.heading p{line-height:1.5}
+.tile:nth-child(odd),.tile:nth-child(even){transform:none}
+.grid{align-items:start;gap:12px}
+.tile{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.feed-item .tile{transform:none}.feed-item .tile:hover{transform:translateY(-2px)}
+.media-grid{align-items:start;row-gap:6px!important;column-gap:6px!important}
+.media-grid .feed-item{min-width:0;align-self:start}
+.media-grid .feed-item>.tile{min-width:0}
+@media(max-width:520px){
+ .app header{height:60px;padding-inline:12px;gap:8px}
+ .app header>.crumb{display:none}
+ .brand{gap:6px}.brand>b{font-size:.86rem}.brand small{max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .header-actions{gap:6px}.header-actions .round{width:36px;height:36px}
+ .app #nav{gap:clamp(2px,1vw,5px);padding:8px max(7px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-right))}
+ .app #nav button{min-height:50px;max-width:none;padding:6px 2px;border-radius:14px}
+ .app #nav button i{width:22px;height:22px;font-size:1rem}
+ .app #nav button span{font-size:clamp(.59rem,2.3vw,.7rem)}
+ #content{padding:17px 13px 24px}
+ .heading{margin:8px 0 15px}
+ .grid{gap:8px}
+ .media-grid{row-gap:4px!important;column-gap:4px!important}
+}
+@media(max-width:360px){.brand small{display:none}.app #nav button span{font-size:.58rem}.app #nav button i{font-size:.94rem}}
+body[data-mode="dark"] .header-actions .round{background:linear-gradient(180deg,#49394f,#3b3043);border-color:#5a4861;box-shadow:0 3px 0 #30263a;color:#f1cfe0}
+body[data-mode="dark"] .header-actions .mode-button{color:#e3ceef}
+body[data-mode="dark"] .notification-badge{background:#cf6b8b;border-color:#342b3c;color:#fff}
+.header-actions .round:active{transform:translateY(2px) scale(.96);box-shadow:0 1px 0 #e7d5df}
+.app #nav button:active i{transform:translateY(-1px) scale(1.08)}
+.app #nav button i{transition:transform .18s ease}
+@media(prefers-reduced-motion:reduce){.app #nav button i,.header-actions .round{transition:none!important}}
+
+
+/* Unified memory reactions, compact media actions, and focused previews. */
+.app header{background:transparent!important}
+.header-actions .round{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.header-actions .round:active{box-shadow:none!important}
+.feed-item .tile.note{margin-top:17px!important;padding-top:13px!important}
+.feed-item .tile.note::before{content:"♡"!important;display:grid!important;position:absolute;z-index:5;top:-16px!important;right:9px!important;left:auto!important;bottom:auto!important;width:26px;height:26px;place-items:center;border:1px solid #f2d8e2;border-radius:50%;background:#fffaf5;color:#cf829f;font:800 1.05rem/1 Nunito,sans-serif;box-shadow:0 3px 9px #9f70841a;pointer-events:none}
+.feed-item[data-kind="photo"] .tile::before,.feed-item[data-kind="song"] .tile::before{content:"♡";display:grid;position:absolute;z-index:5;top:-12px;right:8px;width:26px;height:26px;place-items:center;border:1px solid #f2d8e2;border-radius:50%;background:#fffaf5;color:#cf829f;font:800 1.05rem/1 Nunito,sans-serif;box-shadow:0 3px 9px #9f70841a;pointer-events:none}
+.feed-item .tile.note.is-loved::before{content:"♡"!important;display:grid!important;top:-16px!important;right:9px!important;width:26px;height:26px;border:1px solid #f2d8e2;border-radius:50%;background:#fffaf5;color:#cf829f}
+.feed-item .tile.note.heart-tap::before{content:""!important;top:-17px!important;right:5px!important;width:34px;height:34px;border:2px solid #ec8eb1;border-radius:50%;background:transparent;box-shadow:none}
+.feed-item .tile.is-loved::after,.feed-item .tile.heart-tap::after{top:-12px!important;right:8px!important}
+.feed-item[data-kind="song"] .tile.song-card{grid-template-columns:52px minmax(0,1fr) auto;gap:8px;overflow:visible!important;padding:10px 9px!important}
+.song-title-button{min-width:0;width:100%;padding:2px 0 0;border:0;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer;overflow:hidden}
+.song-title-button:hover{color:#aa6483}
+.song-title-button:focus-visible{outline:2px solid #d58eaa;outline-offset:2px;border-radius:5px}
+.card-song-save{justify-self:end;min-height:31px;padding:5px 10px;white-space:nowrap}
+.song-card .memory-title{padding-right:0!important}
+.photo-lightbox-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;width:min(920px,100%);max-height:calc(100dvh - 28px);padding:22px 14px 14px;border:1px solid #f3dce7;border-radius:24px;background:#fffaf6;box-shadow:0 20px 65px #39263e55;overflow:auto}
+.photo-lightbox-card>img{display:block;width:auto;height:auto;max-width:min(100%,88vw);max-height:calc(100dvh - 118px);object-fit:contain;border-radius:14px;background:#f7edf2}
+.photo-lightbox-save{min-height:40px;padding:9px 24px}
+#photoLightbox{z-index:110;padding:14px;background:#2c2137d9}
+.music-player-card{width:min(390px,100%);padding:24px 22px 20px;overflow:hidden}
+.music-player-art{position:relative;display:grid;place-items:center;width:110px;height:110px;margin:5px auto 10px;border:1px solid #edd7e3;border-radius:30px;background:linear-gradient(145deg,#ffe1eb,#eee5ff);box-shadow:0 7px 0 #e6d5e2;color:#a76e91;font-size:2.5rem}
+.music-player-art>i{position:absolute;color:#d77fa3;font-style:normal;font-size:1.1rem;opacity:0;transform:translateY(8px)}
+.music-player-art>i:nth-of-type(1){right:14px;top:9px}.music-player-art>i:nth-of-type(2){left:13px;bottom:9px}
+.music-player-art.is-playing>span{animation:song-bob .72s ease-in-out infinite alternate}
+.music-player-art.is-playing>i{opacity:1;animation:note-float .8s ease-in-out infinite alternate}
+.music-player-art.is-playing>i:nth-of-type(2){animation-delay:-.35s}
+.music-player-card h2{overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-inline:18px}
+.music-player-caption{margin:0;color:#987f91;font-size:.84rem}
+.music-player-timeline{display:grid;grid-template-columns:34px minmax(0,1fr) 34px;align-items:center;gap:8px;margin:17px 0 9px;color:#9a8194;font-size:.7rem;font-variant-numeric:tabular-nums}
+.music-player-timeline input{width:100%;accent-color:#cc819e}
+.music-player-controls{display:flex;align-items:center;justify-content:center;gap:16px}
+.music-player-play{display:grid;place-items:center;width:48px;height:48px;border:0;border-radius:50%;background:#cf829f;color:#fff;font-size:1.15rem;box-shadow:0 4px 0 #ae6888}
+.music-player-play:active{transform:translateY(2px);box-shadow:0 2px 0 #ae6888}
+#musicPlayerGate{z-index:105}
+.notification-card{width:min(440px,100%);max-height:min(84dvh,700px);padding:22px 20px 16px;overflow:auto}
+.notification-card .eyebrow{margin:0 0 5px}
+.notification-card h2{font-size:1.45rem;margin:3px 0 10px}
+.notification-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#987f91;font-size:.76rem}
+.notification-tools .auth-switch{padding:7px 10px}
+.notification-list{display:grid;gap:7px;max-height:min(48dvh,390px);overflow:auto;margin:9px 0 11px;text-align:left}
+.notification-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:9px;padding:10px;border:1px solid #efdee5;border-radius:15px;background:#fffdfb;color:#705b70;text-align:left}
+.notification-row>span:nth-child(2){min-width:0}.notification-row small,.notification-row time{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#9a8495;font-size:.7rem}.notification-row time{margin-top:3px;font-size:.64rem}.notification-row>i{color:#d77fa3;font-style:normal}
+.notification-avatar{display:grid;place-items:center;width:36px;height:36px;border-radius:13px;background:#f9eaf0;font-size:1.15rem}
+.notification-settings{padding:9px 11px;border:1px solid #eee0e6;border-radius:14px;background:#fffdfb;text-align:left;color:#806b82;font-size:.78rem}
+.notification-settings summary{cursor:pointer;font-weight:800;list-style:none}.notification-settings summary::-webkit-details-marker{display:none}.notification-settings summary::after{content:"＋";float:right;color:#bd819c}.notification-settings[open] summary::after{content:"−"}
+.notification-preferences{padding-top:5px}.notification-preferences label{margin:9px 0!important;font-size:.76rem!important}.notification-preferences input{display:inline-block!important;width:auto!important;margin:0 7px 0 0!important;padding:0!important;vertical-align:middle}.notification-preferences .primary{min-height:38px;padding:8px 14px;font-size:.76rem}
+body[data-mode="dark"] .photo-lightbox-card,body[data-mode="dark"] .notification-card{background:#342b3c;border-color:#5a485f;color:#f1e8ef}
+body[data-mode="dark"] .music-player-card{background:#342b3c;border-color:#5a485f;color:#f1e8ef}
+body[data-mode="dark"] .notification-row,body[data-mode="dark"] .notification-settings{background:#2d2535;border-color:#55465e;color:#f1e8ef}
+body[data-mode="dark"] .notification-row small,body[data-mode="dark"] .notification-row time,body[data-mode="dark"] .notification-tools{color:#c5b2c8}
+body[data-mode="dark"] .feed-item .tile.note::before,body[data-mode="dark"] .feed-item[data-kind="photo"] .tile::before,body[data-mode="dark"] .feed-item[data-kind="song"] .tile::before{background:#403448;border-color:#654f68;color:#f2bbd0}
+body[data-mode="dark"] .feed-item .tile.note.is-loved::before{background:#403448;border-color:#654f68;color:#f2bbd0}
+@media(max-width:420px){.feed-item[data-kind="song"] .tile.song-card{grid-template-columns:46px minmax(0,1fr) auto;gap:6px;padding:9px 8px!important}.feed-item[data-kind="song"] .tile.song-card .album-art.play-song{width:46px!important;height:46px!important}.card-song-save{min-height:29px;padding:4px 8px;font-size:.66rem}.photo-lightbox-card{padding:20px 10px 12px}.photo-lightbox-card>img{max-width:94vw}.notification-card{padding:21px 14px 14px}}
+@media(prefers-reduced-motion:reduce){.music-player-art.is-playing>span,.music-player-art.is-playing>i{animation:none!important}}
+
+.feed-item[data-kind="note"]>.tile.note.is-loved::after,.feed-item[data-kind="note"]>.tile.note.heart-tap::after{top:-20px!important;right:6px!important}
+
+
+/* Streaks live with the happy things and travel with each profile. */
+.streak-widget{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:9px;min-height:100%;margin:0;padding:13px!important;border-radius:22px;background:linear-gradient(145deg,#fff1f5,#fff9ed 58%,#f4efff);box-shadow:0 8px 18px #8b68800e;}
+.streak-top{position:relative;display:flex;align-items:center;gap:10px;min-width:0;padding-right:14px}
+.streak-mascot{flex:0 0 48px;width:48px;height:48px;border-radius:16px}
+.streak-mascot>span{font-size:1.6rem}
+.streak-copy{min-width:0}.streak-copy small{font-size:.58rem;letter-spacing:.8px}.streak-copy strong{font-size:.98rem;overflow-wrap:anywhere}
+.streak-widget>p{margin:0;color:#927c90;font-size:.72rem;line-height:1.35}
+.streak-progress{gap:5px;flex-wrap:wrap;padding:0}
+.streak-day{width:17px;height:17px;flex:0 0 17px}
+.streak-badge{display:inline-flex;align-self:flex-start;padding:5px 8px;border-radius:999px;background:#fff9;color:#9d6a86;font-size:.64rem;font-weight:900}
+.profile-streak{margin:12px 0 17px;padding:12px 13px;border:1px solid #efdee6;border-radius:19px;background:linear-gradient(130deg,#fff4f6,#fffaf1 62%,#f6f1ff);text-align:left}
+.profile-streak-top{display:flex;align-items:center;gap:9px;min-width:0}
+.profile-streak-icon{display:grid;place-items:center;flex:0 0 40px;height:40px;border-radius:14px;background:#fff9;font-size:1.3rem}
+.profile-streak-copy{display:grid;gap:1px;min-width:0;flex:1}
+.profile-streak-copy small{color:#aa7790;font-size:.57rem;font-weight:900;letter-spacing:.9px}
+.profile-streak-copy strong{color:#70546d;font:700 .95rem Quicksand,sans-serif}
+.profile-streak-badge{max-width:45%;padding:5px 8px;border-radius:999px;background:#f9e7ef;color:#9b5f7b;font-size:.59rem;line-height:1.25;text-align:center}
+.profile-streak-progress{display:flex;align-items:center;gap:5px;margin:10px 0 5px}
+.profile-streak-dot{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#f1e7ec;color:#c0adba;font-size:.72rem}
+.profile-streak-dot.is-filled{background:#f5d8e4;color:#a65f80;box-shadow:0 0 8px 2px #edb3c988;animation:dot-glow 1.8s ease-in-out infinite alternate}
+.profile-streak>p{margin:5px 0 0;color:#927c90;font-size:.72rem;line-height:1.4}
+.profile-theme-preview{transition:background .2s,border-color .2s,transform .2s}
+#profileThemePreview>div{min-width:0}#profilePreviewName,#profilePreviewMeta{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.buddy-choice-grid{margin-top:7px}.buddy-choice{min-height:54px}.buddy-swatch{flex-basis:38px!important;height:38px!important;border-radius:14px!important;background:linear-gradient(145deg,#fff0f5,#f1ebff);font-size:1.45rem!important;transition:transform .2s}
+.buddy-choice.is-selected .buddy-swatch{background:linear-gradient(145deg,#f8d8e6,#ece2fa);transform:scale(1.08) rotate(-4deg)}
+.buddy-choice.is-selected{outline:2px solid #f3dbe6;outline-offset:1px}
+.memory-upload-status{position:absolute;z-index:7;left:50%;bottom:9px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 18px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 10px;border:1px solid #fff;border-radius:999px;background:#fffaf2ed;color:#92546f;font-size:.65rem;font-weight:900;box-shadow:0 3px 10px #47314825}
+.feed-item.is-uploading .tile{opacity:.82}.feed-item.is-uploading .memory-upload-status{animation:upload-breathe 1.2s ease-in-out infinite alternate}
+@keyframes upload-breathe{to{opacity:.65;transform:translateX(-50%) scale(.97)}}
+.feed-item.is-pending-delete{display:none!important}
+.notification-loading{padding:20px;text-align:center;border:1px dashed #ead8e2;border-radius:15px;color:#9a8194;font-size:.8rem}
+body[data-mode="dark"] .streak-widget{background:linear-gradient(145deg,#3a2d3c,#373041 58%,#322d42);border-color:#59465e}
+body[data-mode="dark"] .streak-widget>p,body[data-mode="dark"] .profile-streak>p{color:#c5b2c8}
+body[data-mode="dark"] .streak-badge,body[data-mode="dark"] .profile-streak-badge{background:#4b354b;color:#f1d5e5}
+body[data-mode="dark"] .profile-streak{background:linear-gradient(130deg,#3b2d3d,#3a3040 62%,#332e44);border-color:#59465e}
+body[data-mode="dark"] .profile-streak-copy strong{color:#f4ddea}
+body[data-mode="dark"] .profile-streak-icon{background:#49374d}
+body[data-mode="dark"] .profile-streak-dot{background:#514456;color:#c9b6ca}
+body[data-mode="dark"] .profile-streak-dot.is-filled{background:#79506a;color:#ffe4ef}
+body[data-mode="dark"] .buddy-swatch{background:linear-gradient(145deg,#47364c,#40364f)}
+body[data-mode="dark"] .memory-upload-status{background:#403448ed;border-color:#6c526b;color:#ffe8f1}
+@media(max-width:390px){.streak-widget{padding:11px!important;gap:8px}.streak-mascot{flex-basis:42px;width:42px;height:42px}.streak-mascot>span{font-size:1.4rem}.streak-copy small{font-size:.53rem}.streak-copy strong{font-size:.88rem}.profile-streak{padding:10px}.profile-streak-badge{max-width:43%;font-size:.54rem}.profile-streak-dot{width:18px;height:18px}}
+@media(prefers-reduced-motion:reduce){.profile-streak-dot.is-filled,.feed-item.is-uploading .memory-upload-status{animation:none!important}}
+
+.happy-things-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+@media(max-width:799px){.happy-things-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:390px){.happy-things-grid{gap:8px}}
+
+
+/* Memory hearts stay simple and toggle cleanly on every double tap. */
+.feed-item .tile:not(.heart-tap)::before{content:"♡"!important;display:block!important;position:absolute;z-index:5;top:-12px;right:8px;left:auto;bottom:auto;width:auto;height:auto;border:0!important;border-radius:0!important;background:transparent!important;color:#cf829f;font:700 1.2rem/1 Nunito,sans-serif;box-shadow:none!important;pointer-events:none}
+.feed-item .tile.note:not(.heart-tap)::before{top:-16px!important;right:9px!important}
+.feed-item .tile.is-loved::before{display:none!important}
+.feed-item .tile.is-loved::after,.feed-item .tile.heart-tap::after{display:block!important;position:absolute;z-index:6;top:-12px!important;right:8px!important;left:auto;bottom:auto;width:auto!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#e75f91!important;font:800 1.35rem/1 Nunito,sans-serif;box-shadow:none!important;pointer-events:none;animation:memory-heart-bloom .78s cubic-bezier(.18,.88,.25,1) both}
+.feed-item .tile.is-loved::after{content:"♥"!important}
+.feed-item .tile.heart-tap:not(.is-loved)::after{content:"♡"!important;color:#e75f91!important}
+.feed-item .tile.note.is-loved::after,.feed-item .tile.note.heart-tap::after{top:-20px!important;right:6px!important}
+.feed-item[data-kind="song"] .tile.song-card.is-loved::after,.feed-item[data-kind="song"] .tile.song-card.heart-tap::after{top:-12px!important;right:8px!important}
+.feed-item .tile.heart-tap::before{content:""!important;display:block!important;position:absolute;z-index:5;top:-14px;right:4px;left:auto;bottom:auto;width:30px;height:30px;border:1px solid #ec8eb1;border-radius:50%;background:transparent;box-shadow:none;pointer-events:none;animation:memory-heart-ring .8s ease-out both}
+.feed-item .tile.note.heart-tap::before{top:-18px!important;right:2px!important;width:30px;height:30px}
+/* Keep the home streak card complete and easy to reach from the happy-things grid. */
+.happy-things-grid .streak-widget{grid-column:1/-1;display:flex;gap:14px;padding:16px 18px!important;background:linear-gradient(110deg,#fff0f5,#fff9ed 55%,#f1edff)}
+.streak-top{width:100%;gap:13px;padding-right:0}.streak-mascot{flex-basis:58px;width:58px;height:58px}.streak-copy strong{font-size:1.18rem}.streak-copy p{margin:4px 0 0;color:#927c90;font-size:.76rem;line-height:1.4}.streak-top .streak-badge{margin-left:auto;max-width:42%;white-space:normal;text-align:center}.streak-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding-left:71px}.streak-progress{gap:7px}.streak-day{width:21px;height:21px;flex:0 0 21px;font-size:.76rem}.streak-profile-link{flex:none;padding:8px 12px;border:1px solid #efd9e3;border-radius:999px;background:#fff9;color:#98617c;font-size:.72rem;font-weight:900;transition:transform .18s,background .18s}.streak-profile-link:active{transform:scale(.96);background:#fceaf1}
+@media(max-width:520px){.happy-things-grid .streak-widget{gap:10px;padding:13px!important}.streak-bottom{padding-left:0}.streak-mascot{flex-basis:50px;width:50px;height:50px}.streak-copy strong{font-size:1.04rem}.streak-profile-link{padding:7px 10px;font-size:.68rem}}
+body[data-mode="dark"] .feed-item .tile:not(.heart-tap)::before{color:#f2a9c5!important}
+body[data-mode="dark"] .happy-things-grid .streak-widget{background:linear-gradient(110deg,#3b2d3d,#3a3040 55%,#332e44)}
+body[data-mode="dark"] .streak-copy p{color:#c5b2c8}
+body[data-mode="dark"] .streak-profile-link{background:#49364c;border-color:#684e67;color:#f4ddea}
+.buddy-choice-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px}
+.buddy-choice{min-height:64px;flex-direction:column;justify-content:center;gap:3px;padding:6px!important;text-align:center}
+.buddy-choice .buddy-swatch{width:30px!important;height:30px!important;flex:0 0 30px!important;border-radius:11px!important;font-size:1.15rem!important}
+.buddy-choice>span:last-child{font-size:.67rem}
+@media(max-width:390px){.buddy-choice-grid{gap:5px}.buddy-choice{min-height:58px}.buddy-choice .buddy-swatch{width:27px!important;height:27px!important;flex-basis:27px!important;font-size:1.02rem!important}}
+
+/* The streak is the fourth matching happy-things card, not a banner. */
+.happy-things-grid .streak-widget{grid-column:auto;min-width:0;min-height:100%;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:9px;padding:12px!important;border-radius:22px;background:linear-gradient(145deg,#fff1f5,#fff9ed 58%,#f4efff)}
+.streak-top{display:flex;align-items:center;gap:8px;min-width:0;width:100%}.streak-mascot{flex:0 0 38px;width:38px;height:38px;border-radius:13px}.streak-mascot>span{font-size:1.35rem}.streak-copy{min-width:0}.streak-copy small{font-size:.52rem;letter-spacing:.55px}.streak-copy strong{font-size:.91rem;overflow-wrap:anywhere}.streak-widget>p{margin:0;min-height:2.5em;color:#927c90;font-size:.68rem;line-height:1.3}.streak-progress{display:flex;flex-wrap:nowrap;gap:clamp(2px,.7vw,6px);padding:0}.streak-day{flex:0 1 18px;width:18px;height:18px;font-size:.68rem}.streak-widget>.streak-badge{align-self:flex-start;max-width:100%;padding:4px 7px;font-size:.57rem}.streak-profile-link{width:100%;min-height:37px;margin-top:auto;padding:8px 10px!important;font-size:.69rem!important;white-space:nowrap}.streak-bottom{display:contents}
+@media(max-width:520px){.happy-things-grid .streak-widget{gap:8px;padding:10px!important}.streak-mascot{flex-basis:33px;width:33px;height:33px}.streak-copy small{font-size:.47rem}.streak-copy strong{font-size:.82rem}.streak-widget>p{font-size:.63rem}.streak-day{flex-basis:16px;width:16px;height:16px}.streak-profile-link{min-height:34px;font-size:.64rem!important}}
+body[data-mode="dark"] .happy-things-grid .streak-widget{background:linear-gradient(145deg,#3a2d3c,#373041 58%,#322d42);border-color:#59465e}
+body[data-mode="dark"] .streak-widget>p{color:#c5b2c8}
+
+.profile-name-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start;margin:0}
+.profile-name-row>label{min-width:0;margin:12px 0!important}.profile-name-row input{min-width:0;padding:10px!important;font-size:.84rem!important}
+.profile-streak{padding:14px 15px;background:linear-gradient(135deg,#fff0f5,#fffaf0 60%,#f1edff);box-shadow:0 5px 14px #8b68800c}
+.profile-streak-top{gap:11px}.profile-streak-icon{width:44px;height:44px;flex-basis:44px}.profile-streak-copy strong{font-size:1.04rem}.profile-streak-badge{font-size:.62rem;padding:6px 9px}
+.streak-profile-link.primary{background:#cf829f!important;border:0!important;color:#fff!important;box-shadow:0 6px 0 #ae6888,0 12px 24px #a2617d28!important;transition:transform .18s,box-shadow .18s!important}
+.streak-profile-link.primary:active{transform:translateY(4px)!important;box-shadow:0 2px 0 #ae6888!important}
+body[data-mode="dark"] .profile-streak{background:linear-gradient(135deg,#3b2d3d,#3a3040 60%,#332e44);border-color:#59465e}
+@media(max-width:360px){.profile-name-row{gap:6px}.profile-name-row>label{font-size:.72rem!important}.profile-name-row input{padding:8px!important;font-size:.76rem!important}}
+
+
+/* Note threads: day labels and timestamps sit beside each message bubble. */
+.note-day-heading{margin:21px 4px 10px;color:#9d7b91;font:900 .68rem Nunito,sans-serif;letter-spacing:.8px;text-transform:uppercase;text-align:center}
+.note-row{display:flex;align-items:flex-end;gap:7px;width:100%;margin:4px 0 12px}
+.feed-item[data-kind="note"].tone-peach .note-row{justify-content:flex-end}
+.feed-item[data-kind="note"].tone-lavender .note-row{justify-content:flex-start}
+.note-row>.note-time{flex:none;margin:0 0 5px;color:#a28b9b;font:700 .62rem Nunito,sans-serif;white-space:nowrap}
+.note-row>.tile.note{min-width:0;max-width:min(78%,42rem);margin:0!important}
+@media(max-width:520px){.note-row{gap:6px;margin:3px 0 10px}.note-row>.tile.note{max-width:78%}.note-row>.note-time{font-size:.58rem}}
+body[data-mode="dark"] .note-day-heading{color:#d1aec7}body[data-mode="dark"] .note-row>.note-time{color:#c5b2c8}
+/* On a heart tap, hide the resting outline before showing the animated filled heart. */
+.feed-item .tile.heart-tap::before{content:""!important}
+.feed-item .tile.heart-tap.is-loved::after{content:"♥"!important;color:#e75f91!important;text-shadow:0 0 8px #ec74a788,0 0 17px #ed84b566}
+.feed-item .tile.heart-tap:not(.is-loved)::after{content:"♡"!important;text-shadow:0 0 8px #ec74a788}
+/* Compact the streak summaries so the useful details fill each card. */
+.happy-things-grid .streak-widget{gap:7px;padding:11px!important}
+.happy-things-grid .streak-top{gap:8px}
+.happy-things-grid .streak-mascot{flex-basis:35px;width:35px;height:35px}
+.happy-things-grid .streak-copy small{font-size:.49rem;letter-spacing:.4px}
+.happy-things-grid .streak-copy strong{font-size:.87rem}
+.happy-things-grid .streak-widget>p{min-height:0;font-size:.64rem;line-height:1.25}
+.happy-things-grid .streak-widget>.streak-badge{padding:3px 7px;font-size:.54rem}
+.happy-things-grid .streak-profile-link.primary{min-height:35px;padding:7px 9px!important;font-size:.65rem!important}
+.profile-streak{margin:9px 0 13px;padding:10px 12px}
+.profile-streak-top{gap:8px}.profile-streak-icon{width:36px;height:36px;flex-basis:36px;font-size:1.12rem}
+.profile-streak-progress{gap:4px;margin:7px 0 3px}.profile-streak-dot{width:17px;height:17px;font-size:.64rem}
+.profile-streak>p{margin-top:3px;font-size:.66rem}
+/* Notification loading stays wordless; the close control matches the soft theme. */
+.notification-loading{display:grid;place-items:center;min-height:38px;padding:8px;border:0;background:transparent}
+.notification-loader{width:19px;height:19px;border:2px solid #efdae4;border-top-color:#cf829f;border-radius:50%;animation:notification-spin .7s linear infinite}
+@keyframes notification-spin{to{transform:rotate(360deg)}}
+.notification-card .auth-close{display:grid;place-items:center;right:13px;top:12px;width:32px;height:32px;border:1px solid #efd5e1;border-radius:50%;background:linear-gradient(145deg,#ffe8f0,#fff7fb);color:#bd6e91;font-size:1.15rem;line-height:1;box-shadow:0 2px 0 #e8cbd9}
+.notification-card .auth-close:active{transform:translateY(1px) scale(.95);box-shadow:0 1px 0 #e8cbd9}
+body[data-mode="dark"] .notification-card .auth-close{background:linear-gradient(145deg,#4c374a,#3d3046);border-color:#684d66;color:#ffdbea;box-shadow:0 2px 0 #30263a}
+@media(prefers-reduced-motion:reduce){.notification-loader{animation:none!important}}
+
+
+/* Profile header: date tucked left, chosen display name and handle together. */
+.profile-card{position:relative;padding-top:35px}
+.profile-date{position:absolute;top:15px;left:20px;margin:0;color:#a8899a;font-size:.67rem;font-weight:800;letter-spacing:.25px}
+.profile-title-row{display:flex;align-items:baseline;justify-content:center;gap:7px;flex-wrap:wrap;margin:0 0 7px}
+.profile-title-row h2{margin:0!important}.profile-handle{color:#a17e94;font-size:.8rem;font-weight:800}
+.profile-card .auth-bunny{margin:0 auto 2px}
+/* Own notes sit right with their time on the left; friends sit left with time on the right. */
+.note-row{align-items:center!important;max-width:100%}
+.note-row.is-mine{justify-content:flex-end!important}
+.note-row:not(.is-mine){justify-content:flex-start!important}
+.note-row:not(.is-mine)>.note-time{order:2}
+.note-row>.note-time{align-self:center;margin:0 2px!important}
+.note-row>.tile.note{max-width:min(72%,38rem)!important;padding:9px 13px!important;line-height:1.28}
+@media(max-width:520px){.note-row>.tile.note{max-width:74%!important;padding:8px 11px!important}.note-row>.note-time{font-size:.56rem!important}}
+/* A liked item has exactly one resting heart: its filled heart. */
+.feed-item .tile.is-loved::before{content:none!important;display:none!important}
+.feed-item .tile.heart-tap.is-loved::before{content:none!important;display:none!important}
+.feed-item .tile.is-loved::after,.feed-item .tile.heart-tap.is-loved::after{content:"♥"!important;color:#e75f91!important;text-shadow:0 0 8px #ec74a788,0 0 16px #ed84b566}
+/* Match all close controls across dialogs with the same little rose button. */
+.auth-close,.memory-action-close{display:grid!important;place-items:center;width:32px!important;height:32px!important;padding:0!important;border:1px solid #efd5e1!important;border-radius:50%!important;background:linear-gradient(145deg,#ffe8f0,#fff7fb)!important;color:#bd6e91!important;font-size:1.12rem!important;line-height:1!important;box-shadow:0 2px 0 #e8cbd9!important;transition:transform .16s,box-shadow .16s!important}
+.auth-close:active,.memory-action-close:active{transform:translateY(1px) scale(.94)!important;box-shadow:0 1px 0 #e8cbd9!important}
+body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{background:linear-gradient(145deg,#4c374a,#3d3046)!important;border-color:#684d66!important;color:#ffdbea!important;box-shadow:0 2px 0 #30263a!important}
+/* Sharper streak cards: fuller progress, less dead space, same garden palette. */
+.happy-things-grid .streak-widget{gap:6px;padding:10px!important;border-color:#eed8e2;background:linear-gradient(145deg,#fff0f5 0%,#fffaf0 56%,#f0edff 100%)}
+.happy-things-grid .streak-top{gap:7px}.happy-things-grid .streak-mascot{box-shadow:inset 0 0 0 1px #f0e0e6;background:#fffaf4}.happy-things-grid .streak-widget>p{font-size:.62rem;line-height:1.22}.happy-things-grid .streak-progress{justify-content:space-between;width:100%;padding:2px 0}.happy-things-grid .streak-day{flex:1 1 0;width:auto;height:19px;border-radius:8px;font-size:.66rem}.happy-things-grid .streak-widget>.streak-badge{margin:0}.happy-things-grid .streak-profile-link.primary{margin-top:2px}
+.profile-streak{margin:7px 0 12px;padding:9px 11px}.profile-streak-top{gap:7px}.profile-streak-icon{width:33px;height:33px;flex-basis:33px;font-size:1rem}.profile-streak-progress{justify-content:space-between;gap:4px;margin:6px 0 2px}.profile-streak-dot{flex:1 1 0;width:auto;height:17px;border-radius:7px;font-size:.62rem}.profile-streak>p{margin-top:2px;font-size:.64rem}
+body[data-mode="dark"] .happy-things-grid .streak-widget{background:linear-gradient(145deg,#3b2d3d,#393241 56%,#332e44);border-color:#59465e}
+body[data-mode="dark"] .happy-things-grid .streak-mascot{background:#47374a;box-shadow:inset 0 0 0 1px #604e62}
+/* Keep the streak tile visually in the same family as the other happy-things cards. */
+.happy-things-grid .streak-widget{min-height:100%;align-content:start;gap:10px;padding:12px!important;border:1px solid #f0dce5;border-radius:22px;background:#fffdfa;box-shadow:0 7px 18px #8b68800b}
+.happy-things-grid .streak-top{gap:9px;align-items:center}
+.happy-things-grid .streak-mascot{flex-basis:42px;width:42px;height:42px;border-radius:15px}
+.happy-things-grid .streak-copy small{font-size:.58rem;letter-spacing:.6px}
+.happy-things-grid .streak-copy strong{font-size:.98rem}
+.happy-things-grid .streak-widget>p{min-height:0;font-size:.68rem;line-height:1.35}
+.happy-things-grid .streak-progress{gap:4px}
+.happy-things-grid .streak-day{height:20px;flex:1 1 0;border-radius:8px;font-size:.68rem}
+.happy-things-grid .streak-widget>.streak-badge{font-size:.6rem;padding:4px 7px}
+.happy-things-grid .streak-profile-link.primary{margin-top:auto;min-height:38px;font-size:.72rem!important}
+.profile-streak{padding:12px!important;border-radius:18px;background:#fff8fb}
+.profile-streak-top{gap:8px}.profile-streak-icon{width:38px;height:38px;flex-basis:38px}
+.profile-streak-progress{gap:5px}.profile-streak-dot{width:20px;height:20px}
+.feed-item .tile.note{padding-top:27px!important}
+.feed-item .tile.note::before,.feed-item .tile.note.is-loved::after{top:5px!important;right:9px!important}
+.feed-item .tile.note.heart-tap::before{display:none!important;content:none!important}
+.feed-item .tile.note.heart-tap::after{top:4px!important;right:8px!important}
+@media(max-width:520px){.happy-things-grid .streak-widget{gap:8px;padding:11px!important}.happy-things-grid .streak-copy small{font-size:.55rem}.happy-things-grid .streak-copy strong{font-size:.92rem}.happy-things-grid .streak-widget>p{font-size:.64rem}}
+.feed-item .tile.note:not(.heart-tap)::before{top:5px!important;right:9px!important}
+/* Final sizing: keep hearts in the note without adding height to the bubble. */
+.feed-item .tile.note{padding-top:11px!important}
+.feed-item .tile.note:not(.heart-tap)::before{content:"♡"!important;display:block!important;top:6px!important;right:8px!important;left:auto!important;width:auto!important;height:auto!important;border:0!important;border-radius:0!important;background:transparent!important}
+.feed-item .tile.note.is-loved::before,.feed-item .tile.note.heart-tap::before{content:none!important;display:none!important}
+.feed-item .tile.note.is-loved::after,.feed-item .tile.note.heart-tap.is-loved::after{top:6px!important;right:8px!important}
+/* Make Home's streak feel like a matching scrapbook card, not a dashboard. */
+.happy-things-grid .streak-widget{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:11px!important;border:1px solid #eedfe6;border-radius:22px;background:#fffdfa;box-shadow:0 7px 18px #8b68800b}
+.happy-things-grid .streak-top{display:flex;flex-direction:column;gap:7px;width:100%;padding:0}
+.happy-things-grid .streak-mascot{display:grid;place-items:center;width:100%;height:92px;flex:0 0 92px;border-radius:17px;background:linear-gradient(135deg,#fce7ef,#f8edff 55%,#e4f3f3);box-shadow:none}
+.happy-things-grid .streak-mascot>span{font-size:2.25rem}
+.happy-things-grid .streak-mascot i{right:calc(50% - 31px);top:19px}
+.happy-things-grid .streak-copy{width:100%;text-align:left}
+.happy-things-grid .streak-copy small{font-size:.9rem;letter-spacing:0;color:#5e4a61;text-transform:none}
+.happy-things-grid .streak-copy strong{margin-top:3px;font-size:.78rem;color:#a88799;font-weight:600}
+.happy-things-grid .streak-widget>p{font-size:.64rem;line-height:1.25;min-height:0;margin:0;color:#9a8294}
+.happy-things-grid .streak-progress{display:flex;gap:5px;width:100%;padding:0}
+.happy-things-grid .streak-day{height:18px;flex:1 1 0;border-radius:7px;font-size:.65rem}
+.happy-things-grid .streak-widget>.streak-badge{align-self:flex-start;margin:0;padding:3px 7px;font-size:.56rem}
+.happy-things-grid .streak-profile-link.primary{width:100%;margin-top:auto;min-height:38px;padding:8px 10px!important;font-size:.7rem!important}
+/* Profile streak: only the count, week blooms, and one gentle encouragement. */
+.profile-streak{margin:10px 0 14px;padding:11px!important;border-radius:18px;background:#fff9fb}
+.profile-streak-copy small{font-size:.55rem;letter-spacing:.5px}
+.profile-streak-copy strong{font-size:.95rem}
+.profile-streak-badge{display:none}
+.profile-streak-progress{display:flex;gap:5px;margin:8px 0 4px}
+.profile-streak-dot{flex:1 1 0;width:auto;height:18px;border-radius:7px;font-size:.62rem}
+.profile-streak>p{margin:3px 0 0;font-size:.67rem;line-height:1.35}
+body[data-mode="dark"] .happy-things-grid .streak-widget{background:#342c3a;border-color:#59465e}
+body[data-mode="dark"] .happy-things-grid .streak-mascot{background:linear-gradient(135deg,#493747,#40354d 55%,#314249)}
+body[data-mode="dark"] .happy-things-grid .streak-copy small{color:#f4ddea}
+body[data-mode="dark"] .happy-things-grid .streak-copy strong{color:#c5b2c8}
+body[data-mode="dark"] .profile-streak{background:#382e3d}
+@media(max-width:520px){.happy-things-grid .streak-mascot{height:82px;flex-basis:82px}.happy-things-grid .streak-copy small{font-size:.84rem}}
+/* Home streak: a matching scrapbook card with a quiet title/count and no extra labels. */
+.happy-things-grid .streak-top{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:7px!important}
+.happy-things-grid .streak-mascot{height:92px!important;flex:0 0 92px!important;width:100%!important;border-radius:17px!important;background:linear-gradient(135deg,#fce7ef,#f8edff 55%,#e4f3f3)!important;box-shadow:none!important}
+.happy-things-grid .streak-mascot>span{font-size:2.2rem!important}
+.happy-things-grid .streak-copy{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:8px!important;width:100%!important}
+.happy-things-grid .streak-copy small{font-size:.88rem!important;letter-spacing:0!important;color:#5e4a61!important;text-transform:none!important}
+.happy-things-grid .streak-copy strong{margin:0!important;font-size:.78rem!important;color:#a88799!important;white-space:nowrap}
+.happy-things-grid .streak-widget>p,.happy-things-grid .streak-progress,.happy-things-grid .streak-widget>.streak-badge{display:none!important}
+.happy-things-grid .streak-profile-link.primary{margin-top:auto!important;width:100%!important;min-height:38px!important}
+/* Profile: compact weekly count with five softly glowing petals arranged in a ring. */
+.profile-streak{display:grid!important;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:8px 10px!important;padding:9px 11px!important;margin:8px 0 12px!important}
+.profile-streak-top{display:contents!important}
+.profile-streak-icon{grid-column:1;grid-row:1;width:46px!important;height:46px!important;flex-basis:46px!important;border-radius:50%!important;background:transparent!important}
+.profile-streak-copy{grid-column:2;grid-row:1;display:flex!important;align-items:baseline;justify-content:space-between;gap:6px}
+.profile-streak-copy small{font-size:.69rem!important;letter-spacing:0!important;color:#856b7d!important}
+.profile-streak-copy strong{font-size:.81rem!important;white-space:nowrap}
+.profile-streak-badge,.profile-streak>p{display:none!important}
+.profile-streak-progress{grid-column:1;grid-row:1;width:46px;height:46px;margin:0!important;position:relative!important;display:block!important}
+.profile-streak-dot{position:absolute;display:grid;width:14px!important;height:14px!important;flex:none!important;border-radius:50%!important;font-size:.56rem!important}
+.profile-streak-dot:nth-child(1){left:16px;top:0}.profile-streak-dot:nth-child(2){right:0;top:16px}.profile-streak-dot:nth-child(3){right:6px;bottom:0}.profile-streak-dot:nth-child(4){left:6px;bottom:0}.profile-streak-dot:nth-child(5){left:0;top:16px}
+.profile-streak-icon{z-index:2;font-size:0!important;pointer-events:none}
+body[data-mode="dark"] .happy-things-grid .streak-mascot{background:linear-gradient(135deg,#493747,#40354d 55%,#314249)!important}
+body[data-mode="dark"] .happy-things-grid .streak-copy small,body[data-mode="dark"] .profile-streak-copy small{color:#ead4e3!important}
+@media(max-width:520px){.happy-things-grid .streak-mascot{height:82px!important;flex-basis:82px!important}}
+/* Lift the note heart just over the bubble edge without reserving extra text space. */
+.feed-item .tile.note:not(.heart-tap)::before,.feed-item .tile.note.is-loved::after,.feed-item .tile.note.heart-tap.is-loved::after{top:-8px!important;right:8px!important}
+/* The home streak uses the same tile shell, art size, and button as its siblings. */
+.happy-things-grid>.streak-widget{display:flex!important;flex-direction:column!important;align-items:stretch!important;align-self:stretch!important;gap:0!important;min-width:0!important;min-height:0!important;margin:0!important;padding:13px!important;border:1px solid #eddde3!important;border-radius:21px!important;background:rgba(255,253,249,.95)!important;box-shadow:0 7px 18px #8b68800c!important;overflow:hidden}
+.happy-things-grid>.streak-widget .streak-top{display:contents!important}
+.happy-things-grid>.streak-widget .streak-mascot{position:relative!important;display:grid!important;place-items:center!important;flex:none!important;width:100%!important;height:132px!important;margin:0 0 10px!important;padding:0!important;border-radius:16px!important;background:linear-gradient(135deg,#fbe6ef 0%,#f2eaff 52%,#e4f3f2 100%)!important;box-shadow:none!important}
+.happy-things-grid>.streak-widget .streak-mascot>span{font-size:2.5rem!important}
+.happy-things-grid>.streak-widget .streak-mascot i{position:absolute!important;top:10px!important;right:12px!important;left:auto!important;color:#d981a3!important;font-style:normal!important;font-size:1.1rem!important}
+.happy-things-grid>.streak-widget .streak-copy{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:8px!important;width:100%!important;min-width:0!important;margin:0 0 4px!important;text-align:left!important}
+.happy-things-grid>.streak-widget .streak-copy small{display:block!important;margin:0!important;color:#5e4a61!important;font-size:1rem!important;font-weight:800!important;letter-spacing:0!important;text-transform:none!important}
+.happy-things-grid>.streak-widget .streak-copy strong{margin:0!important;color:#a88799!important;font-size:.8rem!important;font-weight:800!important;white-space:nowrap!important}
+.happy-things-grid>.streak-widget>p{display:block!important;min-height:0!important;margin:0 0 12px!important;color:#987f91!important;font-size:.76rem!important;line-height:1.35!important;text-align:left!important}
+.happy-things-grid>.streak-widget .streak-progress,.happy-things-grid>.streak-widget>.streak-badge{display:none!important}
+.happy-things-grid>.streak-widget>.streak-profile-link.primary{width:100%!important;min-height:43px!important;margin:auto 0 0!important;padding:12px 22px!important;border:0!important;border-radius:99px!important;background:#cf829f!important;color:white!important;font-size:.88rem!important;font-weight:900!important;letter-spacing:.1px!important;box-shadow:0 6px 0 #ae6888,0 12px 24px #a2617d28!important}
+@media(max-width:520px){.happy-things-grid>.streak-widget{padding:10px!important;border-radius:18px!important}.happy-things-grid>.streak-widget .streak-mascot{height:110px!important;border-radius:14px!important;margin-bottom:9px!important}.happy-things-grid>.streak-widget .streak-copy small{font-size:.92rem!important}.happy-things-grid>.streak-widget .streak-copy strong{font-size:.72rem!important}.happy-things-grid>.streak-widget>p{font-size:.7rem!important;margin-bottom:10px!important}.happy-things-grid>.streak-widget>.streak-profile-link.primary{min-height:38px!important;font-size:.78rem!important;padding:8px 6px!important}}
+body[data-mode="dark"] .happy-things-grid>.streak-widget{background:rgba(52,43,60,.96)!important;border-color:#59465e!important}
+body[data-mode="dark"] .happy-things-grid>.streak-widget .streak-copy small{color:#f4ddea!important}
+body[data-mode="dark"] .happy-things-grid>.streak-widget>p{color:#c5b2c8!important}
+/* Align the streak shell and art precisely with the shared .tile/.tile-art rules. */
+.happy-things-grid{align-items:stretch}
+.happy-things-grid>.streak-widget{height:100%!important;padding:13px!important;border:1.5px solid #ead9df!important;border-radius:21px!important;background:rgba(255,253,249,.95)!important;box-shadow:0 7px 18px #8b68800c!important}
+.happy-things-grid>.streak-widget .streak-mascot{height:132px!important;border:1px solid #fff!important;border-radius:16px!important;margin:0 0 10px!important}
+@media(max-width:520px){.happy-things-grid>.streak-widget{padding:10px!important;border-radius:18px!important}.happy-things-grid>.streak-widget .streak-mascot{height:110px!important}}
+@media(max-width:390px){.happy-things-grid>.streak-widget .streak-mascot{height:105px!important}}
+.happy-things-grid>.streak-widget>.streak-profile-link.primary{padding:13px 22px!important}
+@media(max-width:520px){.happy-things-grid>.streak-widget>.streak-profile-link.primary{padding:8px 6px!important}}
+/* Unlike in place: keep one outline heart in its resting corner, with a tiny scale-in. */
+.feed-item .tile.heart-tap:not(.is-loved)::after{content:none!important;display:none!important;animation:none!important}
+.feed-item .tile.heart-tap:not(.is-loved)::before{content:"♡"!important;display:block!important;position:absolute!important;z-index:6!important;top:-12px!important;right:8px!important;left:auto!important;bottom:auto!important;width:auto!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#cf829f!important;font:700 1.2rem/1 Nunito,sans-serif!important;box-shadow:none!important;pointer-events:none!important;animation:unlike-heart-return .22s ease-out both!important}
+.feed-item .tile.note.heart-tap:not(.is-loved)::before{top:-8px!important;right:8px!important}
+@keyframes unlike-heart-return{from{opacity:.65;transform:scale(.84);transform-origin:top right}to{opacity:1;transform:scale(1);transform-origin:top right}}
+body[data-mode="dark"] .feed-item .tile.heart-tap:not(.is-loved)::before{color:#f2a9c5!important}
+@media(prefers-reduced-motion:reduce){.feed-item .tile.heart-tap:not(.is-loved)::before{animation:none!important}}
+/* Streak count and flame decorate the moving buddy without changing the card flow. */
+.happy-things-grid>.streak-widget .streak-mascot{overflow:hidden!important}
+.happy-things-grid>.streak-widget .streak-mascot>span{animation:streak-hop 2.2s ease-in-out infinite!important}
+.streak-fire-count{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;align-items:center;gap:3px;color:#70546d;font:800 1.05rem/1 Nunito,sans-serif;text-shadow:0 1px #fff9}
+.streak-fire-count>span{display:inline-block;font-size:1.15rem;animation:fire-flicker .55s ease-in-out infinite alternate;transform-origin:50% 90%}
+.streak-fire-float{position:absolute;color:#f08a69;filter:drop-shadow(0 2px 3px #e8797550);pointer-events:none;animation:fire-float 2s ease-in-out infinite}
+.streak-fire-float.fire-one{top:20px;left:24%;font-size:.7rem;animation-delay:-.3s}.streak-fire-float.fire-two{top:38px;right:23%;font-size:.56rem;animation-delay:-1.1s}.streak-fire-float.fire-three{bottom:28px;left:30%;font-size:.52rem;animation-delay:-.7s}
+@keyframes fire-flicker{from{transform:rotate(-8deg) scale(.92)}to{transform:rotate(8deg) scale(1.12)}}
+@keyframes fire-float{0%,100%{opacity:.45;translate:0 3px}50%{opacity:1;translate:0 -5px}}
+.profile-streak-copy strong{display:flex!important;align-items:center;gap:4px;white-space:nowrap}
+.profile-streak-copy .streak-fire-emoji{display:inline-block;font-style:normal;font-size:.82rem;animation:fire-flicker .55s ease-in-out infinite alternate;transform-origin:50% 90%}
+.profile-title-row{flex-wrap:nowrap!important;gap:6px!important;min-width:0}
+.profile-title-row h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-title-row .profile-handle{flex:none;white-space:nowrap}
+.happy-things-grid>.streak-widget>.streak-profile-link.primary{min-height:43px!important}
+@media(max-width:520px){.happy-things-grid>.streak-widget>.streak-profile-link.primary{min-height:43px!important}}
+@media(prefers-reduced-motion:reduce){.streak-fire-count>span,.streak-fire-float,.profile-streak-copy .streak-fire-emoji,.happy-things-grid>.streak-widget .streak-mascot>span{animation:none!important}}
+/* Profile fields share one clean row, with a narrow-screen stack. */
+.profile-name-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;margin:0}
+.profile-name-row>label{min-width:0;margin:12px 0!important;text-align:left}
+.profile-name-row input{width:100%;min-width:0;min-height:44px;margin-top:6px;padding:11px 12px!important;border:1px solid #ead9e1;border-radius:13px;background:#fff;font:inherit;font-size:.85rem!important}
+@media(max-width:420px){.profile-name-row{grid-template-columns:1fr;gap:0}.profile-name-row>label{margin:7px 0!important}}
+/* Streak thumbnail reuses the dashboard tile and tile-art dimensions. */
+.happy-things-grid>.streak-widget{border:1.5px solid #ead9df!important;border-radius:21px!important;background:rgba(255,253,249,.95)!important;padding:13px!important}
+.happy-things-grid>.streak-widget .streak-mascot{height:132px!important;border-radius:16px!important;border:1px solid #fff!important;background:linear-gradient(135deg,#fbe6ef,#f2eaff 55%,#e4f3f2)!important}
+.happy-things-grid>.streak-widget .streak-mascot>span:first-child{animation:streak-hop 2.3s ease-in-out infinite}
+.streak-calendar-mark{position:absolute;top:10px;right:12px;color:#d981a3!important;font-size:1.1rem!important;line-height:1}
+.happy-things-grid>.streak-widget>.streak-profile-link.primary{min-height:43px!important;padding:13px 22px!important;border-radius:99px!important;background:#cf829f!important;color:#fff!important;font-size:.88rem!important;font-weight:900!important;box-shadow:0 6px 0 #ae6888,0 12px 24px #a2617d28!important}
+@media(max-width:520px){.happy-things-grid>.streak-widget{padding:10px!important;border-radius:18px!important}.happy-things-grid>.streak-widget .streak-mascot{height:110px!important}}
+@media(max-width:390px){.happy-things-grid>.streak-widget .streak-mascot{height:105px!important}.happy-things-grid>.streak-widget>.streak-profile-link.primary{padding:8px 6px!important;font-size:.78rem!important}}
+/* Weekly profile banner: real streak activity, seven aligned weekday markers. */
+.profile-streak{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px 14px!important;align-items:center!important;padding:14px 15px!important;border:1px solid #efdee6!important;border-radius:19px!important;background:#fffaf7!important;box-shadow:0 5px 14px #8b68800c!important}
+.profile-streak-top{display:grid!important;grid-template-columns:44px minmax(0,1fr) auto!important;grid-column:1/-1!important;align-items:center!important;gap:10px!important;min-width:0}
+.profile-streak-icon{display:grid!important;place-items:center!important;width:44px!important;height:44px!important;flex:none!important;border:1px solid #f1dce6!important;border-radius:15px!important;background:linear-gradient(145deg,#fbeaf1,#f3edff)!important;font-size:1.45rem!important}
+.profile-streak-copy{display:grid!important;gap:3px!important;min-width:0!important}
+.profile-streak-copy small{color:#aa7790!important;font-size:.62rem!important;font-weight:900!important;letter-spacing:.8px!important}
+.profile-streak-copy em{color:#927c90;font-size:.7rem;font-style:normal;line-height:1.3}
+.profile-streak-count{display:flex!important;align-items:center!important;gap:4px!important;white-space:nowrap!important;color:#70546d!important;font:700 1rem Quicksand,sans-serif!important}
+.profile-streak-copy .streak-fire-emoji{font-size:.9rem!important}
+.profile-streak-progress{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;grid-column:1/-1!important;gap:6px!important;margin:0!important}
+.profile-streak-day{display:grid;justify-items:center;gap:4px;min-width:0}
+.profile-streak-day::before{content:"";width:17px;height:17px;border:1px solid #eadfe7;border-radius:50%;background:#f2edf2;transition:background .2s,box-shadow .2s,border-color .2s}
+.profile-streak-day.is-active::before{border-color:#e7a9c2;background:#f6dbe6;box-shadow:0 0 7px #efbfd188}
+.profile-streak-day.is-today::before{outline:2px solid #d795b0;outline-offset:2px;background:#fff5f8}
+.profile-streak-day.is-active.is-today::before{background:#e9a9c1}
+.profile-streak-day i{color:#a48d9c;font-size:.57rem;font-style:normal;font-weight:800;line-height:1}
+.profile-streak-badge,.profile-streak>p{display:none!important}
+body[data-mode="dark"] .profile-streak{background:#382e3d!important;border-color:#59465e!important}
+body[data-mode="dark"] .profile-streak-icon{background:linear-gradient(145deg,#493747,#40354d)!important;border-color:#604e62!important}
+body[data-mode="dark"] .profile-streak-count{color:#f4ddea!important}
+body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-streak-day i{color:#c5b2c8}
+@media(max-width:420px){.profile-streak{padding:11px!important;gap:8px!important}.profile-streak-top{grid-template-columns:38px minmax(0,1fr) auto!important;gap:7px!important}.profile-streak-icon{width:38px!important;height:38px!important}.profile-streak-count{font-size:.88rem!important}.profile-streak-progress{gap:4px!important}}
+@media(prefers-reduced-motion:reduce){.happy-things-grid>.streak-widget .streak-mascot>span:first-child{animation:none!important}}
+/* The streak thumbnail shows only its animated count and flame; the buddy stays out. */
+.happy-things-grid>.streak-widget .streak-copy strong{display:none!important}
+.happy-things-grid>.streak-widget .streak-art-count{display:flex!important;align-items:center;justify-content:center;gap:5px;color:#70546d;font:800 2.45rem/1 Quicksand,sans-serif;animation:streak-counter-bob 1.35s ease-in-out infinite;filter:drop-shadow(0 3px 4px #b67d9940)}
+.happy-things-grid>.streak-widget .streak-art-count i{display:inline-block;font-size:2.25rem;font-style:normal;animation:streak-counter-fire .45s ease-in-out infinite alternate;transform-origin:50% 90%}
+@keyframes streak-counter-bob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.04)}}
+@keyframes streak-counter-fire{from{transform:rotate(-7deg) scale(.94)}to{transform:rotate(7deg) scale(1.08)}}
+@media(prefers-reduced-motion:reduce){.happy-things-grid>.streak-widget .streak-art-count,.happy-things-grid>.streak-widget .streak-art-count i{animation:none!important}}
+/* The Home card's only illustration is its animated live count: 1 🔥. */
+.happy-things-grid>.streak-widget .streak-copy strong{display:none!important}
+.happy-things-grid>.streak-widget .streak-art-count{display:flex!important;align-items:center;justify-content:center;gap:7px;color:#70546d;font:800 2.55rem/1 Quicksand,sans-serif;animation:streak-counter-bob 1.25s ease-in-out infinite;filter:drop-shadow(0 3px 4px #b67d9940)}
+.happy-things-grid>.streak-widget .streak-art-count i{display:inline-block;font-size:2.35rem;font-style:normal;animation:streak-counter-fire .45s ease-in-out infinite alternate;transform-origin:50% 90%}
+@keyframes streak-counter-bob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.04)}}
+@keyframes streak-counter-fire{from{transform:rotate(-7deg) scale(.94)}to{transform:rotate(7deg) scale(1.08)}}
+@media(prefers-reduced-motion:reduce){.happy-things-grid>.streak-widget .streak-art-count,.happy-things-grid>.streak-widget .streak-art-count i{animation:none!important}}

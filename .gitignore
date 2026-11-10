@@ -2,4 +2,4 @@
 backend/target/
 backend/uploads/
 .idea/
-
+supabase-config.js

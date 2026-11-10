@@ -1,4 +1,4 @@
-const CACHE_NAME = "cute-bunny-shell-v8";
+const CACHE_NAME = "cute-bunny-shell-v12";
 const APP_ASSETS = ["./", "./index.html", "./style.css", "./app.js", "./manifest.webmanifest", "./supabase-config.js", "./bunny-app-icon-192.png", "./bunny-app-icon-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
@@ -35,4 +35,3 @@ self.addEventListener("fetch", event => {
     }
   })());
 });
-

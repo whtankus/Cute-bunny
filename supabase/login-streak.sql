@@ -41,4 +41,3 @@ $$;
 
 revoke all on function public.record_login_streak() from public;
 grant execute on function public.record_login_streak() to authenticated;
-

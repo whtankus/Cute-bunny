@@ -1,6 +1,6 @@
 # Cute Bunny ♡
 
-A mobile-friendly shared scrapbook. The hosted app uses Supabase Auth, PostgreSQL, and private Supabase Storage. The Java/MySQL prototype is preserved separately in the local backup and is not part of the Pages deployment.
+A mobile-friendly shared scrapbook. The hosted app uses Supabase Auth, PostgreSQL, and private Supabase Storage. The Spring Boot/MySQL prototype under `backend/` is separate and is not used by the Pages deployment.
 
 ## Supabase setup
 
@@ -48,3 +48,17 @@ The workflow follows GitHub's Pages artifact deployment flow. The Supabase publi
 
 The site fills the phone viewport and includes a standalone app manifest. In your phone browser, use **Add to Home Screen** (or **Install app**) to open Cute Bunny without the usual browser tabs and address bar.
 
+## Feature upgrade migration
+
+To enable username changes, persistent notification history, buddy activity pings, and notification preferences, run `supabase/feature-upgrades.sql` once in **Supabase → SQL Editor**. It adds columns, a notifications table, triggers, and policies without deleting existing profiles, memories, follows, or media. Realtime notifications require the project’s `supabase_realtime` publication; the migration adds the table when that publication is available.
+
+The hosted site currently uses the Supabase JavaScript client. The Spring Boot/MySQL code under `backend/` is a separate prototype and is not used by GitHub Pages.
+
+## Recent interaction improvements
+
+- Music playback uses one audio player that stays mounted while pages change.
+- Shared memory cards have stable colors for the two scrapbook owners.
+- Long-press, right-click, and keyboard context menus offer copy, download, multi-select, and owner-only delete actions.
+- Right-swipe reveals deletion; completing the swipe starts a short Undo window before anything is removed.
+- Friends see live presence while the app is open. Buddy taps can send a rate-limited notification to a mutual friend.
+- Photos, songs, and notes create notification history entries for followers after the feature migration is installed.
