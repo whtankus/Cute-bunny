@@ -564,7 +564,7 @@ function chatMessageMarkup(m) {
         <div class="chat-message-line">
           <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>
           <div class="chat-bubble-wrap">
-            <div class="tile chat-bubble" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
+            <div class="chat-bubble" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
               <button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>
               <span class="chat-message-text" dir="auto">${messageText}</span>
             </div>
