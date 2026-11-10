@@ -1357,7 +1357,7 @@ function formatProfileDate(value) {
 
 // Tapping effect on pointerdown
 document.addEventListener('pointerdown', e => {
-  const interactive = e.target.closest('button, .primary, .round, .tile, .chat-bubble, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
+  const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
   if (!interactive || e.target.closest('input, textarea, select')) return;
   interactive.classList.remove('cute-tap');
   void interactive.offsetWidth;

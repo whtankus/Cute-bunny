@@ -2139,3 +2139,12 @@ body:has(.chat-page) #content {
   width:0!important;
   height:0!important;
 }
+
+
+/* Notes bubble taps should not animate or press the whole bubble; only its heart pops. */
+.chat-page .chat-bubble-wrap>.chat-bubble:active {
+  transform:none!important;
+}
+.chat-page .chat-bubble.heart-tap {
+  animation:none!important;
+}
