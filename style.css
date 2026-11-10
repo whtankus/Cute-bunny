@@ -1960,27 +1960,62 @@ body.notes-keyboard-open #nav {
 }
 
 
-/* Notes conversation: rounder lower corners, a lighter pastel composer, and a Friends shortcut. */
+
+
+/* Notes conversation corrections: remove the panel wall and restore the original bubble shape. */
+.chat-page .chat-thread {
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  padding-left:0;
+  padding-right:0;
+}
 .chat-page .chat-bubble-wrap>.chat-bubble {
-  border-radius:26px 26px 36px 36px;
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  width:fit-content!important;
+  min-width:0!important;
+  max-width:100%;
+  border-radius:22px!important;
+}
+.chat-page .chat-message-text {
+  width:auto!important;
+  max-width:100%;
+  min-width:0;
+  flex:0 1 auto;
+}
+.chat-page .chat-message.is-mine .chat-bubble .memory-heart-toggle {
+  left:8px!important;
+  right:auto!important;
 }
 @media(max-width:720px) {
-  .chat-page .chat-bubble-wrap>.chat-bubble {
-    border-radius:24px 24px 33px 33px;
+  .chat-page .chat-message.is-mine .chat-bubble .memory-heart-toggle {
+    left:7px!important;
+    right:auto!important;
   }
 }
 @media(max-width:480px) {
-  .chat-page .chat-bubble-wrap>.chat-bubble {
-    border-radius:22px 22px 30px 30px;
+  .chat-page .chat-message.is-mine .chat-bubble .memory-heart-toggle {
+    left:6px!important;
+    right:auto!important;
   }
 }
-.chat-page .chat-message.is-continuation .chat-message-content {
-  gap:0;
+
+/* Keep the composer close to the unchanged full-size navigation dock. */
+body:has(.chat-page) .app main {
+  padding-bottom:calc(83px + max(0px,env(safe-area-inset-bottom) - 12px))!important;
 }
-.chat-page .chat-message.is-continuation .chat-bubble-wrap {
-  margin-top:4px;
+body:has(.chat-page) #content {
+  padding-bottom:0!important;
+}
+.chat-page {
+  padding-bottom:0!important;
 }
 .chat-page .chat-composer {
+  margin-bottom:0;
   border-color:#efe0ec;
   background:linear-gradient(135deg,#fffdfd 0%,#fff8fc 54%,#f8f3ff 100%);
   box-shadow:0 7px 20px #987a9b14,inset 0 1px 0 #fff;
@@ -2010,47 +2045,4 @@ body.notes-keyboard-open #nav {
 }
 .chat-page .chat-composer .primary:active {
   box-shadow:0 1px 0 #d4c3e2;
-}
-.notes-friends-shortcut {
-  position:fixed;
-  z-index:29;
-  left:50%;
-  bottom:calc(88px + env(safe-area-inset-bottom));
-  display:grid;
-  place-items:center;
-  width:42px;
-  height:42px;
-  margin:0;
-  padding:0;
-  border:1px solid #eadcf0;
-  border-radius:16px;
-  background:linear-gradient(145deg,#fffafd 0%,#f1eafd 100%);
-  color:#9878a3;
-  box-shadow:0 4px 0 #e1d3eb,0 7px 14px #86658c18;
-  transform:translateX(-50%);
-  cursor:pointer;
-  transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;
-}
-.notes-friends-shortcut span {
-  font-size:1.25rem;
-  line-height:1;
-}
-.notes-friends-shortcut:hover {
-  filter:brightness(1.025);
-  transform:translate(-50%,-2px);
-}
-.notes-friends-shortcut:active {
-  transform:translate(-50%,3px);
-  box-shadow:0 1px 0 #e1d3eb;
-}
-body.notes-keyboard-open .notes-friends-shortcut {
-  display:none!important;
-}
-@media(max-width:520px) {
-  .notes-friends-shortcut {
-    width:40px;
-    height:40px;
-    bottom:calc(88px + env(safe-area-inset-bottom));
-    border-radius:15px;
-  }
 }
