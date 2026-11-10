@@ -1086,3 +1086,24 @@ body[data-mode="dark"] .chat-composer textarea{
   .chat-composer{padding:7px!important}
   .chat-composer .primary{padding-inline:12px!important;font-size:.76rem!important}
 }
+
+
+/* Final layout correction: message identity, heart reaction and photo attribution */
+.chat-message{align-items:flex-start!important}
+.chat-message.is-mine{align-items:flex-end!important}
+.chat-meta{display:flex!important;flex-direction:row!important;justify-content:flex-start!important;align-self:flex-start!important;width:auto!important;max-width:100%!important;gap:6px!important}
+.chat-message.is-mine .chat-meta{flex-direction:row!important;justify-content:flex-end!important;align-self:flex-end!important}
+.chat-message .chat-meta time,.chat-message.is-mine .chat-meta time{margin-left:4px!important;margin-right:0!important}
+.chat-bubble-wrap{position:relative!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;max-width:min(78%,560px)!important;margin-top:3px!important;padding-top:0!important}
+.chat-message.is-mine .chat-bubble-wrap{align-items:flex-end!important}
+.chat-heart-toggle{position:relative!important;inset:auto!important;align-self:flex-end!important;display:grid!important;place-items:center!important;width:25px!important;height:25px!important;min-height:25px!important;margin:0 7px -2px 0!important;padding:0!important;border:1px solid #f0dce5!important;border-radius:50%!important;background:#fffdfb!important;color:#e875a1!important;font-size:1.08rem!important;line-height:1!important;box-shadow:0 2px 7px #8b688022!important;filter:none!important;transform:none!important}
+.chat-message.is-friend .chat-heart-toggle{align-self:flex-start!important;margin:0 0 -2px 7px!important}
+.chat-message.is-mine .chat-heart-toggle{align-self:flex-end!important;margin-right:7px!important}
+.chat-bubble-wrap>.chat-bubble{margin:0!important}
+.chat-bubble .note-message-text{white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:normal!important}
+body[data-mode="dark"] .chat-heart-toggle{background:#3b3041!important;border-color:#69536d!important}
+/* Keep the photo author row above each image. */
+.photo-garden-grid .feed-item>.feed-by{order:0!important;align-self:stretch!important;width:100%!important;justify-content:flex-start!important;padding:3px 4px 7px!important;font-size:.76rem!important}
+.photo-garden-grid .feed-item>.tile{order:1!important}
+.photo-garden-grid .feed-item{gap:0!important}
+@media(max-width:520px){.chat-bubble-wrap{max-width:86%!important}.chat-meta{font-size:.7rem!important}.chat-heart-toggle{width:24px!important;height:24px!important}}
