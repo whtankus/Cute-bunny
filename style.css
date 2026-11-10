@@ -679,3 +679,9 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 .memory-heart-toggle:focus-visible{outline:2px solid #c8799c!important;outline-offset:2px;border-radius:50%!important}
 @keyframes heart-button-pop{50%{transform:scale(1.28)}}
 @media(prefers-reduced-motion:reduce){.memory-heart-toggle,.memory-heart-toggle[aria-pressed="true"]{animation:none!important;transition:none!important}}
+
+/* Keep one real, tappable heart in the same corner as the former decoration. */
+#content .feed-item .tile::before,#content .feed-item .tile::after{content:none!important;display:none!important}
+.memory-heart-toggle{top:-12px!important}
+#content .feed-item .tile.note .memory-heart-toggle{top:-8px!important}
+#content .feed-item .tile.heart-tap .memory-heart-toggle{animation:heart-button-pop .34s ease-out}
