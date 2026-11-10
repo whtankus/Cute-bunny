@@ -606,7 +606,7 @@ function memoryCard(m) {
 
   const authorLine = m.kind === 'note' ? '' : `<div class="feed-by"><span class="sender-pet" aria-label="${pet}">${pet}</span> <b title="${name}">${name}</b> <small>@${handle}</small></div>`;
   const ownerIndicator = mine && m.kind !== 'note' ? `<span class="memory-owner-indicator" aria-hidden="true">Your memory</span>` : '';
-  return `<article class="feed-item ${tone}${pending}${uploading}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
+  return `<article class="feed-item ${tone}${pending}${uploading}${m.kind === 'note' ? ' home-note-memory' : ''}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
 }
 
 /* Clean Notes conversation; message markup is shared with Home → Memory History. */
@@ -1403,7 +1403,7 @@ document.addEventListener('click', e => {
 
 // Notes message gestures: tap to like, press and hold for Copy/Delete.
 document.addEventListener('pointerdown', e => {
-  const bubble = e.target.closest('.chat-page .chat-bubble');
+  const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
   if (!bubble || e.target.closest('button, .chat-actions-popup') || (e.pointerType === 'mouse' && e.button !== 0)) return;
 
   clearTimeout(messagePressState.timer);
@@ -1475,7 +1475,7 @@ document.addEventListener('click', async e => {
   }
 
   // A short tap on a Notes bubble likes/unlikes it. Long-press is handled above.
-  const bubble = e.target.closest('.chat-page .chat-bubble');
+  const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
   const selectedText = window.getSelection?.()?.toString().trim();
   if (bubble && !e.target.closest('button') && !selectedText) {
     if (messagePressState.suppressClick) {
