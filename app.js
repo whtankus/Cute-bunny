@@ -1417,6 +1417,12 @@ document.addEventListener('click', async e => {
   const bubble = e.target.closest('.chat-bubble');
   const selectedText = window.getSelection?.()?.toString().trim();
   if (bubble && !e.target.closest('button') && !selectedText) {
+    // Give the tapped bubble a brief, tactile press response before showing its actions.
+    bubble.classList.remove('is-pressed');
+    void bubble.offsetWidth;
+    bubble.classList.add('is-pressed');
+    setTimeout(() => bubble.classList.remove('is-pressed'), 190);
+
     const id = bubble.dataset.chatMessageId;
     if (id) {
       if (activeMessageActionsId === id) hideMessageActions();
