@@ -961,3 +961,128 @@ body[data-mode="dark"] .chat-composer textarea{
   border-color:#66536b!important;
   color:#faeaf1!important;
 }
+
+
+/* Notes conversation: readable, calm message typography and predictable controls */
+.chat-thread{
+  gap:14px!important;
+  padding:12px 7px 16px!important;
+  scroll-padding-bottom:24px;
+}
+.chat-message{gap:4px!important}
+.chat-meta{
+  gap:6px!important;
+  padding-inline:7px!important;
+  font-size:.72rem!important;
+}
+.chat-meta b{font-weight:800!important}
+.chat-meta time{font-size:.68rem!important}
+.chat-bubble-wrap{
+  max-width:min(78%,560px)!important;
+  margin-top:15px!important;
+}
+.chat-bubble-wrap>.chat-bubble{
+  width:auto!important;
+  max-width:100%!important;
+  min-width:72px!important;
+  padding:12px 16px!important;
+  border-radius:18px!important;
+  font:500 15px/1.55 Nunito,sans-serif!important;
+  letter-spacing:.005em;
+  text-align:start!important;
+  cursor:default!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+}
+.chat-message.is-friend .chat-bubble{
+  color:#59465b!important;
+  background:#fffdfb!important;
+  border:1px solid #eedfe6!important;
+  box-shadow:0 2px 7px #8b688012!important;
+}
+.chat-message.is-mine .chat-bubble{
+  color:#59465b!important;
+  background:#f8eff7!important;
+  border:1px solid #e9dbea!important;
+  box-shadow:0 2px 7px #8b688012!important;
+}
+.chat-bubble .note-message-text{
+  display:block!important;
+  margin:0!important;
+  min-width:0;
+  color:inherit!important;
+  font:inherit!important;
+  line-height:inherit!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+  text-align:start!important;
+  user-select:text!important;
+  -webkit-user-select:text!important;
+  cursor:text;
+}
+.chat-bubble .memory-heart-toggle{
+  top:-15px!important;
+  right:8px!important;
+  width:27px!important;
+  height:27px!important;
+  min-height:27px!important;
+  background:#fffdfb!important;
+  border:1px solid #f0dce5!important;
+  border-radius:50%!important;
+  box-shadow:0 2px 7px #8b688022!important;
+  filter:none!important;
+  transform:none!important;
+}
+.chat-composer{
+  gap:9px!important;
+  padding:9px!important;
+  border-radius:20px!important;
+}
+.chat-composer textarea{
+  min-height:46px!important;
+  max-height:132px!important;
+  padding:12px 14px!important;
+  font:500 15px/1.45 Nunito,sans-serif!important;
+  color:#59465b!important;
+  background:#fff!important;
+  border:1px solid #eadbe4!important;
+  border-radius:15px!important;
+  resize:vertical!important;
+  user-select:text!important;
+  -webkit-user-select:text!important;
+}
+.chat-composer textarea::placeholder{color:#a38c9c!important;opacity:1}
+.chat-composer textarea:focus-visible{
+  outline:2px solid #d99ab5!important;
+  outline-offset:1px;
+  border-color:#d99ab5!important;
+  box-shadow:0 0 0 3px #f5dfeb!important;
+}
+.chat-composer .primary{
+  min-height:46px!important;
+  padding:9px 16px!important;
+  border-radius:14px!important;
+  white-space:nowrap;
+}
+.chat-bubble:focus-visible{
+  outline:2px solid #c8799c!important;
+  outline-offset:3px;
+}
+body[data-mode="dark"] .chat-message.is-friend .chat-bubble{
+  color:#f7edf4!important;background:#3a3040!important;border-color:#5c4a63!important;
+}
+body[data-mode="dark"] .chat-message.is-mine .chat-bubble{
+  color:#f7edf4!important;background:#443448!important;border-color:#69536d!important;
+}
+body[data-mode="dark"] .chat-bubble .memory-heart-toggle{background:#3b3041!important;border-color:#69536d!important}
+body[data-mode="dark"] .chat-composer textarea{
+  color:#f7edf4!important;background:#292331!important;border-color:#66536b!important;
+}
+@media(max-width:520px){
+  .chat-thread{gap:12px!important;padding-inline:3px!important}
+  .chat-bubble-wrap{max-width:86%!important}
+  .chat-bubble-wrap>.chat-bubble{padding:11px 14px!important;font-size:14.5px!important;line-height:1.5!important}
+  .chat-composer{padding:7px!important}
+  .chat-composer .primary{padding-inline:12px!important;font-size:.76rem!important}
+}
