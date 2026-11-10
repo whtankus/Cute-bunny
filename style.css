@@ -1311,15 +1311,10 @@ body[data-mode="dark"] .chat-composer textarea { color:#f7edf4;background:#29233
 }
 
 
-/* Slim conversation refinement — restrained typography, outlines and reactions */
+/* Conversation layout refinement only — preserve the app's existing backgrounds and colors */
 .chat-thread {
   gap:17px;
   padding:20px clamp(12px,2.5vw,24px) 24px;
-  border:1px solid #f3e8ec;
-  border-radius:15px;
-  background-color:#fffdfb;
-  background-image:radial-gradient(#e9cbd7 1px,transparent 1.2px);
-  background-size:56px 56px;
 }
 .chat-message-content { gap:5px;max-width:min(100%,680px); }
 .chat-meta { gap:6px;padding:0 5px; }
@@ -1338,7 +1333,6 @@ body[data-mode="dark"] .chat-composer textarea { color:#f7edf4;background:#29233
 .chat-message-time {
   flex-basis:3.15rem;
   width:3.15rem;
-  color:#a98a9c;
   font-size:clamp(.7rem,1.15vw,.82rem);
   font-weight:800;
 }
@@ -1348,16 +1342,12 @@ body[data-mode="dark"] .chat-composer textarea { color:#f7edf4;background:#29233
 }
 .chat-bubble-wrap>.chat-bubble {
   padding:9px 18px 8px;
-  border:1.6px solid #79516b;
+  border-width:1.6px;
   border-radius:24px;
-  background:#fffefd;
-  color:#79516b;
-  font:400 clamp(1.2rem,1.9vw,1.7rem)/1.18 Caveat,cursive;
+  font-weight:400;
+  font-size:clamp(1.2rem,1.9vw,1.7rem);
+  line-height:1.18;
   letter-spacing:.01em;
-}
-.chat-message.is-mine .chat-bubble-wrap>.chat-bubble {
-  background:#fffafd;
-  border-color:#79516b;
 }
 .chat-message-text { line-height:inherit; }
 .chat-bubble .memory-heart-toggle {
@@ -1367,9 +1357,6 @@ body[data-mode="dark"] .chat-composer textarea { color:#f7edf4;background:#29233
   height:30px!important;
   min-width:30px!important;
   min-height:30px!important;
-  color:#f0b4ca!important;
-  text-shadow:0 1px 0 #fff!important;
-  -webkit-text-stroke:1px #79516b!important;
   font-size:1.85rem!important;
 }
 .chat-message.is-mine .chat-bubble .memory-heart-toggle {
@@ -1383,29 +1370,10 @@ body[data-mode="dark"] .chat-composer textarea { color:#f7edf4;background:#29233
 #content .feed-list .feed-item[data-kind="note"] .chat-message-line {
   min-height:46px;
 }
-body[data-mode="dark"] .chat-thread {
-  border-color:#514253;
-  background-color:#302838;
-  background-image:radial-gradient(#62495b .9px,transparent 1.2px);
-}
-body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble {
-  border-color:#aa88a0;
-  background:#372e3c;
-  color:#f3e5ed;
-}
-body[data-mode="dark"] .chat-message.is-mine .chat-bubble-wrap>.chat-bubble {
-  background:#403241;
-}
-body[data-mode="dark"] .chat-bubble .memory-heart-toggle {
-  color:#e9a8c2!important;
-  -webkit-text-stroke-color:#aa88a0!important;
-  text-shadow:0 1px 0 #372e3c!important;
-}
 @media(max-width:720px) {
   .chat-thread {
     gap:15px;
     padding:16px 9px 20px;
-    background-size:48px 48px;
   }
   .chat-message-time {
     flex-basis:2.9rem;
@@ -1439,8 +1407,6 @@ body[data-mode="dark"] .chat-bubble .memory-heart-toggle {
   .chat-thread {
     gap:14px;
     padding:14px 6px 18px;
-    border-radius:12px;
-    background-size:42px 42px;
   }
   .chat-meta { gap:4px;padding-inline:3px; }
   .chat-meta .sender-pet { font-size:1.08rem; }
