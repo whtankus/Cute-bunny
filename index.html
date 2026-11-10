@@ -1,1 +1,271 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="bunny-app-icon-192.png" type="image/png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#fdf1ea"><meta name="description" content="Cute Bunny — a tiny scrapbook of happy things."><title>Cute Bunny ♡</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body class="is-restoring"><div id="sessionRestore" class="session-restore" role="status"><span>🐰</span><p>Opening your little garden…</p></div><div id="welcome" class="welcome"><div class="moon">☾</div><span class="float flower">✿</span><span class="float heart">♡</span><div class="welcome-card"><div class="mascot"><div class="ears"><i></i><i></i></div><div class="bunny-face"><span class="eyes">•　•</span><span class="cheeks">●　●</span><span class="mouth">ᴗ</span></div><span class="mascot-flower">✿</span></div><p class="eyebrow">a little world made just for you</p><h1>Cute Bunny <span>♡</span></h1><p class="intro">A pocketful of photos, favorite songs, and tiny moments worth keeping.</p><button class="primary" id="enter">Let's begin ♡</button><small>take a breath · stay a little ☁</small></div><div class="ground"></div></div><div id="app" class="app hidden"><header><button class="brand" id="profileOpen"><span id="topMascot">🐰</span> <b>Cute Bunny<small id="topName">little memory garden</small></b></button><span class="crumb">MY SCRAPBOOK <b>/ <span id="crumb">Home</span></b></span><div class="header-actions"><button class="round notification-bell" id="notificationOpen" aria-label="Notifications" title="Little love notes from your friend">♡<i id="notificationBadge" class="notification-badge hidden">0</i></button><button class="round mode-button" id="surprise" title="Switch to moonlight mode" aria-label="Switch to moonlight mode">☾</button></div></header><main><section id="content"></section></main><audio id="globalAudio" preload="metadata" hidden></audio><div id="nowPlayingIsland" class="now-playing-island hidden"><button type="button" id="nowPlayingPill" class="now-playing-pill" aria-expanded="false" aria-controls="nowPlayingPanel"><span class="island-note" aria-hidden="true">♫</span><span id="islandShortTitle" class="island-short-title">Song</span><span class="island-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button><section id="nowPlayingPanel" class="now-playing-panel hidden" aria-label="Now playing"><div class="island-track-info"><span class="island-album-icon" aria-hidden="true">🎼</span><div><strong id="islandFullTitle">A little song</strong><small class="island-status-line"><span aria-hidden="true">♡</span><span id="islandStatusText">Listening together</span></small></div><button type="button" id="nowPlayingClose" class="island-close" aria-label="Close player">×</button></div><div class="island-timeline"><span id="islandCurrentTime">0:00</span><input id="islandSeek" type="range" min="0" max="1000" value="0" aria-label="Song progress"><span id="islandDuration">0:00</span></div><div class="island-controls"><button type="button" id="nowPlayingPrevious" aria-label="Previous song">‹</button><button type="button" id="nowPlayingToggle" class="island-play" aria-label="Play song">▶</button><button type="button" id="nowPlayingNext" aria-label="Next song">›</button></div></section></div><nav id="nav"><button class="active" data-page="home"><i aria-hidden="true">🏡</i><span>Home</span></button><button data-page="gallery"><i aria-hidden="true">🌷</i><span>Photos</span></button><button data-page="music"><i aria-hidden="true">🎵</i><span>Music</span></button><button data-page="notes"><i aria-hidden="true">💌</i><span>Notes</span></button><button data-page="friends"><i aria-hidden="true">🐰</i><span>Friends</span></button></nav></div><div id="authGate" class="auth-gate hidden"><form id="authForm" class="auth-card"><button type="button" class="auth-close" id="authClose">×</button><div class="auth-bunny">🐰</div><p class="eyebrow">YOUR LITTLE WORLD</p><h2 id="authTitle">Create your account</h2><p class="auth-hint">Make a private space to share with your friend.</p><label>Email<input id="authEmail" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required></label><label>Display name<input id="authDisplay" maxlength="60" placeholder="What should we call you?"></label><label>Username<input id="authUser" maxlength="24" autocomplete="username" placeholder="3–24 letters, numbers or _"></label><label>Password<input id="authPass" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label><button class="primary auth-submit" id="authSubmit">Create account ♡</button><p class="auth-error" id="authError"></p><button type="button" class="auth-switch" id="authSwitch">Already have an account? Sign in</button></form></div><div id="profileGate" class="auth-gate hidden"><div class="auth-card profile-card"><button type="button" class="auth-close" id="profileClose">×</button><small id="profileCreated" class="profile-date"></small><div class="auth-bunny">🐰</div><div class="profile-title-row"><h2 id="profileName">Your profile</h2><span id="profileHandle" class="profile-handle"></span></div><div class="profile-name-row"><label>Display name<input id="profileDisplay" maxlength="60"></label><label>Username<input id="profileUsername" maxlength="24" autocomplete="username"></label></div><label>About you<input id="profileBio" maxlength="300" placeholder="A little hello..."></label><label class="theme-picker-label">Your colors</label><input id="profileTheme" class="hidden" type="hidden" value="rose"><div id="profileThemeChoices" class="theme-choice-grid" role="radiogroup" aria-label="Pick your profile colors"><button type="button" class="theme-choice is-selected" data-theme-choice="rose" role="radio" aria-checked="true"><span class="theme-swatch rose">🌷</span><span>Rose garden</span></button><button type="button" class="theme-choice" data-theme-choice="lavender" role="radio" aria-checked="false"><span class="theme-swatch lavender">☁️</span><span>Lavender skies</span></button><button type="button" class="theme-choice" data-theme-choice="mint" role="radio" aria-checked="false"><span class="theme-swatch mint">🍃</span><span>Mint meadow</span></button><button type="button" class="theme-choice" data-theme-choice="sky" role="radio" aria-checked="false"><span class="theme-swatch sky">🐦</span><span>Bluebird day</span></button></div><div id="profileThemePreview" class="profile-theme-preview" data-theme-preview="rose"><span id="profileThemeBuddy">🐰</span><div><b id="profilePreviewName">Your cozy style</b><small id="profilePreviewMeta">Pick colors that feel like you ♡</small></div></div><label class="theme-picker-label">Your little buddy</label><input id="profileMascot" class="hidden" type="hidden" value="🐰"><div id="profileBuddyChoices" class="theme-choice-grid buddy-choice-grid" role="radiogroup" aria-label="Choose your little buddy"><button type="button" class="theme-choice buddy-choice is-selected" data-buddy-choice="🐰" role="radio" aria-checked="true"><span class="theme-swatch buddy-swatch">🐰</span><span>Bunny</span></button><button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐱" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch">🐱</span><span>Kitty</span></button><button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐻" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch">🐻</span><span>Bear</span></button><button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐸" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch">🐸</span><span>Frog</span></button></div><button class="primary auth-submit" id="profileSave">Save profile ♡</button><button class="auth-switch" id="signOut">Sign out</button></div></div><div id="friendProfileGate" class="auth-gate hidden"><section class="auth-card friend-profile-card"><button type="button" class="auth-close" id="friendProfileClose" aria-label="Close profile">×</button><div id="friendProfileBuddy" class="auth-bunny">🐰</div><p class="eyebrow">A BUNNY FRIEND</p><h2 id="friendProfileName"></h2><p id="friendProfileHandle" class="auth-hint"></p><p id="friendProfileBio" class="friend-profile-bio"></p><p id="friendProfileCreated" class="auth-hint profile-created"></p><div id="friendProfileStyle" class="profile-theme-preview"><span>✿</span><div><b id="friendProfileThemeName">Rose garden</b><small>their profile colors</small></div></div><button type="button" class="primary auth-submit" id="friendProfileFollow">Follow ♡</button></section></div><div id="memoryActionGate" class="auth-gate hidden"><section class="memory-action-card" role="dialog" aria-modal="true" aria-labelledby="memoryActionTitle"><button type="button" class="memory-action-close" id="memoryActionClose" aria-label="Close options">×</button><div class="memory-action-art" id="memoryActionArt"><img id="memoryActionImage" class="hidden" alt=""><span id="memoryActionEmoji" aria-hidden="true">🌷</span></div><p class="memory-action-kicker" id="memoryActionKicker">A LITTLE MEMORY</p><h2 id="memoryActionTitle">A memory to keep</h2><p class="memory-action-text" id="memoryActionText">Keep this moment close ♡</p><div class="memory-action-buttons"><button type="button" class="primary memory-download" id="memoryDownload">Download ♡</button><button type="button" class="memory-option hidden" id="memoryCopy">Copy note</button><button type="button" class="memory-option hidden" id="memoryDelete">Delete this memory</button></div><button type="button" class="memory-action-cancel" id="memoryActionCancel">Close</button></section></div><div id="photoLightbox" class="auth-gate hidden"><section class="photo-lightbox-card" role="dialog" aria-modal="true" aria-label="Photo preview"><button type="button" class="auth-close" id="photoLightboxClose" aria-label="Close photo">×</button><img id="photoLightboxImage" alt="Full-size shared photo"><div class="photo-lightbox-actions"><button type="button" class="primary photo-lightbox-save photo-lightbox-action" id="photoLightboxSave">Save photo</button><button type="button" class="photo-lightbox-action photo-lightbox-delete hidden" id="photoLightboxDelete" aria-label="Delete photo">Delete photo</button></div></section></div><div id="photoDeleteConfirmGate" class="auth-gate hidden"><section class="auth-card photo-delete-confirm" role="dialog" aria-modal="true" aria-labelledby="photoDeleteConfirmTitle"><div class="auth-bunny" aria-hidden="true">🗑️</div><p class="eyebrow">A LITTLE GOODBYE</p><h2 id="photoDeleteConfirmTitle">Delete this photo?</h2><p class="auth-hint">It will be removed from your shared garden. You can still undo for a moment ♡</p><div class="photo-delete-confirm-actions"><button type="button" class="photo-delete-keep" id="photoDeleteCancel">Keep photo</button><button type="button" class="photo-delete-confirm-button" id="photoDeleteConfirm">Delete photo</button></div></section></div><div id="notificationGate" class="auth-gate hidden"><section class="auth-card notification-card" role="dialog" aria-modal="true" aria-labelledby="notificationTitle"><button type="button" class="auth-close" id="notificationClose" aria-label="Close notifications">×</button><h2 id="notificationTitle">Your Notifications</h2><div class="notification-tools"><span>Shared activity</span><button type="button" class="auth-switch" id="notificationsReadAll">Read all</button></div><div id="notificationList" class="notification-list"></div><details class="notification-settings"><summary>Notification Settings</summary><div class="notification-preferences"><label><input id="notifyMemories" type="checkbox" checked> Photos, songs & notes</label><label><input id="notifyBuddy" type="checkbox" checked> Buddy hellos</label><button type="button" class="primary" id="notificationsSave">Save settings ♡</button></div></details></section></div><input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script src="app.js"></script><script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js",{scope:"./"}).catch(error=>console.warn("Cute Bunny offline support could not start.",error)));</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="bunny-app-icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#fdf1ea">
+  <meta name="description" content="Cute Bunny — a tiny scrapbook of happy things.">
+  <title>Cute Bunny ♡</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="is-restoring">
+  <div id="sessionRestore" class="session-restore" role="status">
+    <span>🐰</span>
+    <p>Opening your little garden…</p>
+  </div>
+
+  <div id="welcome" class="welcome">
+    <div class="moon">☾</div>
+    <span class="float flower">✿</span>
+    <span class="float heart">♡</span>
+    <div class="welcome-card">
+      <div class="mascot">
+        <div class="ears"><i></i><i></i></div>
+        <div class="bunny-face">
+          <span class="eyes">•　•</span>
+          <span class="cheeks">●　●</span>
+          <span class="mouth">ᴗ</span>
+        </div>
+        <span class="mascot-flower">✿</span>
+      </div>
+      <p class="eyebrow">a little world made just for you</p>
+      <h1>Cute Bunny <span>♡</span></h1>
+      <p class="intro">A pocketful of photos, favorite songs, and tiny moments worth keeping.</p>
+      <button class="primary" id="enter">Let's begin ♡</button>
+      <small>take a breath · stay a little ☁</small>
+    </div>
+    <div class="ground"></div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <header>
+      <button class="brand" id="profileOpen">
+        <span id="topMascot">🐰</span>
+        <b>Cute Bunny<small id="topName">little memory garden</small></b>
+      </button>
+      <span class="crumb">MY SCRAPBOOK <b>/ <span id="crumb">Home</span></b></span>
+      <div class="header-actions">
+        <button class="round notification-bell" id="notificationOpen" aria-label="Notifications" title="Little love notes from your friend">
+          ♡<i id="notificationBadge" class="notification-badge hidden">0</i>
+        </button>
+        <button class="round mode-button" id="surprise" title="Switch to moonlight mode" aria-label="Switch to moonlight mode">☾</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="content"></section>
+    </main>
+
+    <audio id="globalAudio" preload="metadata" hidden></audio>
+
+    <div id="nowPlayingIsland" class="now-playing-island hidden">
+      <button type="button" id="nowPlayingPill" class="now-playing-pill" aria-expanded="false" aria-controls="nowPlayingPanel">
+        <span class="island-note" aria-hidden="true">♫</span>
+        <span id="islandShortTitle" class="island-short-title">Song</span>
+        <span class="island-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </button>
+      <section id="nowPlayingPanel" class="now-playing-panel hidden" aria-label="Now playing">
+        <div class="island-track-info">
+          <span class="island-album-icon" aria-hidden="true">🎼</span>
+          <div>
+            <strong id="islandFullTitle">A little song</strong>
+            <small class="island-status-line">
+              <span aria-hidden="true">♡</span>
+              <span id="islandStatusText">Listening together</span>
+            </small>
+          </div>
+        </div>
+        <div class="island-timeline">
+          <span id="islandCurrentTime">0:00</span>
+          <input id="islandSeek" type="range" min="0" max="1000" value="0" aria-label="Song progress">
+          <span id="islandDuration">0:00</span>
+        </div>
+        <div class="island-controls">
+          <button type="button" id="nowPlayingPrevious" aria-label="Previous song">‹</button>
+          <button type="button" id="nowPlayingToggle" class="island-play" aria-label="Play song">▶</button>
+          <button type="button" id="nowPlayingNext" aria-label="Next song">›</button>
+        </div>
+      </section>
+    </div>
+
+    <nav id="nav">
+      <button class="active" data-page="home"><i aria-hidden="true">🏡</i><span>Home</span></button>
+      <button data-page="gallery"><i aria-hidden="true">🌷</i><span>Photos</span></button>
+      <button data-page="music"><i aria-hidden="true">🎵</i><span>Music</span></button>
+      <button data-page="notes"><i aria-hidden="true">💌</i><span>Notes</span></button>
+      <button data-page="friends"><i aria-hidden="true">🐰</i><span>Friends</span></button>
+    </nav>
+  </div>
+
+  <div id="authGate" class="auth-gate hidden">
+    <form id="authForm" class="auth-card">
+      <div class="auth-bunny">🐰</div>
+      <p class="eyebrow">YOUR LITTLE WORLD</p>
+      <h2 id="authTitle">Create your account</h2>
+      <p class="auth-hint">Make a private space to share with your friend.</p>
+      <label>Email<input id="authEmail" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required></label>
+      <label>Display name<input id="authDisplay" maxlength="60" placeholder="What should we call you?"></label>
+      <label>Username<input id="authUser" maxlength="24" autocomplete="username" placeholder="3–24 letters, numbers or _"></label>
+      <label>Password<input id="authPass" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label>
+      <button class="primary auth-submit" id="authSubmit">Create account ♡</button>
+      <p class="auth-error" id="authError"></p>
+      <button type="button" class="auth-switch" id="authSwitch">Already have an account? Sign in</button>
+    </form>
+  </div>
+
+  <div id="profileGate" class="auth-gate hidden">
+    <div class="auth-card profile-card">
+      <small id="profileCreated" class="profile-date"></small>
+      <div class="auth-bunny">🐰</div>
+      <div class="profile-title-row">
+        <h2 id="profileName">Your profile</h2>
+        <span id="profileHandle" class="profile-handle"></span>
+      </div>
+      <div class="profile-name-row">
+        <label>Display name<input id="profileDisplay" maxlength="60"></label>
+        <label>Username<input id="profileUsername" maxlength="24" autocomplete="username"></label>
+      </div>
+      <label>About you<input id="profileBio" maxlength="300" placeholder="A little hello..."></label>
+      <label class="theme-picker-label">Your colors</label>
+      <input id="profileTheme" class="hidden" type="hidden" value="rose">
+      <div id="profileThemeChoices" class="theme-choice-grid" role="radiogroup" aria-label="Pick your profile colors">
+        <button type="button" class="theme-choice is-selected" data-theme-choice="rose" role="radio" aria-checked="true"><span class="theme-swatch rose">🌷</span><span>Rose garden</span></button>
+        <button type="button" class="theme-choice" data-theme-choice="lavender" role="radio" aria-checked="false"><span class="theme-swatch lavender">☁️</span><span>Lavender skies</span></button>
+        <button type="button" class="theme-choice" data-theme-choice="mint" role="radio" aria-checked="false"><span class="theme-swatch mint">🍃</span><span>Mint meadow</span></button>
+        <button type="button" class="theme-choice" data-theme-choice="sky" role="radio" aria-checked="false"><span class="theme-swatch sky">🐦</span><span>Bluebird day</span></button>
+      </div>
+      <div id="profileThemePreview" class="profile-theme-preview" data-theme-preview="rose">
+        <span id="profileThemeBuddy">🐰</span>
+        <div>
+          <b id="profilePreviewName">Your cozy style</b>
+          <small id="profilePreviewMeta">Pick colors that feel like you ♡</small>
+        </div>
+      </div>
+      <label class="theme-picker-label">Your little buddy</label>
+      <input id="profileMascot" class="hidden" type="hidden" value="🐰">
+      <div id="profileBuddyChoices" class="theme-choice-grid buddy-choice-grid" role="radiogroup" aria-label="Choose your little buddy">
+        <button type="button" class="theme-choice buddy-choice is-selected" data-buddy-choice="🐰" role="radio" aria-checked="true"><span class="theme-swatch buddy-swatch">🐰</span><span>Bunny</span></button>
+        <button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐱" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch">🐱</span><span>Kitty</span></button>
+        <button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐻" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch">🐻</span><span>Bear</span></button>
+        <button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐸" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch">🐸</span><span>Frog</span></button>
+      </div>
+      <button class="primary auth-submit" id="profileSave">Save profile ♡</button>
+      <button class="auth-switch" id="signOut">Sign out</button>
+    </div>
+  </div>
+
+  <div id="friendProfileGate" class="auth-gate hidden">
+    <section class="auth-card friend-profile-card">
+      <div id="friendProfileBuddy" class="auth-bunny">🐰</div>
+      <p class="eyebrow">A BUNNY FRIEND</p>
+      <h2 id="friendProfileName"></h2>
+      <p id="friendProfileHandle" class="auth-hint"></p>
+      <p id="friendProfileBio" class="friend-profile-bio"></p>
+      <p id="friendProfileCreated" class="auth-hint profile-created"></p>
+      <div id="friendProfileStyle" class="profile-theme-preview">
+        <span>✿</span>
+        <div>
+          <b id="friendProfileThemeName">Rose garden</b>
+          <small>their profile colors</small>
+        </div>
+      </div>
+      <button type="button" class="primary auth-submit" id="friendProfileFollow">Follow ♡</button>
+    </section>
+  </div>
+
+  <div id="memoryActionGate" class="auth-gate hidden">
+    <section class="memory-action-card" role="dialog" aria-modal="true" aria-labelledby="memoryActionTitle">
+      <div class="memory-action-art" id="memoryActionArt">
+        <img id="memoryActionImage" class="hidden" alt="">
+        <span id="memoryActionEmoji" aria-hidden="true">🌷</span>
+      </div>
+      <p class="memory-action-kicker" id="memoryActionKicker">A LITTLE MEMORY</p>
+      <h2 id="memoryActionTitle">A memory to keep</h2>
+      <p class="memory-action-text" id="memoryActionText">Keep this moment close ♡</p>
+      <div class="memory-action-buttons">
+        <button type="button" class="primary memory-download" id="memoryDownload">Download ♡</button>
+        <button type="button" class="memory-option hidden" id="memoryCopy">Copy</button>
+        <button type="button" class="memory-option hidden" id="memoryDelete">Delete</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="photoLightbox" class="auth-gate hidden">
+    <section class="photo-lightbox-card" role="dialog" aria-modal="true" aria-label="Photo preview">
+      <img id="photoLightboxImage" alt="Full-size shared photo">
+      <div class="photo-lightbox-actions">
+        <button type="button" class="primary photo-lightbox-save photo-lightbox-action" id="photoLightboxSave">Save photo</button>
+        <button type="button" class="photo-lightbox-action photo-lightbox-delete hidden" id="photoLightboxDelete" aria-label="Delete photo">Delete photo</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="photoDeleteConfirmGate" class="auth-gate hidden">
+    <section class="auth-card photo-delete-confirm" role="dialog" aria-modal="true" aria-labelledby="photoDeleteConfirmTitle">
+      <div class="auth-bunny" aria-hidden="true">🗑️</div>
+      <p class="eyebrow">A LITTLE GOODBYE</p>
+      <h2 id="photoDeleteConfirmTitle">Delete this photo?</h2>
+      <p class="auth-hint">It will be removed from your shared garden. You can still undo for a moment ♡</p>
+      <div class="photo-delete-confirm-actions">
+        <button type="button" class="photo-delete-keep" id="photoDeleteCancel">Keep photo</button>
+        <button type="button" class="photo-delete-confirm-button" id="photoDeleteConfirm">Delete photo</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="notificationGate" class="auth-gate hidden">
+    <section class="auth-card notification-card" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
+      <h2 id="notificationTitle">Your Notifications</h2>
+      <div class="notification-tools">
+        <span>Shared activity</span>
+        <button type="button" class="auth-switch" id="notificationsReadAll">Read all</button>
+      </div>
+      <div id="notificationList" class="notification-list"></div>
+      <details class="notification-settings">
+        <summary>Notification Settings</summary>
+        <div class="notification-preferences">
+          <label><input id="notifyMemories" type="checkbox" checked> Photos, songs & notes</label>
+          <label><input id="notifyBuddy" type="checkbox" checked> Buddy hellos</label>
+          <button type="button" class="primary" id="notificationsSave">Save settings ♡</button>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <div id="noteComposerGate" class="auth-gate hidden">
+    <section class="auth-card note-composer-card" role="dialog" aria-modal="true" aria-labelledby="noteComposerTitle">
+      <div class="auth-bunny" aria-hidden="true">💭</div>
+      <p class="eyebrow">YOUR LITTLE NOTE</p>
+      <h2 id="noteComposerTitle">Share a thought</h2>
+      <p class="auth-hint">Leave a quick note for your friends to see at the top of their chat ♡</p>
+      <input id="igNoteInput" class="input" maxlength="60" placeholder="Share what's on your mind… (up to 60 chars)" autocomplete="off">
+      <div class="note-composer-actions">
+        <button type="button" class="primary auth-submit" id="igNoteSubmit">Share note ♡</button>
+        <button type="button" class="auth-switch hidden" id="igNoteClear">Clear current note</button>
+      </div>
+    </section>
+  </div>
+
+  <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(error => {
+          console.warn("Cute Bunny offline support could not start.", error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

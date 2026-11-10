@@ -1,178 +1,1904 @@
-const $=s=>document.querySelector(s), cfg=window.CUTE_BUNNY_CONFIG||{};
-const sb=window.supabase&&cfg.supabaseUrl&&!cfg.supabaseUrl.startsWith('PASTE_')?window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
-let token=localStorage.getItem('cuteBunnyToken')||'',me=null,page='home',feed=[],friends=[],friendResults=[],friendQuery='';let mediaObjectUrls=[],mediaUrlCache=new Map(),pendingMediaUrls=new Map(),reactedMemories=new Set(),pendingPhotoActionTimer=0,photoDoubleTapUntil=0,authMode='register',deferredInstallPrompt=null;
-const kindLines=['You make ordinary days feel special ☀','A little reminder: you are loved just as you are ♡','Hope something makes you smile today 🌷','You deserve a soft, cozy moment ☁','You make the world kinder by being in it ✨','Sending a pocket-sized hug your way 🐻','I hope today brings you a tiny surprise 🌼','You are someone’s favorite hello 💌','Take your time. You are doing just fine 🍃','May your day have snacks, sunshine, and zero worries 🍓','You make people feel at home 🏡','Remember to be as kind to yourself as you are to others 🌸','You are allowed to rest and begin again ☁','A little sparkle follows you wherever you go ✨','You are wonderful in all your small, everyday ways ♡'];
-function setMode(mode){document.body.dataset.mode=mode;const b=$('#surprise');if(b){b.textContent=mode==='dark'?'☀':'☾';b.title=mode==='dark'?'Switch to sunshine mode':'Switch to moonlight mode';b.setAttribute('aria-label',b.title)}if(me)localStorage.setItem('cuteBunnyMode:'+me.username,mode)}
-const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function api(path,options={}){if(!sb)throw Error('Add your Supabase URL and publishable key in supabase-config.js first.');const method=options.method||'GET',body=options.body&&!(options.body instanceof FormData)?JSON.parse(options.body):options.body;const fail=e=>{if(e)throw Error(e.message||'Something went wrong.');};
- if(path==='/auth/register'){const {data,error}=await sb.auth.signUp({email:body.email,password:body.password,options:{emailRedirectTo:'https://whtankus.github.io/Cute-bunny/',data:{username:body.username.toLowerCase(),display_name:body.displayName}}});if(error){const message=(error.message||'').toLowerCase();if(message.includes('already registered'))throw Error('An account with that email already exists. Switch to Sign in ♡');if(message.includes('database error saving new user'))throw Error('We could not create your profile. That username may already be taken; try another one.');fail(error)}return {token:data.session?.access_token||'',user:data.user,needsEmailConfirm:!data.session};}
- if(path==='/auth/login'){const identifier=body.email.trim();if(identifier.includes('@')){const {data,error}=await sb.auth.signInWithPassword({email:identifier,password:body.password});fail(error);if(!data.session)throw Error('Your email is not confirmed yet. Check your inbox or ask the project owner to turn off email confirmation.');return {token:data.session.access_token,user:data.user};}const {data,error}=await sb.functions.invoke('username-login',{body:{identifier,password:body.password}});if(error)throw Error('Username sign-in service error: '+(error.message||'request failed')+'. Try your email, or check that username-login is deployed in Supabase.');if(data?.error)throw Error(data.error);const {data:sessionData,error:sessionError}=await sb.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});fail(sessionError);return {token:sessionData.session.access_token,user:sessionData.user};}
- const {data:{session}}=await sb.auth.getSession();if(!session)throw Error('Please sign in again.');
- if(path==='/me'&&method==='GET'){const {data,error}=await sb.from('profiles').select('*').eq('id',session.user.id).single();fail(error);return {...data,displayName:data.display_name};}
- if(path==='/me'&&method==='PUT'){const username=String(body.username||me?.username||'').trim().toLowerCase();if(!/^[a-z0-9_]{3,24}$/.test(username))throw Error('Usernames need 3–24 letters, numbers, or underscores.');const update={username,display_name:body.displayName,bio:body.bio,theme:body.theme,mascot:body.mascot,notification_preferences:body.notificationPreferences||me?.notification_preferences||{memories:true,buddy:true}};let {data,error}=await sb.from('profiles').update(update).eq('id',session.user.id).select().single();if(error){if(username!==me?.username)throw Error('Run supabase/feature-upgrades.sql in Supabase before changing your username.');const fallback=await sb.from('profiles').update({display_name:body.displayName,bio:body.bio,theme:body.theme,mascot:body.mascot}).eq('id',session.user.id).select().single();fail(fallback.error);data={...fallback.data,notification_preferences:me?.notification_preferences||{memories:true,buddy:true},featureUpgradeNeeded:true};}return {...data,displayName:data.display_name};}
- if(path.startsWith('/username-available?')){const username=decodeURIComponent(path.split('=').slice(1).join('=' )).toLowerCase();const {data,error}=await sb.from('profiles').select('id').eq('username',username).neq('id',session.user.id).maybeSingle();fail(error);return {available:!data};}
- if(path==='/notifications'){const {data,error}=await sb.from('notifications').select('id,actor_id,kind,memory_id,message,created_at,read_at,actor:profiles!notifications_actor_id_fkey(username,display_name,mascot)').order('created_at',{ascending:false}).limit(60);fail(error);return data||[];}
- if(path==='/notifications/read'&&method==='PUT'){const ids=body.ids||[];if(ids.length){const {error}=await sb.from('notifications').update({read_at:new Date().toISOString()}).in('id',ids);fail(error);}return {};}
- if(path==='/notifications/read-all'&&method==='PUT'){const {error}=await sb.from('notifications').update({read_at:new Date().toISOString()}).is('read_at',null);fail(error);return {};}
- if(path==='/buddy-ping'&&method==='POST'){const {data,error}=await sb.rpc('send_buddy_ping');fail(error);return {sent:!!data};}
- if(path==='/feed'){const rows=[],pageSize=500;let start=0;while(true){const {data,error}=await sb.from('memories').select('*,author:profiles!memories_owner_id_fkey(id,username,display_name,mascot)').order('created_at',{ascending:false}).order('id',{ascending:false}).range(start,start+pageSize-1);fail(error);rows.push(...data);if(data.length<pageSize)break;start+=pageSize}return rows.map(m=>({...m,createdAt:m.created_at,fileName:m.file_name,contentType:m.content_type,storagePath:m.storage_path,author:{...m.author,displayName:m.author.display_name}}));}
- if(path.startsWith('/users?q=')){const q=decodeURIComponent(path.slice('/users?q='.length)).trim(),fields='id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date',basic='id,username,display_name,bio,theme,mascot,created_at';let query=sb.from('profiles').select(fields).neq('id',session.user.id).order('username').limit(30);if(q)query=query.ilike('username','%'+q+'%');let {data,error}=await query;if(error&&/login_streak|last_login_date/i.test(error.message||'')){query=sb.from('profiles').select(basic).neq('id',session.user.id).order('username').limit(30);if(q)query=query.ilike('username','%'+q+'%');({data,error}=await query)}fail(error);const {data:edges,error:fe}=await sb.from('follows').select('followed_id').eq('follower_id',session.user.id);fail(fe);const followed=new Set(edges.map(x=>x.followed_id));return data.map(u=>({...u,login_streak:Number(u.login_streak)||0,displayName:u.display_name,isFollowing:followed.has(u.id)}));}
- if(path==='/following'){const basic='followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at)',fields='followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date)';let {data,error}=await sb.from('follows').select(fields).eq('follower_id',session.user.id).order('created_at',{ascending:false});if(error&&/login_streak|last_login_date/i.test(error.message||''))({data,error}=await sb.from('follows').select(basic).eq('follower_id',session.user.id).order('created_at',{ascending:false}));fail(error);return data.map(edge=>{const u=Array.isArray(edge.followed)?edge.followed[0]:edge.followed;return u?({...u,login_streak:Number(u.login_streak)||0,displayName:u.display_name,isFollowing:true,followedAt:edge.created_at}):null}).filter(Boolean);}
- if(path.startsWith('/follow/')){const username=decodeURIComponent(path.slice('/follow/'.length));const {data:user,error}=await sb.from('profiles').select('id').eq('username',username).single();fail(error);if(method==='POST'){const {error:e}=await sb.from('follows').insert({follower_id:session.user.id,followed_id:user.id});fail(e);return {}}const {error:e}=await sb.from('follows').delete().eq('follower_id',session.user.id).eq('followed_id',user.id);fail(e);return {};}
- if(path==='/memories'&&method==='POST'){const {data,error}=await sb.from('memories').insert({owner_id:session.user.id,kind:body.kind,text:body.text}).select().single();fail(error);return data;}
- if(path.startsWith('/memories/')&&method==='DELETE'){const id=path.split('/').pop();const {data:m,error}=await sb.from('memories').select('id,owner_id,storage_path').eq('id',id).single();fail(error);if(m.storage_path)await sb.storage.from('memories').remove([m.storage_path]);const {error:e}=await sb.from('memories').delete().eq('id',id);fail(e);return {};}
- if(path==='/media'&&method==='POST'){const form=body,file=form.get('file'),kind=form.get('kind'),caption=form.get('caption')||file.name;if(file.size>8*1024*1024)throw Error('Choose a file under 8 MB.');const photoTypes=['image/jpeg','image/png','image/webp','image/gif'],songTypes=['audio/mpeg','audio/mp4','audio/ogg','audio/wav','audio/webm'];if(!(kind==='photo'?photoTypes.includes(file.type):kind==='song'?songTypes.includes(file.type):false))throw Error(kind==='photo'?'Choose a JPG, PNG, WebP, or GIF image.':'Choose an MP3, MP4, OGG, WAV, or WebM audio file.');const key=session.user.id+'/'+crypto.randomUUID()+'/'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');const {error:ue}=await sb.storage.from('memories').upload(key,file,{contentType:file.type,upsert:false});fail(ue);const {data,error}=await sb.from('memories').insert({owner_id:session.user.id,kind,text:caption,file_name:file.name,content_type:file.type,storage_path:key}).select().single();if(error){await sb.storage.from('memories').remove([key]);fail(error);}return data;}
- throw Error('That action is not available.');}
-function toast(msg){const raw=String(msg??'').replace(/\s+/g,' ').trim(),lower=raw.toLowerCase();let message=raw;if(lower.includes('failed to send a request to the edge function'))message='Sign-in service unavailable. Try email instead.';else if(lower.includes('failed to fetch')||lower.includes('network request failed'))message='Could not connect. Check internet and retry.';else if(lower.includes('database error saving new user'))message='Could not save account. Try another username.';else if(lower.includes('duplicate key')||lower.includes('already exists'))message='That username or email is already in use.';else if(lower.includes('row-level security')||lower.includes('permission denied'))message='You do not have permission to do that.';if(message.length>76)message=message.slice(0,73).trimEnd()+'…';let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.append(t)}t.textContent=message;t.setAttribute('role','status');t.setAttribute('aria-live','polite');t.classList.add('show');clearTimeout(window.cuteToast);window.cuteToast=setTimeout(()=>t.classList.remove('show'),2800)}
-function sprinkle(x,y){for(let i=0;i<8;i++){let a=document.createElement('span');a.className='sprinkle';a.textContent=['♡','✦','🌸','✨'][i%4];a.style.left=x+'px';a.style.top=y+'px';a.style.setProperty('--dx',(Math.random()*100-50)+'px');a.style.setProperty('--dy',(Math.random()*-90-25)+'px');document.body.append(a);setTimeout(()=>a.remove(),1000)}}
-function isAppInstalled(){return window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true}
-function openAuth(mode='register'){authMode=mode;$('#authGate').classList.remove('hidden');$('#authTitle').textContent=mode==='register'?'Create your account':'Welcome back ♡';$('#authForm .auth-hint').textContent=mode==='login'?'Sign in with your username or email and password.':'Create an account with your email, username, and password.';$('#authDisplay').closest('label').classList.toggle('hidden',mode==='login');$('#authUser').closest('label').classList.toggle('hidden',mode==='login');$('#authEmail').closest('label').classList.remove('hidden');$('#authEmail').required=true;$('#authEmail').type=mode==='login'?'text':'email';$('#authEmail').placeholder=mode==='login'?'Username or email':'you@example.com';$('#authEmail').closest('label').firstChild.textContent=mode==='login'?'Username or email':'Email';$('#authPass').autocomplete=mode==='login'?'current-password':'new-password';$('#authSubmit').textContent=mode==='login'?'Sign in ♡':'Create account ♡';$('#authSwitch').textContent=mode==='login'?"New here? Create an account":"Already have an account? Sign in";$('#authError').textContent='';}
-function setTheme(theme){document.body.dataset.theme=['rose','lavender','mint','sky'].includes(theme)?theme:'rose'}
-function setUser(u){if(me?.id!==u.id){notificationRows=[];notificationLoaded=false;notificationLoading=false}me=u;try{reactedMemories=new Set(JSON.parse(localStorage.getItem('cuteBunnyHearts:'+u.username)||'[]'))}catch{reactedMemories=new Set()}setMode(localStorage.getItem('cuteBunnyMode:'+u.username)||'light');setTheme(u.theme);$('#topMascot').textContent=u.mascot||'🐰';$('#topName').textContent='@'+u.username;$('#authGate').classList.add('hidden');$('#welcome').classList.add('hidden');$('#app').classList.remove('hidden');go('home');startRealtime();void loadNotifications()}
-async function refresh(){const results=await Promise.all([api('/me'),api('/feed'),api('/following')]);me=results[0];feed=results[1];friends=results[2];render();if(!$('#friendProfileGate').classList.contains('hidden')){const profile=[...friends,...friendResults].find(user=>user.username===$('#friendProfileGate').dataset.username);if(profile)showFriendProfile(profile)}}
-const themeNames={rose:'Rose garden',lavender:'Lavender skies',mint:'Mint meadow',sky:'Bluebird day'};
-function formatMessageTime(value){const date=new Date(value);if(Number.isNaN(date.getTime()))return '';const timeZone=Intl.DateTimeFormat().resolvedOptions().timeZone,now=new Date(),yesterday=new Date(now);yesterday.setDate(now.getDate()-1);const day=date.toDateString()===now.toDateString()?'Today':date.toDateString()===yesterday.toDateString()?'Yesterday':new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',timeZone}).format(date);const time=new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit',timeZone}).format(date);return day+' · '+time}
-function formatNoteClock(value){const date=new Date(value);if(Number.isNaN(date.getTime()))return'';const timeZone=Intl.DateTimeFormat().resolvedOptions().timeZone;return new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit',timeZone}).format(date)}
-function noteDayLabel(value){const date=new Date(value);if(Number.isNaN(date.getTime()))return'Little memories';const today=new Date(),yesterday=new Date(today);today.setHours(0,0,0,0);yesterday.setDate(today.getDate()-1);yesterday.setHours(0,0,0,0);const day=new Date(date);day.setHours(0,0,0,0);const timeZone=Intl.DateTimeFormat().resolvedOptions().timeZone;return day.getTime()===today.getTime()?'Today':day.getTime()===yesterday.getTime()?'Yesterday':new Intl.DateTimeFormat(undefined,{weekday:'long',month:'long',day:'numeric',timeZone}).format(date)}
-function groupedNotes(memories){let previous='';return memories.map(memory=>{const label=noteDayLabel(memory.createdAt||memory.created_at),heading=label===previous?'':`<h4 class="note-day-heading">${esc(label)}</h4>`;previous=label;return heading+memoryCard(memory)}).join('')}
-function formatJoinDate(value){if(!value)return 'A little while ago';const date=new Date(value);return Number.isNaN(date.getTime())?'A little while ago':new Intl.DateTimeFormat(undefined,{month:'long',day:'numeric',year:'numeric'}).format(date)}
-function friendRow(user){return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot||'🐰')}</span><span class="friend-copy"><b>${esc(user.displayName||user.display_name||user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing?'Following ✓':'Follow ♡'}</button></article>`}
-function streakBadge(count){return count>=30?'🌟 Love-garden legend':count>=7?'🌼 Week in bloom':count>=3?'🌱 Growing steadily':count>0?'🌷 First blossoms':'✨ Fresh start'}
-function streakMessage(count){if(count>0&&count%7===0)return'A whole week of little hellos! Keep blooming ♡';if(count>=7){const days=count%7;return`${days} ${days===1?'day':'days'} into a new week of hellos ♡`}if(count===1)return'A lovely first hello. Come back tomorrow ♡';if(count===0)return'A sweet little hello starts your streak ♡';const remaining=7-count;return`${remaining} more ${remaining===1?'day':'days'} to your first week ♡`}
-function paintStreak(prefix,count,lastLoginDate=me?.last_login_date){count=Math.max(0,Number(count)||0);const countNode=$(`#${prefix}StreakCount`),badge=$(`#${prefix}StreakBadge`),message=$(`#${prefix}StreakMessage`),progress=$(`#${prefix}StreakProgress`);if(countNode){countNode.innerHTML=`<span>${count}</span><i class="streak-fire-emoji" aria-hidden="true">🔥</i>`;countNode.setAttribute('aria-label',`${count} day streak`)};if(badge)badge.textContent=streakBadge(count);if(message)message.textContent='Every little moment counts!';if(progress){const recorded=new Set(),last=String(lastLoginDate||'').slice(0,10),lastDate=new Date(`${last}T00:00:00Z`);if(count&&/^\d{4}-\d{2}-\d{2}$/.test(last)&&!Number.isNaN(lastDate.getTime()))for(let n=0;n<Math.min(count,7);n++){const day=new Date(lastDate);day.setUTCDate(day.getUTCDate()-n);recorded.add(day.toISOString().slice(0,10))}const today=new Date(),monday=new Date(Date.UTC(today.getUTCFullYear(),today.getUTCMonth(),today.getUTCDate()-((today.getUTCDay()+6)%7)));progress.innerHTML=Array.from({length:7},(_,i)=>{const day=new Date(monday);day.setUTCDate(day.getUTCDate()+i);const iso=day.toISOString().slice(0,10),active=recorded.has(iso),current=iso===today.toISOString().slice(0,10);return `<span class="profile-streak-day${active?' is-active':''}${current?' is-today':''}" aria-label="${day.toLocaleDateString('en',{weekday:'long',timeZone:'UTC'})}${active?', streak recorded':''}"><i>${day.toLocaleDateString('en',{weekday:'narrow',timeZone:'UTC'})}</i></span>`}).join('');progress.setAttribute('aria-label','Recorded login days this week')}}
-function showFriendProfile(user){if(!user)return;const gate=$('#friendProfileGate');gate.dataset.username=user.username;gate.dataset.following=String(!!user.isFollowing);$('#friendProfileBuddy').textContent=user.mascot||'🐰';$('#friendProfileName').textContent=user.displayName||user.display_name||user.username;$('#friendProfileHandle').textContent='@'+user.username;$('#friendProfileBio').textContent=user.bio||'A little mystery friend ♡';$('#friendProfileCreated').textContent='Joined '+formatJoinDate(user.created_at);$('#friendProfileStyle').dataset.themePreview=user.theme||'rose';$('#friendProfileThemeName').textContent=themeNames[user.theme]||'Rose garden';$('#friendProfileFollow').textContent=user.isFollowing?'Following ✓':'Follow ♡';$('#friendProfileFollow').classList.toggle('is-following',!!user.isFollowing);gate.classList.remove('hidden')}
-async function toggleFriendFollow(username,isFollowing){const beforeFriends=friends.slice(),beforeResults=friendResults.slice(),found=[...friends,...friendResults].find(user=>user.username===username)||{username,displayName:username,mascot:'🐰'},next=!isFollowing;friends=next?[...friends.filter(user=>user.username!==username),{...found,isFollowing:true}]:friends.filter(user=>user.username!==username);friendResults=friendResults.map(user=>user.username===username?{...user,isFollowing:next}:user);const gate=$('#friendProfileGate');if(gate.dataset.username===username){gate.dataset.following=String(next);$('#friendProfileFollow').textContent=next?'Following ✓':'Follow ♡';$('#friendProfileFollow').classList.toggle('is-following',next)}render();try{await api('/follow/'+encodeURIComponent(username),{method:next?'POST':'DELETE'});toast(next?'You’re following this friend ♡':'Friend removed from your circle');void refresh().catch(()=>{})}catch(error){friends=beforeFriends;friendResults=beforeResults;if(gate.dataset.username===username){gate.dataset.following=String(isFollowing);$('#friendProfileFollow').textContent=isFollowing?'Following ✓':'Follow ♡';$('#friendProfileFollow').classList.toggle('is-following',isFollowing)}render();toast(error.message)}}
-function updateBuddyChoices(value=$('#profileMascot')?.value||'🐰'){document.querySelectorAll('[data-buddy-choice]').forEach(button=>{const selected=button.dataset.buddyChoice===value;button.classList.toggle('is-selected',selected);button.setAttribute('aria-checked',String(selected))})}
-function updateThemePreview(theme=$('#profileTheme')?.value||'rose'){const preview=$('#profileThemePreview');if(preview)preview.dataset.themePreview=theme;document.querySelectorAll('[data-theme-choice]').forEach(button=>{const selected=button.dataset.themeChoice===theme;button.classList.toggle('is-selected',selected);button.setAttribute('aria-checked',String(selected))});const buddy=$('#profileMascot')?.value||'🐰',avatar=$('#profileThemeBuddy');if(avatar)avatar.textContent=buddy;const name=$('#profilePreviewName');if(name)name.textContent=$('#profileDisplay')?.value.trim()||me?.displayName||'Your cozy style';const meta=$('#profilePreviewMeta');if(meta)meta.textContent=`@${($('#profileUsername')?.value.trim().toLowerCase()||me?.username||'your_name')} · ${themeNames[theme]||themeNames.rose}`;updateBuddyChoices(buddy)}
-function playBoing(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;const context=new Audio();const oscillator=context.createOscillator(),gain=context.createGain();oscillator.type='sine';oscillator.frequency.setValueAtTime(520,context.currentTime);oscillator.frequency.exponentialRampToValueAtTime(760,context.currentTime+.09);oscillator.frequency.exponentialRampToValueAtTime(390,context.currentTime+.24);gain.gain.setValueAtTime(.0001,context.currentTime);gain.gain.exponentialRampToValueAtTime(.12,context.currentTime+.025);gain.gain.exponentialRampToValueAtTime(.0001,context.currentTime+.28);oscillator.connect(gain);gain.connect(context.destination);oscillator.start();oscillator.stop(context.currentTime+.29);oscillator.onended=()=>context.close()}catch{}}
-function popLoveHeart(card){clearTimeout(window.cuteBunnyPhotoOpenTimer);if(!card)return;const id=card.closest('[data-memory]')?.dataset.memory;if(id){const key=String(id);reactedMemories.has(key)?reactedMemories.delete(key):reactedMemories.add(key);try{localStorage.setItem('cuteBunnyHearts:'+me?.username,JSON.stringify([...reactedMemories].slice(-2000)))}catch{}const likedNow=reactedMemories.has(key);card.classList.toggle('is-loved',likedNow);const control=card.closest('.feed-item')?.querySelector('[data-memory-heart]');if(control){control.textContent=likedNow?'♥':'♡';control.setAttribute('aria-pressed',String(likedNow));control.setAttribute('aria-label',likedNow?'Unlike memory':'Like memory')}}card.classList.remove('heart-tap');void card.offsetWidth;card.classList.add('heart-tap');clearTimeout(card.heartTimer);card.heartTimer=setTimeout(()=>card.classList.remove('heart-tap'),1050);window.lastLoveTapAt=Date.now()}
-function syncStreakUI(){const node=document.querySelector('.streak-widget');if(node)node.outerHTML=streakWidget()}
-function streakWidget(){const count=Math.max(0,Number(me?.login_streak)||0),filled=count?((count-1)%7)+1:0,days=Array.from({length:7},(_,i)=>`<span class="streak-day${i<filled?' is-filled':''}" aria-hidden="true">${i<filled?'✿':'·'}</span>`).join('');return `<article class="tile streak-widget" aria-label="Login streak: ${count} ${count===1?'day':'days'}"><div class="streak-top"><div class="tile-art streak-mascot" aria-hidden="true"><span class="streak-art-count" aria-label="${count} day streak">${count}<i aria-hidden="true">🔥</i></span></div><div class="streak-copy"><small>Your streak</small><strong>${count?`${count} ${count===1?'day':'days'}`:'Your first day'}</strong></div></div><p>${count?count+(count===1?' day, Keep it going!':' days, Keep it going!'):'Start your streak today ♡'}</p><div class="streak-progress" role="img" aria-label="${filled} of 7 days toward the next milestone">${days}</div><small class="streak-badge">${esc(streakBadge(count))}</small><button type="button" class="primary streak-profile-link" data-open-profile>Open profile →</button></article>`}
-function recordLoginStreak(){if(!me)return;const userId=me.id,key='cuteBunnyStreak:'+userId,today=new Date().toISOString().slice(0,10),yesterdayDate=new Date(`${today}T00:00:00.000Z`);yesterdayDate.setUTCDate(yesterdayDate.getUTCDate()-1);const yesterday=yesterdayDate.toISOString().slice(0,10),serverDate=String(me.last_login_date||'').slice(0,10),serverCount=Math.max(0,Number(me.login_streak)||0);let saved={count:0,date:''};try{saved=JSON.parse(localStorage.getItem(key)||'{}')}catch{}let localCount;if(serverDate===today)localCount=serverCount||1;else if(serverDate===yesterday)localCount=serverCount+1;else if(serverDate)localCount=1;else if(saved.date===today)localCount=Math.max(1,Number(saved.count)||1);else if(saved.date===yesterday)localCount=Math.max(1,Number(saved.count)||0)+1;else localCount=1;me.login_streak=localCount;me.last_login_date=today;try{localStorage.setItem(key,JSON.stringify({count:localCount,date:today}))}catch{}syncStreakUI();if(!sb)return;void sb.rpc('record_login_streak').then(({data,error})=>{if(error)throw error;if(me?.id!==userId)return;const result=Array.isArray(data)?data[0]:data,count=Math.max(1,Number(result?.login_streak)||localCount),date=String(result?.last_login_date||today).slice(0,10);me.login_streak=count;me.last_login_date=date;try{localStorage.setItem(key,JSON.stringify({count,date}))}catch{}syncStreakUI()}).catch(error=>console.info('Using this-device login streak until the streak database migration is installed.',error?.message||''))}
-function replaceOptimisticMemory(tempId,item){const preview=pendingMediaUrls.get(String(tempId)),index=feed.findIndex(memory=>String(memory.id)===String(tempId)),existing=feed.findIndex(memory=>String(memory.id)===String(item.id));if(preview){pendingMediaUrls.delete(String(tempId));if(index>=0)pendingMediaUrls.set(String(item.id),preview);else{URL.revokeObjectURL(preview);item.previewUrl=''}}if(index>=0)feed[index]=item;else if(existing>=0)feed[existing]=item;else feed.unshift(item);const old=document.querySelector(`.feed-item[data-memory="${CSS.escape(String(tempId))}"]`);if(old){const template=document.createElement('template');template.innerHTML=memoryCard(item);old.replaceWith(template.content.firstElementChild);const photo=document.querySelector(`.feed-item[data-memory="${CSS.escape(String(item.id))}"] .feed-photo`);if(photo&&item.kind==='photo')void hydrateOneMedia(photo)}if(page==='home'){const tiles=document.querySelectorAll('#content>.grid>.tile');const visible=feed.filter(memory=>!pendingDeleteTimers.has(String(memory.id))),counts={photo:visible.filter(x=>x.kind==='photo').length,song:visible.filter(x=>x.kind==='song').length,note:visible.filter(x=>x.kind==='note').length};tiles.forEach(tile=>{const title=tile.querySelector('h3')?.textContent||'';const p=tile.querySelector('p');if(!p)return;if(title.includes('Photo garden'))p.textContent=`${counts.photo} shared photos`;else if(title.includes('Cozy playlist'))p.textContent=`${counts.song} shared songs`;else if(title.includes('Little love notes'))p.textContent=`${counts.note} saved notes`})}}
-function go(p){page=p;$('#crumb').textContent=({home:'Home',gallery:'Photos',music:'Music',notes:'Notes',friends:'Friends'})[p]||'Home';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render();window.scrollTo({top:0,behavior:'smooth'})}
-function mediaSrc(m){return m.storagePath||m.storage_path||''}
-function clearMediaUrlCache(){for(const url of mediaUrlCache.values())URL.revokeObjectURL(url);mediaUrlCache.clear()}
-function render(){let c=$('#content');if(!c)return;const visibleFeed=feed.filter(x=>!pendingDeleteTimers.has(String(x.id))),pics=visibleFeed.filter(x=>x.kind==='photo'),songs=visibleFeed.filter(x=>x.kind==='song'),notes=visibleFeed.filter(x=>x.kind==='note');
-if(page==='home')c.innerHTML=`<div class="heading"><h2>Welcome, ${esc(me?.displayName||'friend')} ♡</h2><p>Your little shared corner for favorite things.</p></div><div class="hero"><div><small>✿ MADE FOR LITTLE MOMENTS</small><h3>Welcome to the memory garden</h3><p>Share photos, songs, and sweet notes with your friend.</p><button class="primary" data-go="friends">Find your friend ♡</button></div><button class="hero-art bunny-button" id="bunnyBuddy" aria-label="Open your profile"><span>☁️</span><span>${esc(me?.mascot||'🐰')}</span><span>🌷</span><svg class="doodle-bouquet" viewBox="0 0 90 70" aria-hidden="true"><path d="M45 66Q35 42 20 27M45 66Q46 38 47 20M45 66Q56 42 72 30"/><path d="M39 54q-13-13-21-5 7 12 21 5M51 53q12-15 21-7-6 13-21 7"/><g class="bloom"><circle cx="20" cy="22" r="5"/><circle cx="14" cy="22" r="4"/><circle cx="26" cy="22" r="4"/><circle cx="20" cy="16" r="4"/><circle cx="20" cy="28" r="4"/></g><g class="bloom lavender"><circle cx="47" cy="16" r="5"/><circle cx="41" cy="16" r="4"/><circle cx="53" cy="16" r="4"/><circle cx="47" cy="10" r="4"/><circle cx="47" cy="22" r="4"/></g><g class="bloom peach"><circle cx="73" cy="27" r="5"/><circle cx="67" cy="27" r="4"/><circle cx="79" cy="27" r="4"/><circle cx="73" cy="21" r="4"/><circle cx="73" cy="33" r="4"/></g></svg><i>✦</i></button></div><div class="daily"><span class="daily-icon">🌼</span><div><small>A LITTLE KINDNESS FOR TODAY</small><p id="compliment">${esc(me?.bio||kindLines[new Date().getDate()%kindLines.length])}</p></div><button class="round" id="newCompliment">↻</button></div><div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div><div class="grid happy-things-grid"><article class="tile"><div class="tile-art photo-art">🌸</div><h3>Photo garden</h3><p>${pics.length} shared photos</p><button class="primary" data-go="gallery">Open photos →</button></article><article class="tile"><div class="tile-art music-art">🎧<span>♫</span></div><h3>Cozy playlist</h3><p>${songs.length} shared songs</p><button class="primary" data-go="music">Open music →</button></article><article class="tile"><div class="tile-art note-art">💌</div><h3>Little love notes</h3><p>${notes.length} saved notes</p><button class="primary" data-go="notes">Open notes →</button></article>${streakWidget()}</div><div class="feed-list"><h3>Your memory history</h3>${feed.map(memoryCard).join('')||'<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}</div>`;
-else if(page==='gallery')c.innerHTML=`<div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div><label class="primary upload-label">＋ Add photo<input data-upload="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden></label><section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('')||'<div class="empty">Your garden is waiting for its first photo ♡</div>'}</section>`;
-else if(page==='music')c.innerHTML=`<div class="heading"><h2>Cozy music 🎵</h2><p>Your songs play right here in the garden.</p></div><label class="primary upload-label">＋ Add a song<input data-upload="song" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" hidden></label><h3 class="shared-songs-title">Your shared songs</h3><div class="grid media-grid music-grid">${songs.map(memoryCard).join('')||'<div class="empty">Add a song file and listen together right here ♡</div>'}</div>`;
-else if(page==='notes')c.innerHTML=`<div class="heading"><h2>A little letter nook 💌</h2><p>Small words can make someone’s whole day.</p></div><div class="tile note-compose"><textarea id="noteText" class="input" maxlength="1000" placeholder="Leave a kind thought, a silly memory, or a little hello…" style="width:100%;min-height:110px"></textarea><button class="primary" id="saveNote" style="margin-top:10px">Save note ♡</button></div><div class="feed-list"><h3>Little words to keep</h3>${groupedNotes(notes)||'<div class="empty">Your note garden is waiting. Leave the first little hello ♡</div>'}</div>`;
-else c.innerHTML=`<div class="heading"><h2>Your little circle 🐰</h2><p>Find a friend, then keep your favorite things together.</p></div><div class="friend-search"><input class="input" id="friendSearch" value="${esc(friendQuery)}" placeholder="Search username…"><button class="primary" id="searchFriends">Find</button></div><section class="following-list"><div class="friend-section-title"><h3>People you follow</h3><span>${friends.length}</span></div>${friends.map(friendRow).join('')||'<div class="empty">Your circle is waiting for its first friend ♡</div>'}</section><section class="friend-results-section"><div class="friend-section-title"><h3>Find new friends</h3></div><div id="friendResults">${friendResults.map(friendRow).join('')||'<div class="empty">Search a username to peek at their profile ♡</div>'}</div></section>`;hydrateMedia();
+const $ = s => document.querySelector(s), cfg = window.CUTE_BUNNY_CONFIG || {};
+const sb = window.supabase && cfg.supabaseUrl && !cfg.supabaseUrl.startsWith('PASTE_')
+  ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    })
+  : null;
+
+let token = localStorage.getItem('cuteBunnyToken') || '', me = null, page = 'home', feed = [], friends = [], friendResults = [], friendQuery = '';
+let mediaObjectUrls = [], mediaUrlCache = new Map(), pendingMediaUrls = new Map(), reactedMemories = new Set();
+let pendingDeleteTimers = new Map(), authMode = 'register';
+let playlist = [], playlistIndex = -1, audioObjectUrl = '';
+let notificationRows = [], notificationLoaded = false, notificationLoading = false;
+let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
+let activeMessageActionsId = null;
+
+const kindLines = [
+  'You make ordinary days feel special ☀',
+  'A little reminder: you are loved just as you are ♡',
+  'Hope something makes you smile today 🌷',
+  'You deserve a soft, cozy moment ☁',
+  'You make the world kinder by being in it ✨',
+  'Sending a pocket-sized hug your way 🐻',
+  'I hope today brings you a tiny surprise 🌼',
+  'You are someone’s favorite hello 💌',
+  'Take your time. You are doing just fine 🍃',
+  'May your day have snacks, sunshine, and zero worries 🍓',
+  'You make people feel at home 🏡',
+  'Remember to be as kind to yourself as you are to others 🌸',
+  'You are allowed to rest and begin again ☁',
+  'A little sparkle follows you wherever you go ✨',
+  'You are wonderful in all your small, everyday ways ♡'
+];
+
+let currentKindnessIndex = new Date().getDate() % kindLines.length;
+function getKindness() {
+  return kindLines[currentKindnessIndex % kindLines.length];
 }
-let selectedMemoryIds=new Set(),selectionMode=false,pendingDeleteTimers=new Map(),notificationRows=[],notificationLoaded=false,notificationLoading=false,presenceChannel=null,notificationChannel=null,memoryChannel=null,profileChannel=null,audioObjectUrl='',playlist=[],playlistIndex=-1;
-function formatClock(value){if(!Number.isFinite(value)||value<0)return'0:00';const minutes=Math.floor(value/60),seconds=Math.floor(value%60);return `${minutes}:${String(seconds).padStart(2,'0')}`}
-function shortIslandTitle(track){const name=String(track?.fileName||track?.text||'Song').replace(/\.[^.]{1,8}$/,'').trim();return Array.from(name||'Song').slice(0,5).join('')}
-function toggleMusicIsland(force){const panel=$('#nowPlayingPanel'),pill=$('#nowPlayingPill'),track=playlist[playlistIndex];if(!panel)return;if(!track&&force!==false)return;const open=typeof force==='boolean'?force:panel.classList.contains('hidden');panel.classList.toggle('hidden',!open);pill?.setAttribute('aria-expanded',String(open))}
-function syncPlayer(){const audio=$('#globalAudio');if(!audio)return;document.querySelectorAll('[data-play-song]').forEach(button=>{const active=String(playlist[playlistIndex]?.id)===String(button.dataset.playSong)&&!audio.paused&&!audio.ended;button.classList.toggle('is-playing',active);button.setAttribute('aria-pressed',String(active));button.setAttribute('aria-label',active?'Pause song':'Play song')});const track=playlist[playlistIndex],hasTrack=!!track&&!!audio.src,playing=hasTrack&&!audio.paused&&!audio.ended,island=$('#nowPlayingIsland'),pill=$('#nowPlayingPill'),shortTitle=$('#islandShortTitle'),fullTitle=$('#islandFullTitle'),status=$('#islandStatusText'),toggle=$('#nowPlayingToggle'),seek=$('#islandSeek'),current=$('#islandCurrentTime'),duration=$('#islandDuration');if(island){island.classList.toggle('hidden',!hasTrack);island.classList.toggle('is-playing',playing)}$('#app').classList.toggle('has-now-playing',hasTrack);if(!hasTrack)toggleMusicIsland(false);if(track){const title=track.fileName||track.text||'A little song',currentStatus=String(me?.bio||'Listening together').trim()||'Listening together';if(shortTitle)shortTitle.textContent=shortIslandTitle(track);if(fullTitle)fullTitle.textContent=title;if(status)status.textContent=currentStatus;if(pill){pill.title=title+' · '+currentStatus;pill.setAttribute('aria-label','Music: '+title+'. Status: '+currentStatus+'. Open player')}}if(toggle){toggle.textContent=audio.paused?'▶':'Ⅱ';toggle.setAttribute('aria-label',audio.paused?'Play song':'Pause song')}if(seek)seek.value=audio.duration?String(Math.round(audio.currentTime/audio.duration*1000)):0;if(current)current.textContent=formatClock(audio.currentTime);if(duration)duration.textContent=formatClock(audio.duration)}
-async function playSong(id){const songs=feed.filter(x=>x.kind==='song'),index=songs.findIndex(x=>String(x.id)===String(id)),audio=$('#globalAudio');if(index<0)return toast('This song is no longer in your garden ♡');if(String(playlist[playlistIndex]?.id)===String(id)&&audio.src){if(audio.paused)await audio.play().catch(()=>{});else audio.pause();syncPlayer();return}playlist=songs;playlistIndex=index;const track=songs[index];audio.pause();audio.removeAttribute('src');audio.load();if(audioObjectUrl)URL.revokeObjectURL(audioObjectUrl);syncPlayer();try{const {data,error}=await sb.storage.from('memories').download(track.storagePath);if(error)throw error;audioObjectUrl=URL.createObjectURL(data);audio.src=audioObjectUrl;await audio.play();syncPlayer()}catch(e){toast(e.message||'Could not play this song right now ♡')}}
-function stepSong(step){if(!playlist.length)return;playlistIndex=(playlistIndex+step+playlist.length)%playlist.length;void playSong(playlist[playlistIndex].id)}
-function syncPresenceUI(){if(!presenceChannel)return;const state=presenceChannel.presenceState();document.querySelectorAll('[data-friend-id]').forEach(node=>node.classList.toggle('is-online',!!state[node.dataset.friendId]?.length))}
-function startRealtime(){if(!sb||!me)return;try{presenceChannel=sb.channel('cute-bunny-presence',{config:{presence:{key:me.id}}}).on('presence',{event:'sync'},syncPresenceUI).subscribe(async status=>{if(status==='SUBSCRIBED')await presenceChannel.track({username:me.username,online_at:new Date().toISOString()})});profileChannel=sb.channel('cute-bunny-profiles-'+me.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles'},payload=>{if(payload.new?.id!==me.id)void refresh()}).subscribe();notificationChannel=sb.channel('cute-bunny-notifications-'+me.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'recipient_id=eq.'+me.id},payload=>{void loadNotifications();if(!$('#notificationGate').classList.contains('hidden'))renderNotifications();toast('A little hello from your friend ♡')}).subscribe();memoryChannel=sb.channel('cute-bunny-memories-'+me.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'memories'},()=>{clearTimeout(window.cuteMemoryRefresh);window.cuteMemoryRefresh=setTimeout(()=>void refresh(),500)}).subscribe()}catch(error){console.info('Live updates will start when Realtime is enabled.',error?.message||'')}}
-async function loadNotifications(){if(!me||notificationLoading)return;const requestedFor=me.id;notificationLoading=true;try{const rows=await api('/notifications');if(me?.id!==requestedFor)return;notificationRows=rows;notificationLoaded=true;updateNotificationBadge()}catch(error){if(me?.id===requestedFor)console.info('Notifications are ready after the feature SQL is installed.',error?.message||'')}finally{if(me?.id===requestedFor){notificationLoading=false;if(!$('#notificationGate').classList.contains('hidden'))renderNotifications()}}}
-function updateNotificationBadge(){const badge=$('#notificationBadge'),count=notificationRows.filter(n=>!n.read_at).length;badge.textContent=count>9?'9+':String(count);badge.classList.toggle('hidden',count===0)}
-function renderNotifications(){const list=$('#notificationList');if(!list)return;const prefs=me?.notification_preferences||{};$('#notifyMemories').checked=prefs.memories!==false;$('#notifyBuddy').checked=prefs.buddy!==false;list.innerHTML=notificationRows.map(n=>{const actor=Array.isArray(n.actor)?n.actor[0]:n.actor||{};return `<button class="notification-row${n.read_at?'':' is-unread'}" data-notification="${esc(n.id)}" data-kind="${esc(n.kind)}" data-memory="${esc(n.memory_id||'')}"><span class="notification-avatar">${esc(actor.mascot||'🐰')}</span><span><b>${esc(actor.display_name||actor.username||'Friend')}</b><small>@${esc(actor.username||'friend')} · ${esc(n.message)}</small><time>${esc(formatMessageTime(n.created_at))}</time></span>${n.read_at?'':'<i>♡</i>'}</button>`}).join('')||(notificationLoading&&!notificationLoaded?'<div class="notification-loading" aria-label="Loading notifications"><span class="notification-loader" aria-hidden="true"></span></div>':'<div class="notification-empty"><span aria-hidden="true">♡</span><b>You’re all caught up</b><small>New shared activity will appear here.</small></div>')}
-function openNotifications(){void loadNotifications();renderNotifications();$('#notificationGate').classList.remove('hidden')}
-async function markNotificationRead(id){const row=notificationRows.find(n=>String(n.id)===String(id));if(!row||row.read_at)return;await api('/notifications/read',{method:'PUT',body:JSON.stringify({ids:[id]})});row.read_at=new Date().toISOString();updateNotificationBadge()}
-function updateSelectionToolbar(){document.querySelector('#selectionToolbar')?.remove();if(!selectionMode)return;const toolbar=document.createElement('section');toolbar.id='selectionToolbar';toolbar.className='selection-toolbar';toolbar.innerHTML=`<b>${selectedMemoryIds.size} selected</b><button data-selection="copy">Copy</button><button data-selection="download">Save files</button><button data-selection="delete">Delete</button><button data-selection="done" aria-label="Finish selection">Done</button>`;$('#content').prepend(toolbar)}
-function enterSelection(id){selectionMode=true;if(id)selectedMemoryIds.add(String(id));render();updateSelectionToolbar()}
-function toggleSelected(id){const key=String(id);selectedMemoryIds.has(key)?selectedMemoryIds.delete(key):selectedMemoryIds.add(key);document.querySelector(`.feed-item[data-memory="${CSS.escape(key)}"]`)?.classList.toggle('is-selected',selectedMemoryIds.has(key));updateSelectionToolbar()}
-async function copyMemory(id){const item=feed.find(x=>String(x.id)===String(id));if(!item)return;const author=item.author?.username||'friend',text=item.kind==='note'?item.text:`${item.kind==='photo'?'Photo':'Song'}: ${item.fileName||item.text||'shared memory'} · @${author}`;await navigator.clipboard.writeText(text);toast('Copied a little memory ♡')}
-function updateHomeCounters(){if(page!=='home')return;const visible=feed.filter(memory=>!pendingDeleteTimers.has(String(memory.id))),tiles=document.querySelectorAll('#content>.grid>.tile'),count={photo:visible.filter(x=>x.kind==='photo').length,song:visible.filter(x=>x.kind==='song').length,note:visible.filter(x=>x.kind==='note').length};const summary=document.querySelector('#content>.toolbar span');if(summary)summary.textContent=`${visible.length} shared memories`;tiles.forEach(tile=>{const title=tile.querySelector('h3')?.textContent||'',p=tile.querySelector('p');if(!p)return;if(title.includes('Photo garden'))p.textContent=`${count.photo} shared photos`;else if(title.includes('Cozy playlist'))p.textContent=`${count.song} shared songs`;else if(title.includes('Little love notes'))p.textContent=`${count.note} saved notes`})}
-async function deleteSafely(id,card=document.querySelector(`.feed-item[data-memory="${CSS.escape(String(id))}"]`)){const item=feed.find(x=>String(x.id)===String(id));if(!item||item.author?.id!==me?.id)return toast('You can only delete your own memories ♡');if(pendingDeleteTimers.has(String(id)))return;card?.classList.add('is-pending-delete');const undo=document.createElement('button');undo.className='undo-toast';undo.textContent='Deleted softly · Undo';undo.setAttribute('aria-label','Undo delete');document.body.append(undo);const timer=setTimeout(async()=>{pendingDeleteTimers.delete(String(id));undo.remove();try{await api('/memories/'+encodeURIComponent(id),{method:'DELETE'});feed=feed.filter(m=>String(m.id)!==String(id));if(String(playlist[playlistIndex]?.id)===String(id)){const audio=$('#globalAudio');audio.pause();audio.removeAttribute('src');playlistIndex=-1;syncPlayer()}render();toast('Memory tucked away ♡')}catch(e){card?.classList.remove('is-pending-delete');toast(e.message)}},6500);pendingDeleteTimers.set(String(id),{timer,card,undo});updateHomeCounters();undo.onclick=()=>{clearTimeout(timer);pendingDeleteTimers.delete(String(id));card?.classList.remove('is-pending-delete');updateHomeCounters();document.querySelector(`.feed-item[data-memory="${CSS.escape(String(id))}"]`)?.classList.remove('is-pending-delete');undo.remove();toast('Memory saved ♡')}}
-async function runSelection(action){const ids=[...selectedMemoryIds];if(action==='copy'){const lines=ids.map(id=>{const item=feed.find(m=>String(m.id)===id);return item?.kind==='note'?item.text:`${item?.kind}: ${item?.fileName||''}`}).filter(Boolean);await navigator.clipboard.writeText(lines.join('\n'));toast('Your little bundle was copied ♡')}else if(action==='download'){for(const id of ids)await downloadMemoryById(id)}else if(action==='delete'){ids.filter(id=>feed.find(m=>String(m.id)===id)?.author?.id===me?.id).forEach(id=>void deleteSafely(id));toast('You can undo each deletion for a moment ♡')}selectionMode=false;selectedMemoryIds.clear();document.querySelector('#selectionToolbar')?.remove();render()}
-function closeRealtime(){[presenceChannel,notificationChannel,memoryChannel,profileChannel].forEach(channel=>{if(channel)sb.removeChannel(channel)});presenceChannel=notificationChannel=memoryChannel=profileChannel=null}
-function memoryCard(m){const owner=m.author||{},name=esc(owner.displayName||'Friend'),handle=esc(owner.username||''),pet=esc(owner.mascot||'🐰'),title=String(m.text||m.fileName||'A little memory'),safeTitle=esc(title),liked=reactedMemories.has(String(m.id))?' is-loved':'',isLiked=reactedMemories.has(String(m.id)),heartButton=`<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(m.id)}" aria-label="${isLiked?'Unlike':'Like'} memory" aria-pressed="${isLiked}">${isLiked?'♥':'♡'}</button>`,sorted=[me?.id,...friends.map(f=>f.id)].filter(Boolean).map(String).sort(),tone=sorted.indexOf(String(owner.id))%2?'tone-lavender':'tone-peach',selected=selectedMemoryIds.has(String(m.id))?' is-selected':'',pending=pendingDeleteTimers.has(String(m.id))?' is-pending-delete':'',uploading=m.isPending?' is-uploading':'',mine=String(owner.id||'')===String(me?.id||''),body=m.kind==='note'?`<div class="note-row${mine?' is-mine':''}"><time class="note-time" datetime="${esc(m.createdAt||m.created_at||'')}">${esc(formatNoteClock(m.createdAt||m.created_at))}</time><div class="tile note${liked}" tabindex="0">${heartButton}<span class="note-message-text">${safeTitle}</span></div></div>`:m.kind==='photo'?`<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" data-media="${esc(m.id)}" ${m.previewUrl?`src="${esc(m.previewUrl)}"`:""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`:`<div class="tile song-card${liked}">${heartButton}<button class="album-art play-song" data-play-song="${esc(m.id)}" aria-label="Play ${esc(m.fileName||'song')}" aria-pressed="false" ${m.isPending?"disabled":""}><span class="song-glyph" aria-hidden="true">🎼</span><span class="song-note" aria-hidden="true">♫</span></button><span class="memory-title song-title-label" title="${esc(m.fileName||m.text||'A little song')}">${esc(m.fileName||m.text||'A little song')}</span>${m.isPending?"":`<button class="song-download card-song-save" type="button" data-memory-download="${esc(m.id)}" aria-label="Save song">Save</button>`}</div>`;return `<article class="feed-item ${tone}${selected}${pending}${uploading}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id||'')}"><div class="feed-by"><span class="sender-pet" aria-label="${pet}">${pet}</span> <b title="${name}">${name}</b> <small>@${handle}</small></div>${body}${m.isPending?'<span class="memory-upload-status" role="status">Adding to your garden…</span>':''}${mine?`<span class="memory-owner-indicator" aria-hidden="true">Your memory</span>`:''}</article>`}
-function closeMemoryActions(){const gate=$('#memoryActionGate');gate.classList.add('hidden');$('#memoryActionImage').removeAttribute('src');ignoreLongPressClick=false}
-async function openPhotoLightbox(id){const item=feed.find(memory=>String(memory.id)===String(id));if(!item||item.kind!=='photo')return;const gate=$('#photoLightbox'),image=$('#photoLightboxImage'),deleteButton=$('#photoLightboxDelete'),thumb=[...document.querySelectorAll('.feed-item[data-memory]')].find(node=>node.dataset.memory===String(id))?.querySelector('.feed-photo'),canDelete=String(item.author?.id||'')===String(me?.id||'')&&!item.isPending;gate.dataset.memoryId=String(id);deleteButton.classList.toggle('hidden',!canDelete);deleteButton.setAttribute('aria-hidden',String(!canDelete));image.removeAttribute('src');gate.classList.remove('hidden');if(thumb?.getAttribute('src'))image.src=thumb.getAttribute('src');else if(thumb){await hydrateOneMedia(thumb);if(gate.dataset.memoryId===String(id)&&thumb.getAttribute('src'))image.src=thumb.getAttribute('src')}}
-function closePhotoLightbox(){const gate=$('#photoLightbox'),confirmGate=$('#photoDeleteConfirmGate');gate.classList.add('hidden');gate.dataset.memoryId='';$('#photoLightboxImage').removeAttribute('src');$('#photoLightboxDelete').classList.add('hidden');confirmGate.classList.add('hidden');confirmGate.dataset.memoryId=''}
-function openMemoryActions(id){const item=feed.find(memory=>String(memory.id)===String(id));if(!item)return;const gate=$('#memoryActionGate'),image=$('#memoryActionImage'),emoji=$('#memoryActionEmoji'),actionCard=gate.querySelector('.memory-action-card'),isPhoto=item.kind==='photo',isNote=item.kind==='note';gate.dataset.memoryId=String(item.id);actionCard.classList.toggle('is-song',item.kind==='song');actionCard.classList.toggle('is-note',isNote);actionCard.classList.toggle('is-photo',isPhoto);$('#memoryDelete').classList.toggle('hidden',String(item.author?.id||'')!==String(me?.id||'')||!!item.isPending);$('#memoryDelete').textContent=isNote?'Delete note 🗑':item.kind==='song'?'Delete song 🗑':'Delete photo 🗑';$('#memoryCopy').classList.toggle('hidden',!isNote);$('#memoryActionKicker').textContent=isPhoto?'A LITTLE PHOTO':isNote?'A LITTLE NOTE':'A SONG TO KEEP';$('#memoryActionTitle').textContent=isPhoto?'A lovely moment':isNote?'A note to keep':item.fileName||'A little song';$('#memoryActionText').textContent=isPhoto?'Keep this sweet moment on your device?':isNote?'Copy this message or delete it gently?':'Save this song file for later?';$('#memoryDownload').textContent=isPhoto?'Save photo':item.kind==='song'?'Save song':'Save';$('#memoryDownload').classList.toggle('hidden',isNote);const art=$('#memoryActionArt');art.classList.toggle('is-photo',isPhoto);image.classList.toggle('hidden',!isPhoto);emoji.classList.toggle('hidden',isPhoto);emoji.textContent=isPhoto?'🌷':isNote?'💌':'🎵';image.alt='A shared photo';image.removeAttribute('src');gate.classList.remove('hidden');if(isPhoto){const thumbnail=[...document.querySelectorAll('.feed-item[data-memory]')].find(node=>node.dataset.memory===String(item.id))?.querySelector('.feed-photo'),loadedSource=thumbnail?.getAttribute('src');if(loadedSource)image.src=loadedSource;else if(thumbnail)void hydrateOneMedia(thumbnail).then(()=>{const nextSource=thumbnail.getAttribute('src');if(gate.dataset.memoryId===String(item.id)&&nextSource)image.src=nextSource})}}
-async function downloadMemoryById(id,button){const item=feed.find(memory=>String(memory.id)===String(id));if(item?.previewUrl&&!item.storagePath){const link=document.createElement('a');link.href=item.previewUrl;link.download=String(item.fileName||'cute-bunny-photo.jpg').replace(/[\/:*?"<>|]/g,'_');document.body.append(link);link.click();link.remove();toast('Saved to your device ♡');return}if(!item?.storagePath)return toast('This memory file is not available to download yet ♡');const original=button?.innerHTML;if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.innerHTML='<span class="download-spinner" aria-hidden="true"></span> Saving…'}try{const {data,error}=await sb.storage.from('memories').download(item.storagePath);if(error)throw error;const url=URL.createObjectURL(data),link=document.createElement('a'),fallback=item.kind==='photo'?'cute-bunny-photo.jpg':'cute-bunny-song';link.href=url;link.download=String(item.fileName||fallback).replace(/[\/:*?"<>|]/g,'_');document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);toast('Saved to your device ♡')}catch(error){toast(error.message||'Could not download this memory. Try again ♡')}finally{if(button){button.disabled=false;button.removeAttribute('aria-busy');button.innerHTML=original}}}
-function downloadSelectedMemory(){const gate=$('#memoryActionGate');return downloadMemoryById(gate.dataset.memoryId,$('#memoryDownload'))}
-async function copyMemoryText(id){const item=feed.find(memory=>String(memory.id)===String(id));if(!item||item.kind!=='note')return;const text=String(item.text||'');try{if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable');await navigator.clipboard.writeText(text);toast('Note copied ♡');return}catch{}const field=document.createElement('textarea');field.value=text;field.setAttribute('readonly','');field.style.position='fixed';field.style.opacity='0';document.body.append(field);field.select();let copied=false;try{copied=document.execCommand('copy')}catch{}field.remove();toast(copied?'Note copied ♡':'Your browser could not copy this note.')}
-async function hydrateOneMedia(node){try{const m=feed.find(x=>String(x.id)===node.dataset.media);if(!m?.storagePath||m.isPending)return;const key=String(m.id),cached=mediaUrlCache.get(key);if(cached){node.src=cached;return}const {data,error}=await sb.storage.from('memories').download(m.storagePath);if(!error&&data){const url=URL.createObjectURL(data);mediaUrlCache.set(key,url);if(mediaUrlCache.size>40){const oldest=mediaUrlCache.keys().next().value,expired=mediaUrlCache.get(oldest);mediaUrlCache.delete(oldest);URL.revokeObjectURL(expired)}node.src=url;if(m.previewUrl){URL.revokeObjectURL(m.previewUrl);pendingMediaUrls.delete(String(m.id));m.previewUrl=''}}}catch{}}
-function hydrateMedia(){if(!sb)return;const nodes=[...document.querySelectorAll('[data-media]')];if('IntersectionObserver'in window){const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){observer.unobserve(entry.target);void hydrateOneMedia(entry.target)}}),{rootMargin:'320px 0px'});nodes.forEach(node=>observer.observe(node))}else nodes.forEach(node=>void hydrateOneMedia(node))}
-async function searchFriends(){const q=$('#friendSearch').value.trim();friendQuery=q;if(!q){friendResults=[];render();return toast('Type your friend’s username first ♡')}if(!/^[a-zA-Z0-9_]{1,24}$/.test(q))return toast('Usernames use letters, numbers, and underscores ♡');try{friendResults=await api('/users?q='+encodeURIComponent(q));render()}catch(e){toast(e.message)}}
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='friendSearch'){e.preventDefault();searchFriends()}if((e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10'))&&e.target.closest('.feed-item')){e.preventDefault();openMemoryActions(e.target.closest('.feed-item').dataset.memory)}});
-const musicAudio=$('#globalAudio');['play','pause','loadedmetadata','durationchange','timeupdate','seeked'].forEach(type=>musicAudio?.addEventListener(type,syncPlayer));musicAudio?.addEventListener('ended',()=>stepSong(1));$('#islandSeek')?.addEventListener('input',event=>{const audio=$('#globalAudio');if(Number.isFinite(audio.duration)&&audio.duration>0)audio.currentTime=Number(event.target.value)/1000*audio.duration});
-document.addEventListener('pointerdown',event=>{const island=$('#nowPlayingIsland'),panel=$('#nowPlayingPanel');if(!island||island.classList.contains('hidden')||panel?.classList.contains('hidden'))return;if(!event.target.closest('#nowPlayingIsland'))toggleMusicIsland(false)},true);
-let pressTimer=0,pressStart=null,ignoreLongPressClick=false;
-document.addEventListener('pointerdown',e=>{const card=e.target.closest('.feed-item'),tile=e.target.closest('.feed-item .tile'),player=e.target.closest('.play-song');if(!card||!tile||(e.target.closest('button,a,input,textarea,select,audio')&&!player))return;const item=feed.find(memory=>String(memory.id)===String(card.dataset.memory));if(!item||!['song','note'].includes(item.kind))return;clearTimeout(pressTimer);pressStart={x:e.clientX,y:e.clientY,id:item.id,pointer:e.pointerId};pressTimer=setTimeout(()=>{if(!pressStart||pressStart.pointer!==e.pointerId)return;ignoreLongPressClick=true;setTimeout(()=>{ignoreLongPressClick=false},1200);openMemoryActions(item.id);pressTimer=0},540)},{passive:true});
-document.addEventListener('pointermove',e=>{if(!pressStart||e.pointerId!==pressStart.pointer)return;if(Math.abs(e.clientX-pressStart.x)>14||Math.abs(e.clientY-pressStart.y)>14){clearTimeout(pressTimer);pressTimer=0;pressStart=null}},{passive:true});
-document.addEventListener('pointerup',e=>{if(!pressStart||e.pointerId!==pressStart.pointer)return;clearTimeout(pressTimer);pressTimer=0;pressStart=null});
-document.addEventListener('pointercancel',()=>{clearTimeout(pressTimer);pressTimer=0;pressStart=null});
-document.addEventListener('contextmenu',e=>{if(e.target.closest('.feed-item')||!e.target.closest('input,textarea,[contenteditable="true"]'))e.preventDefault()});document.addEventListener('click',e=>{if(ignoreLongPressClick&&e.target.closest('.feed-item')){ignoreLongPressClick=false;e.preventDefault();e.stopImmediatePropagation();return}const card=e.target.closest('.feed-item');if(selectionMode&&card&&!e.target.closest('button')){toggleSelected(card.dataset.memory);e.preventDefault();e.stopImmediatePropagation();return}},true);
-document.addEventListener('click',e=>{if(ignoreLongPressClick&&e.target.closest('.feed-item')){ignoreLongPressClick=false;e.preventDefault();e.stopImmediatePropagation();return}const card=e.target.closest('.feed-item');if(selectionMode&&card&&!e.target.closest('button')){toggleSelected(card.dataset.memory);e.preventDefault();return}if(e.target.closest('#notificationGate')&&e.target.classList.contains('auth-gate'))e.target.classList.add('hidden');if(e.target.closest('#photoLightbox')&&e.target.classList.contains('auth-gate'))closePhotoLightbox();});document.addEventListener('online',()=>toast('Back online ♡'));
 
-document.addEventListener('submit',async e=>{if(e.target.id!=='authForm')return;e.preventDefault();const err=$('#authError');err.textContent='';try{const body={email:$('#authEmail').value.trim(),password:$('#authPass').value};if(authMode==='register'){body.username=$('#authUser').value.trim().toLowerCase();body.displayName=$('#authDisplay').value.trim();if(!/^[a-z0-9_]{3,24}$/.test(body.username)){err.textContent='Choose a username with 3–24 letters, numbers, or underscores.';return}if(!body.displayName||body.displayName.length>60){err.textContent='Please enter a display name (up to 60 characters).';return}}const submit=$('#authSubmit');submit.disabled=true;$('#authSwitch').disabled=true;submit.textContent='One little moment…';const result=await api('/auth/'+(authMode==='register'?'register':'login'),{method:'POST',body:JSON.stringify(body)});if(result.needsEmailConfirm){err.textContent='Check your email to confirm your account, then sign in here.';return}token=result.token;localStorage.setItem('cuteBunnyToken',token);await refresh();setUser(me);void recordLoginStreak()}catch(error){err.textContent=error.message.includes('Failed to fetch')?'Check your Supabase URL/key and internet connection, then try again.':error.message}finally{$('#authSubmit').disabled=false;$('#authSwitch').disabled=false;$('#authSubmit').textContent=authMode==='login'?'Sign in ♡':'Create account ♡'}});
-document.addEventListener('input',e=>{if(['profileDisplay','profileUsername'].includes(e.target.id))updateThemePreview($('#profileTheme').value)});document.addEventListener('change',async e=>{if(e.target.id==='profileTheme'||e.target.id==='profileMascot'){updateThemePreview($('#profileTheme').value);return}const input=e.target.closest('[data-upload]');if(!input||!input.files?.length)return;const file=input.files[0],kind=input.dataset.upload;input.value='';if(file.size>8*1024*1024){toast('Choose a file under 8 MB ♡');return}const photoTypes=['image/jpeg','image/png','image/webp','image/gif'],songTypes=['audio/mpeg','audio/mp4','audio/ogg','audio/wav','audio/webm'];if(!(kind==='photo'?photoTypes.includes(file.type):songTypes.includes(file.type))){toast(kind==='photo'?'Choose a JPG, PNG, WebP, or GIF image ♡':'Choose an MP3, MP4, OGG, WAV, or WebM audio file ♡');return}const tempId='upload-'+crypto.randomUUID(),previewUrl=kind==='photo'?URL.createObjectURL(file):'',optimistic={id:tempId,kind,fileName:file.name,text:file.name,contentType:file.type,createdAt:new Date().toISOString(),isPending:true,previewUrl,author:{id:me.id,username:me.username,displayName:me.displayName,mascot:me.mascot}};if(previewUrl)pendingMediaUrls.set(tempId,previewUrl);feed.unshift(optimistic);render();const form=new FormData();form.append('file',file);form.append('kind',kind);form.append('caption',file.name);try{const saved=await api('/media',{method:'POST',body:form}),item={...saved,createdAt:saved.created_at||optimistic.createdAt,fileName:saved.file_name||file.name,contentType:saved.content_type||file.type,storagePath:saved.storage_path,author:optimistic.author,previewUrl};replaceOptimisticMemory(tempId,item);toast('Added to your shared scrapbook ♡')}catch(err){feed=feed.filter(memory=>String(memory.id)!==tempId);const url=pendingMediaUrls.get(tempId);if(url)URL.revokeObjectURL(url);pendingMediaUrls.delete(tempId);render();toast(err.message)}});
+function rollKindness(e) {
+  let next;
+  do {
+    next = Math.floor(Math.random() * kindLines.length);
+  } while (kindLines.length > 1 && next === currentKindnessIndex);
+  currentKindnessIndex = next;
+  const p = $('#compliment');
+  if (p) {
+    p.textContent = getKindness();
+    p.classList.remove('kindness-pop');
+    void p.offsetWidth;
+    p.classList.add('kindness-pop');
+  }
+  if (e) {
+    const rect = (e.currentTarget || e.target).getBoundingClientRect();
+    sprinkle(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  }
+  playBoing();
+  toast('A little drop of kindness for you ♡');
+}
 
-async function restoreSession(){try{if(sb){const {data:{session}}=await sb.auth.getSession();if(session){token=session.access_token;await refresh();setUser(me);void recordLoginStreak()}}}catch(e){toast(e.message)}finally{document.body.classList.remove('is-restoring');$('#sessionRestore')?.classList.add('hidden')}}restoreSession();render();
+function sprinkle(x, y) {
+  if (!x && !y) {
+    x = window.innerWidth / 2;
+    y = window.innerHeight / 2;
+  }
+  const icons = ['♡', '✦', '🌸', '✨', '🌷', '💖', '🌼', '☁️'];
+  for (let i = 0; i < 8; i++) {
+    const a = document.createElement('span');
+    a.className = 'sprinkle';
+    a.textContent = icons[Math.floor(Math.random() * icons.length)];
+    a.style.left = x + 'px';
+    a.style.top = y + 'px';
+    a.style.setProperty('--dx', (Math.random() * 140 - 70) + 'px');
+    a.style.setProperty('--dy', (Math.random() * -110 - 25) + 'px');
+    document.body.append(a);
+    setTimeout(() => a.remove(), 950);
+  }
+}
 
+function setMode(mode) {
+  document.body.dataset.mode = mode;
+  const b = $('#surprise');
+  if (b) {
+    b.textContent = mode === 'dark' ? '☀' : '☾';
+    b.title = mode === 'dark' ? 'Switch to sunshine mode' : 'Switch to moonlight mode';
+    b.setAttribute('aria-label', b.title);
+  }
+  if (me) localStorage.setItem('cuteBunnyMode:' + me.username, mode);
+}
 
+const esc = s => String(s || '').replace(/[&<>"']/g, c => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[c]));
 
-document.addEventListener('pointerup',e=>{if(e.pointerType!=='touch'||e.target.closest('audio,button,a,input,textarea,select'))return;const tile=e.target.closest('.feed-item .tile');if(!tile)return;const now=Date.now(),key=tile.closest('.feed-item')?.dataset.memory||tile;const last=window.lastTouchHeart||{};if(last.key===key&&now-last.time<420){clearTimeout(pendingPhotoActionTimer);pendingPhotoActionTimer=0;photoDoubleTapUntil=now+500;popLoveHeart(tile);window.lastTouchHeart=null}else window.lastTouchHeart={key,time:now}});document.addEventListener('dblclick',e=>{if(Date.now()-(window.lastLoveTapAt||0)<450||e.target.closest('audio,button,a,input,textarea,select'))return;const tile=e.target.closest('.feed-item .tile');if(tile){clearTimeout(pendingPhotoActionTimer);pendingPhotoActionTimer=0;popLoveHeart(tile)}});document.addEventListener('contextmenu',e=>{if(!e.target.closest('input,textarea,[contenteditable="true"]'))e.preventDefault()});document.addEventListener('dragstart',e=>{if(e.target.closest('img,.tile,.brand'))e.preventDefault()});document.addEventListener('click',e=>{if(e.target.classList.contains('auth-gate'))e.target.classList.add('hidden')});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePhotoLightbox();document.querySelectorAll('.auth-gate').forEach(x=>x.classList.add('hidden'))}});
-function formatProfileDate(value){const date=new Date(value||Date.now());if(Number.isNaN(date.getTime()))return'';const month=new Intl.DateTimeFormat('en',{month:'short'}).format(date);return `${date.getDate()} ${month}, ${date.getFullYear()}`}
-document.addEventListener('click',e=>{const open=e.target.closest('#profileOpen,[data-open-profile]');if(open){if(!me)return;$('#profileName').textContent=me.displayName||me.display_name||me.username;$('#profileHandle').textContent='@'+me.username;$('#profileCreated').textContent=formatProfileDate(me.created_at||me.createdAt);$('#profileDisplay').value=me.displayName||me.display_name||'';$('#profileUsername').value=me.username||'';$('#profileBio').value=me.bio||'';$('#profileTheme').value=me.theme||'rose';$('#profileMascot').value=me.mascot||'🐰';updateThemePreview(me.theme||'rose');updateBuddyChoices(me.mascot||'🐰');$('#profileGate').classList.remove('hidden');return}if(e.target.closest('.auth-close')){const gate=e.target.closest('.auth-gate');if(!gate)return;if(gate.id==='photoLightbox')closePhotoLightbox();else gate.classList.add('hidden');return}if(e.target.closest('.memory-action-close')){closeMemoryActions();return}});
-/* Restore the shared navigation and primary home actions through delegation. */
-document.addEventListener('click',e=>{const nav=e.target.closest('#nav [data-page]');if(nav){go(nav.dataset.page);return}const goButton=e.target.closest('[data-go]');if(goButton){go(goButton.dataset.go);return}if(e.target.closest('#surprise')){setMode(document.body.dataset.mode==='dark'?'light':'dark');return}if(e.target.closest('#enter')){openAuth('register');return}if(e.target.closest('#authSwitch')){openAuth(authMode==='login'?'register':'login');return}if(e.target.closest('#bunnyBuddy')){playBoing();const bunny=$('#bunnyBuddy'),buddy=me?.mascot||'🐰',greetings={'🐰':'Bunny says hi! ♡','🐱':'Kitty says meow! ♡','🐻':'Bear sends a hug! ♡','🐸':'Froggy says ribbit! ♡'};bunny.classList.remove('bunny-happy');void bunny.offsetWidth;bunny.classList.add('bunny-happy');toast(greetings[buddy]||'Your buddy says hi! ♡');return}if(e.target.closest('#notificationOpen')){$('#notificationGate').classList.remove('hidden');void loadNotifications().then(()=>renderNotifications()).catch(error=>toast(error.message));return}});
-/* Complete the delegated controls used by friends, notes, media, and profile settings. */
-document.addEventListener('click',async e=>{
-  const search=e.target.closest('#searchFriends');if(search){void searchFriends();return}
-  const friend=e.target.closest('[data-profile]');if(friend){showFriendProfile([...friends,...friendResults].find(user=>user.username===friend.dataset.profile));return}
-  const follow=e.target.closest('#friendProfileFollow,[data-follow]');if(follow){const username=follow.dataset.follow||$('#friendProfileGate').dataset.username;const isFollowing=follow.dataset.following?follow.dataset.following==='true':$('#friendProfileGate').dataset.following==='true';if(username)void toggleFriendFollow(username,isFollowing);return}
-  const theme=e.target.closest('[data-theme-choice]');if(theme){$('#profileTheme').value=theme.dataset.themeChoice;updateThemePreview(theme.dataset.themeChoice);return}
-  const buddy=e.target.closest('[data-buddy-choice]');if(buddy){$('#profileMascot').value=buddy.dataset.buddyChoice;updateBuddyChoices(buddy.dataset.buddyChoice);updateThemePreview($('#profileTheme').value);return}
-  if(e.target.closest('#profileSave')){try{const username=$('#profileUsername').value.trim().toLowerCase();if(!/^[a-z0-9_]{3,24}$/.test(username))return toast('Use 3–24 letters, numbers, or underscores ♡');const updated=await api('/me',{method:'PUT',body:JSON.stringify({username,displayName:$('#profileDisplay').value.trim(),bio:$('#profileBio').value.trim(),theme:$('#profileTheme').value,mascot:$('#profileMascot').value})});me={...me,...updated};$('#profileName').textContent=me.displayName||me.display_name||username;$('#profileHandle').textContent='@'+username;$('#topMascot').textContent=me.mascot||'🐰';$('#profileGate').classList.add('hidden');await refresh();syncPlayer();toast('Profile saved ♡')}catch(error){toast(error.message)}return}
-  if(e.target.closest('#signOut')){closeRealtime();if(sb)await sb.auth.signOut();localStorage.removeItem('cuteBunnyToken');token='';me=null;notificationRows=[];$('#profileGate').classList.add('hidden');$('#app').classList.add('hidden');$('#welcome').classList.remove('hidden');return}
-  if(e.target.closest('#saveNote')){const text=$('#noteText').value.trim();if(!text)return toast('Write a little note first ♡');try{await api('/memories',{method:'POST',body:JSON.stringify({kind:'note',text})});$('#noteText').value='';await refresh();toast('Your note is tucked away ♡')}catch(error){toast(error.message)}return}
-  if(e.target.closest('#nowPlayingPill')){toggleMusicIsland();return}
-  if(e.target.closest('#nowPlayingClose')){toggleMusicIsland(false);return}
-  if(e.target.closest('#nowPlayingToggle')){const audio=$('#globalAudio');if(audio.paused)void audio.play().catch(error=>toast(error.message));else audio.pause();syncPlayer();return}
-  if(e.target.closest('#nowPlayingPrevious')){stepSong(-1);return}
-  if(e.target.closest('#nowPlayingNext')){stepSong(1);return}
-  const play=e.target.closest('[data-play-song]');if(play){void playSong(play.dataset.playSong);return}
-  const remove=e.target.closest('[data-memory-delete]');if(remove){void deleteSafely(remove.dataset.memoryDelete);return}
-  const download=e.target.closest('[data-memory-download]');if(download){void downloadMemoryById(download.dataset.memoryDownload,download);return}
-  if(e.target.closest('#photoLightboxDelete')){const id=$('#photoLightbox').dataset.memoryId,item=feed.find(memory=>String(memory.id)===String(id));if(!item||item.kind!=='photo'||item.isPending||String(item.author?.id||'')!==String(me?.id||''))return;const confirmation=$('#photoDeleteConfirmGate');confirmation.dataset.memoryId=String(id);confirmation.classList.remove('hidden');return}if(e.target.closest('#photoDeleteCancel')){const confirmation=$('#photoDeleteConfirmGate');confirmation.classList.add('hidden');confirmation.dataset.memoryId='';return}if(e.target.closest('#photoDeleteConfirm')){const confirmation=$('#photoDeleteConfirmGate'),id=confirmation.dataset.memoryId,item=feed.find(memory=>String(memory.id)===String(id));confirmation.classList.add('hidden');confirmation.dataset.memoryId='';if(item&&item.kind==='photo'&&!item.isPending&&String(item.author?.id||'')===String(me?.id||'')){closePhotoLightbox();void deleteSafely(id)}return}if(e.target.closest('#photoLightboxSave')){void downloadMemoryById($('#photoLightbox').dataset.memoryId,e.target.closest('#photoLightboxSave'));return}
-  if(e.target.closest('#memoryActionClose')||e.target.closest('#memoryActionCancel')){closeMemoryActions();return}
-  if(e.target.closest('#memoryDownload')){void downloadSelectedMemory();return}
-  if(e.target.closest('#memoryCopy')){const id=$('#memoryActionGate').dataset.memoryId;closeMemoryActions();void copyMemoryText(id);return}
-  if(e.target.closest('#memoryDelete')){const id=$('#memoryActionGate').dataset.memoryId;closeMemoryActions();void deleteSafely(id);return}
-  if(e.target.closest('#notificationsReadAll')){try{await api('/notifications/read-all',{method:'PUT'});await loadNotifications();renderNotifications()}catch(error){toast(error.message)}return}
-  const notification=e.target.closest('[data-notification]');if(notification){try{await markNotificationRead(notification.dataset.notification);renderNotifications()}catch(error){toast(error.message)}return}
-  if(e.target.closest('#notificationsSave')){try{await api('/me',{method:'PUT',body:JSON.stringify({notificationPreferences:{memories:$('#notifyMemories').checked,buddy:$('#notifyBuddy').checked}})});toast('Notification settings saved ♡')}catch(error){toast(error.message)}return}
+async function api(path, options = {}) {
+  if (!sb) throw Error('Add your Supabase URL and publishable key in supabase-config.js first.');
+  const method = options.method || 'GET';
+  const body = options.body && !(options.body instanceof FormData) ? JSON.parse(options.body) : options.body;
+  const fail = e => { if (e) throw Error(e.message || 'Something went wrong.'); };
+
+  if (path === '/auth/register') {
+    const { data, error } = await sb.auth.signUp({
+      email: body.email,
+      password: body.password,
+      options: {
+        emailRedirectTo: 'https://whtankus.github.io/Cute-bunny/',
+        data: { username: body.username.toLowerCase(), display_name: body.displayName }
+      }
+    });
+    if (error) {
+      const message = (error.message || '').toLowerCase();
+      if (message.includes('already registered')) throw Error('An account with that email already exists. Switch to Sign in ♡');
+      if (message.includes('database error saving new user')) throw Error('We could not create your profile. That username may already be taken; try another one.');
+      fail(error);
+    }
+    return { token: data.session?.access_token || '', user: data.user, needsEmailConfirm: !data.session };
+  }
+
+  if (path === '/auth/login') {
+    const identifier = body.email.trim();
+    if (identifier.includes('@')) {
+      const { data, error } = await sb.auth.signInWithPassword({ email: identifier, password: body.password });
+      fail(error);
+      if (!data.session) throw Error('Your email is not confirmed yet. Check your inbox or ask the project owner to turn off email confirmation.');
+      return { token: data.session.access_token, user: data.user };
+    }
+    const { data, error } = await sb.functions.invoke('username-login', { body: { identifier, password: body.password } });
+    if (error) throw Error('Username sign-in service error: ' + (error.message || 'request failed') + '. Try your email, or check that username-login is deployed in Supabase.');
+    if (data?.error) throw Error(data.error);
+    const { data: sessionData, error: sessionError } = await sb.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+    fail(sessionError);
+    return { token: sessionData.session.access_token, user: sessionData.user };
+  }
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw Error('Please sign in again.');
+
+  if (path === '/me' && method === 'GET') {
+    const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+    fail(error);
+    return { ...data, displayName: data.display_name };
+  }
+
+  if (path === '/me' && method === 'PUT') {
+    const username = String(body.username || me?.username || '').trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,24}$/.test(username)) throw Error('Usernames need 3–24 letters, numbers, or underscores.');
+    const update = {
+      username,
+      display_name: body.displayName,
+      bio: body.bio,
+      theme: body.theme,
+      mascot: body.mascot,
+      notification_preferences: body.notificationPreferences || me?.notification_preferences || { memories: true, buddy: true }
+    };
+    let { data, error } = await sb.from('profiles').update(update).eq('id', session.user.id).select().single();
+    if (error) {
+      if (username !== me?.username) throw Error('Run supabase/feature-upgrades.sql in Supabase before changing your username.');
+      const fallback = await sb.from('profiles').update({
+        display_name: body.displayName, bio: body.bio, theme: body.theme, mascot: body.mascot
+      }).eq('id', session.user.id).select().single();
+      fail(fallback.error);
+      data = { ...fallback.data, notification_preferences: me?.notification_preferences || { memories: true, buddy: true }, featureUpgradeNeeded: true };
+    }
+    return { ...data, displayName: data.display_name };
+  }
+
+  if (path.startsWith('/username-available?')) {
+    const username = decodeURIComponent(path.split('=').slice(1).join('=')).toLowerCase();
+    const { data, error } = await sb.from('profiles').select('id').eq('username', username).neq('id', session.user.id).maybeSingle();
+    fail(error);
+    return { available: !data };
+  }
+
+  if (path === '/notifications') {
+    const { data, error } = await sb.from('notifications')
+      .select('id,actor_id,kind,memory_id,message,created_at,read_at,actor:profiles!notifications_actor_id_fkey(username,display_name,mascot)')
+      .order('created_at', { ascending: false }).limit(60);
+    fail(error);
+    return data || [];
+  }
+
+  if (path === '/notifications/read' && method === 'PUT') {
+    const ids = body.ids || [];
+    if (ids.length) {
+      const { error } = await sb.from('notifications').update({ read_at: new Date().toISOString() }).in('id', ids);
+      fail(error);
+    }
+    return {};
+  }
+
+  if (path === '/notifications/read-all' && method === 'PUT') {
+    const { error } = await sb.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
+    fail(error);
+    return {};
+  }
+
+  if (path === '/buddy-ping' && method === 'POST') {
+    const { data, error } = await sb.rpc('send_buddy_ping');
+    fail(error);
+    return { sent: !!data };
+  }
+
+  if (path === '/feed') {
+    const rows = [], pageSize = 500;
+    let start = 0;
+    while (true) {
+      const { data, error } = await sb.from('memories')
+        .select('*,author:profiles!memories_owner_id_fkey(id,username,display_name,mascot,theme)')
+        .order('created_at', { ascending: false }).order('id', { ascending: false })
+        .range(start, start + pageSize - 1);
+      fail(error);
+      rows.push(...data);
+      if (data.length < pageSize) break;
+      start += pageSize;
+    }
+    return rows.map(m => {
+      const author = Array.isArray(m.author) ? m.author[0] : (m.author || {});
+      return {
+        ...m,
+        createdAt: m.created_at,
+        fileName: m.file_name,
+        contentType: m.content_type,
+        storagePath: m.storage_path,
+        author: {
+          ...author,
+          id: author.id || m.owner_id,
+          displayName: author.display_name || author.username || 'Friend',
+          username: author.username || 'friend',
+          mascot: author.mascot || '🐰'
+        }
+      };
+    });
+  }
+
+  if (path.startsWith('/users?q=')) {
+    const q = decodeURIComponent(path.slice('/users?q='.length)).trim();
+    const fields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date';
+    const basic = 'id,username,display_name,bio,theme,mascot,created_at';
+    let query = sb.from('profiles').select(fields).neq('id', session.user.id).order('username').limit(30);
+    if (q) query = query.ilike('username', '%' + q + '%');
+    let { data, error } = await query;
+    if (error && /login_streak|last_login_date/i.test(error.message || '')) {
+      query = sb.from('profiles').select(basic).neq('id', session.user.id).order('username').limit(30);
+      if (q) query = query.ilike('username', '%' + q + '%');
+      ({ data, error } = await query);
+    }
+    fail(error);
+    const { data: edges, error: fe } = await sb.from('follows').select('followed_id').eq('follower_id', session.user.id);
+    fail(fe);
+    const followed = new Set(edges.map(x => x.followed_id));
+    return data.map(u => ({ ...u, login_streak: Number(u.login_streak) || 0, displayName: u.display_name, isFollowing: followed.has(u.id) }));
+  }
+
+  if (path === '/following') {
+    const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at)';
+    const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date)';
+    let { data, error } = await sb.from('follows').select(fields).eq('follower_id', session.user.id).order('created_at', { ascending: false });
+    if (error && /login_streak|last_login_date/i.test(error.message || '')) {
+      ({ data, error } = await sb.from('follows').select(basic).eq('follower_id', session.user.id).order('created_at', { ascending: false }));
+    }
+    fail(error);
+    return data.map(edge => {
+      const u = Array.isArray(edge.followed) ? edge.followed[0] : edge.followed;
+      return u ? ({ ...u, login_streak: Number(u.login_streak) || 0, displayName: u.display_name, isFollowing: true, followedAt: edge.created_at }) : null;
+    }).filter(Boolean);
+  }
+
+  if (path.startsWith('/follow/')) {
+    const username = decodeURIComponent(path.slice('/follow/'.length));
+    const { data: user, error } = await sb.from('profiles').select('id').eq('username', username).single();
+    fail(error);
+    if (method === 'POST') {
+      const { error: e } = await sb.from('follows').insert({ follower_id: session.user.id, followed_id: user.id });
+      fail(e);
+      return {};
+    }
+    const { error: e } = await sb.from('follows').delete().eq('follower_id', session.user.id).eq('followed_id', user.id);
+    fail(e);
+    return {};
+  }
+
+  if (path === '/memories' && method === 'POST') {
+    const { data, error } = await sb.from('memories').insert({ owner_id: session.user.id, kind: body.kind, text: body.text }).select().single();
+    fail(error);
+    return data;
+  }
+
+  if (path.startsWith('/memories/') && method === 'DELETE') {
+    const id = path.split('/').pop();
+    const { data: m, error } = await sb.from('memories').select('id,owner_id,storage_path').eq('id', id).single();
+    fail(error);
+    if (m.storage_path) await sb.storage.from('memories').remove([m.storage_path]);
+    const { error: e } = await sb.from('memories').delete().eq('id', id);
+    fail(e);
+    return {};
+  }
+
+  if (path === '/media' && method === 'POST') {
+    const form = body, file = form.get('file'), kind = form.get('kind'), caption = form.get('caption') || file.name;
+    if (file.size > 8 * 1024 * 1024) throw Error('Choose a file under 8 MB.');
+    const photoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], songTypes = ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/webm'];
+    if (!(kind === 'photo' ? photoTypes.includes(file.type) : kind === 'song' ? songTypes.includes(file.type) : false)) {
+      throw Error(kind === 'photo' ? 'Choose a JPG, PNG, WebP, or GIF image.' : 'Choose an MP3, MP4, OGG, WAV, or WebM audio file.');
+    }
+    const key = session.user.id + '/' + crypto.randomUUID() + '/' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const { error: ue } = await sb.storage.from('memories').upload(key, file, { contentType: file.type, upsert: false });
+    fail(ue);
+    const { data, error } = await sb.from('memories').insert({
+      owner_id: session.user.id, kind, text: caption, file_name: file.name, content_type: file.type, storage_path: key
+    }).select().single();
+    if (error) {
+      await sb.storage.from('memories').remove([key]);
+      fail(error);
+    }
+    return data;
+  }
+  throw Error('That action is not available.');
+}
+
+function toast(msg) {
+  const raw = String(msg ?? '').replace(/\s+/g, ' ').trim(), lower = raw.toLowerCase();
+  let message = raw;
+  if (lower.includes('failed to send a request to the edge function')) message = 'Sign-in service unavailable. Try email instead.';
+  else if (lower.includes('failed to fetch') || lower.includes('network request failed')) message = 'Could not connect. Check internet and retry.';
+  else if (lower.includes('database error saving new user')) message = 'Could not save account. Try another username.';
+  else if (lower.includes('duplicate key') || lower.includes('already exists')) message = 'That username or email is already in use.';
+  else if (lower.includes('row-level security') || lower.includes('permission denied')) message = 'You do not have permission to do that.';
+  if (message.length > 76) message = message.slice(0, 73).trimEnd() + '…';
+  let t = $('#toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.append(t);
+  }
+  t.textContent = message;
+  t.setAttribute('role', 'status');
+  t.setAttribute('aria-live', 'polite');
+  t.classList.add('show');
+  clearTimeout(window.cuteToast);
+  window.cuteToast = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function openAuth(mode = 'register') {
+  authMode = mode;
+  $('#authGate').classList.remove('hidden');
+  $('#authTitle').textContent = mode === 'register' ? 'Create your account' : 'Welcome back ♡';
+  $('#authForm .auth-hint').textContent = mode === 'login' ? 'Sign in with your username or email and password.' : 'Create an account with your email, username, and password.';
+  $('#authDisplay').closest('label').classList.toggle('hidden', mode === 'login');
+  $('#authUser').closest('label').classList.toggle('hidden', mode === 'login');
+  $('#authEmail').closest('label').classList.remove('hidden');
+  $('#authEmail').required = true;
+  $('#authEmail').type = mode === 'login' ? 'text' : 'email';
+  $('#authEmail').placeholder = mode === 'login' ? 'Username or email' : 'you@example.com';
+  $('#authEmail').closest('label').firstChild.textContent = mode === 'login' ? 'Username or email' : 'Email';
+  $('#authPass').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
+  $('#authSubmit').textContent = mode === 'login' ? 'Sign in ♡' : 'Create account ♡';
+  $('#authSwitch').textContent = mode === 'login' ? 'New here? Create an account' : 'Already have an account? Sign in';
+  $('#authError').textContent = '';
+}
+
+function setTheme(theme) {
+  document.body.dataset.theme = ['rose', 'lavender', 'mint', 'sky'].includes(theme) ? theme : 'rose';
+}
+
+function setUser(u) {
+  if (me?.id !== u.id) {
+    notificationRows = [];
+    notificationLoaded = false;
+    notificationLoading = false;
+  }
+  me = u;
+  try {
+    reactedMemories = new Set(JSON.parse(localStorage.getItem('cuteBunnyHearts:' + u.username) || '[]'));
+  } catch {
+    reactedMemories = new Set();
+  }
+  setMode(localStorage.getItem('cuteBunnyMode:' + u.username) || 'light');
+  setTheme(u.theme);
+  $('#topMascot').textContent = u.mascot || '🐰';
+  $('#topName').textContent = '@' + u.username;
+  $('#authGate').classList.add('hidden');
+  $('#welcome').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  go('home');
+  startRealtime();
+  void loadNotifications();
+}
+
+async function refresh() {
+  const results = await Promise.all([api('/me'), api('/feed'), api('/following')]);
+  me = results[0];
+  feed = results[1];
+  friends = results[2];
+  render();
+  if (!$('#friendProfileGate').classList.contains('hidden')) {
+    const profile = [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
+    if (profile) showFriendProfile(profile);
+  }
+}
+
+const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
+
+function formatMessageTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone, now = new Date(), yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const day = date.toDateString() === now.toDateString() ? 'Today' : date.toDateString() === yesterday.toDateString() ? 'Yesterday' : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone }).format(date);
+  const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone }).format(date);
+  return day + ' · ' + time;
+}
+
+function formatNoteClock(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone }).format(date);
+}
+
+function noteDayLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Little memories';
+  const today = new Date(), yesterday = new Date(today);
+  today.setHours(0, 0, 0, 0);
+  yesterday.setDate(today.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+  const day = new Date(date);
+  day.setHours(0, 0, 0, 0);
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return day.getTime() === today.getTime() ? 'Today' : day.getTime() === yesterday.getTime() ? 'Yesterday' : new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone }).format(date);
+}
+
+function formatJoinDate(value) {
+  if (!value) return 'A little while ago';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'A little while ago' : new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(date);
+}
+
+function friendRow(user) {
+  return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}</span><span class="friend-copy"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
+}
+
+function streakBadge(count) {
+  return count >= 30 ? '🌟 Love-garden legend' : count >= 7 ? '🌼 Week in bloom' : count >= 3 ? '🌱 Growing steadily' : count > 0 ? '🌷 First blossoms' : '✨ Fresh start';
+}
+
+function streakWidget() {
+  const count = Math.max(0, Number(me?.login_streak) || 0), filled = count ? ((count - 1) % 7) + 1 : 0;
+  const days = Array.from({ length: 7 }, (_, i) => `<span class="streak-day${i < filled ? ' is-filled' : ''}" aria-hidden="true">${i < filled ? '✿' : '·'}</span>`).join('');
+  return `<article class="tile streak-widget" aria-label="Login streak: ${count} ${count === 1 ? 'day' : 'days'}"><div class="streak-top"><div class="tile-art streak-mascot" aria-hidden="true"><span class="streak-art-count" aria-label="${count} day streak">${count}<i aria-hidden="true">🔥</i></span></div><div class="streak-copy"><small>Your streak</small><strong>${count ? `${count} ${count === 1 ? 'day' : 'days'}` : 'Your first day'}</strong></div></div><p>${count ? count + (count === 1 ? ' day, Keep it going!' : ' days, Keep it going!') : 'Start your streak today ♡'}</p><div class="streak-progress" role="img" aria-label="${filled} of 7 days toward the next milestone">${days}</div><small class="streak-badge">${esc(streakBadge(count))}</small><button type="button" class="primary streak-profile-link" data-open-profile>Open profile →</button></article>`;
+}
+
+function recordLoginStreak() {
+  if (!me) return;
+  const userId = me.id, key = 'cuteBunnyStreak:' + userId, today = new Date().toISOString().slice(0, 10);
+  const yesterdayDate = new Date(`${today}T00:00:00.000Z`);
+  yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
+  const yesterday = yesterdayDate.toISOString().slice(0, 10);
+  const serverDate = String(me.last_login_date || '').slice(0, 10);
+  const serverCount = Math.max(0, Number(me.login_streak) || 0);
+  let saved = { count: 0, date: '' };
+  try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+  let localCount;
+  if (serverDate === today) localCount = serverCount || 1;
+  else if (serverDate === yesterday) localCount = serverCount + 1;
+  else if (serverDate) localCount = 1;
+  else if (saved.date === today) localCount = Math.max(1, Number(saved.count) || 1);
+  else if (saved.date === yesterday) localCount = Math.max(1, Number(saved.count) || 0) + 1;
+  else localCount = 1;
+  me.login_streak = localCount;
+  me.last_login_date = today;
+  try { localStorage.setItem(key, JSON.stringify({ count: localCount, date: today })); } catch {}
+  if (!sb) return;
+  void sb.rpc('record_login_streak').then(({ data, error }) => {
+    if (error) throw error;
+    if (me?.id !== userId) return;
+    const result = Array.isArray(data) ? data[0] : data;
+    const count = Math.max(1, Number(result?.login_streak) || localCount);
+    const date = String(result?.last_login_date || today).slice(0, 10);
+    me.login_streak = count;
+    me.last_login_date = date;
+    try { localStorage.setItem(key, JSON.stringify({ count, date })); } catch {}
+  }).catch(() => {});
+}
+
+function playBoing() {
+  try {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio) return;
+    const context = new Audio();
+    const oscillator = context.createOscillator(), gain = context.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(520, context.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(760, context.currentTime + .09);
+    oscillator.frequency.exponentialRampToValueAtTime(390, context.currentTime + .24);
+    gain.gain.setValueAtTime(.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.12, context.currentTime + .025);
+    gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .28);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + .29);
+    oscillator.onended = () => context.close();
+  } catch {}
+}
+
+function popLoveHeart(card, e) {
+  if (!card) return;
+  const id = card.closest('[data-memory]')?.dataset.memory;
+  if (id) {
+    const key = String(id);
+    reactedMemories.has(key) ? reactedMemories.delete(key) : reactedMemories.add(key);
+    try {
+      localStorage.setItem('cuteBunnyHearts:' + me?.username, JSON.stringify([...reactedMemories].slice(-2000)));
+    } catch {}
+    const likedNow = reactedMemories.has(key);
+    card.classList.toggle('is-loved', likedNow);
+    const control = card.closest('.feed-item')?.querySelector('[data-memory-heart]');
+    if (control) {
+      control.textContent = likedNow ? '♥' : '♡';
+      control.setAttribute('aria-pressed', String(likedNow));
+      control.setAttribute('aria-label', likedNow ? 'Unlike memory' : 'Like memory');
+    }
+  }
+  card.classList.remove('heart-tap');
+  void card.offsetWidth;
+  card.classList.add('heart-tap');
+  clearTimeout(card.heartTimer);
+  card.heartTimer = setTimeout(() => card.classList.remove('heart-tap'), 1050);
+  const rect = card.getBoundingClientRect();
+  const x = e?.clientX || (rect.left + rect.width / 2);
+  const y = e?.clientY || (rect.top + rect.height / 2);
+  sprinkle(x, y);
+}
+
+function go(p) {
+  page = p;
+  $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends' })[p] || 'Home';
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.page === p));
+  hideMessageActions();
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function memoryCard(m) {
+  const owner = m.author || {}, name = esc(owner.displayName || 'Friend'), handle = esc(owner.username || ''), pet = esc(owner.mascot || '🐰');
+  const title = String(m.text || m.fileName || 'A little memory'), safeTitle = esc(title);
+  const liked = reactedMemories.has(String(m.id)) ? ' is-loved' : '';
+  const isLiked = reactedMemories.has(String(m.id));
+  const heartButton = `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}">${isLiked ? '♥' : '♡'}</button>`;
+  const sorted = [me?.id, ...friends.map(f => f.id)].filter(Boolean).map(String).sort();
+  const tone = sorted.indexOf(String(owner.id)) % 2 ? 'tone-lavender' : 'tone-peach';
+  const pending = pendingDeleteTimers.has(String(m.id)) ? ' is-pending-delete' : '';
+  const uploading = m.isPending ? ' is-uploading' : '';
+  const mine = String(owner.id || '') === String(me?.id || '');
+
+  let body = '';
+  if (m.kind === 'photo') {
+    body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
+  } else if (m.kind === 'song') {
+    body = `<div class="tile song-card${liked}">${heartButton}<button class="album-art play-song" data-play-song="${esc(m.id)}" aria-label="Play ${esc(m.fileName || 'song')}" aria-pressed="false" ${m.isPending ? "disabled" : ""}><span class="song-glyph" aria-hidden="true">🎼</span><span class="song-note" aria-hidden="true">♫</span></button><span class="memory-title song-title-label" title="${esc(m.fileName || m.text || 'A little song')}">${esc(m.fileName || m.text || 'A little song')}</span>${m.isPending ? "" : `<button class="song-download card-song-save" type="button" data-memory-download="${esc(m.id)}" aria-label="Save song">Save</button>`}</div>`;
+  } else {
+    body = `<div class="note-row${mine ? ' is-mine' : ''}"><time class="note-time" datetime="${esc(m.createdAt || m.created_at || '')}">${esc(formatNoteClock(m.createdAt || m.created_at))}</time><div class="tile note${liked}" tabindex="0">${heartButton}<span class="note-message-text">${safeTitle}</span></div></div>`;
+  }
+
+  return `<article class="feed-item ${tone}${pending}${uploading}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || '')}"><div class="feed-by"><span class="sender-pet" aria-label="${pet}">${pet}</span> <b title="${name}">${name}</b> <small>@${handle}</small></div>${body}${m.isPending ? '<span class="memory-upload-status" role="status">Adding to your garden…</span>' : ''}${mine ? `<span class="memory-owner-indicator" aria-hidden="true">Your memory</span>` : ''}</article>`;
+}
+
+/* Instagram-style Notes tray & DM thread */
+function renderNotesPage() {
+  const content = $('#content');
+  if (!content) return;
+
+  // 1. Instagram Notes Tray items
+  const myLatestNote = feed.find(m => m.kind === 'note' && String(m.author?.id || m.owner_id) === String(me?.id));
+  const myBubbleText = myLatestNote ? esc(myLatestNote.text) : 'Share a thought…';
+
+  let friendsNotesHtml = '';
+  friends.forEach(f => {
+    const fNote = feed.find(m => m.kind === 'note' && String(m.author?.id || m.owner_id) === String(f.id));
+    const bubble = fNote ? `<div class="ig-thought-bubble"><span class="ig-thought-text">${esc(fNote.text)}</span></div>` : '';
+    friendsNotesHtml += `
+      <div class="ig-note-item" data-friend-profile="${esc(f.username)}">
+        <div class="ig-note-bubble-wrap">
+          ${bubble}
+          <div class="ig-note-avatar">
+            <span>${esc(f.mascot || '🐰')}</span>
+          </div>
+        </div>
+        <span class="ig-note-name">${esc(f.displayName || f.username)}</span>
+      </div>
+    `;
+  });
+
+  const notesTray = `
+    <section class="ig-notes-tray" aria-label="Notes from friends">
+      <div class="ig-notes-scroll">
+        <div class="ig-note-item is-me" id="openMyNoteComposer">
+          <div class="ig-note-bubble-wrap">
+            <div class="ig-thought-bubble">
+              <span class="ig-thought-text">${myBubbleText}</span>
+            </div>
+            <div class="ig-note-avatar">
+              <span>${esc(me?.mascot || '🐰')}</span>
+              ${!myLatestNote ? '<span class="ig-note-plus">＋</span>' : ''}
+            </div>
+          </div>
+          <span class="ig-note-name">Your note</span>
+        </div>
+        ${friendsNotesHtml}
+      </div>
+    </section>
+  `;
+
+  // 2. Chat thread
+  const chatNotes = feed.filter(m => m.kind === 'note' && !pendingDeleteTimers.has(String(m.id))).slice().reverse();
+  let previousLabel = '';
+  const messagesHtml = chatNotes.map(m => {
+    const label = noteDayLabel(m.createdAt || m.created_at);
+    const divider = label === previousLabel ? '' : `<div class="chat-day-divider"><span>${esc(label)}</span></div>`;
+    previousLabel = label;
+
+    const owner = m.author || {};
+    const mine = String(owner.id || m.owner_id || '') === String(me?.id || '');
+    const id = String(m.id);
+    const liked = reactedMemories.has(id);
+    const name = esc(owner.displayName || owner.username || 'Friend');
+    const handle = esc(owner.username || 'friend');
+    const pet = esc(owner.mascot || '🐰');
+    const text = esc(m.text || '');
+    const time = esc(formatNoteClock(m.createdAt || m.created_at));
+
+    return `${divider}
+      <article class="chat-message ${mine ? 'is-mine' : 'is-friend'}${liked ? ' is-loved' : ''}${m.isPending ? ' is-uploading' : ''}" data-kind="note" data-memory="${esc(id)}">
+        <div class="chat-meta">
+          <span class="sender-pet" aria-hidden="true">${pet}</span>
+          <b title="${name}">${name}</b>
+          <small>@${handle}</small>
+          <time datetime="${esc(m.createdAt || m.created_at || '')}">${time}</time>
+        </div>
+        <div class="chat-bubble-wrap">
+          <div class="tile chat-bubble" tabindex="0" data-chat-message-id="${esc(id)}">
+            <button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>
+            <span class="note-message-text">${text}</span>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  content.innerHTML = `
+    <section class="chat-page" aria-label="Shared notes conversation">
+      <header class="chat-header">
+        <div>
+          <p class="eyebrow">YOUR LITTLE CIRCLE</p>
+          <h2>Notes & Messages</h2>
+          <p>Tap your note bubble to share a thought, or chat below ♡</p>
+        </div>
+        <span class="chat-header-buddy" aria-hidden="true">${esc(me?.mascot || '🐰')}</span>
+      </header>
+      ${notesTray}
+      <div class="chat-thread" id="chatThread" aria-live="polite">
+        ${messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your note garden starts here</b><small>Say hello to your circle or share what is on your mind ♡</small></div>'}
+      </div>
+      <form id="chatComposer" class="chat-composer">
+        <textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Message your circle…" aria-label="Message your circle"></textarea>
+        <button type="submit" class="primary" id="chatSend">Send ♡</button>
+      </form>
+    </section>
+  `;
+
+  const thread = $('#chatThread');
+  if (thread) requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
+}
+
+function render() {
+  const c = $('#content');
+  if (!c) return;
+
+  if (page === 'notes') {
+    renderNotesPage();
+    return;
+  }
+
+  const visibleFeed = feed.filter(x => !pendingDeleteTimers.has(String(x.id)));
+  const pics = visibleFeed.filter(x => x.kind === 'photo');
+  const songs = visibleFeed.filter(x => x.kind === 'song');
+  const notes = visibleFeed.filter(x => x.kind === 'note');
+
+  if (page === 'home') {
+    c.innerHTML = `
+      <div class="heading"><h2>Welcome, ${esc(me?.displayName || 'friend')} ♡</h2><p>Your little shared corner for favorite things.</p></div>
+      <div class="hero">
+        <div>
+          <small>✿ MADE FOR LITTLE MOMENTS</small>
+          <h3>Welcome to the memory garden</h3>
+          <p>Share photos, songs, and sweet notes with your friend.</p>
+          <button class="primary" data-go="friends">Find your friend ♡</button>
+        </div>
+        <button class="hero-art bunny-button" id="bunnyBuddy" aria-label="Open your profile">
+          <span>☁️</span><span>${esc(me?.mascot || '🐰')}</span><span>🌷</span>
+          <svg class="doodle-bouquet" viewBox="0 0 90 70" aria-hidden="true"><path d="M45 66Q35 42 20 27M45 66Q46 38 47 20M45 66Q56 42 72 30"/><path d="M39 54q-13-13-21-5 7 12 21 5M51 53q12-15 21-7-6 13-21 7"/><g class="bloom"><circle cx="20" cy="22" r="5"/><circle cx="14" cy="22" r="4"/><circle cx="26" cy="22" r="4"/><circle cx="20" cy="16" r="4"/><circle cx="20" cy="28" r="4"/></g><g class="bloom lavender"><circle cx="47" cy="16" r="5"/><circle cx="41" cy="16" r="4"/><circle cx="53" cy="16" r="4"/><circle cx="47" cy="10" r="4"/><circle cx="47" cy="22" r="4"/></g><g class="bloom peach"><circle cx="73" cy="27" r="5"/><circle cx="67" cy="27" r="4"/><circle cx="79" cy="27" r="4"/><circle cx="73" cy="21" r="4"/><circle cx="73" cy="33" r="4"/></g></svg>
+          <i>✦</i>
+        </button>
+      </div>
+      <div class="daily" id="dailyCard" role="button" tabindex="0" aria-label="A little kindness for today. Tap for a fresh reminder">
+        <span class="daily-icon">🌼</span>
+        <div>
+          <small>A LITTLE KINDNESS FOR TODAY</small>
+          <p id="compliment">${esc(getKindness())}</p>
+        </div>
+        <button class="round" id="newCompliment" aria-label="New kindness reminder">↻</button>
+      </div>
+      <div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div>
+      <div class="grid happy-things-grid">
+        <article class="tile"><div class="tile-art photo-art">🌸</div><h3>Photo garden</h3><p>${pics.length} shared photos</p><button class="primary" data-go="gallery">Open photos →</button></article>
+        <article class="tile"><div class="tile-art music-art">🎧<span>♫</span></div><h3>Cozy playlist</h3><p>${songs.length} shared songs</p><button class="primary" data-go="music">Open music →</button></article>
+        <article class="tile"><div class="tile-art note-art">💌</div><h3>Little love notes</h3><p>${notes.length} saved notes</p><button class="primary" data-go="notes">Open notes →</button></article>
+        ${streakWidget()}
+      </div>
+      <div class="feed-list">
+        <h3>Your memory history</h3>
+        ${feed.map(memoryCard).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
+      </div>
+    `;
+  } else if (page === 'gallery') {
+    c.innerHTML = `
+      <div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div>
+      <label class="primary upload-label">＋ Add photo<input data-upload="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden></label>
+      <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || '<div class="empty">Your garden is waiting for its first photo ♡</div>'}</section>
+    `;
+  } else if (page === 'music') {
+    c.innerHTML = `
+      <div class="heading"><h2>Cozy music 🎵</h2><p>Your songs play right here in the garden.</p></div>
+      <label class="primary upload-label">＋ Add a song<input data-upload="song" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" hidden></label>
+      <h3 class="shared-songs-title">Your shared songs</h3>
+      <div class="grid media-grid music-grid">${songs.map(memoryCard).join('') || '<div class="empty">Add a song file and listen together right here ♡</div>'}</div>
+    `;
+  } else if (page === 'friends') {
+    c.innerHTML = `
+      <div class="heading"><h2>Your little circle 🐰</h2><p>Find a friend, then keep your favorite things together.</p></div>
+      <div class="friend-search"><input class="input" id="friendSearch" value="${esc(friendQuery)}" placeholder="Search username…"><button class="primary" id="searchFriends">Find</button></div>
+      <section class="following-list">
+        <div class="friend-section-title"><h3>People you follow</h3><span>${friends.length}</span></div>
+        ${friends.map(friendRow).join('') || '<div class="empty">Your circle is waiting for its first friend ♡</div>'}
+      </section>
+      <section class="friend-results-section">
+        <div class="friend-section-title"><h3>Find new friends</h3></div>
+        <div id="friendResults">${friendResults.map(friendRow).join('') || '<div class="empty">Search a username to peek at their profile ♡</div>'}</div>
+      </section>
+    `;
+  }
+  hydrateMedia();
+}
+
+function showFriendProfile(user) {
+  if (!user) return;
+  const gate = $('#friendProfileGate');
+  gate.dataset.username = user.username;
+  gate.dataset.following = String(!!user.isFollowing);
+  $('#friendProfileBuddy').textContent = user.mascot || '🐰';
+  $('#friendProfileName').textContent = user.displayName || user.display_name || user.username;
+  $('#friendProfileHandle').textContent = '@' + user.username;
+  $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
+  $('#friendProfileCreated').textContent = 'Joined ' + formatJoinDate(user.created_at);
+  $('#friendProfileStyle').dataset.themePreview = user.theme || 'rose';
+  $('#friendProfileThemeName').textContent = themeNames[user.theme] || 'Rose garden';
+  $('#friendProfileFollow').textContent = user.isFollowing ? 'Following ✓' : 'Follow ♡';
+  $('#friendProfileFollow').classList.toggle('is-following', !!user.isFollowing);
+  gate.classList.remove('hidden');
+}
+
+async function toggleFriendFollow(username, isFollowing) {
+  const beforeFriends = friends.slice(), beforeResults = friendResults.slice();
+  const found = [...friends, ...friendResults].find(user => user.username === username) || { username, displayName: username, mascot: '🐰' };
+  const next = !isFollowing;
+  friends = next ? [...friends.filter(user => user.username !== username), { ...found, isFollowing: true }] : friends.filter(user => user.username !== username);
+  friendResults = friendResults.map(user => user.username === username ? { ...user, isFollowing: next } : user);
+  const gate = $('#friendProfileGate');
+  if (gate.dataset.username === username) {
+    gate.dataset.following = String(next);
+    $('#friendProfileFollow').textContent = next ? 'Following ✓' : 'Follow ♡';
+    $('#friendProfileFollow').classList.toggle('is-following', next);
+  }
+  render();
+  try {
+    await api('/follow/' + encodeURIComponent(username), { method: next ? 'POST' : 'DELETE' });
+    toast(next ? 'You’re following this friend ♡' : 'Friend removed from your circle');
+    void refresh().catch(() => {});
+  } catch (error) {
+    friends = beforeFriends;
+    friendResults = beforeResults;
+    if (gate.dataset.username === username) {
+      gate.dataset.following = String(isFollowing);
+      $('#friendProfileFollow').textContent = isFollowing ? 'Following ✓' : 'Follow ♡';
+      $('#friendProfileFollow').classList.toggle('is-following', isFollowing);
+    }
+    render();
+    toast(error.message);
+  }
+}
+
+function updateBuddyChoices(value = $('#profileMascot')?.value || '🐰') {
+  document.querySelectorAll('[data-buddy-choice]').forEach(button => {
+    const selected = button.dataset.buddyChoice === value;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-checked', String(selected));
+  });
+}
+
+function updateThemePreview(theme = $('#profileTheme')?.value || 'rose') {
+  const preview = $('#profileThemePreview');
+  if (preview) preview.dataset.themePreview = theme;
+  document.querySelectorAll('[data-theme-choice]').forEach(button => {
+    const selected = button.dataset.themeChoice === theme;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-checked', String(selected));
+  });
+  const buddy = $('#profileMascot')?.value || '🐰', avatar = $('#profileThemeBuddy');
+  if (avatar) avatar.textContent = buddy;
+  const name = $('#profilePreviewName');
+  if (name) name.textContent = $('#profileDisplay')?.value.trim() || me?.displayName || 'Your cozy style';
+  const meta = $('#profilePreviewMeta');
+  if (meta) meta.textContent = `@${($('#profileUsername')?.value.trim().toLowerCase() || me?.username || 'your_name')} · ${themeNames[theme] || themeNames.rose}`;
+  updateBuddyChoices(buddy);
+}
+
+/* Audio Player */
+function formatClock(value) {
+  if (!Number.isFinite(value) || value < 0) return '0:00';
+  const minutes = Math.floor(value / 60), seconds = Math.floor(value % 60);
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function shortIslandTitle(track) {
+  const name = String(track?.fileName || track?.text || 'Song').replace(/\.[^.]{1,8}$/, '').trim();
+  return Array.from(name || 'Song').slice(0, 5).join('');
+}
+
+function toggleMusicIsland(force) {
+  const panel = $('#nowPlayingPanel'), pill = $('#nowPlayingPill'), track = playlist[playlistIndex];
+  if (!panel) return;
+  if (!track && force !== false) return;
+  const open = typeof force === 'boolean' ? force : panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !open);
+  pill?.setAttribute('aria-expanded', String(open));
+}
+
+function syncPlayer() {
+  const audio = $('#globalAudio');
+  if (!audio) return;
+  document.querySelectorAll('[data-play-song]').forEach(button => {
+    const active = String(playlist[playlistIndex]?.id) === String(button.dataset.playSong) && !audio.paused && !audio.ended;
+    button.classList.toggle('is-playing', active);
+    button.setAttribute('aria-pressed', String(active));
+    button.setAttribute('aria-label', active ? 'Pause song' : 'Play song');
+  });
+  const track = playlist[playlistIndex], hasTrack = !!track && !!audio.src, playing = hasTrack && !audio.paused && !audio.ended;
+  const island = $('#nowPlayingIsland'), pill = $('#nowPlayingPill'), shortTitle = $('#islandShortTitle'), fullTitle = $('#islandFullTitle');
+  const status = $('#islandStatusText'), toggle = $('#nowPlayingToggle'), seek = $('#islandSeek'), current = $('#islandCurrentTime'), duration = $('#islandDuration');
+  if (island) {
+    island.classList.toggle('hidden', !hasTrack);
+    island.classList.toggle('is-playing', playing);
+  }
+  $('#app').classList.toggle('has-now-playing', hasTrack);
+  if (!hasTrack) toggleMusicIsland(false);
+  if (track) {
+    const title = track.fileName || track.text || 'A little song', currentStatus = String(me?.bio || 'Listening together').trim() || 'Listening together';
+    if (shortTitle) shortTitle.textContent = shortIslandTitle(track);
+    if (fullTitle) fullTitle.textContent = title;
+    if (status) status.textContent = currentStatus;
+    if (pill) {
+      pill.title = title + ' · ' + currentStatus;
+      pill.setAttribute('aria-label', 'Music: ' + title + '. Status: ' + currentStatus + '. Open player');
+    }
+  }
+  if (toggle) {
+    toggle.textContent = audio.paused ? '▶' : 'Ⅱ';
+    toggle.setAttribute('aria-label', audio.paused ? 'Play song' : 'Pause song');
+  }
+  if (seek) seek.value = audio.duration ? String(Math.round(audio.currentTime / audio.duration * 1000)) : 0;
+  if (current) current.textContent = formatClock(audio.currentTime);
+  if (duration) duration.textContent = formatClock(audio.duration);
+}
+
+async function playSong(id) {
+  const songs = feed.filter(x => x.kind === 'song'), index = songs.findIndex(x => String(x.id) === String(id)), audio = $('#globalAudio');
+  if (index < 0) return toast('This song is no longer in your garden ♡');
+  if (String(playlist[playlistIndex]?.id) === String(id) && audio.src) {
+    if (audio.paused) await audio.play().catch(() => {});
+    else audio.pause();
+    syncPlayer();
+    return;
+  }
+  playlist = songs;
+  playlistIndex = index;
+  const track = songs[index];
+  audio.pause();
+  audio.removeAttribute('src');
+  audio.load();
+  if (audioObjectUrl) URL.revokeObjectURL(audioObjectUrl);
+  syncPlayer();
+  try {
+    const { data, error } = await sb.storage.from('memories').download(track.storagePath);
+    if (error) throw error;
+    audioObjectUrl = URL.createObjectURL(data);
+    audio.src = audioObjectUrl;
+    await audio.play();
+    syncPlayer();
+  } catch (e) {
+    toast(e.message || 'Could not play this song right now ♡');
+  }
+}
+
+function stepSong(step) {
+  if (!playlist.length) return;
+  playlistIndex = (playlistIndex + step + playlist.length) % playlist.length;
+  void playSong(playlist[playlistIndex].id);
+}
+
+/* Modals & Dialogs */
+function closeAllGates() {
+  closePhotoLightbox();
+  closeMemoryActions();
+  hideMessageActions();
+  document.querySelectorAll('.auth-gate').forEach(gate => gate.classList.add('hidden'));
+}
+
+async function openPhotoLightbox(id) {
+  const item = feed.find(memory => String(memory.id) === String(id));
+  if (!item || item.kind !== 'photo') return;
+  const gate = $('#photoLightbox'), image = $('#photoLightboxImage'), deleteButton = $('#photoLightboxDelete');
+  const thumb = [...document.querySelectorAll('.feed-item[data-memory]')].find(node => node.dataset.memory === String(id))?.querySelector('.feed-photo');
+  const canDelete = String(item.author?.id || item.owner_id || '') === String(me?.id || '') && !item.isPending;
+  gate.dataset.memoryId = String(id);
+  deleteButton.classList.toggle('hidden', !canDelete);
+  deleteButton.setAttribute('aria-hidden', String(!canDelete));
+  image.removeAttribute('src');
+  gate.classList.remove('hidden');
+  if (thumb?.getAttribute('src')) image.src = thumb.getAttribute('src');
+  else if (thumb) {
+    await hydrateOneMedia(thumb);
+    if (gate.dataset.memoryId === String(id) && thumb.getAttribute('src')) image.src = thumb.getAttribute('src');
+  }
+}
+
+function closePhotoLightbox() {
+  const gate = $('#photoLightbox'), confirmGate = $('#photoDeleteConfirmGate');
+  gate.classList.add('hidden');
+  gate.dataset.memoryId = '';
+  $('#photoLightboxImage').removeAttribute('src');
+  $('#photoLightboxDelete').classList.add('hidden');
+  confirmGate.classList.add('hidden');
+  confirmGate.dataset.memoryId = '';
+}
+
+function openMemoryActions(id) {
+  const item = feed.find(memory => String(memory.id) === String(id));
+  if (!item) return;
+  const gate = $('#memoryActionGate'), image = $('#memoryActionImage'), emoji = $('#memoryActionEmoji');
+  const actionCard = gate.querySelector('.memory-action-card'), isPhoto = item.kind === 'photo', isNote = item.kind === 'note';
+  gate.dataset.memoryId = String(item.id);
+  actionCard.classList.toggle('is-song', item.kind === 'song');
+  actionCard.classList.toggle('is-note', isNote);
+  actionCard.classList.toggle('is-photo', isPhoto);
+
+  const canDelete = String(item.author?.id || item.owner_id || '') === String(me?.id || '') && !item.isPending;
+  $('#memoryDelete').classList.toggle('hidden', !canDelete);
+  // Clean delete text without dustbin box / emoji
+  $('#memoryDelete').textContent = isNote ? 'Delete note' : item.kind === 'song' ? 'Delete song' : 'Delete photo';
+  $('#memoryCopy').classList.toggle('hidden', !isNote);
+  $('#memoryActionKicker').textContent = isPhoto ? 'A LITTLE PHOTO' : isNote ? 'A LITTLE NOTE' : 'A SONG TO KEEP';
+  $('#memoryActionTitle').textContent = isPhoto ? 'A lovely moment' : isNote ? 'A note to keep' : (item.fileName || 'A little song');
+  $('#memoryActionText').textContent = isPhoto ? 'Keep this sweet moment on your device?' : isNote ? 'Copy this message or delete it softly?' : 'Save this song file for later?';
+  $('#memoryDownload').textContent = isPhoto ? 'Save photo' : item.kind === 'song' ? 'Save song' : 'Save';
+  $('#memoryDownload').classList.toggle('hidden', isNote);
+
+  const art = $('#memoryActionArt');
+  art.classList.toggle('is-photo', isPhoto);
+  image.classList.toggle('hidden', !isPhoto);
+  emoji.classList.toggle('hidden', isPhoto);
+  emoji.textContent = isPhoto ? '🌷' : isNote ? '💌' : '🎵';
+  image.alt = 'A shared photo';
+  image.removeAttribute('src');
+  gate.classList.remove('hidden');
+
+  if (isPhoto) {
+    const thumbnail = [...document.querySelectorAll('.feed-item[data-memory]')].find(node => node.dataset.memory === String(item.id))?.querySelector('.feed-photo');
+    const loadedSource = thumbnail?.getAttribute('src');
+    if (loadedSource) image.src = loadedSource;
+    else if (thumbnail) {
+      void hydrateOneMedia(thumbnail).then(() => {
+        const nextSource = thumbnail.getAttribute('src');
+        if (gate.dataset.memoryId === String(item.id) && nextSource) image.src = nextSource;
+      });
+    }
+  }
+}
+
+function closeMemoryActions() {
+  const gate = $('#memoryActionGate');
+  gate.classList.add('hidden');
+  $('#memoryActionImage').removeAttribute('src');
+}
+
+/* Two-button floating popup above pressed message: Copy and Delete */
+function showMessageActions(id, bubbleElement) {
+  hideMessageActions();
+  activeMessageActionsId = String(id);
+  const memory = feed.find(m => String(m.id) === String(id));
+  if (!memory || !bubbleElement) return;
+
+  const wrap = bubbleElement.closest('.chat-bubble-wrap') || bubbleElement;
+  const popup = document.createElement('div');
+  popup.className = 'chat-actions-popup';
+  popup.setAttribute('role', 'toolbar');
+  popup.setAttribute('aria-label', 'Message options');
+  popup.innerHTML = `
+    <button type="button" class="chat-action-btn" data-chat-copy="${esc(id)}">Copy</button>
+    <button type="button" class="chat-action-btn delete-btn" data-chat-delete="${esc(id)}">Delete</button>
+  `;
+  wrap.appendChild(popup);
+}
+
+function hideMessageActions() {
+  document.querySelectorAll('.chat-actions-popup').forEach(el => el.remove());
+  activeMessageActionsId = null;
+}
+
+async function copyMemoryText(id) {
+  const item = feed.find(memory => String(memory.id) === String(id));
+  if (!item) return;
+  const text = String(item.text || item.fileName || '');
+  try {
+    if (!navigator.clipboard?.writeText) throw Error('Clipboard unavailable');
+    await navigator.clipboard.writeText(text);
+    toast('Note copied ♡');
+  } catch {
+    const field = document.createElement('textarea');
+    field.value = text;
+    field.setAttribute('readonly', '');
+    field.style.position = 'fixed';
+    field.style.opacity = '0';
+    document.body.append(field);
+    field.select();
+    try {
+      document.execCommand('copy');
+      toast('Note copied ♡');
+    } catch {
+      toast('Could not copy note text.');
+    }
+    field.remove();
+  }
+}
+
+async function deleteSafely(id) {
+  const item = feed.find(x => String(x.id) === String(id));
+  if (!item) return;
+  const mine = String(item.author?.id || item.owner_id || '') === String(me?.id || '');
+  if (!mine) return toast('You can only delete your own memories ♡');
+  if (pendingDeleteTimers.has(String(id))) return;
+
+  const card = document.querySelector(`[data-memory="${CSS.escape(String(id))}"]`);
+  card?.classList.add('is-pending-delete');
+
+  const undo = document.createElement('button');
+  undo.className = 'undo-toast';
+  undo.textContent = 'Deleted softly · Undo';
+  undo.setAttribute('aria-label', 'Undo delete');
+  document.body.append(undo);
+
+  const timer = setTimeout(async () => {
+    pendingDeleteTimers.delete(String(id));
+    undo.remove();
+    try {
+      await api('/memories/' + encodeURIComponent(id), { method: 'DELETE' });
+      feed = feed.filter(m => String(m.id) !== String(id));
+      if (String(playlist[playlistIndex]?.id) === String(id)) {
+        const audio = $('#globalAudio');
+        audio.pause();
+        audio.removeAttribute('src');
+        playlistIndex = -1;
+        syncPlayer();
+      }
+      render();
+      toast('Memory tucked away ♡');
+    } catch (e) {
+      card?.classList.remove('is-pending-delete');
+      toast(e.message);
+    }
+  }, 6500);
+
+  pendingDeleteTimers.set(String(id), { timer, card, undo });
+  if (page === 'notes') renderNotesPage();
+  else render();
+
+  undo.onclick = () => {
+    clearTimeout(timer);
+    pendingDeleteTimers.delete(String(id));
+    card?.classList.remove('is-pending-delete');
+    undo.remove();
+    if (page === 'notes') renderNotesPage();
+    else render();
+    toast('Memory restored ♡');
+  };
+}
+
+async function downloadMemoryById(id, button) {
+  const item = feed.find(memory => String(memory.id) === String(id));
+  if (item?.previewUrl && !item.storagePath) {
+    const link = document.createElement('a');
+    link.href = item.previewUrl;
+    link.download = String(item.fileName || 'cute-bunny-photo.jpg').replace(/[\/:*?"<>|]/g, '_');
+    document.body.append(link);
+    link.click();
+    link.remove();
+    toast('Saved to your device ♡');
+    return;
+  }
+  if (!item?.storagePath) return toast('This file is not available to download yet ♡');
+  const original = button?.innerHTML;
+  if (button) {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    button.innerHTML = '<span class="download-spinner" aria-hidden="true"></span> Saving…';
+  }
+  try {
+    const { data, error } = await sb.storage.from('memories').download(item.storagePath);
+    if (error) throw error;
+    const url = URL.createObjectURL(data), link = document.createElement('a');
+    const fallback = item.kind === 'photo' ? 'cute-bunny-photo.jpg' : 'cute-bunny-song';
+    link.href = url;
+    link.download = String(item.fileName || fallback).replace(/[\/:*?"<>|]/g, '_');
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    toast('Saved to your device ♡');
+  } catch (error) {
+    toast(error.message || 'Could not download this file. Try again ♡');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+      button.innerHTML = original;
+    }
+  }
+}
+
+async function sendChatMessage() {
+  const field = $('#chatInput'), text = field?.value.trim();
+  if (!text) return toast('Write a little message first ♡');
+  const tempId = 'local-note-' + Date.now();
+  const createdAt = new Date().toISOString();
+  const optimistic = {
+    id: tempId,
+    kind: 'note',
+    text,
+    createdAt,
+    created_at: createdAt,
+    isPending: true,
+    author: { ...me, id: me?.id, displayName: me?.displayName || me?.username, mascot: me?.mascot || '🐰' }
+  };
+  field.value = '';
+  feed = [optimistic, ...feed];
+  hideMessageActions();
+  renderNotesPage();
+  try {
+    const saved = await api('/memories', { method: 'POST', body: JSON.stringify({ kind: 'note', text }) });
+    const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
+    feed = feed.map(m => String(m.id) === tempId ? record : m);
+    renderNotesPage();
+  } catch (error) {
+    feed = feed.filter(m => String(m.id) !== tempId);
+    renderNotesPage();
+    toast(error.message);
+  }
+}
+
+function openNoteComposer() {
+  const myLatestNote = feed.find(m => m.kind === 'note' && String(m.author?.id || m.owner_id) === String(me?.id));
+  const input = $('#igNoteInput');
+  const clearBtn = $('#igNoteClear');
+  if (input) input.value = myLatestNote ? myLatestNote.text : '';
+  if (clearBtn) clearBtn.classList.toggle('hidden', !myLatestNote);
+  $('#noteComposerGate').classList.remove('hidden');
+  input?.focus();
+}
+
+async function saveIgNote() {
+  const input = $('#igNoteInput'), text = input?.value.trim();
+  if (!text) return toast('Write a little thought first ♡');
+  $('#noteComposerGate').classList.add('hidden');
+  try {
+    const saved = await api('/memories', { method: 'POST', body: JSON.stringify({ kind: 'note', text }) });
+    const record = { ...saved, createdAt: saved.created_at, author: { ...me, displayName: me?.displayName || me?.username, mascot: me?.mascot || '🐰' } };
+    feed = [record, ...feed];
+    renderNotesPage();
+    toast('Your note is updated ♡');
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+async function clearIgNote() {
+  const myLatestNote = feed.find(m => m.kind === 'note' && String(m.author?.id || m.owner_id) === String(me?.id));
+  $('#noteComposerGate').classList.add('hidden');
+  if (myLatestNote) {
+    try {
+      await api('/memories/' + encodeURIComponent(myLatestNote.id), { method: 'DELETE' });
+      feed = feed.filter(m => String(m.id) !== String(myLatestNote.id));
+      renderNotesPage();
+      toast('Your note was cleared ♡');
+    } catch (e) {
+      toast(e.message);
+    }
+  }
+}
+
+/* Realtime */
+function startRealtime() {
+  if (!sb || !me) return;
+  try {
+    presenceChannel = sb.channel('cute-bunny-presence', { config: { presence: { key: me.id } } })
+      .on('presence', { event: 'sync' }, syncPresenceUI)
+      .subscribe(async status => {
+        if (status === 'SUBSCRIBED') await presenceChannel.track({ username: me.username, online_at: new Date().toISOString() });
+      });
+
+    profileChannel = sb.channel('cute-bunny-profiles-' + me.id)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, payload => {
+        if (payload.new?.id !== me.id) void refresh();
+      }).subscribe();
+
+    notificationChannel = sb.channel('cute-bunny-notifications-' + me.id)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'recipient_id=eq.' + me.id }, () => {
+        void loadNotifications();
+        if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+        toast('A little hello from your friend ♡');
+      }).subscribe();
+
+    memoryChannel = sb.channel('cute-bunny-memories-' + me.id)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'memories' }, () => {
+        clearTimeout(window.cuteMemoryRefresh);
+        window.cuteMemoryRefresh = setTimeout(() => void refresh(), 600);
+      }).subscribe();
+  } catch (error) {
+    console.info('Realtime will start when supported.', error?.message || '');
+  }
+}
+
+function closeRealtime() {
+  [presenceChannel, notificationChannel, memoryChannel, profileChannel].forEach(channel => {
+    if (channel) sb.removeChannel(channel);
+  });
+  presenceChannel = notificationChannel = memoryChannel = profileChannel = null;
+}
+
+function syncPresenceUI() {
+  if (!presenceChannel) return;
+  const state = presenceChannel.presenceState();
+  document.querySelectorAll('[data-friend-id]').forEach(node => {
+    node.classList.toggle('is-online', !!state[node.dataset.friendId]?.length);
+  });
+}
+
+async function loadNotifications() {
+  if (!me || notificationLoading) return;
+  const req = me.id;
+  notificationLoading = true;
+  try {
+    const rows = await api('/notifications');
+    if (me?.id !== req) return;
+    notificationRows = rows;
+    notificationLoaded = true;
+    updateNotificationBadge();
+  } catch {}
+  finally {
+    if (me?.id === req) {
+      notificationLoading = false;
+      if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+    }
+  }
+}
+
+function updateNotificationBadge() {
+  const badge = $('#notificationBadge'), count = notificationRows.filter(n => !n.read_at).length;
+  badge.textContent = count > 9 ? '9+' : String(count);
+  badge.classList.toggle('hidden', count === 0);
+}
+
+function renderNotifications() {
+  const list = $('#notificationList');
+  if (!list) return;
+  const prefs = me?.notification_preferences || {};
+  $('#notifyMemories').checked = prefs.memories !== false;
+  $('#notifyBuddy').checked = prefs.buddy !== false;
+  list.innerHTML = notificationRows.map(n => {
+    const actor = Array.isArray(n.actor) ? n.actor[0] : (n.actor || {});
+    return `<button class="notification-row${n.read_at ? '' : ' is-unread'}" data-notification="${esc(n.id)}" data-kind="${esc(n.kind)}" data-memory="${esc(n.memory_id || '')}"><span class="notification-avatar">${esc(actor.mascot || '🐰')}</span><span><b>${esc(actor.display_name || actor.username || 'Friend')}</b><small>@${esc(actor.username || 'friend')} · ${esc(n.message)}</small><time>${esc(formatMessageTime(n.created_at))}</time></span>${n.read_at ? '' : '<i>♡</i>'}</button>`;
+  }).join('') || (notificationLoading && !notificationLoaded ? '<div class="notification-loading" aria-label="Loading notifications"><span class="notification-loader" aria-hidden="true"></span></div>' : '<div class="notification-empty"><span aria-hidden="true">♡</span><b>You’re all caught up</b><small>New shared activity will appear here.</small></div>');
+}
+
+async function markNotificationRead(id) {
+  const row = notificationRows.find(n => String(n.id) === String(id));
+  if (!row || row.read_at) return;
+  await api('/notifications/read', { method: 'PUT', body: JSON.stringify({ ids: [id] }) });
+  row.read_at = new Date().toISOString();
+  updateNotificationBadge();
+}
+
+async function searchFriends() {
+  const q = $('#friendSearch').value.trim();
+  friendQuery = q;
+  if (!q) {
+    friendResults = [];
+    render();
+    return toast('Type your friend’s username first ♡');
+  }
+  if (!/^[a-zA-Z0-9_]{1,24}$/.test(q)) return toast('Usernames use letters, numbers, and underscores ♡');
+  try {
+    friendResults = await api('/users?q=' + encodeURIComponent(q));
+    render();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function hydrateOneMedia(node) {
+  try {
+    const m = feed.find(x => String(x.id) === node.dataset.media);
+    if (!m?.storagePath || m.isPending) return;
+    const key = String(m.id), cached = mediaUrlCache.get(key);
+    if (cached) {
+      node.src = cached;
+      return;
+    }
+    const { data, error } = await sb.storage.from('memories').download(m.storagePath);
+    if (!error && data) {
+      const url = URL.createObjectURL(data);
+      mediaUrlCache.set(key, url);
+      if (mediaUrlCache.size > 40) {
+        const oldest = mediaUrlCache.keys().next().value, expired = mediaUrlCache.get(oldest);
+        mediaUrlCache.delete(oldest);
+        URL.revokeObjectURL(expired);
+      }
+      node.src = url;
+    }
+  } catch {}
+}
+
+function hydrateMedia() {
+  if (!sb) return;
+  const nodes = [...document.querySelectorAll('[data-media]')];
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        observer.unobserve(entry.target);
+        void hydrateOneMedia(entry.target);
+      }
+    }), { rootMargin: '320px 0px' });
+    nodes.forEach(node => observer.observe(node));
+  } else nodes.forEach(node => void hydrateOneMedia(node));
+}
+
+function formatProfileDate(value) {
+  const date = new Date(value || Date.now());
+  if (Number.isNaN(date.getTime())) return '';
+  const month = new Intl.DateTimeFormat('en', { month: 'short' }).format(date);
+  return `${date.getDate()} ${month}, ${date.getFullYear()}`;
+}
+
+/* Event listeners */
+
+// Tapping effect on pointerdown
+document.addEventListener('pointerdown', e => {
+  const interactive = e.target.closest('button, .primary, .round, .tile, .chat-bubble, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
+  if (!interactive || e.target.closest('input, textarea, select')) return;
+  interactive.classList.remove('cute-tap');
+  void interactive.offsetWidth;
+  interactive.classList.add('cute-tap');
+  setTimeout(() => interactive.classList.remove('cute-tap'), 360);
+
+  const rect = interactive.getBoundingClientRect();
+  const x = e.clientX || (rect.left + rect.width / 2);
+  const y = e.clientY || (rect.top + rect.height / 2);
+  sprinkle(x, y);
+}, { passive: true });
+
+// Touch free space to dismiss any modal / gate
+document.addEventListener('click', e => {
+  // If clicking on photo lightbox: touching ANYWHERE except Save/Delete closes it
+  const lightbox = e.target.closest('#photoLightbox');
+  if (lightbox && !lightbox.classList.contains('hidden')) {
+    if (!e.target.closest('.photo-lightbox-actions')) {
+      closePhotoLightbox();
+      return;
+    }
+  }
+
+  // If clicking on any auth-gate backdrop
+  if (e.target.classList.contains('auth-gate')) {
+    e.target.classList.add('hidden');
+    if (e.target.id === 'photoLightbox') closePhotoLightbox();
+    if (e.target.id === 'memoryActionGate') closeMemoryActions();
+    return;
+  }
+
+  // Dismiss message actions popup if clicking outside
+  if (!e.target.closest('.chat-actions-popup') && !e.target.closest('.chat-bubble')) {
+    hideMessageActions();
+  }
+
+  // Dismiss now playing panel if clicking outside island
+  const island = $('#nowPlayingIsland');
+  if (island && !island.classList.contains('hidden') && !$('#nowPlayingPanel')?.classList.contains('hidden')) {
+    if (!e.target.closest('#nowPlayingIsland')) toggleMusicIsland(false);
+  }
 });
-document.addEventListener('click',e=>{const photo=e.target.closest('.feed-photo');if(!photo||e.detail>1)return;clearTimeout(window.cuteBunnyPhotoOpenTimer);const id=photo.closest('.feed-item')?.dataset.memory;window.cuteBunnyPhotoOpenTimer=setTimeout(()=>void openPhotoLightbox(id),230)});
 
-document.addEventListener('click',e=>{const heart=e.target.closest('[data-memory-heart]');if(!heart)return;e.preventDefault();const tile=heart.closest('.feed-item')?.querySelector('.tile');if(tile)popLoveHeart(tile)});
-/* Notes are a real shared conversation now: predictable order, one aligned row per message,
-   and no automatic deletion after a fixed number of notes. */
-let activeChatActionId='',chatPressTimer=0,chatPressPointer=null;
-const classicRender=render;
-function chatDayDivider(memory,previousLabel){const label=noteDayLabel(memory.createdAt||memory.created_at);return label===previousLabel?'':`<div class="chat-day-divider"><span>${esc(label)}</span></div>`}
-function chatMessage(memory){const owner=memory.author||{},mine=String(owner.id||'')===String(me?.id||''),id=String(memory.id),liked=reactedMemories.has(id),name=esc(owner.displayName||owner.display_name||owner.username||'Friend'),handle=esc(owner.username||''),pet=esc(owner.mascot||'🐰'),text=esc(memory.text||''),time=esc(formatNoteClock(memory.createdAt||memory.created_at)),actions=activeChatActionId===id?`<div class="chat-actions" role="group" aria-label="Message actions"><button type="button" data-chat-copy="${esc(id)}">Copy</button><button type="button" data-chat-delete="${esc(id)}" ${mine?'':'disabled title="Only the sender can delete this message"'}>Delete</button></div>`:'';return `<article class="feed-item chat-message ${mine?'is-mine':'is-friend'}${liked?' is-loved':''}${memory.isPending?' is-uploading':''}" data-kind="note" data-memory="${esc(id)}" data-owner="${esc(owner.id||'')}"><div class="chat-meta"><span class="sender-pet" aria-hidden="true">${pet}</span><b title="${name}">${name}</b><small>@${handle}</small><time datetime="${esc(memory.createdAt||memory.created_at||'')}">${time}</time></div><div class="chat-bubble-wrap">${actions}<div class="tile chat-bubble" tabindex="0"><button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked?'Unlike':'Like'} message" aria-pressed="${liked}">${liked?'♥':'♡'}</button><span class="note-message-text">${text}</span></div></div></article>`}
-function renderChatNotes(){const content=$('#content'),notes=feed.filter(memory=>memory.kind==='note'&&!pendingDeleteTimers.has(String(memory.id))).slice().reverse();let previous='';const messages=notes.map(memory=>{const divider=chatDayDivider(memory,previous);previous=noteDayLabel(memory.createdAt||memory.created_at);return divider+chatMessage(memory)}).join('');content.innerHTML=`<section class="chat-page" aria-label="Shared notes conversation"><header class="chat-header"><div><p class="eyebrow">YOUR LITTLE CIRCLE</p><h2>Little words to keep</h2><p>A shared chat for every friend and every tiny hello.</p></div><span class="chat-header-buddy" aria-hidden="true">${esc(me?.mascot||'🐰')}</span></header><div class="chat-thread" id="chatThread" aria-live="polite">${messages||'<div class="chat-empty"><span>💌</span><b>Your first little hello starts here</b><small>Write something sweet for your circle.</small></div>'}</div><form id="chatComposer" class="chat-composer"><textarea id="noteText" class="input" maxlength="1000" rows="1" placeholder="Write a little message…" aria-label="Message your circle"></textarea><button type="submit" class="primary" id="chatSend">Send <span aria-hidden="true">♡</span></button></form></section>`;const thread=$('#chatThread');if(thread)requestAnimationFrame(()=>{thread.scrollTop=thread.scrollHeight})}
-render=function(){if(page==='notes'){renderChatNotes();return}classicRender()};
-async function sendChatMessage(){const field=$('#noteText'),text=field?.value.trim();if(!text)return toast('Write a little message first ♡');const temporaryId='local-note-'+Date.now(),createdAt=new Date().toISOString(),optimistic={id:temporaryId,kind:'note',text,createdAt,created_at:createdAt,isPending:true,author:{...me,displayName:me?.displayName||me?.display_name||me?.username}};field.value='';feed=[optimistic,...feed];activeChatActionId='';render();try{const saved=await api('/memories',{method:'POST',body:JSON.stringify({kind:'note',text})}),record={...saved,createdAt:saved.created_at,author:{...me,displayName:me?.displayName||me?.display_name||me?.username}};feed=feed.map(memory=>String(memory.id)===temporaryId?record:memory);render()}catch(error){feed=feed.filter(memory=>String(memory.id)!==temporaryId);render();toast(error.message)}}
-function showChatActions(id){activeChatActionId=String(id);const thread=$('#chatThread'),position=thread?.scrollTop||0;render();const nextThread=$('#chatThread');if(nextThread)nextThread.scrollTop=position}
+// Main delegation
+document.addEventListener('click', async e => {
+  // Kindness card & button
+  if (e.target.closest('#dailyCard') || e.target.closest('#newCompliment')) {
+    rollKindness(e);
+    return;
+  }
 
-/* A small visible response on every like/tap makes the interaction feel immediate. */
-const classicPopLoveHeart=popLoveHeart;
-popLoveHeart=function(card){const wasLoved=card?.classList.contains('is-loved');classicPopLoveHeart(card);if(!card)return;const rect=card.getBoundingClientRect(),spark=document.createElement('span');spark.className='memory-tap-spark';spark.textContent=wasLoved?'♡':'♥';spark.style.left=(rect.left+rect.width*.72)+'px';spark.style.top=(rect.top+Math.min(36,rect.height*.34))+'px';document.body.append(spark);setTimeout(()=>spark.remove(),760)};
-document.addEventListener('pointerdown',event=>{const target=event.target.closest('button,.chat-bubble,.feed-photo,.bunny-button');if(!target||event.target.closest('textarea,input,select'))return;target.classList.remove('cute-tap');void target.offsetWidth;target.classList.add('cute-tap');setTimeout(()=>target.classList.remove('cute-tap'),360)},{passive:true});
+  // Heart toggle
+  const heart = e.target.closest('[data-memory-heart]');
+  if (heart) {
+    e.preventDefault();
+    e.stopPropagation();
+    const card = heart.closest('.feed-item .tile, .chat-bubble');
+    if (card) popLoveHeart(card, e);
+    return;
+  }
 
-/* Long-press a chat bubble for only Copy and Delete, directly above that message. */
-document.addEventListener('pointerdown',event=>{if(page!=='notes')return;const bubble=event.target.closest('.chat-bubble');if(!bubble||event.target.closest('button'))return;const item=bubble.closest('.chat-message');if(!item)return;event.stopImmediatePropagation();clearTimeout(chatPressTimer);chatPressPointer={id:item.dataset.memory,pointer:event.pointerId,x:event.clientX,y:event.clientY};chatPressTimer=setTimeout(()=>{if(!chatPressPointer||chatPressPointer.pointer!==event.pointerId)return;showChatActions(chatPressPointer.id);chatPressPointer=null;chatPressTimer=0},520)},{capture:true,passive:true});
-document.addEventListener('pointermove',event=>{if(!chatPressPointer||event.pointerId!==chatPressPointer.pointer)return;if(Math.abs(event.clientX-chatPressPointer.x)>12||Math.abs(event.clientY-chatPressPointer.y)>12){clearTimeout(chatPressTimer);chatPressTimer=0;chatPressPointer=null}},{passive:true});
-document.addEventListener('pointerup',event=>{if(chatPressPointer&&event.pointerId===chatPressPointer.pointer){clearTimeout(chatPressTimer);chatPressTimer=0;chatPressPointer=null}},{passive:true});
-document.addEventListener('submit',event=>{if(event.target.id!=='chatComposer')return;event.preventDefault();void sendChatMessage()});
-document.addEventListener('keydown',event=>{if(event.target.id==='noteText'&&event.key==='Enter'&&!event.shiftKey){event.preventDefault();void sendChatMessage()}});
-document.addEventListener('click',event=>{const copy=event.target.closest('[data-chat-copy]');if(copy){activeChatActionId='';void copyMemoryText(copy.dataset.chatCopy);render();return}const remove=event.target.closest('[data-chat-delete]');if(remove){if(remove.disabled)return;const item=feed.find(memory=>String(memory.id)===String(remove.dataset.chatDelete));if(item&&String(item.author?.id||'')===String(me?.id)){activeChatActionId='';void deleteSafely(item.id)}return}if(event.target.closest('#newCompliment')){const words=kindLines.filter(line=>line!==$('#compliment')?.textContent);const next=words[Math.floor(Math.random()*words.length)]||kindLines[0],text=$('#compliment');if(text){text.textContent=next;text.classList.remove('kindness-pop');void text.offsetWidth;text.classList.add('kindness-pop')}return}});
+  // Chat message press -> show Copy & Delete
+  const bubble = e.target.closest('.chat-bubble');
+  if (bubble && !e.target.closest('button')) {
+    const id = bubble.dataset.chatMessageId;
+    if (id) {
+      if (activeMessageActionsId === id) hideMessageActions();
+      else showMessageActions(id, bubble);
+    }
+    return;
+  }
 
-/* Dialogs close on their empty backdrop. No close icons are needed. */
-document.addEventListener('pointerdown',event=>{const gate=event.target;if(!(gate instanceof HTMLElement)||!gate.classList.contains('auth-gate')||gate.classList.contains('hidden'))return;if(gate.id==='photoLightbox'){closePhotoLightbox();return}if(gate.id==='memoryActionGate'){closeMemoryActions();return}gate.classList.add('hidden')},{capture:true});
-const classicOpenMemoryActions=openMemoryActions;
-openMemoryActions=function(id){classicOpenMemoryActions(id);const item=feed.find(memory=>String(memory.id)===String(id));if(item){const label=item.kind==='song'?'Delete song':item.kind==='photo'?'Delete photo':'Delete note';$('#memoryDelete').textContent=label}};
-document.addEventListener('pointerdown',event=>{const lightbox=event.target.closest('#photoLightbox');if(lightbox&&!lightbox.classList.contains('hidden')&&!event.target.closest('.photo-lightbox-actions'))closePhotoLightbox()},{capture:true});
-document.addEventListener('click',event=>{const remove=event.target.closest('[data-chat-delete]');if(remove)remove.closest('.chat-actions')?.remove()},{capture:true});
+  // Chat action: Copy
+  const copyBtn = e.target.closest('[data-chat-copy]');
+  if (copyBtn) {
+    const id = copyBtn.dataset.chatCopy;
+    hideMessageActions();
+    await copyMemoryText(id);
+    return;
+  }
+
+  // Chat action: Delete
+  const delBtn = e.target.closest('[data-chat-delete]');
+  if (delBtn) {
+    const id = delBtn.dataset.chatDelete;
+    hideMessageActions();
+    void deleteSafely(id);
+    return;
+  }
+
+  // Instagram Notes: open my composer
+  if (e.target.closest('#openMyNoteComposer')) {
+    openNoteComposer();
+    return;
+  }
+
+  // Instagram Notes: tap friend note
+  const friendNoteItem = e.target.closest('[data-friend-profile]');
+  if (friendNoteItem) {
+    const username = friendNoteItem.dataset.friendProfile;
+    const f = friends.find(u => u.username === username);
+    if (f) showFriendProfile(f);
+    return;
+  }
+
+  // Note composer submit & clear
+  if (e.target.closest('#igNoteSubmit')) {
+    void saveIgNote();
+    return;
+  }
+  if (e.target.closest('#igNoteClear')) {
+    void clearIgNote();
+    return;
+  }
+
+  // Navigation
+  const nav = e.target.closest('#nav [data-page]');
+  if (nav) {
+    go(nav.dataset.page);
+    return;
+  }
+  const goBtn = e.target.closest('[data-go]');
+  if (goBtn) {
+    go(goBtn.dataset.go);
+    return;
+  }
+
+  // Mascot button
+  if (e.target.closest('#bunnyBuddy')) {
+    playBoing();
+    const bunny = $('#bunnyBuddy'), buddy = me?.mascot || '🐰';
+    const greetings = { '🐰': 'Bunny says hi! ♡', '🐱': 'Kitty says meow! ♡', '🐻': 'Bear sends a hug! ♡', '🐸': 'Froggy says ribbit! ♡' };
+    bunny.classList.remove('bunny-happy');
+    void bunny.offsetWidth;
+    bunny.classList.add('bunny-happy');
+    toast(greetings[buddy] || 'Your buddy says hi! ♡');
+    return;
+  }
+
+  // Mode & profile & notifications open
+  if (e.target.closest('#surprise')) {
+    setMode(document.body.dataset.mode === 'dark' ? 'light' : 'dark');
+    return;
+  }
+  if (e.target.closest('#notificationOpen')) {
+    $('#notificationGate').classList.remove('hidden');
+    void loadNotifications().then(() => renderNotifications());
+    return;
+  }
+  if (e.target.closest('#profileOpen, [data-open-profile]')) {
+    if (!me) return;
+    $('#profileName').textContent = me.displayName || me.username;
+    $('#profileHandle').textContent = '@' + me.username;
+    $('#profileCreated').textContent = formatProfileDate(me.created_at || me.createdAt);
+    $('#profileDisplay').value = me.displayName || '';
+    $('#profileUsername').value = me.username || '';
+    $('#profileBio').value = me.bio || '';
+    $('#profileTheme').value = me.theme || 'rose';
+    $('#profileMascot').value = me.mascot || '🐰';
+    updateThemePreview(me.theme || 'rose');
+    updateBuddyChoices(me.mascot || '🐰');
+    $('#profileGate').classList.remove('hidden');
+    return;
+  }
+
+  // Profile save & sign out
+  if (e.target.closest('#profileSave')) {
+    try {
+      const username = $('#profileUsername').value.trim().toLowerCase();
+      if (!/^[a-z0-9_]{3,24}$/.test(username)) return toast('Use 3–24 letters, numbers, or underscores ♡');
+      const updated = await api('/me', {
+        method: 'PUT',
+        body: JSON.stringify({
+          username,
+          displayName: $('#profileDisplay').value.trim(),
+          bio: $('#profileBio').value.trim(),
+          theme: $('#profileTheme').value,
+          mascot: $('#profileMascot').value
+        })
+      });
+      me = { ...me, ...updated };
+      $('#profileName').textContent = me.displayName || username;
+      $('#profileHandle').textContent = '@' + username;
+      $('#topMascot').textContent = me.mascot || '🐰';
+      $('#profileGate').classList.add('hidden');
+      await refresh();
+      syncPlayer();
+      toast('Profile saved ♡');
+    } catch (error) {
+      toast(error.message);
+    }
+    return;
+  }
+
+  if (e.target.closest('#signOut')) {
+    closeRealtime();
+    if (sb) await sb.auth.signOut();
+    localStorage.removeItem('cuteBunnyToken');
+    token = '';
+    me = null;
+    notificationRows = [];
+    $('#profileGate').classList.add('hidden');
+    $('#app').classList.add('hidden');
+    $('#welcome').classList.remove('hidden');
+    return;
+  }
+
+  // Welcome enter & auth switch
+  if (e.target.closest('#enter')) {
+    openAuth('register');
+    return;
+  }
+  if (e.target.closest('#authSwitch')) {
+    openAuth(authMode === 'login' ? 'register' : 'login');
+    return;
+  }
+
+  // Friend search & profile & follow
+  if (e.target.closest('#searchFriends')) {
+    void searchFriends();
+    return;
+  }
+  const friendLink = e.target.closest('[data-profile]');
+  if (friendLink) {
+    showFriendProfile([...friends, ...friendResults].find(u => u.username === friendLink.dataset.profile));
+    return;
+  }
+  const followBtn = e.target.closest('#friendProfileFollow, [data-follow]');
+  if (followBtn) {
+    const username = followBtn.dataset.follow || $('#friendProfileGate').dataset.username;
+    const isFollowing = followBtn.dataset.following ? followBtn.dataset.following === 'true' : $('#friendProfileGate').dataset.following === 'true';
+    if (username) void toggleFriendFollow(username, isFollowing);
+    return;
+  }
+
+  // Theme choices
+  const themeBtn = e.target.closest('[data-theme-choice]');
+  if (themeBtn) {
+    $('#profileTheme').value = themeBtn.dataset.themeChoice;
+    updateThemePreview(themeBtn.dataset.themeChoice);
+    return;
+  }
+  const buddyBtn = e.target.closest('[data-buddy-choice]');
+  if (buddyBtn) {
+    $('#profileMascot').value = buddyBtn.dataset.buddyChoice;
+    updateBuddyChoices(buddyBtn.dataset.buddyChoice);
+    updateThemePreview($('#profileTheme').value);
+    return;
+  }
+
+  // Music controls
+  if (e.target.closest('#nowPlayingPill')) {
+    toggleMusicIsland();
+    return;
+  }
+  if (e.target.closest('#nowPlayingToggle')) {
+    const audio = $('#globalAudio');
+    if (audio.paused) void audio.play().catch(error => toast(error.message));
+    else audio.pause();
+    syncPlayer();
+    return;
+  }
+  if (e.target.closest('#nowPlayingPrevious')) {
+    stepSong(-1);
+    return;
+  }
+  if (e.target.closest('#nowPlayingNext')) {
+    stepSong(1);
+    return;
+  }
+  const playBtn = e.target.closest('[data-play-song]');
+  if (playBtn) {
+    void playSong(playBtn.dataset.playSong);
+    return;
+  }
+  const downloadBtn = e.target.closest('[data-memory-download]');
+  if (downloadBtn) {
+    void downloadMemoryById(downloadBtn.dataset.memoryDownload, downloadBtn);
+    return;
+  }
+
+  // Photo open & lightbox controls
+  const photo = e.target.closest('.feed-photo');
+  if (photo) {
+    const id = photo.closest('.feed-item')?.dataset.memory;
+    if (id) void openPhotoLightbox(id);
+    return;
+  }
+  if (e.target.closest('#photoLightboxSave')) {
+    void downloadMemoryById($('#photoLightbox').dataset.memoryId, e.target.closest('#photoLightboxSave'));
+    return;
+  }
+  if (e.target.closest('#photoLightboxDelete')) {
+    const id = $('#photoLightbox').dataset.memoryId;
+    const item = feed.find(m => String(m.id) === String(id));
+    if (!item || item.kind !== 'photo' || item.isPending || String(item.author?.id || item.owner_id || '') !== String(me?.id || '')) return;
+    const confirmGate = $('#photoDeleteConfirmGate');
+    confirmGate.dataset.memoryId = String(id);
+    confirmGate.classList.remove('hidden');
+    return;
+  }
+  if (e.target.closest('#photoDeleteCancel')) {
+    $('#photoDeleteConfirmGate').classList.add('hidden');
+    return;
+  }
+  if (e.target.closest('#photoDeleteConfirm')) {
+    const id = $('#photoDeleteConfirmGate').dataset.memoryId;
+    $('#photoDeleteConfirmGate').classList.add('hidden');
+    closePhotoLightbox();
+    if (id) void deleteSafely(id);
+    return;
+  }
+
+  // Memory Actions (from song options)
+  if (e.target.closest('#memoryDownload')) {
+    void downloadMemoryById($('#memoryActionGate').dataset.memoryId, $('#memoryDownload'));
+    return;
+  }
+  if (e.target.closest('#memoryCopy')) {
+    const id = $('#memoryActionGate').dataset.memoryId;
+    closeMemoryActions();
+    void copyMemoryText(id);
+    return;
+  }
+  if (e.target.closest('#memoryDelete')) {
+    const id = $('#memoryActionGate').dataset.memoryId;
+    closeMemoryActions();
+    void deleteSafely(id);
+    return;
+  }
+
+  // Notifications
+  if (e.target.closest('#notificationsReadAll')) {
+    try {
+      await api('/notifications/read-all', { method: 'PUT' });
+      await loadNotifications();
+      renderNotifications();
+    } catch (err) {
+      toast(err.message);
+    }
+    return;
+  }
+  const notifItem = e.target.closest('[data-notification]');
+  if (notifItem) {
+    try {
+      await markNotificationRead(notifItem.dataset.notification);
+      renderNotifications();
+    } catch (err) {
+      toast(err.message);
+    }
+    return;
+  }
+  if (e.target.closest('#notificationsSave')) {
+    try {
+      await api('/me', {
+        method: 'PUT',
+        body: JSON.stringify({
+          notificationPreferences: { memories: $('#notifyMemories').checked, buddy: $('#notifyBuddy').checked }
+        })
+      });
+      toast('Notification settings saved ♡');
+    } catch (err) {
+      toast(err.message);
+    }
+    return;
+  }
+});
+
+// Chat form submission
+document.addEventListener('submit', event => {
+  if (event.target.id === 'chatComposer') {
+    event.preventDefault();
+    void sendChatMessage();
+  }
+});
+
+document.addEventListener('keydown', event => {
+  if (event.target.id === 'chatInput' && event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    void sendChatMessage();
+  }
+  if (event.key === 'Escape') {
+    closeAllGates();
+  }
+});
+
+// Auth form submission
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'authForm') return;
+  e.preventDefault();
+  const err = $('#authError');
+  err.textContent = '';
+  try {
+    const body = { email: $('#authEmail').value.trim(), password: $('#authPass').value };
+    if (authMode === 'register') {
+      body.username = $('#authUser').value.trim().toLowerCase();
+      body.displayName = $('#authDisplay').value.trim();
+      if (!/^[a-z0-9_]{3,24}$/.test(body.username)) {
+        err.textContent = 'Choose a username with 3–24 letters, numbers, or underscores.';
+        return;
+      }
+      if (!body.displayName || body.displayName.length > 60) {
+        err.textContent = 'Please enter a display name (up to 60 characters).';
+        return;
+      }
+    }
+    const submit = $('#authSubmit');
+    submit.disabled = true;
+    $('#authSwitch').disabled = true;
+    submit.textContent = 'One little moment…';
+    const result = await api('/auth/' + (authMode === 'register' ? 'register' : 'login'), {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+    if (result.needsEmailConfirm) {
+      err.textContent = 'Check your email to confirm your account, then sign in here.';
+      return;
+    }
+    token = result.token;
+    localStorage.setItem('cuteBunnyToken', token);
+    await refresh();
+    setUser(me);
+    void recordLoginStreak();
+  } catch (error) {
+    err.textContent = error.message.includes('Failed to fetch') ? 'Check your Supabase URL/key and internet connection, then try again.' : error.message;
+  } finally {
+    $('#authSubmit').disabled = false;
+    $('#authSwitch').disabled = false;
+    $('#authSubmit').textContent = authMode === 'login' ? 'Sign in ♡' : 'Create account ♡';
+  }
+});
+
+// Media upload change listener
+document.addEventListener('change', async e => {
+  const input = e.target.closest('[data-upload]');
+  if (!input || !input.files?.length) return;
+  const file = input.files[0], kind = input.dataset.upload;
+  input.value = '';
+  if (file.size > 8 * 1024 * 1024) {
+    toast('Choose a file under 8 MB ♡');
+    return;
+  }
+  const photoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], songTypes = ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/webm'];
+  if (!(kind === 'photo' ? photoTypes.includes(file.type) : songTypes.includes(file.type))) {
+    toast(kind === 'photo' ? 'Choose a JPG, PNG, WebP, or GIF image ♡' : 'Choose an MP3, MP4, OGG, WAV, or WebM audio file ♡');
+    return;
+  }
+  const tempId = 'upload-' + crypto.randomUUID();
+  const previewUrl = kind === 'photo' ? URL.createObjectURL(file) : '';
+  const optimistic = {
+    id: tempId,
+    kind,
+    fileName: file.name,
+    text: file.name,
+    contentType: file.type,
+    createdAt: new Date().toISOString(),
+    isPending: true,
+    previewUrl,
+    author: { id: me.id, username: me.username, displayName: me.displayName, mascot: me.mascot }
+  };
+  if (previewUrl) pendingMediaUrls.set(tempId, previewUrl);
+  feed = [optimistic, ...feed];
+  render();
+
+  const form = new FormData();
+  form.append('file', file);
+  form.append('kind', kind);
+  form.append('caption', file.name);
+  try {
+    const saved = await api('/media', { method: 'POST', body: form });
+    const item = {
+      ...saved,
+      createdAt: saved.created_at || optimistic.createdAt,
+      fileName: saved.file_name || file.name,
+      contentType: saved.content_type || file.type,
+      storagePath: saved.storage_path,
+      author: optimistic.author,
+      previewUrl
+    };
+    feed = feed.map(m => String(m.id) === tempId ? item : m);
+    render();
+    toast('Added to your shared scrapbook ♡');
+  } catch (err) {
+    feed = feed.filter(m => String(m.id) !== tempId);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    render();
+    toast(err.message);
+  }
+});
+
+// Setup audio event listeners
+const musicAudio = $('#globalAudio');
+if (musicAudio) {
+  ['play', 'pause', 'loadedmetadata', 'durationchange', 'timeupdate', 'seeked'].forEach(type => {
+    musicAudio.addEventListener(type, syncPlayer);
+  });
+  musicAudio.addEventListener('ended', () => stepSong(1));
+}
+$('#islandSeek')?.addEventListener('input', event => {
+  const audio = $('#globalAudio');
+  if (Number.isFinite(audio.duration) && audio.duration > 0) {
+    audio.currentTime = Number(event.target.value) / 1000 * audio.duration;
+  }
+});
+
+// Session restore
+async function restoreSession() {
+  try {
+    if (sb) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        token = session.access_token;
+        await refresh();
+        setUser(me);
+        void recordLoginStreak();
+      }
+    }
+  } catch (e) {
+    toast(e.message);
+  } finally {
+    document.body.classList.remove('is-restoring');
+    $('#sessionRestore')?.classList.add('hidden');
+  }
+}
+
+restoreSession();
+render();
