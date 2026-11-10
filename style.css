@@ -1871,3 +1871,90 @@ body[data-mode="dark"] .chat-actions-popup .chat-action-btn.delete-btn {
 body.notes-keyboard-open #nav {
   display:none!important;
 }
+
+
+/* Notes polish: softer roundness and a clearer, more tactile message composer. */
+.chat-page .chat-bubble-wrap>.chat-bubble {
+  border-radius:28px;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap>.chat-bubble {
+    border-radius:26px;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap>.chat-bubble {
+    border-radius:24px;
+  }
+}
+
+.chat-page .chat-composer {
+  gap:10px;
+  padding:9px;
+  border:1px solid #ead4e1;
+  border-radius:22px;
+  background:linear-gradient(135deg,#fffafd 0%,#fff5fa 100%);
+  box-shadow:0 7px 20px #805a7518, inset 0 1px 0 #ffffff;
+}
+.chat-page .chat-composer textarea {
+  min-height:46px;
+  padding:12px 15px;
+  border:1.5px solid #ead7e4;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:inset 0 1px 3px #805a750c;
+  color:#59465b;
+  font:600 15px/1.45 Nunito,sans-serif;
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.chat-page .chat-composer textarea::placeholder {
+  color:#aa91a2;
+  font-weight:600;
+}
+.chat-page .chat-composer textarea:focus {
+  outline:none;
+  border-color:#d49ab8;
+  background:#fffefe;
+  box-shadow:0 0 0 3px #f5e2ec, inset 0 1px 3px #805a750c;
+}
+.chat-page .chat-composer .primary {
+  min-width:76px;
+  min-height:46px;
+  padding:10px 17px;
+  border:1px solid #bd7897;
+  border-radius:999px;
+  background:linear-gradient(145deg,#d895b0 0%,#c77fa2 100%);
+  color:#fff;
+  font:900 .82rem/1 Nunito,sans-serif;
+  letter-spacing:.01em;
+  box-shadow:0 4px 0 #a96889,0 6px 12px #a968891c;
+  transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;
+}
+.chat-page .chat-composer .primary:hover {
+  filter:brightness(1.035);
+  transform:translateY(-1px);
+  box-shadow:0 5px 0 #a96889,0 8px 14px #a968891c;
+}
+.chat-page .chat-composer .primary:active {
+  transform:translateY(3px);
+  box-shadow:0 1px 0 #a96889;
+}
+@media(max-width:480px) {
+  .chat-page .chat-composer {
+    gap:7px;
+    padding:7px;
+    border-radius:19px;
+  }
+  .chat-page .chat-composer textarea {
+    min-height:44px;
+    padding:10px 12px;
+    border-radius:16px;
+    font-size:16px;
+  }
+  .chat-page .chat-composer .primary {
+    min-width:69px;
+    min-height:44px;
+    padding:9px 13px;
+    font-size:.78rem;
+  }
+}
