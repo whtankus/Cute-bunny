@@ -51,7 +51,7 @@ function rollKindness(e) {
   }
   if (e) {
     const rect = (e.currentTarget || e.target).getBoundingClientRect();
-    sprinkle(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
   }
   playBoing();
   toast('A little drop of kindness for you ♡');
@@ -511,7 +511,7 @@ function popLoveHeart(card, e) {
   const rect = card.getBoundingClientRect();
   const x = e?.clientX || (rect.left + rect.width / 2);
   const y = e?.clientY || (rect.top + rect.height / 2);
-  sprinkle(x, y);
+
 }
 
 function go(p) {
@@ -1365,7 +1365,7 @@ document.addEventListener('pointerdown', e => {
   const rect = interactive.getBoundingClientRect();
   const x = e.clientX || (rect.left + rect.width / 2);
   const y = e.clientY || (rect.top + rect.height / 2);
-  sprinkle(x, y);
+
 }, { passive: true });
 
 // Touch free space to dismiss any modal / gate
