@@ -2052,3 +2052,46 @@ body:has(.chat-page) #content {
 .chat-page .chat-composer .primary:active {
   box-shadow:0 1px 0 #d4c3e2;
 }
+
+
+/* Notes hearts should use the exact simple heart treatment used on Photos and Music. */
+.chat-page .chat-bubble .memory-heart-toggle {
+  top:-12px!important;
+  right:8px!important;
+  left:auto!important;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  padding:0!important;
+  color:#c77999!important;
+  -webkit-text-stroke:0!important;
+  font:700 1.3rem/1 Nunito,sans-serif!important;
+  text-shadow:0 1px 2px #fff9!important;
+  transform:none!important;
+  transition:transform .18s,color .18s,text-shadow .18s!important;
+}
+.chat-page .chat-bubble .memory-heart-toggle[aria-pressed="true"] {
+  color:#e75f91!important;
+  text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
+}
+.chat-page .chat-message.is-mine .chat-bubble .memory-heart-toggle {
+  left:8px!important;
+  right:auto!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble .memory-heart-toggle {
+    top:-12px!important;
+    right:8px!important;
+    left:auto!important;
+    width:30px!important;
+    height:30px!important;
+    min-width:30px!important;
+    min-height:30px!important;
+    font-size:1.3rem!important;
+  }
+  .chat-page .chat-message.is-mine .chat-bubble .memory-heart-toggle {
+    left:8px!important;
+    right:auto!important;
+  }
+}
