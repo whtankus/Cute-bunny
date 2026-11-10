@@ -1401,19 +1401,20 @@ document.addEventListener('click', e => {
   }
 });
 
-// Notes message gestures: tap to like, press and hold for Copy/Delete.
+// Notes message gestures: button press feedback, tap to like, hold for Copy/Delete.
 document.addEventListener('pointerdown', e => {
   const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
   if (!bubble || e.target.closest('button, .chat-actions-popup') || (e.pointerType === 'mouse' && e.button !== 0)) return;
 
   clearTimeout(messagePressState.timer);
   clearTimeout(messagePressState.suppressTimer);
+  messagePressState.suppressClick = false;
+  messagePressState.longPressed = false;
   messagePressState.bubble = bubble;
   messagePressState.pointerId = e.pointerId;
   messagePressState.startX = e.clientX;
   messagePressState.startY = e.clientY;
-  messagePressState.longPressed = false;
-  messagePressState.suppressClick = false;
+  bubble.classList.add('is-pressed');
 
   messagePressState.timer = setTimeout(() => {
     if (!messagePressState.bubble?.isConnected || messagePressState.pointerId !== e.pointerId) return;
@@ -1425,22 +1426,33 @@ document.addEventListener('pointerdown', e => {
   }, 480);
 });
 
+function cancelNotesMessagePress(e) {
+  if (messagePressState.pointerId !== e.pointerId) return;
+  clearTimeout(messagePressState.timer);
+  messagePressState.timer = null;
+  messagePressState.bubble?.classList.remove('is-pressed');
+  messagePressState.bubble = null;
+  messagePressState.pointerId = null;
+  messagePressState.longPressed = false;
+  messagePressState.suppressClick = true;
+  clearTimeout(messagePressState.suppressTimer);
+  messagePressState.suppressTimer = setTimeout(() => {
+    messagePressState.suppressClick = false;
+  }, 350);
+}
+
 document.addEventListener('pointermove', e => {
   if (messagePressState.pointerId !== e.pointerId || !messagePressState.bubble) return;
   const dx = e.clientX - messagePressState.startX;
   const dy = e.clientY - messagePressState.startY;
-  if (Math.hypot(dx, dy) > 12) {
-    clearTimeout(messagePressState.timer);
-    messagePressState.timer = null;
-    messagePressState.bubble = null;
-    messagePressState.pointerId = null;
-  }
+  if (Math.hypot(dx, dy) > 12) cancelNotesMessagePress(e);
 });
 
 function finishNotesMessagePress(e) {
   if (messagePressState.pointerId !== e.pointerId) return;
   clearTimeout(messagePressState.timer);
   messagePressState.timer = null;
+  messagePressState.bubble?.classList.remove('is-pressed');
   messagePressState.bubble = null;
   messagePressState.pointerId = null;
   if (messagePressState.longPressed) {
@@ -1454,7 +1466,7 @@ function finishNotesMessagePress(e) {
 }
 
 document.addEventListener('pointerup', finishNotesMessagePress);
-document.addEventListener('pointercancel', finishNotesMessagePress);
+document.addEventListener('pointercancel', cancelNotesMessagePress);
 
 // Main delegation
 document.addEventListener('click', async e => {
