@@ -1832,3 +1832,23 @@ body[data-mode="dark"] .chat-actions-popup .chat-action-btn.delete-btn {
     font-size:clamp(1.12rem,4.6vw,1.35rem);
   }
 }
+
+
+/* Notes: use the browser's normal page scrolling, not a nested chat scroller. */
+.chat-page {
+  min-height:0;
+  padding-bottom:24px;
+}
+.chat-page .chat-thread {
+  flex:0 0 auto;
+  min-height:0;
+  max-height:none;
+  overflow:visible;
+  overscroll-behavior:auto;
+  -webkit-overflow-scrolling:auto;
+  scroll-behavior:auto;
+}
+.chat-page .chat-composer {
+  position:static;
+  bottom:auto;
+}
