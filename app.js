@@ -620,8 +620,8 @@ function renderNotesPage() {
           <time datetime="${esc(m.createdAt || m.created_at || '')}">${time}</time>
         </div>
         <div class="chat-bubble-wrap">
+          <button type="button" class="memory-heart-toggle chat-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>
           <div class="tile chat-bubble" tabindex="0" data-chat-message-id="${esc(id)}">
-            <button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>
             <p class="note-message-text" dir="auto">${text}</p>
           </div>
         </div>
