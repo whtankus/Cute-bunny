@@ -1714,6 +1714,25 @@ document.addEventListener('click', async e => {
   }
 });
 
+// Keep the conversation visible when the mobile keyboard opens.
+document.addEventListener('focusin', event => {
+  if (event.target.id !== 'chatInput') return;
+  requestAnimationFrame(() => {
+    const thread = $('#chatThread');
+    if (thread) thread.scrollTop = thread.scrollHeight;
+    $('#chatComposer')?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+  });
+});
+
+document.addEventListener('input', event => {
+  if (event.target.id !== 'chatInput') return;
+  const field = event.target;
+  field.style.height = 'auto';
+  field.style.height = Math.min(field.scrollHeight, 116) + 'px';
+  const thread = $('#chatThread');
+  if (thread) thread.scrollTop = thread.scrollHeight;
+});
+
 // Chat form submission
 document.addEventListener('submit', event => {
   if (event.target.id === 'chatComposer') {
