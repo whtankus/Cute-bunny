@@ -521,8 +521,19 @@ function go(p) {
   $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends' })[p] || 'Home';
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.page === p));
   hideMessageActions();
-  render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  render();
+  if (p === 'notes') {
+    const input = $('#chatInput');
+    if (input) {
+      input.focus({ preventScroll: true });
+      requestAnimationFrame(() => {
+        const thread = $('#chatThread');
+        if (thread) thread.scrollTop = thread.scrollHeight;
+        $('#chatComposer')?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      });
+    }
+  }
 }
 
 function memoryCard(m) {
@@ -566,13 +577,13 @@ function renderNotesPage() {
       '<span class="ig-note-name">' + esc(friend.displayName || friend.username) + '</span></div>';
   }).join('');
 
-  const notesTray = '<section class="ig-notes-tray" aria-label="Notes from friends">' +
+  const notesTray = '<section class="ig-notes-tray" aria-label="Your little circle">' +
     '<div class="ig-notes-scroll">' +
       '<div class="ig-note-item is-me" id="openMyNoteComposer">' +
         '<div class="ig-note-bubble-wrap"><div class="ig-thought-bubble"><span class="ig-thought-text">' + myBubbleText + '</span></div>' +
         '<div class="ig-note-avatar"><span>' + esc(me?.mascot || '🐰') + '</span>' +
         (!myLatestNote ? '<span class="ig-note-plus">＋</span>' : '') + '</div></div>' +
-        '<span class="ig-note-name">Your note</span></div>' + friendsNotesHtml +
+        '<span class="ig-note-name">You</span></div>' + friendsNotesHtml +
     '</div></section>';
 
   const chatNotes = feed.filter(m => m.kind === 'note' && !pendingDeleteTimers.has(String(m.id))).slice().reverse();
@@ -596,16 +607,14 @@ function renderNotesPage() {
       '<article class="chat-message ' + (mine ? 'is-mine' : 'is-friend') + (liked ? ' is-loved' : '') + (m.isPending ? ' is-uploading' : '') + '" data-kind="note" data-memory="' + esc(id) + '">' +
         '<div class="chat-message-content">' +
           '<div class="chat-meta">' +
+            '<time datetime="' + esc(m.createdAt || m.created_at || '') + '">' + time + '</time>' +
             '<span class="sender-pet" aria-hidden="true">' + pet + '</span>' +
             '<b title="' + name + '">' + name + '</b>' +
             '<small>@' + handle + '</small>' +
-            '<time datetime="' + esc(m.createdAt || m.created_at || '') + '">' + time + '</time>' +
           '</div>' +
           '<div class="chat-bubble-wrap">' +
-            '<div class="chat-reaction-row">' +
-              '<button type="button" class="memory-heart-toggle chat-heart-toggle" data-memory-heart="' + esc(id) + '" aria-label="' + (liked ? 'Unlike' : 'Like') + ' message" aria-pressed="' + liked + '">' + (liked ? '♥' : '♡') + '</button>' +
-            '</div>' +
-            '<div class="tile chat-bubble" tabindex="0" data-chat-message-id="' + esc(id) + '">' +
+            '<div class="tile chat-bubble' + (liked ? ' is-loved' : '') + '" tabindex="0" data-chat-message-id="' + esc(id) + '">' +
+              '<button type="button" class="memory-heart-toggle" data-memory-heart="' + esc(id) + '" aria-label="' + (liked ? 'Unlike' : 'Like') + ' message" aria-pressed="' + liked + '">' + (liked ? '♥' : '♡') + '</button>' +
               '<p class="note-message-text" dir="auto">' + messageText + '</p>' +
             '</div>' +
           '</div>' +
@@ -614,16 +623,14 @@ function renderNotesPage() {
   }).join('');
 
   content.innerHTML =
-    '<section class="chat-page" aria-label="Shared notes conversation">' +
-      '<header class="chat-header"><div><p class="eyebrow">YOUR LITTLE CIRCLE</p>' +
-        '<h2>Notes & Messages</h2><p>Tap your note bubble to share a thought, or chat below ♡</p></div>' +
-        '<span class="chat-header-buddy" aria-hidden="true">' + esc(me?.mascot || '🐰') + '</span></header>' +
+    '<section class="chat-page" aria-label="Notes conversation">' +
+      '<header class="chat-header"><h2>Your little circle</h2></header>' +
       notesTray +
       '<div class="chat-thread" id="chatThread" aria-live="polite">' +
-        (messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your note garden starts here</b><small>Say hello to your circle or share what is on your mind ♡</small></div>') +
+        (messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your messages will appear here</b><small>Send the first little hello ♡</small></div>') +
       '</div>' +
       '<form id="chatComposer" class="chat-composer">' +
-        '<textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Message your circle…" aria-label="Message your circle"></textarea>' +
+        '<textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Message…" aria-label="Write a message"></textarea>' +
         '<button type="submit" class="primary" id="chatSend">Send ♡</button>' +
       '</form>' +
     '</section>';
@@ -1124,6 +1131,10 @@ async function sendChatMessage() {
   feed = [optimistic, ...feed];
   hideMessageActions();
   renderNotesPage();
+  const keepTyping = $('#chatInput');
+  keepTyping?.focus({ preventScroll: true });
+  const threadAfterSend = $('#chatThread');
+  if (threadAfterSend) threadAfterSend.scrollTop = threadAfterSend.scrollHeight;
   try {
     const saved = await api('/memories', { method: 'POST', body: JSON.stringify({ kind: 'note', text }) });
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
