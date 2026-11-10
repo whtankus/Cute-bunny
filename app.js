@@ -538,7 +538,7 @@ function go(p) {
 
 
 /* One reusable note message structure for the Notes conversation and Home history. */
-function chatMessageMarkup(m) {
+function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
   const owner = m.author || {};
   const ownerId = owner.id || m.owner_id || '';
   const mine = String(ownerId) === String(me?.id || '');
@@ -552,15 +552,18 @@ function chatMessageMarkup(m) {
   const time = esc(formatNoteClock(createdAt));
   const senderTag = mine ? 'div' : 'button';
   const senderAttrs = mine ? '' : `type="button" data-friend-profile="${handle}" aria-label="Open ${name}'s profile"`;
-
-  return `
-    <div class="chat-message ${mine ? 'is-mine' : 'is-friend'}${liked ? ' is-loved' : ''}${m.isPending ? ' is-uploading' : ''}" data-kind="note" data-memory="${esc(id)}" data-owner="${esc(ownerId)}">
-      <div class="chat-message-content">
+  const senderMeta = showMeta ? `
         <${senderTag} class="chat-meta${mine ? '' : ' chat-sender-link'}" ${senderAttrs}>
           <span class="sender-pet" aria-hidden="true">${pet}</span>
           <b title="${name}">${name}</b>
           <small>@${handle}</small>
         </${senderTag}>
+  ` : '';
+
+  return `
+    <div class="chat-message ${mine ? 'is-mine' : 'is-friend'}${liked ? ' is-loved' : ''}${m.isPending ? ' is-uploading' : ''}${isContinuation ? ' is-continuation' : ''}" data-kind="note" data-memory="${esc(id)}" data-owner="${esc(ownerId)}">
+      <div class="chat-message-content">
+        ${senderMeta}
         <div class="chat-message-line">
           <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>
           <div class="chat-bubble-wrap">
@@ -615,11 +618,16 @@ function renderNotesPage() {
     .reverse();
 
   let previousLabel = '';
+  let previousOwnerId = '';
   const messagesHtml = chatNotes.map(m => {
     const label = noteDayLabel(m.createdAt || m.created_at);
-    const divider = label === previousLabel ? '' : `<div class="chat-day-divider"><span>${esc(label)}</span></div>`;
+    const ownerId = String(m.author?.id || m.owner_id || '');
+    const isNewDay = label !== previousLabel;
+    const divider = isNewDay ? `<div class="chat-day-divider"><span>${esc(label)}</span></div>` : '';
+    const isContinuation = !isNewDay && !!ownerId && ownerId === previousOwnerId;
     previousLabel = label;
-    return divider + chatMessageMarkup(m);
+    previousOwnerId = ownerId;
+    return divider + chatMessageMarkup(m, !isContinuation, isContinuation);
   }).join('');
 
   content.innerHTML = `
@@ -639,6 +647,9 @@ function renderNotesPage() {
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend">Send ♡</button>
       </form>
+      <button type="button" class="notes-friends-shortcut" data-go="friends" aria-label="Open Friends" title="Friends">
+        <span aria-hidden="true">👥</span>
+      </button>
     </section>
   `;
 
