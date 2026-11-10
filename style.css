@@ -657,8 +657,7 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 @keyframes streak-counter-bob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.04)}}
 @keyframes streak-counter-fire{from{transform:rotate(-7deg) scale(.94)}to{transform:rotate(7deg) scale(1.08)}}
 @media(prefers-reduced-motion:reduce){.happy-things-grid>.streak-widget .streak-art-count,.happy-things-grid>.streak-widget .streak-art-count i{animation:none!important}}
-
-/* Compact, friendly one-line status toasts; buddy messages stay easy to read. */
+/* Keep app feedback to one readable line and keep the buddy hello above the mascot. */
 .toast{top:max(12px,env(safe-area-inset-top));left:50%;width:max-content;max-width:min(460px,calc(100vw - 24px));padding:10px 16px;border:1px solid #fff7;border-radius:999px;background:#70546df5;color:#fff;box-shadow:0 7px 22px #61485b33;font-size:.82rem;font-weight:800;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 #toast[role="status"]{pointer-events:none}
@@ -668,8 +667,7 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 .bunny-happy:after{content:"";position:absolute;left:50%;top:24%;width:14px;height:14px;border-radius:50%;background:#fff6;box-shadow:-36px 20px 0 -4px #f5a8c3,-22px -9px 0 -5px #fff;pointer-events:none;animation:buddy-sparkle .7s ease-out both}
 @keyframes buddy-sparkle{0%{opacity:0;transform:translate(-50%,10px) scale(.3)}35%{opacity:1;transform:translate(-50%,-5px) scale(1)}100%{opacity:0;transform:translate(-50%,-24px) scale(.5)}}
 @media(prefers-reduced-motion:reduce){.bunny-happy:after{animation:none!important;opacity:0}}
-
-/* Tap hearts directly on photos, songs, and notes. */
+/* Real, keyboard-accessible heart controls replace the decorative heart pseudos. */
 .feed-item .tile::before,.feed-item .tile::after{content:none!important;display:none!important}
 .feed-item .tile{overflow:visible}
 .memory-heart-toggle{position:absolute;z-index:9;top:7px;right:8px;display:grid;place-items:center;width:30px;height:30px;min-height:30px;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#c77999!important;font:700 1.3rem/1 Nunito,sans-serif!important;box-shadow:none!important;text-shadow:0 1px 2px #fff9;transition:transform .18s,color .18s,text-shadow .18s}
@@ -680,12 +678,11 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 @keyframes heart-button-pop{50%{transform:scale(1.28)}}
 @media(prefers-reduced-motion:reduce){.memory-heart-toggle,.memory-heart-toggle[aria-pressed="true"]{animation:none!important;transition:none!important}}
 
-/* Keep one real, tappable heart in the same corner as the former decoration. */
+/* Make the existing corner heart itself tappable, with no decorative duplicate. */
 #content .feed-item .tile::before,#content .feed-item .tile::after{content:none!important;display:none!important}
 .memory-heart-toggle{top:-12px!important}
 #content .feed-item .tile.note .memory-heart-toggle{top:-8px!important}
 #content .feed-item .tile.heart-tap .memory-heart-toggle{animation:heart-button-pop .34s ease-out}
-
 /* A compact Dynamic Island-style music pill and top player. */
 .now-playing-island{position:fixed;z-index:95;top:max(7px,calc(env(safe-area-inset-top) + 3px));left:50%;display:grid;justify-items:center;gap:7px;width:max-content;max-width:calc(100vw - 150px);transform:translateX(-50%);pointer-events:none}
 .now-playing-island.hidden{display:none!important}.now-playing-island:not(.hidden){display:grid}
@@ -716,3 +713,52 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 .photo-delete{position:absolute;right:9px;bottom:9px;display:grid;place-items:center;width:36px;height:34px;padding:0;border:1px solid #fff9;border-radius:50%;background:rgba(255,250,247,.96);color:#a95778;font-size:1rem;line-height:1;box-shadow:0 4px 13px #45314a30;backdrop-filter:blur(8px);transition:transform .18s,box-shadow .18s}
 .photo-delete:hover{transform:scale(1.08)}.photo-delete:active{transform:scale(.92)}
 body[data-mode="dark"] .photo-delete{background:rgba(55,43,62,.96);border-color:#76576f;color:#ffd8e7}
+
+/* Center the one interactive heart inside each note, above its writing line. */
+#content .feed-item[data-kind="note"] .note-row>.tile.note{display:flex!important;flex-direction:column!important;align-items:stretch!important;margin-top:0!important;padding-top:9px!important}
+#content .feed-item[data-kind="note"] .note-row>.tile.note:before{content:none!important;display:none!important}
+#content .feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle{position:relative!important;inset:auto!important;align-self:center!important;flex:0 0 21px!important;width:24px!important;height:21px!important;min-height:21px!important;margin:0 auto 2px!important;padding:0!important;transform:rotate(10deg)!important;transform-origin:center!important;font-size:1.08rem!important;line-height:1!important}
+#content .feed-item[data-kind="note"] .note-row>.tile.note .note-message-text{display:block!important;align-self:stretch!important;width:100%!important;min-width:0!important;text-align:left}
+#content .feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle[aria-pressed="true"]{animation:note-heart-center-pop .26s ease-out}
+@keyframes note-heart-center-pop{50%{transform:rotate(10deg) scale(1.24)}}
+
+/* Photo actions live only in the opened photo viewer. */
+.photo-lightbox-card{padding:62px 14px 14px!important}
+.photo-lightbox-card>img{max-height:calc(100dvh - 112px)!important}
+#photoLightboxClose{left:12px!important;right:auto!important;top:12px!important;z-index:6}
+.photo-lightbox-actions{position:absolute;top:12px;right:12px;z-index:5;display:flex;align-items:center;justify-content:flex-end;gap:8px;width:min(286px,calc(100% - 62px))}
+.photo-lightbox-action{flex:1 1 0;min-width:0;min-height:40px!important;width:auto!important;margin:0!important;padding:8px 10px!important;border:1px solid #f4dce7!important;border-radius:999px!important;background:linear-gradient(145deg,#e3a2ba,#c9799d)!important;color:#fff!important;box-shadow:0 4px 0 #a85f80!important;font:900 .74rem Nunito,sans-serif!important;white-space:nowrap}
+.photo-lightbox-action:active{transform:translateY(2px) scale(.98)!important;box-shadow:0 2px 0 #a85f80!important}
+.photo-lightbox-delete.hidden{display:none!important}
+#photoDeleteConfirmGate{z-index:130}
+.photo-delete-confirm{width:min(380px,100%);padding:24px 22px 20px!important;border-style:solid!important;background:linear-gradient(150deg,#fffaf5,#fff1f6 65%,#f4efff)!important}
+.photo-delete-confirm .auth-hint{margin:0 auto 16px;max-width:280px;line-height:1.5}
+.photo-delete-confirm-actions{display:flex;align-items:center;gap:9px}
+.photo-delete-confirm-actions button{flex:1 1 0;min-width:0;min-height:40px;padding:9px 10px;border:1px solid #efd9e3;border-radius:999px;font:800 .76rem Nunito,sans-serif}
+.photo-delete-keep{background:#fffafc;color:#865d79}
+.photo-delete-confirm-button{border-color:#d793ab!important;background:linear-gradient(145deg,#e4a3ba,#c7799a);color:#fff;box-shadow:0 4px 0 #a85f80}
+body[data-mode="dark"] .photo-delete-confirm{background:linear-gradient(150deg,#352b3d,#423044 60%,#332d47)!important;border-color:#69506a!important}
+body[data-mode="dark"] .photo-delete-keep{background:#443649;color:#f4ddea;border-color:#634f68}
+
+/* Keep song save and delete actions compact and side by side. */
+#memoryActionGate .memory-action-buttons{display:grid;gap:7px;width:100%;margin-top:2px}
+#memoryActionGate .memory-action-card.is-song .memory-action-buttons{display:flex;align-items:stretch;justify-content:center;gap:8px}
+#memoryActionGate .memory-action-card.is-song #memoryDownload,
+#memoryActionGate .memory-action-card.is-song #memoryDelete{display:block;flex:1 1 0;width:auto;min-width:0;min-height:40px;margin:0;padding:8px 11px;border:1px solid #f0d4e1;border-radius:999px;background:linear-gradient(145deg,#df9fba,#c77799);color:#fff;box-shadow:0 4px 0 #a85f80;font:900 .76rem Nunito,sans-serif;white-space:nowrap}
+#memoryActionGate .memory-action-card.is-song #memoryDelete.hidden{display:none!important}
+body[data-mode="dark"] #memoryActionGate .memory-action-card.is-song #memoryDownload,
+body[data-mode="dark"] #memoryActionGate .memory-action-card.is-song #memoryDelete{border-color:#73576e;background:linear-gradient(145deg,#a86d8b,#805a82);color:#fff}
+
+/* Float the music capsule over the feed; opening it never shifts page content. */
+#app.music-island-open main{padding-top:0!important;transition:none!important}
+.now-playing-island{touch-action:pan-y}
+.now-playing-panel{max-height:220px;overflow:hidden;transform-origin:top center;transition:opacity .18s ease,transform .2s ease,max-height .22s ease,padding .22s ease,gap .22s ease,visibility 0s}
+.now-playing-panel.hidden{display:grid!important;max-height:0!important;min-height:0;gap:0;padding-top:0;padding-bottom:0;border-color:transparent;opacity:0;transform:translateY(-7px) scale(.97);visibility:hidden;pointer-events:none;animation:none!important}
+.now-playing-panel:not(.hidden){display:grid;max-height:220px;opacity:1;transform:translateY(0) scale(1);visibility:visible;pointer-events:auto;animation:island-panel-in .2s ease-out both}
+body[data-mode="dark"] .photo-lightbox-action{border-color:#76576f!important;background:linear-gradient(145deg,#a86d8b,#805a82)!important;color:#fff!important;box-shadow:0 4px 0 #634760!important}
+@media(max-width:520px){.photo-lightbox-actions{top:10px;right:10px;width:calc(100% - 54px);gap:6px}.photo-lightbox-action{min-height:38px!important;padding:7px 8px!important;font-size:.68rem!important}.photo-lightbox-card{padding:58px 10px 10px!important}.photo-lightbox-card>img{max-height:calc(100dvh - 106px)!important}.photo-delete-confirm{padding:22px 16px 18px!important}}
+
+/* Keep playback above the feed but beneath dialogs; hide only when the viewport is too narrow. */
+.now-playing-island{z-index:79!important}
+@media(max-width:240px){.now-playing-island:not(.hidden){display:none!important}}
+@media(prefers-reduced-motion:reduce){.now-playing-panel{transition:none!important}}
