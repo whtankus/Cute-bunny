@@ -177,8 +177,8 @@ body[data-mode="dark"] .photo-download{background:rgba(55,43,62,.95);border-colo
 
 .friend-row .friend-avatar{position:relative}
 @media(max-width:520px){.selection-toolbar{width:100%}.notification-card{padding:23px 17px}.notification-preferences label{font-size:.72rem}}
-.feed-item.swipe-revealed{padding-right:12px;background:#f8e8ef;border-radius:20px}.swipe-delete-reveal{display:block;margin:4px 0 12px auto;padding:8px 13px;border:1px solid #efcbd9;border-radius:14px;background:#f9e4ed;color:#9b516f;font:800 .76rem Nunito,sans-serif;box-shadow:0 3px 12px #8c596211}.notification-preferences>#notificationsSave{width:100%;min-height:38px;margin:8px 0 2px;padding:8px}
-body[data-mode="dark"] .feed-item.tone-lavender>.tile{background:#40364f!important;color:#f3eaff;border-color:#655779}body[data-mode="dark"] .feed-item.tone-peach>.tile{background:#493638!important;color:#fff0e8;border-color:#76545a}body[data-mode="dark"] .notification-card{background:#342b3c;border-color:#59465e;color:#f1e8ef}body[data-mode="dark"] .notification-card h2{color:#f4ddea}body[data-mode="dark"] .notification-preferences{background:#403447;color:#f1e8ef}body[data-mode="dark"] .notification-row{background:#3c3043;border-color:#594a61;color:#f1e8ef}body[data-mode="dark"] .notification-row.is-unread{background:#49364c;border-color:#765878}body[data-mode="dark"] .notification-row small,body[data-mode="dark"] .notification-row time{color:#c5b2c8}body[data-mode="dark"] .memory-option{background:#443649;border-color:#634f68;color:#f4ddea}body[data-mode="dark"] .selection-toolbar{background:#342b3cf2;border-color:#59465e}body[data-mode="dark"] .selection-toolbar b{color:#f4ddea}body[data-mode="dark"] .selection-toolbar button{background:#49364c;color:#f4ddea}body[data-mode="dark"] .swipe-delete-reveal{background:#49364c;color:#ffe4ef;border-color:#765878}
+.notification-preferences>#notificationsSave{width:100%;min-height:38px;margin:8px 0 2px;padding:8px}
+body[data-mode="dark"] .feed-item.tone-lavender>.tile{background:#40364f!important;color:#f3eaff;border-color:#655779}body[data-mode="dark"] .feed-item.tone-peach>.tile{background:#493638!important;color:#fff0e8;border-color:#76545a}body[data-mode="dark"] .notification-card{background:#342b3c;border-color:#59465e;color:#f1e8ef}body[data-mode="dark"] .notification-card h2{color:#f4ddea}body[data-mode="dark"] .notification-preferences{background:#403447;color:#f1e8ef}body[data-mode="dark"] .notification-row{background:#3c3043;border-color:#594a61;color:#f1e8ef}body[data-mode="dark"] .notification-row.is-unread{background:#49364c;border-color:#765878}body[data-mode="dark"] .notification-row small,body[data-mode="dark"] .notification-row time{color:#c5b2c8}body[data-mode="dark"] .memory-option{background:#443649;border-color:#634f68;color:#f4ddea}body[data-mode="dark"] .selection-toolbar{background:#342b3cf2;border-color:#59465e}body[data-mode="dark"] .selection-toolbar b{color:#f4ddea}body[data-mode="dark"] .selection-toolbar button{background:#49364c;color:#f4ddea}
 .friend-row.is-online .friend-copy:after{content:'Online now';display:block;margin-top:3px;color:#45a974;font-size:.68rem;font-weight:900}
 .feed-item{-webkit-touch-callout:none}.feed-item .note{-webkit-touch-callout:none}
 /* Notes behave like chat bubbles: short messages stay small; long ones wrap. */
@@ -700,3 +700,19 @@ body[data-mode="dark"] .profile-streak-copy em,body[data-mode="dark"] .profile-s
 .song-title-label{display:block;min-width:0;width:100%;padding:2px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit;text-align:left;font:inherit}
 @media(max-width:390px){.now-playing-island{max-width:calc(100vw - 136px)}.now-playing-pill{min-width:105px;padding:5px 10px}.island-track-info{grid-template-columns:38px minmax(0,1fr) 26px;gap:7px}.island-album-icon{width:38px;height:38px}}
 @media(prefers-reduced-motion:reduce){.island-wave i,.now-playing-panel{animation:none!important}}
+
+/* Chat sides follow authorship for every viewer, including new friends. */
+.feed-item[data-kind="note"] .note-row{justify-content:flex-start!important}
+.feed-item[data-kind="note"] .note-row.is-mine{justify-content:flex-end!important}
+.feed-item[data-kind="note"] .note-row:not(.is-mine)>.note-time{order:2}
+.feed-item[data-kind="note"] .note-row.is-mine>.note-time{order:0}
+.feed-item[data-kind="note"] .note-row>.tile.note{align-self:auto!important}
+/* Float the one tappable heart 40% above the note edge and tilt it right. */
+.feed-item[data-kind="note"] .note-row>.tile.note .memory-heart-toggle{top:0!important;transform:translateY(-40%) rotate(10deg)!important;transform-origin:top right}
+.feed-item[data-kind="note"] .note-row>.tile.note:hover .memory-heart-toggle{transform:translateY(-40%) rotate(10deg) scale(1.12)!important}
+@keyframes heart-button-pop{50%{transform:translateY(-40%) rotate(10deg) scale(1.28)}}
+/* Owner photo controls sit together at the lower right. */
+.tile.has-photo-delete .photo-download{right:52px}
+.photo-delete{position:absolute;right:9px;bottom:9px;display:grid;place-items:center;width:36px;height:34px;padding:0;border:1px solid #fff9;border-radius:50%;background:rgba(255,250,247,.96);color:#a95778;font-size:1rem;line-height:1;box-shadow:0 4px 13px #45314a30;backdrop-filter:blur(8px);transition:transform .18s,box-shadow .18s}
+.photo-delete:hover{transform:scale(1.08)}.photo-delete:active{transform:scale(.92)}
+body[data-mode="dark"] .photo-delete{background:rgba(55,43,62,.96);border-color:#76576f;color:#ffd8e7}
