@@ -1729,7 +1729,8 @@ function syncNotesKeyboardLayout() {
   const keyboardInset = focused && viewport
     ? Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop))
     : 0;
-  const keyboardOpen = focused && mobile && (!viewport || keyboardInset > 100);
+  const viewportClearlyReduced = !!viewport && viewport.height < window.screen.height * 0.72;
+  const keyboardOpen = focused && mobile && (!viewport || keyboardInset > 100 || viewportClearlyReduced);
   const wasOpen = document.body.classList.contains('notes-keyboard-open');
 
   notesPage?.classList.toggle('notes-keyboard-open', keyboardOpen);
