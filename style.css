@@ -927,3 +927,37 @@ body[data-mode="dark"] .note-composer-card{background:linear-gradient(150deg,#35
   .chat-composer .primary{padding-inline:11px!important}
   .chat-bubble-wrap>.chat-bubble{padding:8px 12px!important;font-size:.96rem}
 }
+
+
+/* Notes chat polish: keep reactions above the message text and reserve clear space */
+.chat-bubble-wrap{margin-top:17px!important}
+.chat-bubble-wrap>.chat-bubble{padding:13px 15px 10px!important}
+.chat-bubble .memory-heart-toggle{
+  top:-17px!important;
+  right:7px!important;
+  width:27px!important;
+  height:27px!important;
+  min-height:27px!important;
+  font-size:1.18rem!important;
+  transform:none!important;
+}
+.chat-bubble .memory-heart-toggle:hover{transform:scale(1.1)!important}
+.chat-composer{align-items:flex-end!important}
+.chat-composer textarea{
+  min-height:46px!important;
+  max-height:120px!important;
+  padding:12px 14px!important;
+  line-height:1.4!important;
+  background:#fff!important;
+  border:1px solid #ead6e1!important;
+  outline:none!important;
+}
+.chat-composer textarea:focus{
+  border-color:#d99ab5!important;
+  box-shadow:0 0 0 3px #f5dfeb!important;
+}
+body[data-mode="dark"] .chat-composer textarea{
+  background:#282231!important;
+  border-color:#66536b!important;
+  color:#faeaf1!important;
+}
