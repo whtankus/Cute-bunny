@@ -2112,3 +2112,9 @@ body:has(.chat-page) #content {
   color:#e75f91!important;
   text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
 }
+
+
+/* Give the Notes heart the same pop animation as Photo and Music hearts. */
+.chat-page .chat-bubble.heart-tap .memory-heart-toggle {
+  animation:heart-button-pop .34s ease-out!important;
+}
