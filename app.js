@@ -523,17 +523,6 @@ function go(p) {
   hideMessageActions();
   window.scrollTo({ top: 0, behavior: 'smooth' });
   render();
-  if (p === 'notes') {
-    const input = $('#chatInput');
-    if (input) {
-      input.focus({ preventScroll: true });
-      requestAnimationFrame(() => {
-        const thread = $('#chatThread');
-        if (thread) thread.scrollTop = thread.scrollHeight;
-        $('#chatComposer')?.scrollIntoView({ block: 'end', behavior: 'smooth' });
-      });
-    }
-  }
 }
 
 
@@ -642,8 +631,6 @@ function renderNotesPage() {
     </section>
   `;
 
-  const thread = $('#chatThread');
-  if (thread) requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
 }
 
 function render() {
@@ -1140,8 +1127,6 @@ async function sendChatMessage() {
   renderNotesPage();
   const keepTyping = $('#chatInput');
   keepTyping?.focus({ preventScroll: true });
-  const threadAfterSend = $('#chatThread');
-  if (threadAfterSend) threadAfterSend.scrollTop = threadAfterSend.scrollHeight;
   try {
     const saved = await api('/memories', { method: 'POST', body: JSON.stringify({ kind: 'note', text }) });
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
@@ -1742,8 +1727,6 @@ document.addEventListener('input', event => {
   const field = event.target;
   field.style.height = 'auto';
   field.style.height = Math.min(field.scrollHeight, 116) + 'px';
-  const thread = $('#chatThread');
-  if (thread) thread.scrollTop = thread.scrollHeight;
 });
 
 // Chat form submission
