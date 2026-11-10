@@ -521,7 +521,7 @@ function go(p) {
   $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends' })[p] || 'Home';
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.page === p));
   hideMessageActions();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (p !== 'notes') window.scrollTo({ top: 0, behavior: 'smooth' });
   render();
 }
 
@@ -1718,6 +1718,47 @@ document.addEventListener('input', event => {
   field.style.height = 'auto';
   field.style.height = Math.min(field.scrollHeight, 116) + 'px';
 });
+
+// Keep the Notes composer and conversation clear of the mobile keyboard.
+function syncNotesKeyboardLayout() {
+  const notesPage = document.querySelector('.chat-page');
+  const input = $('#chatInput');
+  const focused = page === 'notes' && !!notesPage && document.activeElement === input;
+  const viewport = window.visualViewport;
+  const mobile = window.matchMedia('(max-width: 720px)').matches;
+  const keyboardInset = focused && viewport
+    ? Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop))
+    : 0;
+  const viewportClearlyReduced = !!viewport && viewport.height < window.screen.height * 0.72;
+  const keyboardOpen = focused && mobile && (!viewport || keyboardInset > 100 || viewportClearlyReduced);
+  const wasOpen = document.body.classList.contains('notes-keyboard-open');
+
+  notesPage?.classList.toggle('notes-keyboard-open', keyboardOpen);
+  document.body.classList.toggle('notes-keyboard-open', keyboardOpen);
+  document.documentElement.style.setProperty('--notes-keyboard-inset', keyboardOpen ? keyboardInset + 'px' : '0px');
+
+  if (keyboardOpen && !wasOpen) {
+    requestAnimationFrame(() => {
+      if (page !== 'notes' || document.activeElement !== $('#chatInput')) return;
+      window.scrollTo({
+        top: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
+        behavior: 'smooth'
+      });
+    });
+  }
+}
+
+document.addEventListener('focusin', event => {
+  if (event.target.id !== 'chatInput') return;
+  requestAnimationFrame(syncNotesKeyboardLayout);
+});
+document.addEventListener('focusout', event => {
+  if (event.target.id !== 'chatInput') return;
+  requestAnimationFrame(syncNotesKeyboardLayout);
+});
+window.addEventListener('resize', syncNotesKeyboardLayout);
+window.visualViewport?.addEventListener('resize', syncNotesKeyboardLayout);
+window.visualViewport?.addEventListener('scroll', syncNotesKeyboardLayout);
 
 // Chat form submission
 document.addEventListener('submit', event => {

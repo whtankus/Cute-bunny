@@ -1852,3 +1852,22 @@ body[data-mode="dark"] .chat-actions-popup .chat-action-btn.delete-btn {
   position:static;
   bottom:auto;
 }
+
+
+/* Notes mobile keyboard layout: float the composer above the keyboard. */
+.chat-page.notes-keyboard-open {
+  padding-bottom:calc(100px + var(--notes-keyboard-inset, 0px));
+}
+.chat-page.notes-keyboard-open .chat-composer {
+  position:fixed;
+  left:50%;
+  bottom:calc(var(--notes-keyboard-inset, 0px) + 8px);
+  width:min(680px,calc(100vw - 30px));
+  max-width:calc(100vw - 30px);
+  margin:0;
+  transform:translateX(-50%);
+  z-index:50;
+}
+body.notes-keyboard-open #nav {
+  display:none!important;
+}
