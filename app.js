@@ -521,8 +521,19 @@ function go(p) {
   $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends' })[p] || 'Home';
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.page === p));
   hideMessageActions();
-  if (p !== 'notes') window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (p !== 'notes') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
   render();
+  if (p === 'notes') {
+    requestAnimationFrame(() => {
+      if (page !== 'notes') return;
+      window.scrollTo({
+        top: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
+        behavior: 'auto'
+      });
+    });
+  }
 }
 
 
