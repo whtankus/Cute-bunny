@@ -892,18 +892,6 @@ body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{b
 .note-composer-card .input{margin:14px 0 14px;font-size:1rem;padding:12px 14px}
 .note-composer-actions{display:flex;flex-direction:column;gap:8px}
 
-/* Tapping effects & sprinkles */
-.sprinkle{position:fixed;z-index:9999;pointer-events:none;font-size:22px;animation:sprinkle-pop .9s cubic-bezier(.2,.8,.4,1) forwards;user-select:none}
-@keyframes sprinkle-pop{0%{opacity:1;transform:translate(0,0) scale(.6) rotate(0)}50%{opacity:1;transform:translate(calc(var(--dx)*.7),calc(var(--dy)*.7)) scale(1.15) rotate(20deg)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.5) rotate(45deg)}}
-.cute-tap{animation:cute-tap-bounce .34s ease-out both!important}
-@keyframes cute-tap-bounce{0%{transform:scale(1)}40%{transform:scale(.93)}100%{transform:scale(1)}}
-.kindness-pop{animation:kindness-pop .4s ease-out}
-@keyframes kindness-pop{0%{opacity:.35;transform:translateY(4px)}100%{opacity:1;transform:translateY(0)}}
-.daily{cursor:pointer;transition:transform .18s,border-color .18s}
-.daily:hover{border-color:#d793ab}
-.daily:active{transform:scale(.98)}
-.daily #newCompliment{transition:transform .2s ease}
-.daily #newCompliment:active{transform:rotate(140deg) scale(.92)}
 
 /* Dark mode refinements */
 body[data-mode="dark"] .ig-notes-tray{border-color:#5c4961}

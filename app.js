@@ -57,20 +57,6 @@ function rollKindness(e) {
   toast('A little drop of kindness for you ♡');
 }
 
-function sprinkle(x,y){
-    for(let i=0;i<8;i++){
-        let a=document.createElement('span');
-        a.className='sprinkle';
-        a.textContent=['♡','✦','🌸','✨'][i%4];
-        a.style.left=x+'px';
-        a.style.top=y+'px';
-        a.style.setProperty('--dx',(Math.random()*100-50)+'px');
-        a.style.setProperty('--dy',(Math.random()*-90-25)+'px');
-        document.body.append(a);
-        setTimeout(()=>a.remove(),1000)
-    }
-}
-
 function setMode(mode) {
   document.body.dataset.mode = mode;
   const b = $('#surprise');
