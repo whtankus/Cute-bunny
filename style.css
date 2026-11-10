@@ -2095,3 +2095,20 @@ body:has(.chat-page) #content {
     right:auto!important;
   }
 }
+
+
+/* Force Notes hearts to inherit the same outline/filled glyph treatment as Photo and Music hearts, including dark mode. */
+#content .chat-page .chat-bubble .memory-heart-toggle {
+  color:#c77999!important;
+  -webkit-text-stroke:0 transparent!important;
+  font-family:Nunito,sans-serif!important;
+  font-size:1.3rem!important;
+  font-style:normal!important;
+  font-weight:700!important;
+  line-height:1!important;
+  text-shadow:0 1px 2px #fff9!important;
+}
+#content .chat-page .chat-bubble .memory-heart-toggle[aria-pressed="true"] {
+  color:#e75f91!important;
+  text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
+}
