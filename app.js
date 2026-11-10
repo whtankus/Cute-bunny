@@ -647,9 +647,6 @@ function renderNotesPage() {
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend">Send ♡</button>
       </form>
-      <button type="button" class="notes-friends-shortcut" data-go="friends" aria-label="Open Friends" title="Friends">
-        <span aria-hidden="true">👥</span>
-      </button>
     </section>
   `;
 
@@ -1762,10 +1759,20 @@ function syncNotesKeyboardLayout() {
   if (keyboardOpen && !wasOpen) {
     requestAnimationFrame(() => {
       if (page !== 'notes' || document.activeElement !== $('#chatInput')) return;
-      window.scrollTo({
-        top: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
-        behavior: 'smooth'
-      });
+      const composer = $('#chatComposer');
+      if (!composer) return;
+
+      const visual = window.visualViewport;
+      const visibleTop = visual?.offsetTop || 0;
+      const visibleBottom = visibleTop + (visual?.height || window.innerHeight);
+      const rect = composer.getBoundingClientRect();
+      const bottomOverflow = rect.bottom + 10 - visibleBottom;
+      const topOverflow = visibleTop + 4 - rect.top;
+      const adjustment = bottomOverflow > 0 ? bottomOverflow : (topOverflow > 0 ? -topOverflow : 0);
+
+      if (adjustment) {
+        window.scrollBy({ top: adjustment, behavior: 'smooth' });
+      }
     });
   }
 }
