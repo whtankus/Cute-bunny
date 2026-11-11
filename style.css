@@ -7708,3 +7708,37 @@ body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line>stron
 body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line span b {
   color:#f1ddea!important;
 }
+
+
+/* Mobile Petal Pairs: use true square cards and a roomier four-column board.
+   Tuned against 320px, 360px, and 390px phone-width previews. */
+@media(max-width:620px) {
+  .streak-garden-page .sg-game-compact .sg-petal-board {
+    width:min(100%,278px)!important;
+    max-width:278px!important;
+    gap:7px!important;
+    padding:8px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-card {
+    width:100%!important;
+    max-width:none!important;
+    height:auto!important;
+    min-height:0!important;
+    aspect-ratio:1/1!important;
+  }
+}
+@media(max-width:380px) {
+  .streak-garden-page .sg-game-compact .sg-petal-board {
+    width:min(100%,278px)!important;
+    max-width:278px!important;
+    gap:6px!important;
+    padding:7px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-card {
+    width:100%!important;
+    max-width:none!important;
+    height:auto!important;
+    min-height:0!important;
+    aspect-ratio:1/1!important;
+  }
+}
