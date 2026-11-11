@@ -2188,15 +2188,6 @@ document.addEventListener('scroll', event => {
   }
 }, true);
 
-// Re-measure the Notes viewport after the masthead's height-collapse animation.
-document.addEventListener('transitionend', event => {
-  if (
-    event.target.matches?.('.app>header') &&
-    event.propertyName === 'margin-bottom' &&
-    page === 'notes'
-  ) scheduleNotesKeyboardLayout();
-});
-
 // Chat form submission
 document.addEventListener('submit', event => {
   if (event.target.id === 'chatComposer') {
