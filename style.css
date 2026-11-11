@@ -3079,24 +3079,3 @@ body.notes-page-active .app>header {
 #content .chat-page .chat-thread>.chat-message.is-continuation {
   margin-top:-8px!important;
 }
-
-
-/* v78 — let each note bubble shrink to its own text instead of a fixed minimum width. */
-#content .chat-page .chat-bubble-wrap>.chat-bubble,
-.home-note-memory .chat-bubble-wrap>.chat-bubble {
-  display:block!important;
-  width:fit-content!important;
-  min-width:0!important;
-  max-width:100%!important;
-}
-#content .chat-page .chat-bubble-wrap>.chat-bubble>.chat-message-text,
-.home-note-memory .chat-bubble-wrap>.chat-bubble>.chat-message-text {
-  display:block!important;
-  width:auto!important;
-  min-width:0!important;
-  max-width:100%!important;
-  flex:none!important;
-  margin:0!important;
-  text-align:left!important;
-  text-align-last:left!important;
-}
