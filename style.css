@@ -5270,3 +5270,374 @@ body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-avatar
   .streak-garden-page .sg-week-legend span{padding:3px 4px;font-size:8.5px}
   .streak-garden-page .sg-game-compact .sg-petal-board{gap:6px!important;padding:8px!important}
 }
+
+
+/* v108 — banner game, stable week flowers, friend name/count tiles, refined tabs. */
+/* Petal Pairs becomes one compact horizontal garden banner. */
+.streak-garden-page .sg-game-compact{
+  display:grid!important;
+  grid-template-columns:minmax(92px,.72fr) minmax(0,1.28fr);
+  grid-template-areas:"copy board";
+  align-items:center!important;
+  justify-items:stretch!important;
+  gap:12px!important;
+  width:100%;
+  padding:13px 14px!important;
+  border:1px solid #ebdce8!important;
+  border-radius:21px!important;
+  background:linear-gradient(112deg,#fff8f7 0%,#f7f1fa 100%)!important;
+  box-shadow:0 4px 15px #80657b0c!important;
+}
+.streak-garden-page .sg-petal-banner-copy{
+  grid-area:copy;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:8px;
+  min-width:0;
+}
+.streak-garden-page .sg-petal-banner-copy .sg-compact-section-heading{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  width:100%;
+}
+.streak-garden-page .sg-petal-banner-copy .sg-compact-section-heading h3{
+  color:#624b65!important;
+  font:800 17px/1.15 Quicksand,sans-serif!important;
+}
+.streak-garden-page .sg-petal-banner-copy #streakGamePairsLeft{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  padding:5px 8px;
+  border:1px solid #edd9e4;
+  border-radius:999px;
+  background:#fffdfb;
+  color:#97617f!important;
+  font-size:10px!important;
+}
+.streak-garden-page .sg-petal-banner-note{
+  margin:0;
+  color:#907b91;
+  font-size:10px;
+  line-height:1.35;
+}
+.streak-garden-page .sg-game-compact .sg-petal-board{
+  grid-area:board;
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:6px!important;
+  width:100%!important;
+  max-width:290px!important;
+  margin:0!important;
+  padding:8px!important;
+  border:1px solid #ead9e5!important;
+  border-radius:16px!important;
+  background:#fffdfb!important;
+  box-shadow:inset 0 0 0 2px #fff,0 3px 9px #80657b0a!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-card{
+  display:grid!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  min-height:0!important;
+  aspect-ratio:1/1!important;
+  padding:0!important;
+  border:1px solid #e8d8e5!important;
+  border-radius:9px!important;
+  background:linear-gradient(145deg,#fffdf8,#f1e9f7)!important;
+  box-shadow:0 2px 0 #e1d4e1!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-card:not(:disabled):hover{
+  transform:translateY(-1px);
+}
+.streak-garden-page .sg-game-compact .sg-petal-back{font-size:16px!important}
+.streak-garden-page .sg-game-compact .sg-petal-face{font-size:18px!important}
+.streak-garden-page .sg-game-compact .sg-game-reset-compact{
+  min-height:28px!important;
+  margin:0!important;
+  padding:5px 9px!important;
+  border:1px solid #e7d2df!important;
+  border-radius:999px!important;
+  background:#fffdfb!important;
+  color:#895d78!important;
+  font-size:10px!important;
+  box-shadow:none!important;
+}
+
+/* Selecting a day updates only its highlight; no flower should jump or re-open. */
+.streak-garden-page .sg-week-day{
+  box-sizing:border-box!important;
+  transform:none!important;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease!important;
+}
+.streak-garden-page .sg-week-day:active,
+.streak-garden-page .sg-week-day:hover{
+  transform:none!important;
+}
+.streak-garden-page .sg-week-day.is-selected{
+  border:1px solid #ad6e8d!important;
+  outline:none!important;
+  box-shadow:inset 0 0 0 1px #ad6e8d22!important;
+}
+.streak-garden-page .sg-week-day .sg-week-flower{
+  box-sizing:border-box!important;
+  flex:none!important;
+  pointer-events:none;
+}
+.streak-garden-page .sg-week-day .sg-week-flower svg,
+.streak-garden-page .sg-week-day.is-visited .sg-week-flower svg{
+  display:block;
+  transform:none!important;
+  animation:none!important;
+  transition:none!important;
+}
+
+/* Friends: round profile icon, name beneath, flower total aligned on the right. */
+.streak-garden-page .sg-friends-compact .sg-friend-list{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:8px!important;
+  width:100%;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-card{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:7px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:70px;
+  padding:7px 9px!important;
+  border:1px solid #ecdee6!important;
+  border-radius:16px!important;
+  background:linear-gradient(145deg,#fffdfb,#fff6f8)!important;
+  box-shadow:0 2px 8px #866b7c09!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-person{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  min-width:0;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-avatar{
+  display:grid!important;
+  place-items:center;
+  flex:none!important;
+  width:36px!important;
+  height:36px!important;
+  border:1px solid #ead4e1!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,#fbe8ef,#eee8f8)!important;
+  box-shadow:0 2px 5px #866b7c12!important;
+  font-size:20px!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-name{
+  display:block;
+  max-width:100%;
+  overflow:hidden;
+  color:#705875;
+  font:700 10px/1.15 Quicksand,sans-serif;
+  text-align:center;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count{
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  flex:none;
+  gap:4px;
+  min-width:34px;
+  padding:6px 7px;
+  border:1px solid #f0dce5;
+  border-radius:999px;
+  background:#fff0f4;
+  color:#a26584;
+  line-height:1;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count i{
+  color:#c17b9b;
+  font-size:11px;
+  font-style:normal;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count strong{
+  color:#80566f;
+  font:800 11px/1 Quicksand,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Two clear, tactile tabs; Little Promises is the first and default destination. */
+.streak-garden-page .sg-bottom-tabs-wrap{gap:8px!important;margin-top:3px!important}
+.streak-garden-page .sg-bottom-tabs{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px!important;
+  padding:6px!important;
+  border:1px solid #eadbe5!important;
+  border-radius:19px!important;
+  background:linear-gradient(135deg,#fffaf8,#f6f0f8)!important;
+  box-shadow:0 3px 10px #80657b09!important;
+}
+.streak-garden-page .sg-bottom-tab{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  min-width:0!important;
+  min-height:52px!important;
+  padding:8px 10px!important;
+  border:1px solid transparent!important;
+  border-radius:14px!important;
+  background:transparent!important;
+  color:#826d84!important;
+  font:800 11px/1.2 Quicksand,sans-serif!important;
+  text-align:left!important;
+  transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,color .18s ease!important;
+}
+.streak-garden-page .sg-tab-icon{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:28px;
+  height:28px;
+  border:1px solid #eed9e4;
+  border-radius:10px;
+  background:#fff6f8;
+  color:#ba7898;
+  font-size:17px;
+  line-height:1;
+}
+.streak-garden-page .sg-tab-label{
+  display:block;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.streak-garden-page .sg-bottom-tab.is-active{
+  border-color:#dfbfd0!important;
+  background:linear-gradient(135deg,#f9e8ee,#eee7f7)!important;
+  color:#644b68!important;
+  box-shadow:0 2px 6px #80657b12!important;
+}
+.streak-garden-page .sg-bottom-tab.is-active .sg-tab-icon{
+  border-color:#e8c6d6;
+  background:#fffafd;
+  color:#a65f82;
+}
+.streak-garden-page .sg-bottom-tab:focus-visible{
+  outline:2px solid #a56f90!important;
+  outline-offset:2px;
+}
+.streak-garden-page .sg-tab-panel{padding-top:10px!important}
+.streak-garden-page .sg-tab-panel .sg-milestones-section,
+.streak-garden-page .sg-tab-panel .sg-goals-section{
+  padding-top:5px;
+}
+.streak-garden-page .sg-tab-panel .sg-section-heading h3{
+  color:#624b65;
+}
+body[data-mode="dark"] .streak-garden-page .sg-game-compact{
+  border-color:#59495e!important;
+  background:linear-gradient(112deg,#403440,#393342)!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-petal-banner-copy .sg-compact-section-heading h3,
+body[data-mode="dark"] .streak-garden-page .sg-tab-panel .sg-section-heading h3{
+  color:#f3e2ed!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-petal-banner-note{color:#c8b5c7}
+body[data-mode="dark"] .streak-garden-page .sg-petal-banner-copy #streakGamePairsLeft{
+  border-color:#695366;
+  background:#483744;
+  color:#f0cadd!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-game-compact .sg-petal-board{
+  border-color:#5b4b60!important;
+  background:#39323f!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-card{
+  border-color:#5b4b60!important;
+  background:linear-gradient(145deg,#443844,#39323f)!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-name{
+  color:#f0deeb;
+}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-avatar{
+  border-color:#6a5469!important;
+  background:linear-gradient(145deg,#544051,#454052)!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-flower-count{
+  border-color:#6a5365;
+  background:#4d3946;
+  color:#f0dbe9;
+}
+body[data-mode="dark"] .streak-garden-page .sg-bottom-tabs{
+  border-color:#5d4c5e!important;
+  background:linear-gradient(135deg,#403642,#38313d)!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-bottom-tab{color:#c7b3c8!important}
+body[data-mode="dark"] .streak-garden-page .sg-tab-icon{
+  border-color:#665166;
+  background:#473744;
+  color:#e2b0c8;
+}
+body[data-mode="dark"] .streak-garden-page .sg-bottom-tab.is-active{
+  border-color:#8b657f!important;
+  background:linear-gradient(135deg,#58404f,#4b4058)!important;
+  color:#f5e3ef!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-bottom-tab.is-active .sg-tab-icon{
+  border-color:#88647c;
+  background:#493947;
+  color:#f0c7d9;
+}
+@media(max-width:620px){
+  .streak-garden-page .sg-game-compact{
+    grid-template-columns:minmax(78px,.62fr) minmax(0,1.38fr);
+    gap:8px!important;
+    padding:10px 9px!important;
+    border-radius:18px!important;
+  }
+  .streak-garden-page .sg-petal-banner-copy{gap:6px}
+  .streak-garden-page .sg-petal-banner-copy .sg-compact-section-heading h3{font-size:15px!important}
+  .streak-garden-page .sg-petal-banner-note{font-size:9px}
+  .streak-garden-page .sg-game-compact .sg-petal-board{
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+    gap:5px!important;
+    padding:7px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-card{border-radius:7px!important}
+  .streak-garden-page .sg-game-compact .sg-petal-back{font-size:14px!important}
+  .streak-garden-page .sg-game-compact .sg-petal-face{font-size:16px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-card{min-height:66px;padding:6px 7px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-avatar{width:33px!important;height:33px!important;font-size:18px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-name{font-size:9px}
+  .streak-garden-page .sg-bottom-tab{
+    min-height:48px!important;
+    gap:6px!important;
+    padding:7px 8px!important;
+    font-size:10px!important;
+  }
+  .streak-garden-page .sg-tab-icon{width:25px;height:25px;font-size:15px}
+}
+@media(max-width:360px){
+  .streak-garden-page .sg-game-compact{
+    grid-template-columns:minmax(70px,.58fr) minmax(0,1.42fr);
+    gap:6px!important;
+    padding:9px 7px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-board{gap:4px!important;padding:6px!important}
+  .streak-garden-page .sg-bottom-tabs{gap:4px!important;padding:4px!important}
+  .streak-garden-page .sg-bottom-tab{gap:4px!important;padding:6px!important;font-size:9px!important}
+  .streak-garden-page .sg-tab-icon{width:22px;height:22px;font-size:14px}
+}
