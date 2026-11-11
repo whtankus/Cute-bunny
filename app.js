@@ -921,10 +921,9 @@ function renderStreakPage() {
       '<div class="sg-hero-scene"><div class="sg-garden-art" id="sgGardenArt">' + gardenScene +
         '<div class="sg-garden-hit-layer">' + gardenFlowerMarkup + '</div></div>' +
         '<span class="sg-garden-bloom-count' + (gardenBlooms.size === 4 ? ' is-complete' : '') + '" id="sgGardenBloomCount">' +
-        (gardenBlooms.size === 4 ? 'Garden in bloom ✿' : gardenBlooms.size + ' / 4 watered') + '</span></div>' +
+        (gardenBlooms.size === 4 ? 'Garden in bloom ✿' : 'Tap flowers · ' + gardenBlooms.size + ' / 4') + '</span></div>' +
       '<span class="sg-hero-corner sg-corner-one" aria-hidden="true">❧</span><span class="sg-hero-corner sg-corner-two" aria-hidden="true">✧</span></div></section>',
     '<section class="sg-stats-ribbon" aria-label="Your garden numbers">' +
-      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-flame" aria-hidden="true">✿</span><div><small>CURRENT STREAK</small><strong>' + count + '</strong><em>' + (count === 1 ? 'day' : 'days') + '</em></div></div>' +
       '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-sprout" aria-hidden="true">♧</span><div><small>LONGEST RUN</small><strong>' + Math.max(bestRun, count) + '</strong><em>days in a row</em></div></div>' +
       '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-bloom" aria-hidden="true">✾</span><div><small>GARDEN VISITS</small><strong>' + history.size + '</strong><em>days recorded</em></div></div>' +
       '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-award" aria-hidden="true">✧</span><div><small>BLOOMS FOUND</small><strong>' + earned.size + '</strong><em>of ' + milestones.length + '</em></div></div></section>',
@@ -2352,7 +2351,7 @@ document.addEventListener('click', async e => {
     gardenFlowerButton.setAttribute('aria-label', 'Watered flower');
     const bloomCount = $('#sgGardenBloomCount');
     if (bloomCount) {
-      bloomCount.textContent = blooms.size === 4 ? 'Garden in bloom ✿' : blooms.size + ' / 4 watered';
+      bloomCount.textContent = blooms.size === 4 ? 'Garden in bloom ✿' : 'Tap flowers · ' + blooms.size + ' / 4';
       bloomCount.classList.toggle('is-complete', blooms.size === 4);
     }
     const gardenArt = $('#sgGardenArt');
