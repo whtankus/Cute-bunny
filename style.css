@@ -7364,3 +7364,178 @@ body[data-mode="dark"] .card-song-delete {
   background:linear-gradient(145deg,#513849,#443347)!important;
   color:#ffdce9!important;
 }
+
+
+/* Streak Garden: compact, evenly centered Weekly Blooms and Petal Pairs. */
+.streak-garden-page .sg-week-section {
+  width:calc(100% - 12px)!important;
+  max-width:540px!important;
+  box-sizing:border-box!important;
+  margin-inline:auto!important;
+  padding:10px 9px 9px!important;
+}
+.streak-garden-page .sg-week-section .sg-section-heading {
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0 0 8px!important;
+  text-align:center!important;
+}
+.streak-garden-page .sg-week-section .sg-section-heading>div {
+  width:100%;
+  text-align:center!important;
+}
+.streak-garden-page .sg-week-section .sg-section-heading h3 {
+  margin:0!important;
+  text-align:center!important;
+}
+.streak-garden-page .sg-week-row {
+  display:grid!important;
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  justify-items:stretch!important;
+  gap:2px!important;
+  width:100%!important;
+}
+.streak-garden-page .sg-week-day,
+.streak-garden-page .sg-week-day.is-visited,
+.streak-garden-page .sg-week-day.is-today,
+.streak-garden-page .sg-week-day.is-selected,
+.streak-garden-page .sg-week-day:hover,
+.streak-garden-page .sg-week-day:active,
+.streak-garden-page .sg-week-day:focus,
+.streak-garden-page .sg-week-day:focus-visible {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:3px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:4px 0 3px!important;
+  border:0!important;
+  border-radius:10px!important;
+  outline:0!important;
+  outline-offset:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  text-align:center!important;
+  -webkit-tap-highlight-color:transparent;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+}
+.streak-garden-page .sg-week-day .sg-week-name,
+.streak-garden-page .sg-week-day .sg-week-date {
+  display:block!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  text-align:center!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+}
+.streak-garden-page .sg-week-day .sg-week-name {
+  font-size:10px!important;
+  letter-spacing:0!important;
+}
+.streak-garden-page .sg-week-day .sg-week-date {
+  font-size:11px!important;
+  font-variant-numeric:tabular-nums;
+}
+.streak-garden-page .sg-week-day .sg-week-flower,
+.streak-garden-page .sg-week-day.is-visited .sg-week-flower {
+  display:grid!important;
+  place-items:center!important;
+  flex:0 0 28px!important;
+  width:28px!important;
+  height:28px!important;
+  min-width:28px!important;
+  margin:0 auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.streak-garden-page .sg-week-day .sg-week-flower svg {
+  display:block!important;
+  width:22px!important;
+  height:22px!important;
+  margin:auto!important;
+}
+.streak-garden-page .sg-week-day.is-selected .sg-week-flower,
+.streak-garden-page .sg-week-day:focus-visible .sg-week-flower {
+  border:0!important;
+  background:transparent!important;
+  box-shadow:0 0 0 3px rgba(230,171,193,.42)!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-selected .sg-week-flower,
+body[data-mode="dark"] .streak-garden-page .sg-week-day:focus-visible .sg-week-flower {
+  border:0!important;
+  background:transparent!important;
+  box-shadow:0 0 0 3px rgba(201,142,170,.3)!important;
+}
+
+/* Smaller four-column square tiles; board stays centered and responsive. */
+.streak-garden-page .sg-game-compact .sg-petal-board {
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:6px!important;
+  width:min(100%,236px)!important;
+  max-width:236px!important;
+  margin:0 auto!important;
+  padding:7px!important;
+  box-sizing:border-box!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-card {
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  max-width:48px!important;
+  min-width:0!important;
+  min-height:0!important;
+  aspect-ratio:1/1!important;
+  justify-self:center!important;
+  padding:0!important;
+  border-radius:10px!important;
+  box-sizing:border-box!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-back {
+  font-size:17px!important;
+  line-height:1!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-face {
+  font-size:20px!important;
+  line-height:1!important;
+}
+@media(max-width:380px) {
+  .streak-garden-page .sg-week-section {
+    width:calc(100% - 8px)!important;
+    padding:9px 6px 8px!important;
+  }
+  .streak-garden-page .sg-week-row {gap:1px!important}
+  .streak-garden-page .sg-week-day .sg-week-name {font-size:9px!important}
+  .streak-garden-page .sg-week-day .sg-week-flower,
+  .streak-garden-page .sg-week-day.is-visited .sg-week-flower {
+    flex-basis:26px!important;
+    width:26px!important;
+    height:26px!important;
+    min-width:26px!important;
+  }
+  .streak-garden-page .sg-week-day .sg-week-flower svg {
+    width:21px!important;
+    height:21px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-board {
+    width:min(100%,224px)!important;
+    max-width:224px!important;
+    gap:5px!important;
+    padding:6px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-card {
+    max-width:46px!important;
+    border-radius:9px!important;
+  }
+}
