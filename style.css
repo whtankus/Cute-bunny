@@ -2700,3 +2700,9 @@ body.notes-page-active .app>header {
     scroll-padding-top:36px;
   }
 }
+
+
+/* Give the auto-scroll a small, exact end spacer when it needs to clear a sliced message. */
+#content .chat-page .chat-thread {
+  padding-bottom:var(--notes-end-clearance,28px)!important;
+}
