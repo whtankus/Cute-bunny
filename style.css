@@ -6682,3 +6682,141 @@ body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line small
     animation:none!important;
   }
 }
+
+
+/* v115 — two floating blossoms, stronger garden flowers and a potted-plant streak tile. */
+
+/* Exactly two drifting flowers beside the Streak Garden heading. */
+.streak-garden-page .sg-heading-doodle {
+  display:flex!important;
+  align-items:center;
+  justify-content:center;
+  gap:11px;
+  width:auto!important;
+  height:auto!important;
+  padding:5px 10px 0 0!important;
+  overflow:visible!important;
+}
+.streak-garden-page .sg-heading-bloom {
+  position:relative!important;
+  display:inline-block!important;
+  color:#d989a8;
+  font:normal 2rem/1 Caveat,cursive!important;
+  transform-origin:50% 58%;
+  animation:sg-heading-bloom-wander var(--sg-bloom-speed,4.2s) ease-in-out infinite!important;
+  animation-delay:var(--sg-bloom-delay,0s)!important;
+  will-change:transform;
+}
+.streak-garden-page .sg-heading-bloom-two {
+  color:#b7a2d2!important;
+  font-size:1.72rem!important;
+  animation-direction:reverse!important;
+}
+
+/* The garden's seven rooted flowers are scaled up to the cherry-tree blossom size. */
+.streak-garden-page .sg-garden-art svg use[href="#sgGardenFlower"],
+.streak-garden-page .sg-garden-art svg use[href="#sgGardenBud"] {
+  transform-box:fill-box;
+}
+
+/* More confident, readable type for the garden stage message. */
+.streak-garden-page .sg-hero-copy .sg-garden-stage {
+  font-family:Quicksand,sans-serif!important;
+  font-size:clamp(15px,1.55vw,18px)!important;
+  font-weight:800!important;
+  letter-spacing:-.25px;
+  line-height:1.3!important;
+  color:#785778!important;
+}
+@media(max-width:620px) {
+  .streak-garden-page .sg-hero-copy .sg-garden-stage {
+    font-size:14px!important;
+    line-height:1.3!important;
+  }
+}
+@media(max-width:370px) {
+  .streak-garden-page .sg-hero-copy .sg-garden-stage {font-size:13px!important}
+}
+
+/* Home streak thumbnail: plant illustration in the center, with the live count as larger text below. */
+.streak-tile .streak-art-trigger {
+  display:grid!important;
+  place-items:center!important;
+  min-height:126px!important;
+  padding:6px 8px 2px!important;
+  overflow:hidden;
+  background:linear-gradient(145deg,#f9e4ed 0%,#f2eafa 54%,#e5f1e9 100%)!important;
+  cursor:pointer;
+}
+.streak-tile .streak-plant-illustration {
+  position:relative;
+  display:block;
+  width:118px;
+  height:108px;
+  margin:auto;
+  animation:sg-home-plant-sway 4.8s ease-in-out infinite;
+  transform-origin:50% 88%;
+}
+.streak-tile .streak-plant-flower {
+  position:absolute;
+  z-index:3;
+  display:block;
+  font-size:30px;
+  line-height:1;
+  filter:drop-shadow(0 2px 2px #79556b22);
+}
+.streak-tile .streak-plant-flower-one {left:40px;top:5px;font-size:34px}
+.streak-tile .streak-plant-flower-two {left:13px;top:25px;font-size:27px}
+.streak-tile .streak-plant-flower-three {right:9px;top:27px;font-size:29px}
+.streak-tile .streak-plant-leaf {
+  position:absolute;
+  z-index:2;
+  display:block;
+  font-size:25px;
+  line-height:1;
+}
+.streak-tile .streak-plant-leaf-one {left:10px;top:52px;transform:rotate(-24deg)}
+.streak-tile .streak-plant-leaf-two {right:5px;top:54px;transform:rotate(22deg)}
+.streak-tile .streak-plant-pot {
+  position:absolute;
+  z-index:1;
+  left:34px;
+  bottom:1px;
+  display:grid;
+  place-items:center;
+  width:52px;
+  height:37px;
+  border:2px solid #c77f9d;
+  border-top:4px solid #e3a6bc;
+  border-radius:6px 6px 14px 14px;
+  background:linear-gradient(145deg,#f3bfd0,#d98eaa);
+  box-shadow:inset 0 3px 5px #fff8,0 4px 7px #76526c22;
+  clip-path:polygon(0 0,100% 0,86% 100%,14% 100%);
+}
+.streak-tile .streak-plant-pot i {
+  color:#fff5f8;
+  font:normal 17px/1 Quicksand,sans-serif;
+  transform:translateY(-1px);
+}
+.streak-tile [data-streak-live-subtitle] {
+  margin:5px 0 0!important;
+  color:#96627f!important;
+  font:800 .94rem/1.35 Quicksand,sans-serif!important;
+  letter-spacing:-.15px;
+  text-align:center;
+}
+.streak-tile .streak-art-sprig,
+.streak-tile .streak-art-value,
+.streak-tile .streak-art-trigger>i {display:none!important}
+body[data-mode="dark"] .streak-tile .streak-art-trigger {
+  background:linear-gradient(145deg,#493746 0%,#45384d 54%,#35443c 100%)!important;
+}
+body[data-mode="dark"] .streak-tile [data-streak-live-subtitle] {color:#f0cadd!important}
+@keyframes sg-home-plant-sway {
+  0%,100% {transform:rotate(-2deg) translateY(0)}
+  50% {transform:rotate(2deg) translateY(-3px)}
+}
+@media(prefers-reduced-motion:reduce) {
+  .streak-garden-page .sg-heading-bloom,
+  .streak-tile .streak-plant-illustration {animation:none!important}
+}
