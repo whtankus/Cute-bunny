@@ -1993,14 +1993,12 @@ function syncNotesKeyboardLayout() {
   const navHeight = keyboardOpen ? 0 : (nav?.getBoundingClientRect().height || 68);
   document.documentElement.style.setProperty('--notes-nav-height', navHeight + 'px');
 
-  // Measure the composer after its keyboard/navigation offset has been applied.
-  // The chat page ends just above that real top edge; no guessed composer height
-  // is subtracted from the flex area, so the message viewport cannot drift.
+  // Measure the actual rendered composer edge after its keyboard/navigation
+  // offset has been applied. The sole scrollport ends 8px above that edge.
   const pageTop = notesPage.getBoundingClientRect().top;
-  const composerTop = composer?.getBoundingClientRect().top
-    ?? (visibleViewportBottom - (keyboardOpen ? keyboardInset : navHeight) - 58);
-  const composerGap = 8;
-  const availableHeight = Math.max(0, Math.floor(composerTop - pageTop - composerGap));
+  const composerRect = composer?.getBoundingClientRect();
+  const composerTop = composerRect?.top ?? visibleViewportBottom - (keyboardOpen ? keyboardInset : navHeight) - 58;
+  const availableHeight = Math.max(0, Math.floor(composerTop - pageTop - 8));
   notesPage.style.setProperty('--notes-page-height', availableHeight + 'px');
 
   if (thread && threadWasNearBottom) {
