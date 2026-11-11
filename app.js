@@ -686,7 +686,7 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
   `;
 }
 
-function memoryCard(m) {
+function memoryCard(m, options = {}) {
   const owner = m.author || {};
   const name = esc(owner.displayName || owner.display_name || 'Friend');
   const handle = esc(owner.username || '');
@@ -706,12 +706,14 @@ function memoryCard(m) {
   } else if (m.kind === 'song') {
     body = `<div class="tile song-card${liked}">${heartButton}<button class="album-art play-song" data-play-song="${esc(m.id)}" aria-label="Play ${esc(m.fileName || 'song')}" aria-pressed="false" ${m.isPending ? "disabled" : ""}><span class="song-glyph" aria-hidden="true">🎼</span><span class="song-note" aria-hidden="true">♫</span></button><span class="memory-title song-title-label" title="${esc(m.fileName || m.text || 'A little song')}">${esc(m.fileName || m.text || 'A little song')}</span>${m.isPending ? "" : `<button class="song-download card-song-save" type="button" data-memory-download="${esc(m.id)}" aria-label="Save song">Save</button>`}</div>`;
   } else {
-    body = chatMessageMarkup(m);
+    const isContinuation = m.kind === 'note' && !!options.isContinuation;
+    body = chatMessageMarkup(m, !isContinuation, isContinuation);
   }
 
   const authorLine = m.kind === 'note' ? '' : `<div class="feed-by"><span class="sender-pet" aria-label="${pet}">${pet}</span> <b title="${name}">${name}</b> <small>@${handle}</small></div>`;
   const ownerIndicator = mine && m.kind !== 'note' ? `<span class="memory-owner-indicator" aria-hidden="true">Your memory</span>` : '';
-  return `<article class="feed-item ${tone}${pending}${uploading}${m.kind === 'note' ? ' home-note-memory' : ''}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
+  const continuationClass = m.kind === 'note' && options.isContinuation ? ' is-continuation' : '';
+  return `<article class="feed-item ${tone}${pending}${uploading}${m.kind === 'note' ? ' home-note-memory' : ''}${continuationClass}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
 }
 
 /* Clean Notes conversation; message markup is shared with Home → Memory History. */
@@ -848,7 +850,14 @@ function render() {
       </div>
       <div class="feed-list">
         <h3>Your memory history</h3>
-        ${feed.map(memoryCard).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
+        ${visibleFeed.map((m, index) => {
+          const previous = visibleFeed[index - 1];
+          const ownerId = String(m.author?.id || m.owner_id || '');
+          const previousOwnerId = String(previous?.author?.id || previous?.owner_id || '');
+          const sameDay = previous && noteDayLabel(m.createdAt || m.created_at) === noteDayLabel(previous.createdAt || previous.created_at);
+          const isContinuation = m.kind === 'note' && previous?.kind === 'note' && !!ownerId && ownerId === previousOwnerId && sameDay;
+          return memoryCard(m, { isContinuation });
+        }).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
       </div>
     `;
   } else if (page === 'gallery') {
