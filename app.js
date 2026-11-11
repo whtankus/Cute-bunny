@@ -15,7 +15,7 @@ let presenceChannel = null, notificationChannel = null, memoryChannel = null, pr
 let activeMessageActionsId = null;
 let streakSelectedWeekDate = '';
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
-let streakCountdownInterval = null;
+let streakCountdownInterval = null, streakCountdownDayKey = '';
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
 const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
@@ -508,11 +508,18 @@ function streakUtcTimeRemaining() {
   return hours ? hours + 'h ' + String(rest).padStart(2, '0') + 'm' : rest + 'm';
 }
 function updateStreakCountdownLabels() {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  if (streakCountdownDayKey && todayKey !== streakCountdownDayKey && page === 'streak') {
+    streakCountdownDayKey = todayKey;
+    renderStreakPage();
+    return;
+  }
   const remaining = streakUtcTimeRemaining();
   document.querySelectorAll('[data-streak-self-countdown]').forEach(node => { node.textContent = remaining; });
   document.querySelectorAll('[data-streak-friend-countdown]').forEach(node => { node.textContent = 'Visit today · ' + remaining + ' left'; });
 }
 function startStreakCountdown() {
+  streakCountdownDayKey = new Date().toISOString().slice(0, 10);
   updateStreakCountdownLabels();
   if (!streakCountdownInterval) streakCountdownInterval = window.setInterval(updateStreakCountdownLabels, 60000);
 }
@@ -746,7 +753,8 @@ function streakFriendsMarkup(todayKey) {
       '<span class="sg-friend-streak"><strong>' + (snapshot.count === null ? '✿' : '🔥 ' + countLabel) +
       '</strong><small>' + (snapshot.count === null ? 'streak' : 'day streak') + '</small></span></button>';
   }).join('');
-  return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>';
+  return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>' +
+    '<button type="button" class="sg-find-friends" data-go="friends">Find more friends →</button>';
 }
 
 function renderStreakPage() {
