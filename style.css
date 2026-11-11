@@ -4255,3 +4255,41 @@ body[data-mode="dark"] .streak-garden-page .sg-growth-track{background:#ffffff2a
   .streak-garden-page .sg-count-line>strong{font-size:37px}
   .streak-garden-page .sg-garden-stage{font-size:14px!important}
 }
+
+
+/* v101 — give the garden illustration its full landscape frame on mobile. */
+@media(max-width:620px){
+  .streak-garden-page .sg-hero-paper{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto;
+    min-height:0;
+  }
+  .streak-garden-page .sg-hero-copy{
+    padding:18px 18px 8px;
+  }
+  .streak-garden-page .sg-hero-scene{
+    height:auto;
+    min-height:0;
+    padding:0 10px 13px;
+  }
+  .streak-garden-page .sg-garden-art{
+    width:100%;
+    max-width:none;
+    height:auto;
+    min-height:0;
+    aspect-ratio:880/520;
+    border-radius:20px;
+  }
+  .streak-garden-page .sg-garden-svg{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  .streak-garden-page .sg-garden-bloom-count{
+    left:14px;
+    bottom:19px;
+  }
+}
+@media(max-width:380px){
+  .streak-garden-page .sg-hero-copy{padding-right:14px;padding-left:14px}
+}
