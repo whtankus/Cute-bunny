@@ -4544,3 +4544,413 @@ body[data-mode="dark"] .streak-garden-page .sg-garden-art{
   background:rgba(56,45,61,.32);
   box-shadow:0 4px 13px #0003,inset 0 0 0 3px #ffffff12;
 }
+
+
+/* v105 — polish Streak Garden statistics and weekly blooms only. */
+.streak-garden-page .sg-stats-ribbon{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch;
+  gap:0;
+  padding:13px 0 14px;
+  border:0;
+  border-bottom:1px solid #eadde1;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.streak-garden-page .sg-stat{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:5px;
+  min-width:0;
+  min-height:92px;
+  padding:0 7px;
+  text-align:center;
+}
+.streak-garden-page .sg-stat+.sg-stat{
+  border-left:1px solid #eadde1;
+}
+.streak-garden-page .sg-stat-illustration{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:30px;
+  height:30px;
+  border:1px solid #f0dce5;
+  border-radius:11px;
+  background:#f9e8ee!important;
+  color:#b96f8d;
+  font-size:17px;
+  line-height:1;
+}
+.streak-garden-page .sg-stat-sprout{
+  border-color:#dce8d5;
+  background:#edf4e8!important;
+  color:#718e69;
+}
+.streak-garden-page .sg-stat-bloom{
+  border-color:#e5dcef;
+  background:#f1ebf8!important;
+  color:#9180b2;
+}
+.streak-garden-page .sg-stat>div{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1px;
+  min-width:0;
+  text-align:center;
+}
+.streak-garden-page .sg-stat small{
+  color:#846b82;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.45px;
+  line-height:1.25;
+  white-space:nowrap;
+}
+.streak-garden-page .sg-stat strong{
+  color:#563f60;
+  font:800 31px/1.05 Quicksand,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+.streak-garden-page .sg-stat em{
+  color:#88758b;
+  font-size:10.5px;
+  font-style:normal;
+  line-height:1.2;
+}
+
+/* Weekly Blooms: stronger heading, equal day cells, and clearer state language. */
+.streak-garden-page .sg-week-section .sg-section-heading{
+  align-items:center;
+  margin:0 0 12px;
+}
+.streak-garden-page .sg-week-section .sg-section-heading h3{
+  position:relative;
+  margin:0;
+  color:#563f60;
+  font:800 22px/1.2 Quicksand,sans-serif;
+  letter-spacing:-.35px;
+}
+.streak-garden-page .sg-week-section .sg-section-note{
+  margin:0;
+  color:#8d5f7b;
+  font-size:11.5px;
+  font-weight:900;
+}
+.streak-garden-page .sg-week-row{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  align-items:stretch;
+  gap:clamp(3px,.8vw,7px);
+  width:100%;
+}
+.streak-garden-page .sg-week-day{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:5px;
+  min-width:0;
+  min-height:83px;
+  padding:6px 1px 7px;
+  border:1px solid transparent;
+  border-radius:13px;
+  background:transparent;
+  box-shadow:none;
+  transition:background .2s,border-color .2s;
+}
+.streak-garden-page .sg-week-day .sg-week-name{
+  color:#77637d;
+  font-size:11.5px;
+  font-weight:800;
+  line-height:1.2;
+  text-transform:none;
+}
+.streak-garden-page .sg-week-flower{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:39px;
+  height:39px;
+  border:1px solid #e6dce3;
+  border-radius:50%;
+  background:#f5eff3;
+  color:#78677c;
+}
+.streak-garden-page .sg-week-flower svg{
+  display:block;
+  width:30px;
+  height:30px;
+  overflow:visible;
+}
+.streak-garden-page .sg-week-day .sg-week-date{
+  color:#67546f;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.2;
+}
+.streak-garden-page .sg-week-day.is-visited{
+  border-color:transparent;
+  background:transparent;
+}
+.streak-garden-page .sg-week-day.is-visited .sg-week-flower{
+  border-color:#e8bfce;
+  background:#f9e3eb;
+  color:#a75e7f;
+  box-shadow:0 2px 5px #c889a218;
+}
+.streak-garden-page .sg-week-day.is-visited .sg-week-name,
+.streak-garden-page .sg-week-day.is-visited .sg-week-date{
+  color:#985875;
+}
+.streak-garden-page .sg-week-day.is-today{
+  border:1px solid #d39ab3;
+  background:#fff3f6;
+  box-shadow:none;
+}
+.streak-garden-page .sg-week-day.is-today .sg-week-name,
+.streak-garden-page .sg-week-day.is-today .sg-week-date{
+  color:#8f4f70;
+}
+.streak-garden-page .sg-week-day.is-today .sg-week-flower{
+  border-color:#d9a0b7;
+  background:#fbe9ef;
+}
+.streak-garden-page .sg-week-day.is-future{
+  border-color:transparent;
+  background:transparent;
+}
+.streak-garden-page .sg-week-day.is-future .sg-week-flower{
+  border:1px dashed #a9ba9c;
+  background:#f0f4e9;
+}
+.streak-garden-page .sg-week-day.is-future .sg-week-flower svg path:nth-of-type(1){
+  stroke:#6f8d6b;
+  stroke-width:2.5;
+}
+.streak-garden-page .sg-week-day.is-future .sg-week-flower svg path:nth-of-type(2){
+  fill:#b9cda9;
+  stroke:#849b79;
+  stroke-width:1;
+}
+.streak-garden-page .sg-week-day.is-future .sg-week-flower svg path:nth-of-type(3){
+  fill:#e8b9cc;
+  stroke:#a97897;
+  stroke-width:1.7;
+}
+.streak-garden-page .sg-week-day.is-future .sg-week-name,
+.streak-garden-page .sg-week-day.is-future .sg-week-date{
+  color:#71826f;
+}
+.streak-garden-page .sg-week-day.is-missed{
+  border-color:transparent;
+  background:transparent;
+}
+.streak-garden-page .sg-week-day.is-missed .sg-week-flower{
+  border-color:#e0d8d5;
+  background:#f0ece9;
+  color:#817881;
+}
+.streak-garden-page .sg-week-day.is-missed .sg-week-name,
+.streak-garden-page .sg-week-day.is-missed .sg-week-date{
+  color:#827783;
+}
+.streak-garden-page .sg-week-missed-mark{
+  color:#897d88;
+  font-size:23px;
+}
+.streak-garden-page .sg-week-day.is-pending .sg-week-flower{
+  border:1.5px solid #c782a0;
+  background:#fff8f5;
+  box-shadow:none;
+}
+.streak-garden-page .sg-week-day.is-selected{
+  border-color:transparent!important;
+  outline:none;
+  background:#f2eaf6;
+  box-shadow:inset 0 0 0 1px #b59bc5;
+}
+.streak-garden-page .sg-week-day.is-selected.is-today{
+  border:1px solid #c987a5!important;
+  background:#fff3f6;
+  box-shadow:none;
+}
+.streak-garden-page .sg-week-day:focus-visible{
+  outline:2px solid #9d7196;
+  outline-offset:2px;
+}
+.streak-garden-page .sg-week-legend{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  flex-wrap:wrap;
+  gap:8px 17px;
+  margin-top:13px;
+  padding:9px 11px;
+  border:1px solid #eee2e7;
+  border-radius:13px;
+  background:#fffaf7;
+  color:#66536e;
+  font-size:12px;
+  font-weight:700;
+}
+.streak-garden-page .sg-week-legend span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  line-height:1.25;
+}
+.streak-garden-page .sg-week-legend i{
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:19px;
+  height:19px;
+  border-radius:50%;
+  font-size:12px;
+  font-style:normal;
+  font-weight:900;
+}
+.streak-garden-page .sg-week-legend .is-bloomed{
+  background:#f7dfe8;
+  color:#a65479;
+}
+.streak-garden-page .sg-week-legend .is-today{
+  border:1px solid #d69ab3;
+  background:#fff1f5;
+  color:#995778;
+}
+.streak-garden-page .sg-week-legend .is-future{
+  border:1px dashed #8da582;
+  background:#eef4e8;
+  color:#6e8967;
+}
+.streak-garden-page .sg-week-legend .is-missed{
+  border:1px solid #dcd4d5;
+  background:#eeeaeb;
+  color:#7b707a;
+}
+body[data-mode="dark"] .streak-garden-page .sg-stats-ribbon{
+  border-bottom-color:#574958;
+}
+body[data-mode="dark"] .streak-garden-page .sg-stat+.sg-stat{
+  border-left-color:#574958;
+}
+body[data-mode="dark"] .streak-garden-page .sg-stat-illustration{
+  border-color:#765366;
+  background:#523d4b!important;
+  color:#f0bfd2;
+}
+body[data-mode="dark"] .streak-garden-page .sg-stat-sprout{
+  border-color:#52664c;
+  background:#394a39!important;
+  color:#c4ddb8;
+}
+body[data-mode="dark"] .streak-garden-page .sg-stat-bloom{
+  border-color:#665576;
+  background:#463b56!important;
+  color:#d7c5ef;
+}
+body[data-mode="dark"] .streak-garden-page .sg-stat small,
+body[data-mode="dark"] .streak-garden-page .sg-stat em{
+  color:#cbb7c9;
+}
+body[data-mode="dark"] .streak-garden-page .sg-stat strong{
+  color:#f5e4ef;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-section .sg-section-heading h3{
+  color:#f4e4ef;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-section .sg-section-note{
+  color:#e4b6cf;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day .sg-week-name,
+body[data-mode="dark"] .streak-garden-page .sg-week-day .sg-week-date{
+  color:#dfcbdc;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-visited .sg-week-flower{
+  border-color:#875d73;
+  background:#563d4d;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-visited .sg-week-name,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-visited .sg-week-date{
+  color:#f0c6d9;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-today{
+  border-color:#c68ca8;
+  background:#4b3646;
+  box-shadow:none;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-today .sg-week-flower{
+  border-color:#c68ca8;
+  background:#5a3e50;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-future .sg-week-flower{
+  border-color:#839a79;
+  background:#394737;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-future .sg-week-flower svg path:nth-of-type(1){stroke:#b2c9a4}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-future .sg-week-flower svg path:nth-of-type(2){fill:#91ad83;stroke:#bfd3b3}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-future .sg-week-flower svg path:nth-of-type(3){fill:#d9a5bc;stroke:#f0c8d9}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-future .sg-week-name,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-future .sg-week-date{
+  color:#c2d0b9;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-missed .sg-week-flower{
+  border-color:#625a62;
+  background:#403b40;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-missed .sg-week-name,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-missed .sg-week-date{
+  color:#c7bac7;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-missed-mark{color:#c8bbc9}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-selected{
+  background:#473a4c;
+  box-shadow:inset 0 0 0 1px #a890bd;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-selected.is-today{
+  border-color:#c68ca8!important;
+  background:#4b3646;
+  box-shadow:none;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-legend{
+  border-color:#5b4b5a;
+  background:#3b333f;
+  color:#e0cfe0;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-legend .is-bloomed{background:#624455;color:#f1c3d8}
+body[data-mode="dark"] .streak-garden-page .sg-week-legend .is-today{border-color:#c68ca8;background:#4b3646;color:#f0c7d9}
+body[data-mode="dark"] .streak-garden-page .sg-week-legend .is-future{border-color:#819777;background:#394737;color:#c5d8ba}
+body[data-mode="dark"] .streak-garden-page .sg-week-legend .is-missed{border-color:#625a62;background:#403b40;color:#d1c6d0}
+@media(max-width:620px){
+  .streak-garden-page .sg-stats-ribbon{padding:11px 0 12px}
+  .streak-garden-page .sg-stat{min-height:88px;gap:4px;padding:0 4px}
+  .streak-garden-page .sg-stat-illustration{width:27px;height:27px;border-radius:9px;font-size:15px}
+  .streak-garden-page .sg-stat small{font-size:9px;letter-spacing:.2px}
+  .streak-garden-page .sg-stat strong{font-size:27px}
+  .streak-garden-page .sg-stat em{font-size:10px}
+  .streak-garden-page .sg-week-section .sg-section-heading{margin-bottom:10px}
+  .streak-garden-page .sg-week-section .sg-section-heading h3{font-size:20px}
+  .streak-garden-page .sg-week-row{gap:3px}
+  .streak-garden-page .sg-week-day{min-height:76px;gap:4px;padding:5px 0 6px;border-radius:11px}
+  .streak-garden-page .sg-week-day .sg-week-name{font-size:10.5px}
+  .streak-garden-page .sg-week-flower{width:33px;height:33px}
+  .streak-garden-page .sg-week-flower svg{width:26px;height:26px}
+  .streak-garden-page .sg-week-day .sg-week-date{font-size:12px}
+  .streak-garden-page .sg-week-legend{gap:7px 12px;margin-top:11px;padding:8px 9px;font-size:11.5px}
+  .streak-garden-page .sg-week-legend i{width:18px;height:18px}
+}
+@media(max-width:390px){
+  .streak-garden-page .sg-stat small{font-size:8.5px;letter-spacing:.05px}
+  .streak-garden-page .sg-stat strong{font-size:25px}
+  .streak-garden-page .sg-week-row{gap:2px}
+  .streak-garden-page .sg-week-day{min-height:73px}
+  .streak-garden-page .sg-week-flower{width:31px;height:31px}
+  .streak-garden-page .sg-week-flower svg{width:24px;height:24px}
+  .streak-garden-page .sg-week-legend{gap:7px 10px;font-size:11px}
+}
