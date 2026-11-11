@@ -6973,3 +6973,32 @@ body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboa
     will-change:auto;
   }
 }
+
+
+/* v121 — invert Notes masthead scroll direction without moving the conversation content. */
+body.notes-page-active {
+  --notes-header-collapse:0px!important;
+}
+body.notes-page-active .app>header,
+body.notes-page-active.notes-header-hidden .app>header {
+  margin-bottom:0!important;
+  transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .16s ease!important;
+}
+body.notes-page-active.notes-header-hidden .app>header {
+  transform:translate3d(0,-105%,0)!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+/* Keep the same chat viewport height whether the masthead is shown or hidden. */
+body.notes-page-active #content .chat-page:not(.notes-keyboard-open),
+body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
+  height:var(--notes-page-height,calc(100dvh - 180px))!important;
+  margin-top:0!important;
+  margin-bottom:0!important;
+  transition:none!important;
+}
+@media(prefers-reduced-motion:reduce) {
+  body.notes-page-active .app>header {
+    transition:none!important;
+  }
+}
