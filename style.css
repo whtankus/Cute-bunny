@@ -6820,3 +6820,54 @@ body[data-mode="dark"] .streak-tile [data-streak-live-subtitle] {color:#f0cadd!i
   .streak-garden-page .sg-heading-bloom,
   .streak-tile .streak-plant-illustration {animation:none!important}
 }
+
+
+/* v116 — match the Home streak card typography and thumbnail dimensions to its siblings. */
+.happy-things-grid>.streak-tile>.streak-art-trigger {
+  width:100%!important;
+  height:132px!important;
+  min-height:0!important;
+  max-height:132px!important;
+  flex:0 0 132px!important;
+  margin:0!important;
+  padding:6px 8px 2px!important;
+  border-radius:16px!important;
+}
+.happy-things-grid>.streak-tile>h3 {
+  min-height:1.4em!important;
+  margin:11px 3px 3px!important;
+  font-size:1rem!important;
+  font-weight:inherit;
+  line-height:1.4!important;
+  text-align:left!important;
+}
+.happy-things-grid>.streak-tile>p[data-streak-live-subtitle] {
+  height:1.4em!important;
+  min-height:1.4em!important;
+  margin:5px 3px 12px!important;
+  overflow:hidden;
+  color:inherit!important;
+  font:inherit!important;
+  font-size:.83rem!important;
+  font-weight:inherit!important;
+  line-height:1.4!important;
+  letter-spacing:normal!important;
+  text-align:left!important;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+@media(max-width:520px) {
+  .happy-things-grid>.streak-tile>.streak-art-trigger {
+    height:105px!important;
+    min-height:0!important;
+    max-height:105px!important;
+    flex:0 0 105px!important;
+    border-radius:15px!important;
+  }
+  .happy-things-grid>.streak-tile>h3 {
+    font-size:.92rem!important;
+  }
+  .happy-things-grid>.streak-tile>p[data-streak-live-subtitle] {
+    font-size:.76rem!important;
+  }
+}
