@@ -3677,3 +3677,14 @@ body[data-mode="dark"] .sg-friends-empty p{color:#c2aec4}
   .happy-things-grid>.tile:hover,.sg-petal-card,.sg-friend-card{transition:none!important}
   .sg-petal-card.is-revealed .sg-petal-face{animation:none!important}
 }
+
+
+/* Visible fallback if a Streak render ever fails; its retry uses the same route handler. */
+.sg-load-error{display:grid;justify-items:center;gap:10px;margin:18px 0;padding:30px 20px;border:1px dashed #e3c8d6;border-radius:22px;background:linear-gradient(145deg,#fffaf4,#f7eff8);text-align:center;color:#70546d}
+.sg-load-error>span{font-size:2.2rem}
+.sg-load-error h2{margin:0;font:700 1.35rem Quicksand,sans-serif}
+.sg-load-error p{margin:0;color:#8c788c;font-size:.84rem}
+.sg-load-error small{max-width:100%;overflow-wrap:anywhere;color:#9b7187;font-size:.7rem}
+.sg-load-error .primary{min-width:170px;margin-top:4px}
+body[data-mode="dark"] .sg-load-error{background:linear-gradient(145deg,#3c313e,#342e3c);border-color:#665267;color:#f3dfeb}
+body[data-mode="dark"] .sg-load-error p,body[data-mode="dark"] .sg-load-error small{color:#cfb9cb}
