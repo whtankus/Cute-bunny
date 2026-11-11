@@ -2706,3 +2706,33 @@ body.notes-page-active .app>header {
 #content .chat-page .chat-thread {
   padding-bottom:var(--notes-end-clearance,28px)!important;
 }
+
+
+/* Love-letter send button: 20% larger while staying circular and inside the composer. */
+#content .chat-page .chat-composer textarea {
+  padding-right:62px!important;
+}
+#content .chat-page .chat-composer .primary {
+  right:8px!important;
+  bottom:4px!important;
+  width:41px!important;
+  height:41px!important;
+  min-width:41px!important;
+  min-height:41px!important;
+  border-radius:50%!important;
+  font-size:1.15rem!important;
+  line-height:1!important;
+}
+@media(max-width:480px) {
+  #content .chat-page .chat-composer textarea {
+    padding-right:62px!important;
+  }
+  #content .chat-page .chat-composer .primary {
+    right:8px!important;
+    bottom:4px!important;
+    width:41px!important;
+    height:41px!important;
+    min-width:41px!important;
+    min-height:41px!important;
+  }
+}
