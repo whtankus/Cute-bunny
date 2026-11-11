@@ -1146,39 +1146,58 @@ function showMessageActions(id, bubbleElement) {
     <button type="button" class="chat-action-btn" data-chat-copy="${esc(id)}">Copy</button>
     <button type="button" class="chat-action-btn delete-btn" data-chat-delete="${esc(id)}">Delete</button>
   `;
-
-  // Render the menu directly under <body>, not inside the scrollable thread.
-  // This prevents overflow clipping when a message is near the top or bottom.
   popup.style.position = 'fixed';
   popup.style.zIndex = '1000';
   document.body.append(popup);
 
-  const bubbleRect = bubbleElement.getBoundingClientRect();
-  const popupRect = popup.getBoundingClientRect();
+  const thread = bubbleElement.closest('.chat-thread');
+  const messageRows = thread ? [...thread.querySelectorAll('.chat-message[data-memory]')] : [];
+  const lastMessage = messageRows[messageRows.length - 1];
+  const isLastMessage = !!lastMessage && lastMessage.contains(bubbleElement);
   const viewport = window.visualViewport;
   const viewportTop = viewport?.offsetTop || 0;
   const viewportBottom = viewportTop + (viewport?.height || window.innerHeight);
   const viewportWidth = viewport?.width || window.innerWidth;
   const sidePadding = 12;
-  const halfWidth = popupRect.width / 2;
-  const centerX = Math.max(
-    halfWidth + sidePadding,
-    Math.min(viewportWidth - halfWidth - sidePadding, bubbleRect.left + bubbleRect.width / 2)
-  );
-  const popupHeight = popupRect.height;
-  const gap = 10;
+  const gap = 9;
 
-  let top = bubbleRect.top - popupHeight - gap;
-  if (top < viewportTop + sidePadding) {
-    top = bubbleRect.bottom + gap;
-  }
-  top = Math.max(
-    viewportTop + sidePadding,
-    Math.min(viewportBottom - popupHeight - sidePadding, top)
-  );
+  const placePopup = () => {
+    if (!popup.isConnected || !bubbleElement.isConnected) return;
+    const bubbleRect = bubbleElement.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+    const halfWidth = popupRect.width / 2;
+    const centerX = Math.max(
+      halfWidth + sidePadding,
+      Math.min(viewportWidth - halfWidth - sidePadding, bubbleRect.left + bubbleRect.width / 2)
+    );
 
-  popup.style.left = centerX + 'px';
-  popup.style.top = top + 'px';
+    // Ordinary messages open the menu below. The newest message opens it above
+    // so it never runs into the fixed writing bar.
+    let top = isLastMessage
+      ? bubbleRect.top - popupRect.height - gap
+      : bubbleRect.bottom + gap;
+
+    if (!isLastMessage && top + popupRect.height > viewportBottom - sidePadding && thread) {
+      const overflow = top + popupRect.height - (viewportBottom - sidePadding);
+      const previousScrollTop = thread.scrollTop;
+      thread.scrollTop = Math.min(
+        thread.scrollHeight - thread.clientHeight,
+        previousScrollTop + overflow
+      );
+      const adjustedBubbleRect = bubbleElement.getBoundingClientRect();
+      top = adjustedBubbleRect.bottom + gap;
+    }
+
+    top = Math.max(
+      viewportTop + sidePadding,
+      Math.min(viewportBottom - popupRect.height - sidePadding, top)
+    );
+
+    popup.style.left = centerX + 'px';
+    popup.style.top = top + 'px';
+  };
+
+  placePopup();
 }
 
 function hideMessageActions() {
@@ -2083,7 +2102,7 @@ function syncNotesKeyboardLayout() {
     // to ensure the last message can scroll fully into view above the input.
     if (thread) {
       const composerHeight = Math.ceil(composer?.getBoundingClientRect().height || 50);
-      const bottomClearance = composerHeight + 16;
+      const bottomClearance = composerHeight + 32;
       thread.style.setProperty('padding-bottom', bottomClearance + 'px', 'important');
       thread.style.setProperty('scroll-padding-bottom', bottomClearance + 'px');
     }
