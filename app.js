@@ -13,7 +13,7 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
-let streakCalendarOffset = 0, streakSelectedDate = '';
+let streakCalendarOffset = 0, streakSelectedDate = '', streakSelectedWeekDate = '';
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
 const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
@@ -530,17 +530,42 @@ function readStreakGoalChecks(dateKey) {
     return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
   } catch { return {}; }
 }
+function countSavedStreakGoalCompletions() {
+  const prefix = streakStorageKey('checks:');
+  let total = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith(prefix)) continue;
+      const saved = JSON.parse(localStorage.getItem(key) || '{}');
+      if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+        total += Object.values(saved).filter(value => value === true).length;
+      }
+    }
+  } catch {}
+  return total;
+}
 function updateStreakGoalProgress() {
   const list = $('#streakGoalsList');
   if (!list) return;
   const checks = readStreakGoalChecks(new Date().toISOString().slice(0, 10));
   const boxes = [...list.querySelectorAll('[data-streak-goal]')];
   const completed = boxes.filter(box => !!checks[box.dataset.streakGoal]).length;
+  const percentage = boxes.length ? Math.round(completed / boxes.length * 100) : 0;
   const label = $('#streakGoalProgress');
   const bar = $('#streakGoalProgressBar');
-  if (label) label.textContent = completed + ' of ' + boxes.length + ' completed';
-  if (bar) bar.style.width = (boxes.length ? completed / boxes.length * 100 : 0) + '%';
+  if (label) label.textContent = completed + ' of ' + boxes.length + ' bloomed';
+  if (bar) {
+    bar.style.width = percentage + '%';
+    bar.setAttribute('aria-valuenow', String(percentage));
+  }
   boxes.forEach(box => box.closest('.streak-goal')?.classList.toggle('is-done', !!checks[box.dataset.streakGoal]));
+  const total = countSavedStreakGoalCompletions();
+  const totalLabel = $('#sgAllTimeGoalCount');
+  if (totalLabel) {
+    totalLabel.hidden = total === 0;
+    totalLabel.textContent = total + ' little ' + (total === 1 ? 'goal' : 'goals') + ' completed across your journal';
+  }
 }
 function readStreakMilestones() {
   try {
@@ -567,37 +592,41 @@ function streakCalendarMarkup(todayKey, history) {
   const monthCount = [...history].filter(key => key.startsWith(prefix)).length;
   const selected = streakSelectedDate || (streakCalendarOffset === 0 ? todayKey : '');
   const cells = [];
-  for (let i = 0; i < leadingDays; i++) cells.push('<span class="streak-calendar-empty" aria-hidden="true"></span>');
+  for (let i = 0; i < leadingDays; i++) cells.push('<span class="sg-calendar-empty" aria-hidden="true"></span>');
   for (let day = 1; day <= daysInMonth; day++) {
     const key = prefix + String(day).padStart(2, '0');
-    const visited = history.has(key);
-    const isToday = key === todayKey;
-    const isFuture = key > todayKey;
-    const isSelected = key === selected;
+    const visited = history.has(key), isToday = key === todayKey, isFuture = key > todayKey, isSelected = key === selected;
     cells.push(
       '<button type="button" class="streak-calendar-day sg-calendar-day' +
       (visited ? ' is-visited' : '') + (isToday ? ' is-today' : '') + (isSelected ? ' is-selected' : '') +
-      '" data-streak-date="' + key + '" aria-pressed="' + isSelected + '"' + (isFuture ? ' disabled' : '') + '>' +
-      '<span class="sg-calendar-number">' + day + '</span><i class="sg-calendar-flower" aria-hidden="true">' +
+      '" data-streak-date="' + key + '" aria-pressed="' + isSelected + '"' +
+      ' aria-label="' + key + (visited ? ', garden visit recorded' : isFuture ? ', upcoming day' : ', no visit recorded') + '"' +
+      (isFuture ? ' disabled' : '') + '><span class="sg-calendar-number">' + day +
+      '</span><i class="sg-calendar-flower" aria-hidden="true">' +
       (visited ? '<svg viewBox="0 0 24 24"><g fill="#d989a8"><ellipse cx="12" cy="5" rx="3.1" ry="5"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(120 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(180 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(240 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.2" fill="#efc978"/></svg>' : '') +
       '</i></button>'
     );
   }
-  let detail = 'Select a date to see its check-in.';
+  let detail = 'Choose a day to revisit its little story.';
   if (selected) {
     const date = new Date(selected + 'T00:00:00.000Z');
     const label = new Intl.DateTimeFormat(undefined, {weekday:'long', month:'long', day:'numeric', timeZone:'UTC'}).format(date);
-    detail = history.has(selected) ? 'You showed up for your garden on ' + label + '. ♡' : 'No saved check-in for ' + label + '.';
+    const goalChecks = readStreakGoalChecks(selected);
+    const completedGoals = Object.values(goalChecks).filter(value => value === true).length;
+    if (history.has(selected)) detail = 'Garden visit recorded on ' + label + '.';
+    else if (selected === todayKey) detail = 'Today’s visit is still waiting to be recorded.';
+    else detail = 'No garden visit was recorded on ' + label + '.';
+    if (completedGoals) detail += ' ' + completedGoals + ' little ' + (completedGoals === 1 ? 'goal was' : 'goals were') + ' completed that day. ♡';
   }
-  return '<section class="sg-section sg-calendar-section"><div class="sg-section-heading"><div><small>THE GARDEN JOURNAL</small><h3>Little days, kept close</h3><p>Every flower is a day you came back.</p></div>' +
+  return '<section class="sg-section sg-calendar-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">MONTHLY VISITS</span><h3>Little days, kept close</h3><p>Choose a date to revisit a moment.</p></div>' +
     '<span class="sg-month-count">' + monthCount + ' ' + (monthCount === 1 ? 'visit' : 'visits') + '</span></div>' +
     '<div class="sg-month-nav"><button type="button" data-streak-month="prev" aria-label="Previous month">‹</button>' +
     '<strong>' + monthTitle + '</strong><button type="button" data-streak-month="next" aria-label="Next month" ' +
     (streakCalendarOffset >= 0 ? 'disabled' : '') + '>›</button></div>' +
     '<div class="sg-calendar-grid sg-calendar-weekdays">' + ['M','T','W','T','F','S','S'].map(day => '<span>' + day + '</span>').join('') + '</div>' +
     '<div class="sg-calendar-grid sg-calendar-days">' + cells.join('') + '</div>' +
-    '<p class="sg-calendar-detail">' + esc(detail) + '</p>' +
-    '<p class="sg-calendar-note">Your active streak fills its consecutive days. New check-ins are saved on this device.</p></section>';
+    '<p class="sg-calendar-detail" aria-live="polite">' + esc(detail) + '</p>' +
+    '<div class="sg-calendar-legend"><span><i class="is-bloomed">✿</i>Visit recorded</span><span><i class="is-today">•</i>Today</span></div></section>';
 }
 function renderStreakPage() {
   const content = $('#content');
@@ -630,26 +659,58 @@ function renderStreakPage() {
     {days:365, icon:'💮', name:'Eternal garden'}
   ];
   const earned = readStreakMilestones();
-  const next = milestones.find(item => !earned.has(item.days)) || milestones[milestones.length - 1];
-  const previousMilestone = [...milestones].reverse().find(item => earned.has(item.days));
+  const next = milestones.find(item => !earned.has(item.days)) || null;
+  const previousMilestone = next ? [...milestones].reverse().find(item => earned.has(item.days) && item.days < next.days) : milestones[milestones.length - 1];
   const base = previousMilestone ? previousMilestone.days : 0;
-  const progress = Math.max(0, Math.min(100, (count - base) / Math.max(1, next.days - base) * 100));
-  const left = Math.max(0, next.days - count);
+  const progress = next ? Math.max(0, Math.min(100, (count - base) / Math.max(1, next.days - base) * 100)) : 100;
+  const left = next ? Math.max(0, next.days - count) : 0;
+  const todayCompleted = history.has(todayKey);
+  const allTimeGoalCompletions = countSavedStreakGoalCompletions();
   const stage = count >= 30 ? 'Your garden is in full bloom.' : count >= 14 ? 'Your flowers are thriving.' :
     count >= 7 ? 'Your garden is blooming.' : count ? 'A little sprout is growing.' : 'Your garden is waiting for its first flower.';
 
-  const week = [];
-  for (let i = 6; i >= 0; i--) {
-    const key = shiftStreakDate(todayKey, -i);
-    const date = new Date(key + 'T00:00:00Z');
-    const letter = new Intl.DateTimeFormat(undefined, {weekday:'short', timeZone:'UTC'}).format(date).slice(0, 1);
-    const visited = history.has(key);
-    week.push('<div class="streak-week-day sg-week-day' + (visited ? ' is-visited' : '') + (key === todayKey ? ' is-today' : '') +
-      '"><span class="sg-week-name">' + letter + '</span><span class="sg-week-flower" aria-hidden="true">' +
-      (visited ? '<svg viewBox="0 0 40 40"><g fill="#d989a8"><ellipse cx="20" cy="8" rx="5.2" ry="8"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(60 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(120 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(180 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(240 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(300 20 20)"/></g><circle cx="20" cy="20" r="5" fill="#efc978"/><path d="M20 26v10" stroke="#789775" stroke-width="2" stroke-linecap="round"/></svg>' :
-      '<svg viewBox="0 0 40 40"><path d="M20 35V20" stroke="#91a98b" stroke-width="2" stroke-linecap="round"/><path d="M20 27c-8-9-14-4-12 1 4 5 9 3 12-1Z" fill="#dce8d4"/><circle cx="20" cy="15" r="5" fill="#f7e9ef" stroke="#d8b8c8" stroke-width="1.5"/><path d="M20 8v-3" stroke="#d8b8c8" stroke-width="1.5" stroke-linecap="round"/></svg>') +
-      '</span><small class="sg-week-date">' + Number(key.slice(-2)) + '</small></div>');
+  const todayDate = new Date(todayKey + 'T00:00:00Z');
+  const mondayOffset = (todayDate.getUTCDay() + 6) % 7;
+  const weekStartDate = shiftStreakDate(todayKey, -mondayOffset);
+  const weekEndDate = shiftStreakDate(weekStartDate, 6);
+  if (!streakSelectedWeekDate || streakSelectedWeekDate < weekStartDate || streakSelectedWeekDate > weekEndDate) {
+    streakSelectedWeekDate = todayKey;
   }
+  const weekKeys = [];
+  const week = [];
+  for (let i = 0; i < 7; i++) {
+    const key = shiftStreakDate(weekStartDate, i);
+    weekKeys.push(key);
+    const date = new Date(key + 'T00:00:00Z');
+    const shortName = new Intl.DateTimeFormat(undefined, {weekday:'short', timeZone:'UTC'}).format(date);
+    const fullDate = new Intl.DateTimeFormat(undefined, {weekday:'long', month:'short', day:'numeric', timeZone:'UTC'}).format(date);
+    const visited = history.has(key), isToday = key === todayKey, isFuture = key > todayKey, selected = key === streakSelectedWeekDate;
+    const stateClass = visited ? ' is-visited' : isFuture ? ' is-future' : isToday ? ' is-pending' : ' is-missed';
+    const marker = visited
+      ? '<svg viewBox="0 0 40 40"><g fill="#d989a8"><ellipse cx="20" cy="8" rx="5.2" ry="8"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(60 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(120 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(180 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(240 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(300 20 20)"/></g><circle cx="20" cy="20" r="5" fill="#efc978"/><path d="M20 26v10" stroke="#789775" stroke-width="2" stroke-linecap="round"/></svg>'
+      : isFuture
+        ? '<svg viewBox="0 0 40 40"><path d="M20 35V20" stroke="#91a98b" stroke-width="2" stroke-linecap="round"/><path d="M20 27c-8-9-14-4-12 1 4 5 9 3 12-1Z" fill="#dce8d4"/><path d="M20 20c-7-7-5-15 0-17 7 5 7 12 0 17Z" fill="#f4dfe8" stroke="#cfadc1" stroke-width="1.5"/></svg>'
+        : '<svg viewBox="0 0 40 40"><circle cx="20" cy="18" r="8" fill="none" stroke="#cfc2c8" stroke-width="2"/><path d="M20 27v8" stroke="#cfc2c8" stroke-width="2" stroke-linecap="round"/></svg>';
+    week.push('<button type="button" class="sg-week-day' + stateClass + (selected ? ' is-selected' : '') +
+      '" data-streak-week-date="' + key + '" aria-pressed="' + selected + '" aria-label="' + fullDate + ': ' +
+      (visited ? 'visit recorded' : isFuture ? 'upcoming day' : isToday ? 'today, not yet recorded' : 'no visit recorded') + '">' +
+      '<span class="sg-week-name">' + shortName + '</span><span class="sg-week-flower" aria-hidden="true">' + marker +
+      '</span><small class="sg-week-date">' + Number(key.slice(-2)) + '</small></button>');
+  }
+  const weekVisited = weekKeys.filter(key => history.has(key)).length;
+  const selectedWeekLabel = new Intl.DateTimeFormat(undefined, {weekday:'long', month:'long', day:'numeric', timeZone:'UTC'}).format(new Date(streakSelectedWeekDate + 'T00:00:00Z'));
+  const selectedWeekVisited = history.has(streakSelectedWeekDate);
+  const selectedWeekFuture = streakSelectedWeekDate > todayKey;
+  const selectedWeekChecks = readStreakGoalChecks(streakSelectedWeekDate);
+  const selectedWeekGoals = Object.values(selectedWeekChecks).filter(value => value === true).length;
+  let selectedWeekMessage = selectedWeekVisited
+    ? 'Your garden visit is saved.'
+    : selectedWeekFuture
+      ? 'This day is still ahead. A little space is waiting for you.'
+      : streakSelectedWeekDate === todayKey
+        ? 'Today’s visit has not been recorded yet.'
+        : 'No garden visit was recorded on this day.';
+  if (selectedWeekGoals) selectedWeekMessage += ' ' + selectedWeekGoals + ' little ' + (selectedWeekGoals === 1 ? 'goal was' : 'goals were') + ' completed.';
 
   const goals = readStreakGoals();
   const checks = readStreakGoalChecks(todayKey);
@@ -676,10 +737,18 @@ function renderStreakPage() {
   ];
   const badges = milestones.map((item, index) => {
     const unlocked = earned.has(item.days);
-    return '<article class="streak-milestone sg-milestone' + (unlocked ? ' is-earned' : ' is-locked') + '">' +
-      '<span class="sg-milestone-art">' + milestoneIllustrations[index] + '</span><span class="sg-milestone-copy"><small class="sg-milestone-day">' +
-      item.days + ' days</small><b>' + item.name + '</b><em>' + (unlocked ? 'In your garden' : 'Still growing') +
-      '</em></span></article>';
+    const daysLeft = Math.max(0, item.days - count);
+    const milestoneProgress = unlocked ? 100 : Math.min(100, Math.max(0, count / item.days * 100));
+    const status = unlocked ? 'Bloom unlocked' : daysLeft === 1 ? '1 day to go' : daysLeft + ' days to go';
+    return '<article class="streak-milestone sg-milestone' + (unlocked ? ' is-earned' : ' is-locked') +
+      '" aria-label="' + item.name + ', ' + item.days + ' days, ' + status + '">' +
+      '<span class="sg-milestone-art">' + milestoneIllustrations[index] + '</span>' +
+      '<span class="sg-milestone-copy"><small class="sg-milestone-day">' + item.days + '-DAY BLOOM</small><b>' + item.name +
+      '</b><em class="sg-milestone-status">' + status + '</em></span>' +
+      '<span class="sg-milestone-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
+      Math.round(milestoneProgress) + '" aria-label="' + Math.round(milestoneProgress) + '% toward ' + item.name + '">' +
+      '<i style="width:' + milestoneProgress + '%"></i></span>' +
+      '<small class="sg-milestone-progress-copy">' + Math.min(count, item.days) + ' / ' + item.days + ' days</small></article>';
   }).join('');
 
   const gardenScene = '<svg class="sg-garden-svg" viewBox="0 0 440 300" role="img" aria-label="A little bunny in a blooming flower garden">' +
@@ -714,30 +783,48 @@ function renderStreakPage() {
   content.innerHTML = [
     '<div class="streak-garden-page">',
     '<div class="sg-page-heading"><div><span class="sg-page-kicker">A LITTLE SPACE TO GROW</span><h2>Your Streak Garden</h2><p>Small visits, lovely little things, and a garden that grows with you.</p></div><span class="sg-heading-doodle" aria-hidden="true">✿</span></div>',
+
+    '<div class="sg-page-group sg-garden-group"><div class="sg-group-heading"><span>01</span><b>MY GARDEN</b><i>your little corner</i></div>',
     '<section class="sg-hero" aria-label="Your current streak garden"><div class="sg-hero-paper">' +
       '<div class="sg-hero-copy"><span class="sg-eyebrow"><i>✦</i> YOUR LITTLE GARDEN</span>' +
       '<div class="sg-count-line"><strong>' + count + '</strong><span><b>' + (count === 1 ? 'day in a row' : 'days in a row') + '</b><small>of showing up for yourself</small></span></div>' +
-      '<h3>' + stage + '</h3><p>' + (count ? 'Another little day has found its place among the flowers. Keep growing at your own pace. ♡' : 'Your first little bloom is waiting. Come by today and plant it. ♡') + '</p>' +
-      '<div class="sg-progress-head"><span>NEXT LITTLE BLOOM</span><b>' + (left ? left + ' ' + (left === 1 ? 'day' : 'days') + ' to go' : 'A lovely milestone!') + '</b></div>' +
-      '<div class="sg-growth-track" style="--progress:' + progress + '%" role="img" aria-label="' + Math.round(progress) + '% progress toward the next milestone"><span style="width:' + progress + '%"></span><i>✿</i></div>' +
-      '<small class="sg-next-milestone">' + next.days + '-day milestone <span>·</span> ' + next.name + '</small></div>' +
+      '<div class="sg-today-status ' + (todayCompleted ? 'is-complete' : 'is-pending') + '" aria-live="polite"><span aria-hidden="true">' +
+      (todayCompleted ? '✿' : '○') + '</span><span><b>' + (todayCompleted ? 'Today’s visit is saved' : 'Today’s visit is still waiting') +
+      '</b><small>' + (todayCompleted ? 'Your flower has been watered today.' : 'Your next visit today will water the garden.') + '</small></span></div>' +
+      '<h3>' + stage + '</h3><p>' + (count ? 'Another little day has found its place among the flowers. Keep growing at your own pace. ♡' : 'Your first little bloom is waiting. Come by whenever it feels right. ♡') + '</p>' +
+      '<div class="sg-progress-head"><span>NEXT LITTLE BLOOM</span><b>' + (next ? (left ? left + ' ' + (left === 1 ? 'day' : 'days') + ' to go' : 'Ready to bloom!') : 'Every bloom is yours!') + '</b></div>' +
+      '<div class="sg-growth-track" style="--progress:' + progress + '%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(progress) + '" aria-label="' + Math.round(progress) + '% progress toward next bloom"><span style="width:' + progress + '%"></span><i>✿</i></div>' +
+      '<small class="sg-next-milestone">' + (next ? next.days + '-day milestone <span>·</span> ' + next.name : 'All eight garden blooms unlocked') + '</small></div>' +
       '<div class="sg-hero-scene">' + gardenScene + '<span class="sg-scene-caption">a little garden, just for you</span></div>' +
       '<span class="sg-hero-corner sg-corner-one" aria-hidden="true">❧</span><span class="sg-hero-corner sg-corner-two" aria-hidden="true">✧</span></div></section>',
-    '<section class="sg-stats-ribbon" aria-label="Streak statistics">' +
+    '<section class="sg-stats-ribbon" aria-label="Your garden numbers">' +
       '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-flame" aria-hidden="true">✿</span><div><small>CURRENT STREAK</small><strong>' + count + '</strong><em>' + (count === 1 ? 'day' : 'days') + '</em></div></div>' +
-      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-sprout" aria-hidden="true">♧</span><div><small>BEST RECORDED</small><strong>' + Math.max(bestRun, count) + '</strong><em>days in a row</em></div></div>' +
-      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-bloom" aria-hidden="true">✾</span><div><small>DAYS RECORDED</small><strong>' + history.size + '</strong><em>little visits</em></div></div></section>',
-    '<section class="sg-section sg-week-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">THE LITTLE THINGS ADD UP</span><h3>Your weekly rhythm</h3><p>Seven small chances to let something bloom.</p></div><span class="sg-section-note">' + week.filter(day => day.includes('is-visited')).length + ' of 7 days</span></div>' +
-      '<div class="sg-week-row">' + week.join('') + '</div><div class="sg-botanical-rule"><span>❧</span><i>keep growing, gently</i><span>❧</span></div></section>',
+      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-sprout" aria-hidden="true">♧</span><div><small>LONGEST RUN</small><strong>' + Math.max(bestRun, count) + '</strong><em>days in a row</em></div></div>' +
+      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-bloom" aria-hidden="true">✾</span><div><small>GARDEN VISITS</small><strong>' + history.size + '</strong><em>days recorded</em></div></div>' +
+      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-award" aria-hidden="true">✧</span><div><small>BLOOMS FOUND</small><strong>' + earned.size + '</strong><em>of ' + milestones.length + '</em></div></div></section>',
+    '</div>',
+
+    '<div class="sg-page-group sg-journal-group"><div class="sg-group-heading"><span>02</span><b>MY JOURNAL</b><i>days worth keeping</i></div>',
+    '<section class="sg-section sg-week-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">THIS WEEK</span><h3>Your weekly rhythm</h3><p>Tap a day to revisit its little story.</p></div><span class="sg-section-note">' + weekVisited + ' of 7 visits</span></div>' +
+      '<div class="sg-week-row">' + week.join('') + '</div>' +
+      '<div class="sg-week-detail" id="sgWeekDetail" aria-live="polite"><b>' + selectedWeekLabel + '</b><span>' + esc(selectedWeekMessage) + '</span></div>' +
+      '<div class="sg-week-legend"><span><i class="is-bloomed">✿</i>Recorded</span><span><i class="is-today">●</i>Today</span><span><i class="is-future">○</i>Upcoming</span><span><i class="is-missed">·</i>Missed</span></div>' +
+      '<div class="sg-botanical-rule"><span>❧</span><i>keep growing, gently</i><span>❧</span></div></section>',
     streakCalendarMarkup(todayKey, history),
+    '</div>',
+
+    '<div class="sg-page-group sg-growth-group"><div class="sg-group-heading"><span>03</span><b>MY GROWTH</b><i>small things, over time</i></div>',
     '<section class="sg-section sg-goals-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">A NOTE TO YOURSELF</span><h3>Little daily promises</h3><p>Choose a few lovely things to make room for today.</p></div><span class="sg-goal-count" id="streakGoalProgress">' + completed + ' / ' + goals.length + '</span></div>' +
-      '<div class="sg-goal-progress"><span id="streakGoalProgressBar" style="width:' + (goals.length ? completed / goals.length * 100 : 0) + '%"></span></div>' +
+      '<div class="sg-goal-progress"><span id="streakGoalProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + (goals.length ? Math.round(completed / goals.length * 100) : 0) + '" style="width:' + (goals.length ? completed / goals.length * 100 : 0) + '%"></span></div>' +
       '<div class="sg-goal-list" id="streakGoalsList">' + goalMarkup + '</div>' +
+      '<p class="sg-alltime-goals" id="sgAllTimeGoalCount"' + (allTimeGoalCompletions ? '' : ' hidden') + '>' +
+      allTimeGoalCompletions + ' little ' + (allTimeGoalCompletions === 1 ? 'goal' : 'goals') + ' completed across your journal</p>' +
       '<button type="button" class="sg-add-goal" id="streakAddGoal"><span>＋</span> Plant a little goal</button>' +
       '<form class="sg-add-form hidden" id="streakGoalForm"><input class="input" id="streakGoalInput" maxlength="56" placeholder="Something kind I want to do…" required><button type="submit" class="primary">Add to my garden ♡</button></form>' +
       '<p class="sg-goal-footnote">Your goals are gentle reminders. They never reduce or break your login streak.</p></section>',
-    '<section class="sg-section sg-milestones-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">LOOK HOW FAR YOU HAVE GROWN</span><h3>The garden path</h3><p>Each milestone adds another little piece to your garden.</p></div><span class="sg-section-note">' + earned.size + ' / ' + milestones.length + ' blooms</span></div>' +
+    '<section class="sg-section sg-milestones-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">LOOK HOW FAR YOU HAVE GROWN</span><h3>Your garden journey</h3><p>Each bloom has its own little milestone.</p></div><span class="sg-section-note">' + earned.size + ' / ' + milestones.length + ' unlocked</span></div>' +
       '<div class="sg-milestone-route">' + badges + '</div><div class="sg-botanical-rule"><span>❧</span><i>one day at a time</i><span>❧</span></div></section>',
+    '</div>',
     '<p class="sg-signoff">Made of little moments, growing into something lovely. <span>♡</span></p>',
     '</div>'
   ].join('');
@@ -2094,6 +2181,8 @@ document.addEventListener('click', async e => {
   if (streakMonth) { streakCalendarOffset += streakMonth.dataset.streakMonth === 'next' ? 1 : -1; streakSelectedDate = ''; renderStreakPage(); return; }
   const streakDate = e.target.closest('[data-streak-date]');
   if (streakDate && !streakDate.disabled) { streakSelectedDate = streakDate.dataset.streakDate; renderStreakPage(); return; }
+  const streakWeekDate = e.target.closest('[data-streak-week-date]');
+  if (streakWeekDate) { streakSelectedWeekDate = streakWeekDate.dataset.streakWeekDate; renderStreakPage(); return; }
   if (e.target.closest('#streakAddGoal')) { const form = $('#streakGoalForm'); form?.classList.toggle('hidden'); if (form && !form.classList.contains('hidden')) $('#streakGoalInput')?.focus(); return; }
   const removeStreakGoal = e.target.closest('[data-streak-remove-goal]');
   if (removeStreakGoal) { writeStreakGoals(readStreakGoals().filter(goal => goal.id !== removeStreakGoal.dataset.streakRemoveGoal)); renderStreakPage(); return; }
