@@ -3760,3 +3760,13 @@ body[data-mode="dark"] .sg-calendar-foldout .sg-calendar-section{border-top-colo
 @media(prefers-reduced-motion:reduce){
   .sg-garden-flower-hit:before,.sg-garden-flower-hit.is-watered:before,.sg-garden-flower-hit.is-watered:after,.sg-garden-art.sg-water-pop .sg-garden-svg{animation:none!important;transition:none!important}
 }
+
+/* Final spacing for the compact three-stat strip and foldout cards. */
+.sg-stats-ribbon{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sg-milestones-foldout{padding:0}
+.sg-garden-bloom-count{font-size:.59rem}
+@media(max-width:420px){
+  .sg-stats-ribbon{grid-template-columns:repeat(3,minmax(0,1fr));padding:10px 2px}
+  .sg-stat{padding:2px 4px}
+  .sg-stat small{font-size:.5rem;letter-spacing:.35px}
+}
