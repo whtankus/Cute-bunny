@@ -1000,7 +1000,10 @@ function renderStreakPage() {
   </g>
 </svg>`;
 
-  const completedGardenWeeks = Math.min(7, Math.floor(Math.max(count, bestRun) / 7));
+  const streakFlowerTotal = Math.max(count, bestRun);
+  const earnedGardenFlowers = streakFlowerTotal >= 2
+    ? Math.min(7, 2 + Math.floor(streakFlowerTotal / 7))
+    : 0;
   const gardenFlowers = [
     {id:'pink', label:'pink flower', x:14.7, y:79.3, svgX:100, svgY:365, scale:.94},
     {id:'lavender', label:'lavender flower', x:27.9, y:85.2, svgX:190, svgY:392, scale:.82},
@@ -1011,7 +1014,7 @@ function renderStreakPage() {
     {id:'cream', label:'cream flower', x:93.4, y:87.6, svgX:635, svgY:403, scale:.72}
   ];
   const gardenPlantMarkup = gardenFlowers.map((flower, index) =>
-    '<use href="#' + (index < completedGardenWeeks ? 'sgGardenFlower' : 'sgGardenBud') +
+    '<use href="#' + (index < earnedGardenFlowers ? 'sgGardenFlower' : 'sgGardenBud') +
     '" transform="translate(' + flower.svgX + ' ' + flower.svgY + ') scale(' + flower.scale + ')"/>'
   ).join('');
   const gardenSceneMarkup = gardenScene.replace('<g id="sgGardenPlots"></g>', '<g>' + gardenPlantMarkup + '</g>');
