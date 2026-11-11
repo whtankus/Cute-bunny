@@ -14,6 +14,7 @@ let notificationRows = [], notificationLoaded = false, notificationLoading = fal
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
 let streakSelectedWeekDate = '';
+let streakGardenActiveTab = 'milestones';
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
 let streakCountdownInterval = null, streakCountdownDayKey = '';
 let notesHeaderLastScrollTop = null;
@@ -542,14 +543,14 @@ function readStreakHistory() {
   } catch { return new Set(); }
 }
 function readStreakGardenBlooms(dateKey) {
-  const valid = new Set(['pink','lavender','honey','rose']);
+  const valid = new Set(['pink','lavender','honey','rose','peach','lilac','cream']);
   try {
     const saved = JSON.parse(localStorage.getItem(streakStorageKey('garden-blooms:' + dateKey)) || '[]');
     return new Set(Array.isArray(saved) ? saved.filter(id => valid.has(id)) : []);
   } catch { return new Set(); }
 }
 function saveStreakGardenBloom(dateKey, flowerId) {
-  const valid = new Set(['pink','lavender','honey','rose']);
+  const valid = new Set(['pink','lavender','honey','rose','peach','lilac','cream']);
   if (!valid.has(flowerId)) return new Set();
   const blooms = readStreakGardenBlooms(dateKey);
   blooms.add(flowerId);
@@ -663,11 +664,11 @@ function renderStreakPetalGame() {
   }).join('');
   const pairs = state.matched.length / 2;
   const status = $('#streakGameStatus');
-  const moves = $('#streakGameMoves');
+  const moves = $('#streakGamePairsLeft');
   if (status) status.textContent = state.completed
     ? (state.newBest ? 'New personal best! ✿' : 'All six pairs found!')
     : state.locked ? 'Remember the flowers…' : 'Find all six pairs';
-  if (moves) moves.textContent = state.moves + ' moves · ' + pairs + ' / 6';
+  if (moves) moves.textContent = state.completed ? 'All pairs found' : (6 - pairs) + ' pairs left';
   const progress = $('#streakGameProgressBar');
   if (progress) {
     progress.style.width = (pairs / 6 * 100) + '%';
@@ -730,7 +731,7 @@ function streakFriendSnapshot(friend, todayKey) {
 }
 function streakFriendsMarkup(todayKey) {
   if (!Array.isArray(friends) || !friends.length) {
-    return '<div class="sg-friends-empty"><span aria-hidden="true">✿</span><p>Your circle is waiting to bloom.</p><button type="button" class="sg-find-friends" data-go="friends">Find friends →</button></div>';
+    return '<div class="sg-friends-empty"><p>No friends in bloom yet.</p><button type="button" class="sg-find-friends" data-go="friends">Find friends</button></div>';
   }
   const stateRank = {active:0,due:1,paused:2,unknown:3};
   const orderedFriends = [...friends].sort((a,b) => {
@@ -741,20 +742,13 @@ function streakFriendsMarkup(todayKey) {
       String(a.username || '').localeCompare(String(b.username || ''));
   });
   const rows = orderedFriends.map(friend => {
-    const name = friend.displayName || friend.display_name || friend.username || 'Friend';
     const snapshot = streakFriendSnapshot(friend,todayKey);
-    const countLabel = snapshot.count === null ? '—' : String(snapshot.count);
-    return '<button type="button" class="sg-friend-card is-' + snapshot.state + '" data-streak-friend="' + esc(friend.username || '') +
-      '" aria-label="Open ' + esc(name) + ' garden">' +
-      '<span class="sg-friend-avatar">' + esc(friend.mascot || '🐰') + '</span>' +
-      '<span class="sg-friend-identity"><b>' + esc(name) + '</b><small>@' + esc(friend.username || 'friend') + '</small>' +
-      '<em' + (snapshot.state === 'due' ? ' data-streak-friend-countdown' : '') + '>' + esc(snapshot.label) + '</em>' +
-      '<span class="sg-friend-action">View garden <i aria-hidden="true">→</i></span></span>' +
-      '<span class="sg-friend-streak"><strong>' + (snapshot.count === null ? '✿' : '🔥 ' + countLabel) +
-      '</strong><small>' + (snapshot.count === null ? 'streak' : 'day streak') + '</small></span></button>';
+    const flowerCount = snapshot.count === null ? '—' : String(snapshot.count);
+    return '<div class="sg-friend-card" aria-label="Friend garden">' +
+      '<span class="sg-friend-avatar" aria-hidden="true">' + esc(friend.mascot || '🐰') + '</span>' +
+      '<span class="sg-friend-flower-count"><i aria-hidden="true">✿</i><strong>' + flowerCount + '</strong></span></div>';
   }).join('');
-  return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>' +
-    '<button type="button" class="sg-find-friends" data-go="friends">Find more friends →</button>';
+  return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>';
 }
 
 function renderStreakPage() {
@@ -797,7 +791,6 @@ function renderStreakPage() {
   const base = previousMilestone ? previousMilestone.days : 0;
   const progress = next ? Math.max(0, Math.min(100, ((count - base) / Math.max(1, next.days - base)) * 100)) : 100;
   const left = next ? Math.max(0, next.days - count) : 0;
-  const todayCompleted = history.has(todayKey);
   if (!streakPetalGame.cards.length) resetStreakPetalGame();
   const allTimeGoalCompletions = countSavedStreakGoalCompletions();
 
@@ -929,6 +922,14 @@ function renderStreakPage() {
       </g>
       <circle r="3.8" fill="#edc978"/>
     </g>
+    <g id="sgGardenBud">
+      <path d="M0 8 C-1 21 -1 31 0 43" fill="none" stroke="#668868" stroke-width="3" stroke-linecap="round"/>
+      <path d="M-1 29 Q-18 17 -18 28 Q-11 37 -1 29Z" fill="#8fae85"/>
+      <path d="M0 35 Q17 22 18 33 Q11 42 0 35Z" fill="#a7bf99"/>
+      <path d="M0 8 C-10 0 -8 -12 0 -19 C9 -12 10 0 0 8Z" fill="#e9c7d5" stroke="#b983a0" stroke-width="1.5"/>
+      <path d="M0 7 Q-5 -3 -2 -14" fill="none" stroke="#f9e7ed" stroke-width="2" stroke-linecap="round"/>
+      <path d="M-6 6 Q0 1 6 6" fill="none" stroke="#73936e" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
   </defs>
 
   <!-- Quiet mountain layers leave open sky around the focal scene. -->
@@ -988,10 +989,7 @@ function renderStreakPage() {
   </g>
 
   <!-- Four rooted flowers are the existing touch targets. -->
-  <use href="#sgGardenFlower" transform="translate(116 366) scale(1.02)"/>
-  <use href="#sgGardenFlower" transform="translate(228 381) scale(.88)"/>
-  <use href="#sgGardenFlower" transform="translate(470 370) scale(1.02)"/>
-  <use href="#sgGardenFlower" transform="translate(584 357) scale(.94)"/>
+  <g id="sgGardenPlots"></g>
 
   <!-- A few low grass strokes ground the illustration without extra ornaments. -->
   <g fill="none" stroke="#6e906f" stroke-width="3" stroke-linecap="round" opacity=".78">
@@ -1000,12 +998,21 @@ function renderStreakPage() {
   </g>
 </svg>`;
 
+  const completedGardenWeeks = Math.min(7, Math.floor(Math.max(count, bestRun) / 7));
   const gardenFlowers = [
-    {id:'pink', label:'pink flower', x:17, y:79},
-    {id:'lavender', label:'lavender flower', x:33, y:83},
-    {id:'honey', label:'yellow flower', x:69, y:80},
-    {id:'rose', label:'rose flower', x:86, y:78}
+    {id:'pink', label:'pink flower', x:14.7, y:79.3, svgX:100, svgY:365, scale:.94},
+    {id:'lavender', label:'lavender flower', x:27.9, y:85.2, svgX:190, svgY:392, scale:.82},
+    {id:'honey', label:'yellow flower', x:40.4, y:87.8, svgX:275, svgY:404, scale:.78},
+    {id:'rose', label:'rose flower', x:61, y:88.7, svgX:415, svgY:408, scale:.82},
+    {id:'peach', label:'peach flower', x:72.5, y:85.2, svgX:493, svgY:392, scale:.84},
+    {id:'lilac', label:'lilac flower', x:83.8, y:80.7, svgX:570, svgY:371, scale:.82},
+    {id:'cream', label:'cream flower', x:93.4, y:87.6, svgX:635, svgY:403, scale:.72}
   ];
+  const gardenPlantMarkup = gardenFlowers.map((flower, index) =>
+    '<use href="#' + (index < completedGardenWeeks ? 'sgGardenFlower' : 'sgGardenBud') +
+    '" transform="translate(' + flower.svgX + ' ' + flower.svgY + ') scale(' + flower.scale + ')"/>'
+  ).join('');
+  const gardenSceneMarkup = gardenScene.replace('<g id="sgGardenPlots"></g>', '<g>' + gardenPlantMarkup + '</g>');
   const gardenFlowerMarkup = gardenFlowers.map(flower => {
     const watered = gardenBlooms.has(flower.id);
     return '<button type="button" class="sg-garden-flower-hit' + (watered ? ' is-watered' : '') +
@@ -1023,22 +1030,14 @@ function renderStreakPage() {
       '<div class="sg-hero-copy"><span class="sg-eyebrow">CURRENT STREAK</span>' +
       '<div class="sg-count-line"><strong>' + count + '</strong><span><b>' + (count === 1 ? 'day' : 'days') + '</b><small>in a row</small></span></div>' +
       '<h3 class="sg-garden-stage">' + gardenStage + '</h3>' +
-      '<div class="sg-today-status ' + (todayCompleted ? 'is-complete' : 'is-pending') + '" aria-live="polite"><span aria-hidden="true">' +
-      (todayCompleted ? '✿' : '○') + '</span><span><b>' + (todayCompleted ? 'Visit saved today' :
-      gap === 1 ? 'Keep your streak for ' + '<i data-streak-self-countdown>' + streakUtcTimeRemaining() + '</i>' : 'Your next visit is waiting') +
-      '</b></span></div>' +
       '<div class="sg-progress-head"><span>NEXT BLOOM</span><b>' + (next ? (left ? left + ' ' + (left === 1 ? 'day' : 'days') + ' to go' : 'Ready to bloom!') : 'All blooms unlocked') + '</b></div>' +
       '<div class="sg-growth-track" style="--progress:' + progress + '%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(progress) + '" aria-label="' + Math.round(progress) + '% progress toward next bloom"><span style="width:' + progress + '%"></span><i>✿</i></div>' +
       '<small class="sg-next-milestone">' + (next ? 'Next: ' + next.days + ' days · ' + next.name : 'Every milestone reached') + '</small></div>' +
-      '<div class="sg-hero-scene"><div class="sg-garden-art" id="sgGardenArt">' + gardenScene +
+      '<div class="sg-hero-scene"><div class="sg-garden-art" id="sgGardenArt">' + gardenSceneMarkup +
         '<div class="sg-garden-hit-layer">' + gardenFlowerMarkup + '</div></div>' +
-        '<span class="sg-garden-bloom-count' + (gardenBlooms.size === 4 ? ' is-complete' : '') + '" id="sgGardenBloomCount">' +
-        (gardenBlooms.size === 4 ? 'Garden in bloom ✿' : 'Tap flowers · ' + gardenBlooms.size + ' / 4') + '</span></div>' +
+        '<span class="sg-garden-bloom-count' + (gardenBlooms.size === 7 ? ' is-complete' : '') + '" id="sgGardenBloomCount">' +
+        (gardenBlooms.size === 7 ? 'Garden in bloom ✿' : 'Tap flowers · ' + gardenBlooms.size + ' / 7') + '</span></div>' +
       '<span class="sg-hero-corner sg-corner-one" aria-hidden="true">❧</span><span class="sg-hero-corner sg-corner-two" aria-hidden="true">✧</span></div></section>',
-    '<section class="sg-stats-ribbon" aria-label="Your streak statistics">' +
-      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-flame" aria-hidden="true">🔥</span><div><small>CURRENT STREAK</small><strong>' + count + '</strong><em>' + (count === 1 ? 'day' : 'days') + '</em></div></div>' +
-      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-sprout" aria-hidden="true">♧</span><div><small>BEST STREAK</small><strong>' + Math.max(bestRun, count) + '</strong><em>days</em></div></div>' +
-      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-bloom" aria-hidden="true">✾</span><div><small>GARDEN VISITS</small><strong>' + history.size + '</strong><em>days recorded</em></div></div></section>',
     '</div>',
 
     '<div class="sg-page-group sg-journal-group" id="sgJournalGroup">',
@@ -1048,28 +1047,27 @@ function renderStreakPage() {
       '<div class="sg-week-legend"><span><i class="is-bloomed">✿</i>Visited</span><span><i class="is-today">●</i>Today</span><span><i class="is-future">○</i>Future</span><span><i class="is-missed">–</i>Missed</span></div></section>',
     '</div>',
 
-    '<div class="sg-page-group sg-growth-group" id="sgGrowthGroup">',
-    '<section class="sg-goals-section"><div class="sg-section-heading"><div><h3>Your little promises</h3><p>Optional goals for today</p></div><span class="sg-goal-count" id="streakGoalProgress">' + completed + ' / ' + goals.length + '</span></div>' +
-      '<div class="sg-goal-progress"><span id="streakGoalProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + (goals.length ? Math.round(completed / goals.length * 100) : 0) + '" style="width:' + (goals.length ? completed / goals.length * 100 : 0) + '%"></span></div>' +
-      '<p class="sg-goal-note">Optional reminders · these never affect your streak</p>' +
-      '<div class="sg-goal-list" id="streakGoalsList">' + goalMarkup + '</div>' +
-      '<p class="sg-alltime-goals" id="sgAllTimeGoalCount"' + (allTimeGoalCompletions ? '' : ' hidden') + '>' +
-      allTimeGoalCompletions + ' goals completed</p>' +
-      '<button type="button" class="sg-add-goal" id="streakAddGoal"><span>＋</span> Add a goal</button>' +
-      '<form class="sg-add-form hidden" id="streakGoalForm"><input class="input" id="streakGoalInput" maxlength="56" placeholder="Add a little goal…" required><button type="submit" class="primary">Plant goal</button></form></section>',
-    '<div class="sg-growth-extras">',
-    '<section class="sg-game-section"><div class="sg-section-heading"><div><h3>Petal Pairs</h3><p>Find six matching flower pairs</p></div><span class="sg-game-stamp">12 cards</span></div>' +
-      '<div class="sg-game-score"><span id="streakGameStatus">Find all six pairs.</span><b id="streakGameMoves">0 moves · 0 / 6</b><small id="streakGameBest">No best yet</small></div>' +
-      '<div class="sg-game-progress" aria-label="Game progress"><span id="streakGameProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0" style="width:0%"></span></div>' +
+    '<section class="sg-game-section sg-game-compact"><div class="sg-compact-section-heading"><h3>Petal Pairs</h3><b id="streakGamePairsLeft">6 pairs left</b></div>' +
       '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div>' +
-      '<button type="button" class="sg-game-reset" id="streakGameReset">Shuffle ↻</button></section>',
-    '<section class="sg-friends-section"><div class="sg-section-heading"><div><h3>Friends in Bloom</h3><p>' + friends.length + ' followed ' + (friends.length === 1 ? 'friend' : 'friends') + '</p></div><span class="sg-friends-count">✿ ' + friends.length + '</span></div>' +
+      '<button type="button" class="sg-game-reset sg-game-reset-compact" id="streakGameReset">Shuffle ↻</button></section>',
+    '<section class="sg-friends-section sg-friends-compact"><div class="sg-friends-heading"><h3>Friends in Bloom</h3></div>' +
       streakFriendsMarkup(todayKey) + '</section>',
+    '<div class="sg-bottom-tabs-wrap">',
+    '<div class="sg-bottom-tabs" role="tablist" aria-label="Garden details">' +
+      '<button type="button" class="sg-bottom-tab' + (streakGardenActiveTab === 'milestones' ? ' is-active' : '') + '" id="sgMilestonesTab" role="tab" aria-controls="sgMilestonesPanel" aria-selected="' + (streakGardenActiveTab === 'milestones') + '" data-streak-garden-tab="milestones">Your Garden Milestones</button>' +
+      '<button type="button" class="sg-bottom-tab' + (streakGardenActiveTab === 'promises' ? ' is-active' : '') + '" id="sgPromisesTab" role="tab" aria-controls="sgPromisesPanel" aria-selected="' + (streakGardenActiveTab === 'promises') + '" data-streak-garden-tab="promises">Your Little Promises</button></div>',
+    '<section class="sg-tab-panel' + (streakGardenActiveTab === 'milestones' ? ' is-active' : '') + '" id="sgMilestonesPanel" role="tabpanel" aria-labelledby="sgMilestonesTab"' + (streakGardenActiveTab === 'milestones' ? '' : ' hidden') + '>' +
+      '<section class="sg-milestones-section"><div class="sg-section-heading"><div><h3>8 garden milestones</h3><p>' + earned.size + ' of ' + milestones.length + ' blooms unlocked</p></div></div>' +
+      '<div class="sg-milestone-route">' + badges + '</div></section></section>',
+    '<section class="sg-tab-panel' + (streakGardenActiveTab === 'promises' ? ' is-active' : '') + '" id="sgPromisesPanel" role="tabpanel" aria-labelledby="sgPromisesTab"' + (streakGardenActiveTab === 'promises' ? '' : ' hidden') + '>' +
+      '<section class="sg-goals-section"><div class="sg-section-heading"><div><h3>Your little promises</h3><p>Optional goals for today</p></div><span class="sg-goal-count" id="streakGoalProgress">' + completed + ' / ' + goals.length + '</span></div>' +
+      '<div class="sg-goal-progress"><span id="streakGoalProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + (goals.length ? Math.round(completed / goals.length * 100) : 0) + '" style="width:' + (goals.length ? completed / goals.length * 100 : 0) + '%"></span></div>' +
+      '<div class="sg-goal-list" id="streakGoalsList">' + goalMarkup + '</div>' +
+      '<p class="sg-alltime-goals" id="sgAllTimeGoalCount"' + (allTimeGoalCompletions ? '' : ' hidden') + '>' + allTimeGoalCompletions + ' goals completed</p>' +
+      '<button type="button" class="sg-add-goal" id="streakAddGoal"><span>＋</span> Add a goal</button>' +
+      '<form class="sg-add-form hidden" id="streakGoalForm"><input class="input" id="streakGoalInput" maxlength="56" placeholder="Add a little goal…" required><button type="submit" class="primary">Plant goal</button></form></section></section>',
     '</div>',
-    '<section class="sg-milestones-section"><div class="sg-section-heading"><div><h3>Your garden milestones</h3><p>' + earned.size + ' of ' + milestones.length + ' blooms unlocked</p></div><span class="sg-section-note">8 blooms</span></div>' +
-      '<div class="sg-milestone-route">' + badges + '</div></section>',
     '</div>',
-    '</div>'
   ].join('');
   renderStreakPetalGame();
   startStreakCountdown();
@@ -2498,6 +2496,30 @@ document.addEventListener('click', async e => {
   const petalCard = e.target.closest('[data-streak-game-card]');
   if (petalCard) {
     flipStreakPetalCard(petalCard.dataset.streakGameCard);
+    return;
+  }
+
+  const gardenTabButton = e.target.closest('[data-streak-garden-tab]');
+  if (gardenTabButton) {
+    const tabName = gardenTabButton.dataset.streakGardenTab;
+    if (tabName !== 'milestones' && tabName !== 'promises') return;
+    streakGardenActiveTab = tabName;
+    const gardenTabs = gardenTabButton.closest('.streak-garden-page');
+    gardenTabs?.querySelectorAll('[data-streak-garden-tab]').forEach(button => {
+      const active = button.dataset.streakGardenTab === tabName;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-selected', String(active));
+    });
+    gardenTabs?.querySelectorAll('.sg-tab-panel').forEach(panel => {
+      const active = panel.id === (tabName === 'milestones' ? 'sgMilestonesPanel' : 'sgPromisesPanel');
+      panel.hidden = !active;
+      panel.classList.toggle('is-active', active);
+      if (active) {
+        panel.classList.remove('is-active');
+        void panel.offsetWidth;
+        panel.classList.add('is-active');
+      }
+    });
     return;
   }
 
