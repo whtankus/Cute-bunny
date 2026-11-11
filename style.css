@@ -7264,19 +7264,19 @@ body.notes-page-active.notes-keyboard-open #nav {
   display:none!important;
 }
 
-/* v90 Notes bubble width: cap at 30 characters while keeping short messages content-sized. */
+/* Notes bubbles: allow up to a 40-character line while keeping short notes content-sized. */
 body.notes-page-active #content .chat-bubble-wrap {
   width:fit-content!important;
-  max-width:min(30ch,calc(72.9% - 2.916rem))!important;
+  max-width:min(40ch,calc(100% - 4rem))!important;
 }
 @media(max-width:720px) {
   body.notes-page-active #content .chat-bubble-wrap {
-    max-width:min(30ch,calc(72.9% - 2.5515rem))!important;
+    max-width:min(40ch,calc(100% - 3.55rem))!important;
   }
 }
 @media(max-width:480px) {
   body.notes-page-active #content .chat-bubble-wrap {
-    max-width:min(30ch,calc(72.9% - 2.2599rem))!important;
+    max-width:min(40ch,calc(100% - 3.08rem))!important;
   }
 }
 @media(prefers-reduced-motion:reduce) {
