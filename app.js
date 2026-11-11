@@ -528,6 +528,7 @@ function go(p) {
     document.body.classList.remove('notes-keyboard-open');
     document.documentElement.style.setProperty('--notes-keyboard-inset', '0px');
     document.documentElement.style.removeProperty('--notes-page-height');
+    document.documentElement.style.removeProperty('--notes-nav-height');
   }
 
   page = p;
@@ -1874,12 +1875,15 @@ function syncNotesKeyboardLayout() {
     ? Math.max(0, Math.round(window.innerHeight - visualTop - visualHeight))
     : 0;
   const viewportHeightDrop = viewport ? Math.max(0, window.innerHeight - visualHeight) : 0;
-  const viewportSuggestsKeyboard = !!viewport && (
-    keyboardInset > 100 ||
-    viewportHeightDrop > 100 ||
-    visualHeight < window.screen.height * 0.72
-  );
-  const keyboardOpen = mobile && (viewport ? viewportSuggestsKeyboard : focused);
+  const wasOpen = document.body.classList.contains('notes-keyboard-open');
+  const viewportSuggestsKeyboard = viewport
+    ? (
+      keyboardInset > 100 ||
+      viewportHeightDrop > 100 ||
+      visualHeight < window.screen.height * 0.72
+    )
+    : window.innerHeight < window.screen.height * 0.72;
+  const keyboardOpen = mobile && (viewportSuggestsKeyboard || (focused && !wasOpen));
   const nav = $('#nav');
   const composer = $('#chatComposer');
 
@@ -1894,6 +1898,7 @@ function syncNotesKeyboardLayout() {
   const pageTop = Math.max(0, notesPage.getBoundingClientRect().top - visualTop);
   const composerHeight = composer?.getBoundingClientRect().height || 62;
   const navHeight = keyboardOpen ? 0 : (nav?.getBoundingClientRect().height || 68);
+  document.documentElement.style.setProperty('--notes-nav-height', navHeight + 'px');
   const lowerGap = keyboardOpen ? 12 : navHeight + 12;
   const availableHeight = Math.max(150, Math.floor(visualHeight - pageTop - composerHeight - lowerGap));
   notesPage.style.setProperty('--notes-page-height', availableHeight + 'px');
