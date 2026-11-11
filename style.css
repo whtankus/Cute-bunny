@@ -2296,7 +2296,7 @@ body:has(.chat-page) #content {
 #content .chat-page .chat-composer {
   position:fixed!important;
   left:50%;
-  bottom:calc(76px + env(safe-area-inset-bottom));
+  bottom:calc(var(--notes-nav-height,68px) + 8px);
   z-index:60;
   width:min(680px,calc(100vw - 30px));
   max-width:calc(100vw - 30px);
