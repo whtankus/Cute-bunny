@@ -2702,9 +2702,10 @@ body.notes-page-active .app>header {
 }
 
 
-/* Keep a fixed, predictable end inset; it never grows as the list scrolls. */
+/* The message scrollport now ends directly above the fixed composer. */
 #content .chat-page .chat-thread {
-  padding-bottom:28px!important;
+  padding-bottom:0!important;
+  scroll-padding-bottom:0;
 }
 
 
