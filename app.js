@@ -620,57 +620,6 @@ function saveStreakMilestones(count) {
   [3, 7, 14, 30, 50, 100, 180, 365].forEach(value => { if (count >= value) earned.add(value); });
   try { localStorage.setItem(streakStorageKey('milestones'), JSON.stringify([...earned].sort((a,b) => a-b))); } catch {}
 }
-function streakCalendarMarkup(todayKey, history) {
-  const monthDate = new Date();
-  monthDate.setUTCDate(1);
-  monthDate.setUTCMonth(monthDate.getUTCMonth() + streakCalendarOffset);
-  const year = monthDate.getUTCFullYear();
-  const month = monthDate.getUTCMonth();
-  const firstDay = new Date(Date.UTC(year, month, 1));
-  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  const leadingDays = (firstDay.getUTCDay() + 6) % 7;
-  const prefix = year + '-' + String(month + 1).padStart(2, '0') + '-';
-  const monthTitle = new Intl.DateTimeFormat(undefined, {month:'long', year:'numeric', timeZone:'UTC'}).format(firstDay);
-  const monthCount = [...history].filter(key => key.startsWith(prefix)).length;
-  const selected = streakSelectedDate || (streakCalendarOffset === 0 ? todayKey : '');
-  const cells = [];
-  for (let i = 0; i < leadingDays; i++) cells.push('<span class="sg-calendar-empty" aria-hidden="true"></span>');
-  for (let day = 1; day <= daysInMonth; day++) {
-    const key = prefix + String(day).padStart(2, '0');
-    const visited = history.has(key), isToday = key === todayKey, isFuture = key > todayKey, isSelected = key === selected;
-    cells.push(
-      '<button type="button" class="streak-calendar-day sg-calendar-day' +
-      (visited ? ' is-visited' : '') + (isToday ? ' is-today' : '') + (isSelected ? ' is-selected' : '') +
-      '" data-streak-date="' + key + '" aria-pressed="' + isSelected + '"' +
-      ' aria-label="' + key + (visited ? ', garden visit recorded' : isFuture ? ', upcoming day' : ', no visit recorded') + '"' +
-      (isFuture ? ' disabled' : '') + '><span class="sg-calendar-number">' + day +
-      '</span><i class="sg-calendar-flower" aria-hidden="true">' +
-      (visited ? '<svg viewBox="0 0 24 24"><g fill="#d989a8"><ellipse cx="12" cy="5" rx="3.1" ry="5"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(120 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(180 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(240 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.2" fill="#efc978"/></svg>' : '') +
-      '</i></button>'
-    );
-  }
-  let detail = 'Select a date';
-  if (selected) {
-    const date = new Date(selected + 'T00:00:00.000Z');
-    const label = new Intl.DateTimeFormat(undefined, {weekday:'short', month:'short', day:'numeric', timeZone:'UTC'}).format(date);
-    const goalChecks = readStreakGoalChecks(selected);
-    const completedGoals = Object.values(goalChecks).filter(value => value === true).length;
-    if (history.has(selected)) detail = 'Visited · ' + label;
-    else if (selected === todayKey) detail = 'Today · not visited';
-    else detail = 'No visit · ' + label;
-    if (completedGoals) detail += ' · ' + completedGoals + ' goals';
-  }
-  return '<section class="sg-section sg-calendar-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">MONTH</span><h3>Visit calendar</h3></div>' +
-    '<span class="sg-month-count">' + monthCount + ' ' + (monthCount === 1 ? 'visit' : 'visits') + '</span></div>' +
-    '<div class="sg-month-nav"><button type="button" data-streak-month="prev" aria-label="Previous month">‹</button>' +
-    '<strong>' + monthTitle + '</strong><button type="button" data-streak-month="next" aria-label="Next month" ' +
-    (streakCalendarOffset >= 0 ? 'disabled' : '') + '>›</button></div>' +
-    '<div class="sg-calendar-grid sg-calendar-weekdays">' + ['M','T','W','T','F','S','S'].map(day => '<span>' + day + '</span>').join('') + '</div>' +
-    '<div class="sg-calendar-grid sg-calendar-days">' + cells.join('') + '</div>' +
-    '<p class="sg-calendar-detail" aria-live="polite">' + esc(detail) + '</p>' +
-    '<div class="sg-calendar-legend"><span><i class="is-bloomed">✿</i>Visit recorded</span><span><i class="is-today">•</i>Today</span></div></section>';
-}
-
 function resetStreakPetalGame() {
   const symbols = ['🌷','🌼','🌸','🌻','🌺','🍀'];
   const cards = [...symbols, ...symbols].map((symbol, index) => ({ id: String(index), symbol }));
@@ -780,8 +729,8 @@ function renderStreakPage() {
   if (!content || !me) return;
   const todayKey = new Date().toISOString().slice(0, 10);
   const lastDate = String(me.last_login_date || todayKey).slice(0, 10);
-  const gap = Math.round((Date.parse(todayKey + 'T00:00:00Z') - Date.parse(lastDate + 'T00:00:00Z')) / 86400000);
-  const count = gap > 1 ? 0 : Math.max(0, Number(me.login_streak) || 0);
+  const gap = streakDateDistance(lastDate, todayKey);
+  const count = gap !== null && gap >= 0 && gap <= 1 ? Math.max(0, Number(me.login_streak) || 0) : 0;
   if (count) {
     saveStreakHistory(lastDate, count);
     saveStreakMilestones(count);
@@ -807,10 +756,10 @@ function renderStreakPage() {
     {days:365, icon:'💮', name:'Eternal garden'}
   ];
   const earned = readStreakMilestones();
-  const next = milestones.find(item => !earned.has(item.days)) || null;
-  const previousMilestone = next ? [...milestones].reverse().find(item => earned.has(item.days) && item.days < next.days) : milestones[milestones.length - 1];
+  const next = milestones.find(item => count < item.days) || null;
+  const previousMilestone = next ? [...milestones].reverse().find(item => item.days <= count) : milestones[milestones.length - 1];
   const base = previousMilestone ? previousMilestone.days : 0;
-  const progress = next ? Math.max(0, Math.min(100, (count - base) / Math.max(1, next.days - base) * 100)) : 100;
+  const progress = next ? Math.max(0, Math.min(100, ((count - base) / Math.max(1, next.days - base)) * 100)) : 100;
   const left = next ? Math.max(0, next.days - count) : 0;
   const todayCompleted = history.has(todayKey);
   if (!streakPetalGame.cards.length) resetStreakPetalGame();
@@ -893,40 +842,13 @@ function renderStreakPage() {
       '<small class="sg-milestone-progress-copy">' + (unlocked ? item.days + ' days reached' : Math.min(count, item.days) + ' / ' + item.days + ' days') + '</small></article>';
   }).join('');
 
-  const gardenScene = '<svg class="sg-garden-svg" viewBox="0 0 440 300" role="img" aria-label="A little bunny in a blooming flower garden">' +
-    '<defs><linearGradient id="sg-sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#e9e2f4"/><stop offset="1" stop-color="#fae9e8"/></linearGradient>' +
-    '<linearGradient id="sg-hill" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b5c9a7"/><stop offset="1" stop-color="#829f7a"/></linearGradient>' +
-    '<linearGradient id="sg-bunny" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffdf8"/><stop offset="1" stop-color="#eadfe4"/></linearGradient></defs>' +
-    '<circle cx="343" cy="57" r="26" fill="#f4dca0" opacity=".85"/><path d="M0 175Q82 118 174 169T440 150V300H0Z" fill="#d8e4d1"/>' +
-    '<path d="M0 212Q93 155 194 206T440 190V300H0Z" fill="url(#sg-hill)"/>' +
-    '<path d="M0 247Q105 211 216 241T440 228V300H0Z" fill="#789878"/>' +
-    '<g fill="#fffaf2" opacity=".9"><path d="M61 72c0-10 8-17 18-17 8 0 14 4 17 11 11-3 21 5 21 15H59c-7-3-7-7 2-9Z"/><path d="M208 42c0-8 7-14 15-14 7 0 12 4 14 9 9-2 17 4 17 12h-47c-6-2-6-5 1-7Z"/></g>' +
-    '<g stroke="#628b68" stroke-width="4" stroke-linecap="round" fill="none"><path d="M62 242q-3-44 3-76"/><path d="M372 250q2-53 0-91"/><path d="M115 263q-2-45 1-69"/></g>' +
-    '<g fill="#9dbb8c"><path d="M64 218q-33-29-39-5 18 23 39 5Z"/><path d="M65 205q25-35 40-15-13 27-40 15Z"/><path d="M372 220q-31-27-40-7 18 24 40 7Z"/><path d="M372 208q22-32 39-13-12 25-39 13Z"/><path d="M116 237q-26-23-33-5 14 21 33 5Z"/><path d="M116 224q21-28 34-12-11 22-34 12Z"/></g>' +
-    '<g transform="translate(58 151)"><path d="M0 0v34" stroke="#5e8765" stroke-width="3"/><g fill="#e5a0ba"><ellipse cx="0" cy="-8" rx="5" ry="10"/><ellipse cx="0" cy="-8" rx="5" ry="10" transform="rotate(60)"/><ellipse cx="0" cy="-8" rx="5" ry="10" transform="rotate(120)"/></g><circle r="4" fill="#f5d17c"/></g>' +
-    '<g transform="translate(373 158)"><path d="M0 0v35" stroke="#5e8765" stroke-width="3"/><g fill="#e7c4e9"><ellipse cy="-7" rx="5" ry="10"/><ellipse cy="-7" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-7" rx="5" ry="10" transform="rotate(120)"/></g><circle r="4" fill="#f5d17c"/></g>' +
-    '<g transform="translate(113 195)"><path d="M0 0v25" stroke="#658b67" stroke-width="3"/><g fill="#eecb81"><ellipse cy="-6" rx="4" ry="8"/><ellipse cy="-6" rx="4" ry="8" transform="rotate(60)"/><ellipse cy="-6" rx="4" ry="8" transform="rotate(120)"/></g><circle r="3" fill="#fff3d6"/></g>' +
-    '<g transform="translate(303 222)"><path d="M0 0v24" stroke="#658b67" stroke-width="3"/><g fill="#f3b8c9"><ellipse cy="-5" rx="4" ry="8"/><ellipse cy="-5" rx="4" ry="8" transform="rotate(60)"/><ellipse cy="-5" rx="4" ry="8" transform="rotate(120)"/></g><circle r="3" fill="#f5d17c"/></g>' +
-    '<g transform="translate(221 213)"><ellipse cx="0" cy="45" rx="47" ry="11" fill="#4e7656" opacity=".23"/>' +
-    '<path d="M-28 32q-20-7-12-28 9-20 31-12 17 4 23 24 5 18-11 25Z" fill="url(#sg-bunny)" stroke="#d8cbd1" stroke-width="2"/>' +
-    '<ellipse cx="-10" cy="-13" rx="10" ry="34" transform="rotate(-13 -10 -13)" fill="url(#sg-bunny)" stroke="#d8cbd1" stroke-width="2"/>' +
-    '<ellipse cx="13" cy="-17" rx="10" ry="36" transform="rotate(12 13 -17)" fill="url(#sg-bunny)" stroke="#d8cbd1" stroke-width="2"/>' +
-    '<ellipse cx="-10" cy="-15" rx="4" ry="21" transform="rotate(-13 -10 -15)" fill="#e9b6c8"/><ellipse cx="13" cy="-18" rx="4" ry="22" transform="rotate(12 13 -18)" fill="#e9b6c8"/>' +
-    '<circle cx="0" cy="10" r="31" fill="url(#sg-bunny)" stroke="#d8cbd1" stroke-width="2"/>' +
-    '<ellipse cx="-17" cy="22" rx="6" ry="3.5" fill="#efbdc9" opacity=".9"/><ellipse cx="17" cy="22" rx="6" ry="3.5" fill="#efbdc9" opacity=".9"/>' +
-    '<circle cx="-10" cy="8" r="2.7" fill="#5c4b5d"/><circle cx="10" cy="8" r="2.7" fill="#5c4b5d"/>' +
-    '<path d="M-3 17q3-4 6 0q-3 5-6 0Z" fill="#c9819d"/><path d="M0 21q-4 5-8 1m8-1q4 5 8 1" stroke="#987b8c" stroke-width="1.5" stroke-linecap="round" fill="none"/>' +
-    '<path d="M-23 37q-16-1-17-12m64 12q16-1 17-12" stroke="#d8cbd1" stroke-width="2" stroke-linecap="round" fill="none"/>' +
-    '<path d="M-2 -19q-5-13 7-18" stroke="#d989a8" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="6" cy="-37" r="5" fill="#d989a8"/></g>' +
-    '<g fill="#fff5dc"><circle cx="170" cy="93" r="3"/><circle cx="276" cy="110" r="2.5"/><circle cx="397" cy="98" r="3"/></g>' +
-    '<g fill="#e3a8be"><path d="m162 126 3-8 3 8 8 3-8 3-3 8-3-8-8-3Z"/><path d="m411 184 2-6 2 6 6 2-6 2-2 6-2-6-6-2Z"/></g>' +
-    '</svg>';
+  const gardenScene = '<img class="sg-garden-svg" src="./streak-garden-banner.svg" alt="Sunset over lavender mountains and a meadow of cherry blossoms" loading="eager">';
 
   const gardenFlowers = [
-    {id:'pink', label:'pink flower', x:13.18, y:50.33},
-    {id:'lavender', label:'lavender flower', x:84.77, y:52.67},
-    {id:'honey', label:'yellow flower', x:25.68, y:65},
-    {id:'rose', label:'rose flower', x:68.86, y:74}
+    {id:'pink', label:'pink flower', x:17, y:88},
+    {id:'lavender', label:'lavender flower', x:52, y:80},
+    {id:'honey', label:'yellow flower', x:73, y:82},
+    {id:'rose', label:'rose flower', x:91, y:75}
   ];
   const gardenFlowerMarkup = gardenFlowers.map(flower => {
     const watered = gardenBlooms.has(flower.id);
@@ -938,15 +860,15 @@ function renderStreakPage() {
 
   content.innerHTML = [
     '<div class="streak-garden-page">',
-    '<div class="sg-page-heading"><div><span class="sg-page-kicker">YOUR LITTLE GARDEN</span><h2>Your Streak Garden</h2></div><span class="sg-heading-doodle" aria-hidden="true">✿</span></div>',
-    '<nav class="sg-quick-nav" aria-label="Garden sections"><a href="#sgGardenGroup">Garden</a><a href="#sgJournalGroup">Journal</a><a href="#sgGrowthGroup">Growth</a></nav>',
+    '<div class="sg-page-heading"><div><h2>Your Streak Garden</h2></div><span class="sg-heading-doodle" aria-hidden="true">✿</span></div>',
 
     '<div class="sg-page-group sg-garden-group" id="sgGardenGroup"><div class="sg-group-heading"><span>01</span><b>MY GARDEN</b></div>',
     '<section class="sg-hero" aria-label="Your current streak garden"><div class="sg-hero-paper">' +
       '<div class="sg-hero-copy"><span class="sg-eyebrow"><i>✦</i> CURRENT STREAK</span>' +
       '<div class="sg-count-line"><strong>' + count + '</strong><span><b>' + (count === 1 ? 'day in a row' : 'days in a row') + '</b></span></div>' +
       '<div class="sg-today-status ' + (todayCompleted ? 'is-complete' : 'is-pending') + '" aria-live="polite"><span aria-hidden="true">' +
-      (todayCompleted ? '✿' : '○') + '</span><span><b>' + (todayCompleted ? 'Today’s visit is saved' : 'Today’s visit is waiting') +
+      (todayCompleted ? '✿' : '○') + '</span><span><b>' + (todayCompleted ? 'Today’s visit is saved' :
+      gap === 1 ? 'Log in within ' + streakUtcTimeRemaining() + ' to keep it' : 'Today’s visit is waiting') +
       '</b></span></div>' +
       '<div class="sg-progress-head"><span>NEXT BLOOM</span><b>' + (next ? (left ? left + ' ' + (left === 1 ? 'day' : 'days') + ' to go' : 'Ready to bloom!') : 'All blooms unlocked') + '</b></div>' +
       '<div class="sg-growth-track" style="--progress:' + progress + '%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(progress) + '" aria-label="' + Math.round(progress) + '% progress toward next bloom"><span style="width:' + progress + '%"></span><i>✿</i></div>' +
@@ -967,9 +889,6 @@ function renderStreakPage() {
       '<div class="sg-week-row">' + week.join('') + '</div>' +
       '<div class="sg-week-detail" id="sgWeekDetail" aria-live="polite"><b>' + selectedWeekLabel + '</b><span>' + esc(selectedWeekMessage) + '</span></div>' +
       '<div class="sg-week-legend"><span><i class="is-bloomed">✿</i>Visited</span><span><i class="is-today">●</i>Today</span><span><i class="is-future">○</i>Future</span><span><i class="is-missed">·</i>Missed</span></div></section>',
-    '<details class="sg-calendar-foldout"' + (streakCalendarExpanded ? ' open' : '') + '><summary><span>Month calendar</span><b>Open</b></summary>',
-    streakCalendarMarkup(todayKey, history),
-    '</details>',
     '</div>',
 
     '<div class="sg-page-group sg-growth-group" id="sgGrowthGroup"><div class="sg-group-heading"><span>03</span><b>MY GROWTH</b></div>',
@@ -981,9 +900,9 @@ function renderStreakPage() {
       '<button type="button" class="sg-add-goal" id="streakAddGoal"><span>＋</span> Add a goal</button>' +
       '<form class="sg-add-form hidden" id="streakGoalForm"><input class="input" id="streakGoalInput" maxlength="56" placeholder="Add a little goal…" required><button type="submit" class="primary">Plant goal</button></form></section>',
     '<div class="sg-growth-extras">',
-    '<section class="sg-section sg-game-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">PLAY</span><h3>Petal pairs</h3></div><span class="sg-game-stamp">4 pairs</span></div>' +
-      '<div class="sg-game-score"><span id="streakGameStatus">Match the flowers.</span><b id="streakGameMoves">0 moves · 0 / 4</b></div>' +
-      '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game"></div>' +
+    '<section class="sg-section sg-game-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">PLAY</span><h3>Petal pairs</h3></div><span class="sg-game-stamp">6 pairs</span></div>' +
+      '<div class="sg-game-score"><span id="streakGameStatus">Find all six pairs.</span><b id="streakGameMoves">0 moves · 0 / 6</b><small id="streakGameBest">No best yet</small></div>' +
+      '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div>' +
       '<button type="button" class="sg-game-reset" id="streakGameReset">Shuffle ↻</button></section>',
     '<section class="sg-section sg-friends-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">YOUR CIRCLE</span><h3>Friends in bloom</h3></div><span class="sg-friends-count">' + friends.length + '</span></div>' +
       streakFriendsMarkup(todayKey) + '</section>',
@@ -2397,12 +2316,6 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  const calendarSummary = e.target.closest('.sg-calendar-foldout > summary');
-  if (calendarSummary) {
-    streakCalendarExpanded = !calendarSummary.parentElement.open;
-    return;
-  }
-
   const streakFriendButton = e.target.closest('[data-streak-friend]');
   if (streakFriendButton) {
     const friend = friends.find(user => user.username === streakFriendButton.dataset.streakFriend);
@@ -2419,10 +2332,6 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  const streakMonth = e.target.closest('[data-streak-month]');
-  if (streakMonth) { streakCalendarExpanded = true; streakCalendarOffset += streakMonth.dataset.streakMonth === 'next' ? 1 : -1; streakSelectedDate = ''; renderStreakPage(); return; }
-  const streakDate = e.target.closest('[data-streak-date]');
-  if (streakDate && !streakDate.disabled) { streakCalendarExpanded = true; streakSelectedDate = streakDate.dataset.streakDate; renderStreakPage(); return; }
   const streakWeekDate = e.target.closest('[data-streak-week-date]');
   if (streakWeekDate) { streakSelectedWeekDate = streakWeekDate.dataset.streakWeekDate; renderStreakPage(); return; }
   if (e.target.closest('#streakAddGoal')) { const form = $('#streakGoalForm'); form?.classList.toggle('hidden'); if (form && !form.classList.contains('hidden')) $('#streakGoalInput')?.focus(); return; }
