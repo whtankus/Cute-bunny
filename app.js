@@ -3011,7 +3011,7 @@ window.addEventListener('orientationchange', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('resize', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('scroll', scheduleNotesKeyboardLayout);
 
-// Reveal the Notes masthead on a deliberate upward gesture; tuck it away on a deliberate downward gesture.
+// Hide the Notes masthead while scrolling upward; reveal it while scrolling downward.
 document.addEventListener('scroll', event => {
   const thread = event.target;
   if (page !== 'notes' || thread?.id !== 'chatThread') return;
@@ -3030,6 +3030,7 @@ document.addEventListener('scroll', event => {
     return;
   }
 
+  // At the beginning of the conversation, always keep the masthead visible.
   if (currentTop <= 8) {
     if (headerHidden) document.body.classList.remove('notes-header-hidden');
     notesHeaderLastScrollTop = currentTop;
@@ -3040,10 +3041,11 @@ document.addEventListener('scroll', event => {
   const directionThreshold = headerHidden ? 9 : 18;
   if (Math.abs(delta) < directionThreshold) return;
 
-  if (delta < 0 && headerHidden) {
-    document.body.classList.remove('notes-header-hidden');
-  } else if (delta > 0 && !headerHidden && currentTop > 42) {
+  // Upward movement hides the masthead; downward movement brings it back.
+  if (delta < 0 && !headerHidden) {
     document.body.classList.add('notes-header-hidden');
+  } else if (delta > 0 && headerHidden && currentTop > 42) {
+    document.body.classList.remove('notes-header-hidden');
   }
   notesHeaderLastScrollTop = currentTop;
 }, { capture:true, passive:true });
