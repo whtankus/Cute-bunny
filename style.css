@@ -7002,3 +7002,12 @@ body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboa
     transition:none!important;
   }
 }
+
+/* v122 — protect the first and last Notes messages from the viewport edges and floating composer. */
+body.notes-page-active #content .chat-page .chat-thread {
+  box-sizing:border-box!important;
+  padding-top:44px!important;
+  padding-bottom:96px!important;
+  scroll-padding-top:44px!important;
+  scroll-padding-bottom:96px;
+}
