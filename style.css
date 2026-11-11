@@ -2884,3 +2884,25 @@ body.notes-page-active .app #content {
 #content .chat-page .chat-thread>.chat-empty {
   flex:0 0 auto!important;
 }
+
+
+/* Notes fixes: remove the outer conversation frame without changing message bubbles. */
+#content .chat-page .chat-thread {
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+
+/* Keep the top app header at the top of the Notes flex column. */
+body.notes-page-active .app>header {
+  flex:0 0 64px!important;
+  margin:0 auto!important;
+}
+
+/* Long-press actions are portaled to <body> and must stay above scroll containers. */
+.chat-actions-popup {
+  position:fixed!important;
+  z-index:1000!important;
+  max-width:calc(100vw - 24px);
+  white-space:nowrap;
+}
