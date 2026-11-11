@@ -7347,12 +7347,13 @@ body.notes-page-active #content .chat-page.notes-keyboard-open {
 }
 
 
-/* Keep the Delete action compact on songs uploaded by the current user. */
+/* Smaller Delete action on songs uploaded by the current user. */
 .card-song-delete {
-  width:64px!important;
-  min-width:64px!important;
-  min-height:29px!important;
-  padding:4px 7px!important;
+  width:56px!important;
+  min-width:56px!important;
+  min-height:26px!important;
+  padding:3px 5px!important;
+  font-size:.64rem!important;
   justify-self:end;
   border-color:#e7b9ca!important;
   background:linear-gradient(145deg,#fff0f4,#fbe1eb)!important;
