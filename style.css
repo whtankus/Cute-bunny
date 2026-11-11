@@ -2963,3 +2963,36 @@ body.notes-page-active .app>header {
   border-radius:inherit;
   object-fit:cover!important;
 }
+
+
+/* Keep the final message a little closer to the writing bar. */
+#content .chat-page .chat-thread {
+  padding-bottom:24px!important;
+  scroll-padding-bottom:24px!important;
+}
+
+/* Long-press menu sits beside its message instead of above or below it. */
+.chat-actions-popup {
+  position:fixed!important;
+  z-index:1000!important;
+  top:auto;
+  bottom:auto;
+  left:auto;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 5px;
+  max-width:calc(100vw - 20px);
+  white-space:nowrap;
+  transform:translateY(-50%);
+  animation:chat-actions-side-in .14s ease-out both;
+}
+@keyframes chat-actions-side-in {
+  from { opacity:0;transform:translateY(-50%) scale(.96); }
+  to { opacity:1;transform:translateY(-50%) scale(1); }
+}
+.chat-actions-popup .chat-action-btn {
+  min-height:28px;
+  padding:5px 9px;
+  font-size:.7rem;
+}
