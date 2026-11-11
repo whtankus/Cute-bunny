@@ -2996,3 +2996,20 @@ body.notes-page-active .app>header {
   padding:5px 9px;
   font-size:.7rem;
 }
+
+
+/* Left-align every wrapped line inside incoming and outgoing chat bubbles. */
+.chat-bubble-wrap>.chat-bubble,
+.chat-bubble-wrap>.chat-bubble .chat-message-text {
+  text-align:left!important;
+}
+
+/* Slightly reduce the Copy/Delete action pill's overall width. */
+.chat-actions-popup {
+  gap:3px;
+  padding:3px 4px;
+}
+.chat-actions-popup .chat-action-btn {
+  padding:4px 7px;
+  font-size:.68rem;
+}
