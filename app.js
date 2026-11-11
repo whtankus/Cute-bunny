@@ -1436,6 +1436,13 @@ function musicTrackDetails(track) {
   return { title: fileName || 'A little song', artist: track?.author?.displayName || 'Shared favorite' };
 }
 
+function getMusicPlaylist(source = feed) {
+  return source
+    .filter(track => track.kind === 'song')
+    .slice()
+    .sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0));
+}
+
 function memoryCard(m, options = {}) {
   const owner = m.author || {};
   const name = esc(owner.displayName || owner.display_name || 'Friend');
@@ -1624,7 +1631,7 @@ function render() {
       <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || '<div class="empty">Your garden is waiting for its first photo ♡</div>'}</section>
     `;
   } else if (page === 'music') {
-    const orderedSongs = songs.slice().sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0));
+    const orderedSongs = getMusicPlaylist(visibleFeed);
     c.innerHTML = `
       <section class="bunny-music-page" aria-label="Bunny music playlist">
         <div class="bunny-music-hero">
@@ -1808,7 +1815,7 @@ function syncPlayer() {
 }
 
 async function playSong(id) {
-  const songs = feed.filter(x => x.kind === 'song'), index = songs.findIndex(x => String(x.id) === String(id)), audio = $('#globalAudio');
+  const songs = getMusicPlaylist(), index = songs.findIndex(x => String(x.id) === String(id)), audio = $('#globalAudio');
   if (index < 0) return toast('This song is no longer in your garden ♡');
   if (String(playlist[playlistIndex]?.id) === String(id) && audio.src) {
     if (audio.paused) await audio.play().catch(() => {});
