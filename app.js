@@ -2342,6 +2342,29 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  const gardenFlowerButton = e.target.closest('[data-sg-garden-flower]');
+  if (gardenFlowerButton && !gardenFlowerButton.disabled) {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const blooms = saveStreakGardenBloom(todayKey, gardenFlowerButton.dataset.sgGardenFlower);
+    gardenFlowerButton.classList.add('is-watered');
+    gardenFlowerButton.disabled = true;
+    gardenFlowerButton.setAttribute('aria-pressed', 'true');
+    gardenFlowerButton.setAttribute('aria-label', 'Watered flower');
+    const bloomCount = $('#sgGardenBloomCount');
+    if (bloomCount) {
+      bloomCount.textContent = blooms.size === 4 ? 'Garden in bloom ✿' : blooms.size + ' / 4 watered';
+      bloomCount.classList.toggle('is-complete', blooms.size === 4);
+    }
+    const gardenArt = $('#sgGardenArt');
+    if (gardenArt) {
+      gardenArt.classList.remove('sg-water-pop');
+      void gardenArt.offsetWidth;
+      gardenArt.classList.add('sg-water-pop');
+      window.setTimeout(() => gardenArt.classList.remove('sg-water-pop'), 620);
+    }
+    return;
+  }
+
   const streakFriendButton = e.target.closest('[data-streak-friend]');
   if (streakFriendButton) {
     const friend = friends.find(user => user.username === streakFriendButton.dataset.streakFriend);
