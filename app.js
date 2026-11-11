@@ -735,19 +735,11 @@ function renderNotesPage() {
 
   content.innerHTML = `
     <section class="chat-page" aria-label="Notes conversation">
-      <header class="chat-header">
-        <div class="chat-heading-copy">
-          <p class="eyebrow">A LITTLE CORNER FOR TWO</p>
-          <h2>Little Notes</h2>
-          <p>Words worth keeping close ♡</p>
-        </div>
-        <button type="button" class="chat-header-action" id="openMyNoteComposer">＋ Share a thought</button>
-      </header>
       <div class="chat-thread" id="chatThread" aria-live="polite">
         ${messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>'}
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
-        <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="send" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
+        <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>➤</button>
       </form>
     </section>
@@ -2035,9 +2027,10 @@ document.addEventListener('keydown', event => {
     event.key === 'Enter' &&
     !event.shiftKey &&
     !event.isComposing &&
-    event.keyCode !== 229
+    event.keyCode !== 229 &&
+    !isTouchNotesViewport()
   ) {
-    // Enter sends on desktop and mobile; Shift+Enter remains available for a new line.
+    // Enter sends on desktop; on phones it keeps the keyboard's normal new-line action.
     event.preventDefault();
     void sendChatMessage();
     return;
