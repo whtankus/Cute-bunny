@@ -2702,9 +2702,9 @@ body.notes-page-active .app>header {
 }
 
 
-/* Give the auto-scroll a small, exact end spacer when it needs to clear a sliced message. */
+/* Keep a fixed, predictable end inset; it never grows as the list scrolls. */
 #content .chat-page .chat-thread {
-  padding-bottom:var(--notes-end-clearance,28px)!important;
+  padding-bottom:28px!important;
 }
 
 
