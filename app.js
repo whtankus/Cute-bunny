@@ -823,8 +823,8 @@ function renderStreakPage() {
     previous = day;
   });
 
-  const gardenStage = count >= 30 ? 'Your garden is in full bloom.' : count >= 14 ? 'Your flowers are thriving.' :
-    count >= 7 ? 'Your garden is blooming.' : count ? 'Your garden is growing.' : 'Your first bloom is waiting.';
+  const gardenStage = count >= 30 ? 'Your garden is in full bloom' : count >= 14 ? 'Your flowers are thriving' :
+    count >= 7 ? 'Your garden is blooming' : count ? 'Your garden is growing' : 'Your first bloom is waiting';
 
   const milestones = [
     {days:3, icon:'🌱', name:'Tiny sprout'},
