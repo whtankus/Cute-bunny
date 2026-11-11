@@ -3063,3 +3063,19 @@ body.notes-page-active .app>header {
     padding-right:14.58px!important;
   }
 }
+
+
+/* v77 — restore content-sized bubbles and tighten only same-sender message gaps. */
+.chat-page .chat-bubble-wrap>.chat-bubble>.chat-message-text,
+.home-note-memory .chat-bubble-wrap>.chat-bubble>.chat-message-text {
+  width:auto!important;
+  max-width:100%!important;
+  min-width:0!important;
+  flex:0 1 auto!important;
+  margin:0!important;
+  text-align:left!important;
+  text-align-last:left!important;
+}
+#content .chat-page .chat-thread>.chat-message.is-continuation {
+  margin-top:-8px!important;
+}
