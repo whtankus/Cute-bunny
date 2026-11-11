@@ -3159,3 +3159,31 @@ body.notes-page-active .app>header {
 #content .feed-list .feed-item[data-kind="note"].is-continuation .chat-bubble-wrap {
   margin-top:4px!important;
 }
+
+
+/* v85 — smoothly tuck away the Notes masthead for the keyboard and scroll direction. */
+body.notes-page-active {
+  --notes-header-collapse:64px;
+}
+body.notes-page-active .app>header {
+  transition:transform .24s cubic-bezier(.2,.75,.25,1), opacity .18s ease, margin-bottom .24s cubic-bezier(.2,.75,.25,1);
+}
+body.notes-page-active.notes-header-hidden .app>header {
+  transform:translateY(-105%)!important;
+  opacity:0!important;
+  margin-bottom:calc(-1 * var(--notes-header-collapse))!important;
+  pointer-events:none!important;
+}
+body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
+  height:calc(var(--notes-page-height,calc(100dvh - 180px)) + var(--notes-header-collapse))!important;
+}
+@media(max-width:520px) {
+  body.notes-page-active {
+    --notes-header-collapse:60px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.notes-page-active .app>header {
+    transition:none!important;
+  }
+}
