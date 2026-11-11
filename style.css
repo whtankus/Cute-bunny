@@ -3584,3 +3584,96 @@ body[data-mode="dark"] .sg-alltime-goals{color:#c3d4b8}
 @media(prefers-reduced-motion:reduce){
   .streak-garden-page *,.streak-garden-page *:before,.streak-garden-page *:after{animation:none!important;transition:none!important}
 }
+
+
+/* Home happy-things cards: one shared geometry, equal row height and aligned actions. */
+.happy-things-grid{align-items:stretch;grid-auto-rows:1fr}
+.happy-things-grid>.tile{display:flex;flex-direction:column;align-items:stretch;align-self:stretch;min-width:0;height:100%;margin:0;padding:13px;border:1.5px solid #ead9df;border-radius:21px;background:rgba(255,253,249,.95);box-shadow:0 7px 18px #8b68800c;transform:none!important}
+.happy-things-grid>.tile:hover{transform:translateY(-3px)!important}
+.happy-things-grid>.tile>.tile-art{width:100%;height:132px;flex:0 0 132px;margin:0;border-radius:16px}
+.happy-things-grid>.tile>h3{min-height:1.4em;margin:11px 3px 3px;font-size:1rem;line-height:1.4}
+.happy-things-grid>.tile>p{height:1.4em;min-height:1.4em;margin:5px 3px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.83rem;line-height:1.4}
+.happy-things-grid>.tile>.primary{width:100%;height:43px;min-height:43px;max-height:43px;margin-top:auto;padding:9px 12px;border-radius:99px;white-space:nowrap}
+.streak-tile .streak-art{background:linear-gradient(145deg,#f7dce7 0%,#eee5fb 55%,#e4f1ef 100%)}
+.streak-art-value{display:flex;align-items:center;justify-content:center;gap:7px;width:max-content;height:auto;color:#765474;line-height:1}
+.streak-art-value .streak-fire-emoji{display:inline-block;font-size:2.3rem;line-height:1}
+.streak-art-value strong{display:block;color:#70546d;font:800 2.45rem/1 Quicksand,sans-serif;font-variant-numeric:tabular-nums;text-shadow:0 2px 0 #fff8}
+.streak-art i{position:absolute;top:12px;right:14px;color:#fff;font:normal 1.25rem Caveat,cursive}
+.streak-open-button{display:block;text-align:center}
+body[data-mode="dark"] .streak-art-value strong{color:#f4ddea;text-shadow:0 2px 0 #342b3c}
+@media(max-width:520px){
+  .happy-things-grid>.tile{padding:10px;border-radius:18px}
+  .happy-things-grid>.tile>.tile-art{height:105px;flex-basis:105px;border-radius:15px}
+  .happy-things-grid>.tile>h3{font-size:.92rem}
+  .happy-things-grid>.tile>p{font-size:.76rem}
+  .happy-things-grid>.tile>.primary{height:43px;min-height:43px;max-height:43px;padding:8px 6px;font-size:.78rem}
+  .streak-art-value .streak-fire-emoji{font-size:2.05rem}
+  .streak-art-value strong{font-size:2.2rem}
+}
+@media(max-width:390px){
+  .streak-art-value{gap:5px}
+  .streak-art-value .streak-fire-emoji{font-size:1.9rem}
+  .streak-art-value strong{font-size:2.05rem}
+}
+
+/* Small Streak Garden interactions: a local flower-matching game and followed-friend streaks. */
+.sg-growth-extras{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+.sg-growth-extras>.sg-section{height:100%;padding:16px 15px}
+.sg-game-stamp,.sg-friends-count{flex:none;padding:5px 8px;border:1px solid #ead8e0;border-radius:99px;background:#fff7f4;color:#9d6b87;font-size:.62rem;font-weight:900}
+.sg-game-score{display:flex;flex-direction:column;gap:4px;margin:0 0 11px;color:#806d82;font-size:.66rem}
+.sg-game-score b{color:#9c6683;font-size:.64rem}
+.sg-petal-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.sg-petal-card{position:relative;display:grid;place-items:center;aspect-ratio:1;min-width:0;padding:0;border:1px solid #e6d6e0;border-radius:13px;background:linear-gradient(145deg,#f8eaf0,#f0eafa);color:#795c78;box-shadow:0 3px 0 #e5d4df;transition:transform .16s,background .18s,border-color .18s}
+.sg-petal-card:not(:disabled):hover{transform:translateY(-2px)}
+.sg-petal-card:active{transform:scale(.96)}
+.sg-petal-back{display:grid;place-items:center;width:100%;height:100%;color:#bd83a0;font:1.45rem Caveat,cursive}
+.sg-petal-face{display:none;font-size:1.55rem;line-height:1}
+.sg-petal-card.is-revealed .sg-petal-back{display:none}
+.sg-petal-card.is-revealed .sg-petal-face{display:block;animation:sg-petal-reveal .2s ease-out}
+.sg-petal-card.is-matched{border-color:#c8d9bd;background:linear-gradient(145deg,#edf5e7,#f9f7eb);box-shadow:0 3px 0 #d4e0c9}
+.sg-petal-card.is-matched .sg-petal-face{filter:drop-shadow(0 2px 3px #a8bb8d55)}
+@keyframes sg-petal-reveal{from{opacity:.45;transform:scale(.72)}to{opacity:1;transform:scale(1)}}
+.sg-game-reset{display:inline-flex;align-items:center;justify-content:center;margin-top:11px;padding:8px 12px;border:1px solid #e8d5df;border-radius:99px;background:#fff7f7;color:#a06483;font-size:.7rem;font-weight:900}
+.sg-game-reset:hover{background:#f9e9ef}
+.sg-game-note{margin:9px 0 0;color:#8e7b8d;font-size:.63rem;line-height:1.4}
+.sg-friend-list{display:grid;gap:7px}
+.sg-friend-card{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:8px;border:1px solid #eadfe3;border-radius:13px;background:#fffdf9;color:#654f68;text-align:left;transition:transform .15s,border-color .15s,background .15s}
+.sg-friend-card:hover{transform:translateY(-1px);border-color:#d7b6c6;background:#fff8f8}
+.sg-friend-avatar{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:12px;background:#f7e6ed;font-size:1.25rem}
+.sg-friend-identity{display:flex;flex:1;flex-direction:column;gap:2px;min-width:0}
+.sg-friend-identity b,.sg-friend-identity small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-friend-identity b{color:#6a526c;font:700 .75rem Quicksand,sans-serif}
+.sg-friend-identity small{color:#9a8294;font-size:.62rem}
+.sg-friend-streak{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none;max-width:94px}
+.sg-friend-streak strong{color:#9f6885;font-size:.73rem;white-space:nowrap}
+.sg-friend-streak small{color:#907b8d;font-size:.56rem;line-height:1.2;text-align:right}
+.sg-friends-empty{display:grid;justify-items:center;gap:7px;padding:14px 5px;text-align:center}
+.sg-friends-empty>span{font-size:1.8rem}
+.sg-friends-empty p{margin:0;color:#8f7b8d;font-size:.7rem;line-height:1.45}
+.sg-find-friends,.sg-more-friends{margin-top:8px;padding:7px 0;border:0;background:transparent;color:#a56684;font-size:.7rem;font-weight:900}
+.sg-more-friends{display:block;margin:8px auto 0}
+body[data-mode="dark"] .sg-game-stamp,body[data-mode="dark"] .sg-friends-count{background:#473744;border-color:#665264;color:#edccde}
+body[data-mode="dark"] .sg-game-score,body[data-mode="dark"] .sg-game-note{color:#c7b4c7}
+body[data-mode="dark"] .sg-game-score b{color:#e5bed2}
+body[data-mode="dark"] .sg-petal-card{border-color:#695469;background:linear-gradient(145deg,#493849,#3e3448);color:#f4ddea;box-shadow:0 3px 0 #2d2634}
+body[data-mode="dark"] .sg-petal-card.is-matched{border-color:#62785b;background:linear-gradient(145deg,#3c4b3a,#41413d);box-shadow:0 3px 0 #2e3b2e}
+body[data-mode="dark"] .sg-game-reset{background:#493744;border-color:#6c5267;color:#f0d7e5}
+body[data-mode="dark"] .sg-friend-card{background:#3d3441;border-color:#5d4e61;color:#f1e4ee}
+body[data-mode="dark"] .sg-friend-avatar{background:#514054}
+body[data-mode="dark"] .sg-friend-identity b{color:#f0deeb}
+body[data-mode="dark"] .sg-friend-identity small,body[data-mode="dark"] .sg-friend-streak small{color:#c2aec4}
+body[data-mode="dark"] .sg-friend-streak strong{color:#efc6d9}
+body[data-mode="dark"] .sg-friends-empty p{color:#c2aec4}
+@media(max-width:620px){
+  .sg-growth-extras{grid-template-columns:1fr;gap:10px}
+  .sg-growth-extras>.sg-section{padding:15px}
+}
+@media(max-width:390px){
+  .sg-petal-board{gap:6px}
+  .sg-petal-card{border-radius:11px}
+  .sg-petal-face{font-size:1.4rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .happy-things-grid>.tile:hover,.sg-petal-card,.sg-friend-card{transition:none!important}
+  .sg-petal-card.is-revealed .sg-petal-face{animation:none!important}
+}
