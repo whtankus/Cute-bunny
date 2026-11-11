@@ -1165,7 +1165,7 @@ body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{b
 
 .chat-composer {
   position:sticky;
-  bottom:calc(76px + env(safe-area-inset-bottom));
+  bottom:calc(var(--notes-nav-height,68px) + 8px);
   z-index:12;
   display:flex;
   align-items:flex-end;
