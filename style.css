@@ -4528,3 +4528,19 @@ body[data-mode="dark"] .streak-garden-page .sg-garden-bloom-count.is-complete{co
   .streak-garden-page .sg-garden-art{width:100%;max-width:360px}
   .streak-garden-page .sg-garden-flower-hit{width:42px;height:42px}
 }
+
+
+/* v104 — frame the garden scene to match the outer hero card. */
+.streak-garden-page .sg-garden-art{
+  border:1px solid #ead4df;
+  border-radius:24px;
+  overflow:hidden;
+  background:rgba(255,250,247,.2);
+  box-shadow:0 4px 13px #765b6b14,inset 0 0 0 3px #fff8;
+}
+.streak-garden-page .sg-garden-svg{border-radius:inherit}
+body[data-mode="dark"] .streak-garden-page .sg-garden-art{
+  border-color:#655064;
+  background:rgba(56,45,61,.32);
+  box-shadow:0 4px 13px #0003,inset 0 0 0 3px #ffffff12;
+}
