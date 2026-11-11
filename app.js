@@ -1862,7 +1862,8 @@ function syncNotesKeyboardLayout() {
   const input = $('#chatInput');
   const focused = document.activeElement === input;
   const viewport = window.visualViewport;
-  const mobile = window.matchMedia('(max-width: 720px)').matches;
+  const touchDevice = window.matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints || 0) > 0;
+  const mobile = window.matchMedia('(max-width: 720px)').matches && touchDevice;
   const visualHeight = viewport?.height || window.innerHeight;
   const visualTop = viewport?.offsetTop || 0;
   const keyboardInset = viewport
