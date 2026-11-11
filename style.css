@@ -7093,3 +7093,39 @@ body.notes-page-active #content .chat-page .chat-thread {
   -webkit-overflow-scrolling:touch;
   overflow-anchor:auto;
 }
+
+
+/* v123 — restore Instagram-style Notes header and composer-boundary scrolling. */
+body.notes-page-active .app>header {
+  transform:translate3d(0,0,0)!important;
+  opacity:1!important;
+  margin-bottom:0!important;
+  pointer-events:auto!important;
+  transition:transform .24s cubic-bezier(.22,.61,.36,1),opacity .16s ease!important;
+  will-change:transform,opacity;
+}
+body.notes-page-active.notes-header-hidden .app>header {
+  transform:translate3d(0,-105%,0)!important;
+  opacity:0!important;
+  margin-bottom:calc(-1 * var(--notes-header-collapse-size,0px))!important;
+  pointer-events:none!important;
+}
+/* Collapse the masthead's layout slot immediately; animate only the masthead itself. */
+body.notes-page-active.notes-keyboard-open .app>header {
+  margin-bottom:calc(-1 * var(--notes-header-collapse-size,0px))!important;
+}
+body.notes-page-active #content .chat-page {
+  box-sizing:border-box!important;
+  padding:0 0 var(--notes-composer-space,76px)!important;
+  overflow:hidden!important;
+}
+body.notes-page-active #content .chat-page .chat-thread {
+  padding-bottom:10px!important;
+  scroll-padding-bottom:10px!important;
+}
+@media(prefers-reduced-motion:reduce) {
+  body.notes-page-active .app>header {
+    transition:none!important;
+    will-change:auto;
+  }
+}
