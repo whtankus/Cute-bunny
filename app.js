@@ -6,6 +6,7 @@ const sb = window.supabase && cfg.supabaseUrl && !cfg.supabaseUrl.startsWith('PA
   : null;
 
 let token = localStorage.getItem('cuteBunnyToken') || '', me = null, page = 'home', feed = [], friends = [], friendResults = [], friendQuery = '';
+let appPageStack = ['home'], appBackGuardInstalled = false, appBackExitArmedUntil = 0, appBackExitPending = false;
 let mediaObjectUrls = [], mediaUrlCache = new Map(), pendingMediaUrls = new Map(), reactedMemories = new Set();
 let pendingDeleteTimers = new Map(), authMode = 'register';
 let playlist = [], playlistIndex = -1, audioObjectUrl = '';
@@ -364,7 +365,8 @@ function setUser(u) {
   $('#authGate').classList.add('hidden');
   $('#welcome').classList.add('hidden');
   $('#app').classList.remove('hidden');
-  go('home');
+  go('home', { resetStack: true });
+  installAppBackNavigation();
   startRealtime();
   void loadNotifications();
 }
@@ -519,9 +521,11 @@ function popLoveHeart(card, e) {
 
 }
 
-function go(p) {
+function go(p, options = {}) {
   const validPages = ['home', 'gallery', 'music', 'notes', 'friends'];
   if (!validPages.includes(p)) return;
+  if (options.resetStack) appPageStack = [p];
+  else if (!options.fromBack && p !== page && appBackGuardInstalled) appPageStack.push(p);
 
   if (page === 'notes' && p !== 'notes') {
     $('#chatInput')?.blur();
@@ -555,6 +559,86 @@ function go(p) {
   }
 }
 
+
+
+/* Keep Android/browser Back inside the app until Home is reached. */
+function installAppBackNavigation() {
+  appPageStack = ['home'];
+  appBackExitArmedUntil = 0;
+  appBackExitPending = false;
+  try {
+    history.replaceState({ cuteBunnyAppRoot: true }, '', window.location.href);
+    history.pushState({ cuteBunnyBackGuard: true }, '', window.location.href);
+    appBackGuardInstalled = true;
+  } catch {
+    appBackGuardInstalled = false;
+  }
+}
+
+function pushAppBackGuard() {
+  if (!appBackGuardInstalled || appBackExitPending) return;
+  try {
+    history.pushState({ cuteBunnyBackGuard: true }, '', window.location.href);
+  } catch {
+    appBackGuardInstalled = false;
+  }
+}
+
+function handleAppBackNavigation() {
+  if (!appBackGuardInstalled || appBackExitPending || !me || $('#app')?.classList.contains('hidden')) return;
+
+  // The first Back action dismisses the software keyboard without changing pages.
+  const input = $('#chatInput');
+  if (document.activeElement === input || document.body.classList.contains('notes-keyboard-open')) {
+    input?.blur();
+    requestAnimationFrame(syncNotesKeyboardLayout);
+    appBackExitArmedUntil = 0;
+    pushAppBackGuard();
+    return;
+  }
+
+  // Back closes an open dialog or transient panel before navigating the app.
+  if (document.querySelector('.auth-gate:not(.hidden)')) {
+    closeAllGates();
+    pushAppBackGuard();
+    return;
+  }
+  if (activeMessageActionsId) {
+    hideMessageActions();
+    pushAppBackGuard();
+    return;
+  }
+  const musicPanel = $('#nowPlayingPanel');
+  if (musicPanel && !musicPanel.classList.contains('hidden')) {
+    toggleMusicIsland(false);
+    pushAppBackGuard();
+    return;
+  }
+
+  // Each section visit is kept in a lightweight in-app stack.
+  if (appPageStack.length > 1) {
+    appPageStack.pop();
+    const previousPage = appPageStack[appPageStack.length - 1];
+    go(previousPage, { fromBack: true });
+    appBackExitArmedUntil = 0;
+    pushAppBackGuard();
+    return;
+  }
+
+  // At Home, show an exit hint. A second Back within 2.3 seconds leaves the app.
+  const now = Date.now();
+  if (now <= appBackExitArmedUntil) {
+    appBackExitArmedUntil = 0;
+    appBackExitPending = true;
+    history.back();
+    return;
+  }
+  appBackExitArmedUntil = now + 2300;
+  toast('You are at Home · Press back again to exit.');
+  pushAppBackGuard();
+}
+
+window.addEventListener('popstate', handleAppBackNavigation);
 
 /* One reusable note message structure for the Notes conversation and Home history. */
 function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
@@ -663,7 +747,7 @@ function renderNotesPage() {
         ${messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>'}
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
-        <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
+        <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="send" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>➤</button>
       </form>
     </section>
@@ -1168,6 +1252,7 @@ async function sendChatMessage() {
 
   field.value = '';
   field.style.height = '';
+  field.style.overflowY = 'hidden';
   feed = [optimistic, ...feed];
   hideMessageActions();
   renderNotesPage();
@@ -1836,10 +1921,14 @@ document.addEventListener('click', async e => {
 
 function syncChatComposerState(field = $('#chatInput')) {
   const send = $('#chatSend');
-  if (!send) return;
+  const composer = $('#chatComposer');
+  if (!send || !composer) return;
   const hasMessage = !!field?.value.trim();
+  composer.classList.toggle('has-message', hasMessage);
   send.hidden = !hasMessage;
+  send.disabled = !hasMessage;
   send.setAttribute('aria-hidden', String(!hasMessage));
+  send.setAttribute('aria-label', hasMessage ? 'Send message' : 'Write a message first');
 }
 
 function isTouchNotesViewport() {
@@ -1851,7 +1940,9 @@ document.addEventListener('input', event => {
   if (event.target.id !== 'chatInput') return;
   const field = event.target;
   field.style.height = 'auto';
-  field.style.height = Math.min(field.scrollHeight, 116) + 'px';
+  const nextHeight = Math.min(Math.max(field.scrollHeight, 50), 116);
+  field.style.height = nextHeight + 'px';
+  field.style.overflowY = field.scrollHeight > 116 ? 'auto' : 'hidden';
   syncChatComposerState(field);
   syncNotesKeyboardLayout();
 });
@@ -1944,9 +2035,9 @@ document.addEventListener('keydown', event => {
     event.key === 'Enter' &&
     !event.shiftKey &&
     !event.isComposing &&
-    event.keyCode !== 229 &&
-    !isTouchNotesViewport()
+    event.keyCode !== 229
   ) {
+    // Enter sends on desktop and mobile; Shift+Enter remains available for a new line.
     event.preventDefault();
     void sendChatMessage();
     return;
