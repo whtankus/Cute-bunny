@@ -738,39 +738,41 @@ function flipStreakPetalCard(cardId) {
 }
 function streakFriendSnapshot(friend, todayKey) {
   if (!Object.prototype.hasOwnProperty.call(friend || {}, 'last_login_date')) {
-    return { count: null, label: 'Streak details unavailable' };
+    return { count: null, label: 'Activity unavailable', state: 'unknown' };
   }
   const lastDate = String(friend.last_login_date || '').slice(0,10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(lastDate)) {
-    return { count: 0, label: 'No visit recorded yet' };
-  }
-  const gap = Math.round((Date.parse(todayKey + 'T00:00:00Z') - Date.parse(lastDate + 'T00:00:00Z')) / 86400000);
-  if (!Number.isFinite(gap) || gap < 0) return { count: null, label: 'Streak details unavailable' };
-  if (gap > 1) return { count: 0, label: 'Streak paused' };
+  const gap = streakDateDistance(lastDate, todayKey);
+  if (gap === null || gap < 0) return { count: null, label: 'Activity unavailable', state: 'unknown' };
+  if (gap > 1) return { count: 0, label: 'Streak paused', state: 'paused' };
   const count = Math.max(0, Number(friend.login_streak) || 0);
-  return { count, label: gap === 0 ? 'Here today' : 'Visited yesterday' };
+  if (gap === 1) return { count, label: 'Visit today · ' + streakUtcTimeRemaining() + ' left', state: 'due' };
+  return { count, label: 'Active today', state: 'active' };
 }
 function streakFriendsMarkup(todayKey) {
   if (!Array.isArray(friends) || !friends.length) {
-    return '<div class="sg-friends-empty"><span aria-hidden="true">🐰</span><button type="button" class="sg-find-friends" data-go="friends">Find friends →</button></div>';
+    return '<div class="sg-friends-empty"><span aria-hidden="true">✿</span><p>Your circle is waiting to bloom.</p><button type="button" class="sg-find-friends" data-go="friends">Find friends →</button></div>';
   }
-  const rows = friends.slice(0,4).map(friend => {
+  const stateRank = {active:0,due:1,paused:2,unknown:3};
+  const orderedFriends = [...friends].sort((a,b) => {
+    const aSnapshot = streakFriendSnapshot(a,todayKey);
+    const bSnapshot = streakFriendSnapshot(b,todayKey);
+    return (stateRank[aSnapshot.state] ?? 3) - (stateRank[bSnapshot.state] ?? 3) ||
+      (Number(b.login_streak) || 0) - (Number(a.login_streak) || 0) ||
+      String(a.username || '').localeCompare(String(b.username || ''));
+  });
+  const rows = orderedFriends.map(friend => {
     const name = friend.displayName || friend.display_name || friend.username || 'Friend';
     const snapshot = streakFriendSnapshot(friend,todayKey);
     const countLabel = snapshot.count === null ? '—' : String(snapshot.count);
-    const duration = snapshot.count === null ? 'streak unavailable' : snapshot.count === 1 ? 'day streak' : 'day streak';
-    return '<button type="button" class="sg-friend-card" data-streak-friend="' + esc(friend.username || '') +
+    return '<button type="button" class="sg-friend-card is-' + snapshot.state + '" data-streak-friend="' + esc(friend.username || '') +
       '" aria-label="Open ' + esc(name) + ' profile">' +
       '<span class="sg-friend-avatar">' + esc(friend.mascot || '🐰') + '</span>' +
-      '<span class="sg-friend-identity"><b>' + esc(name) + '</b><small>@' + esc(friend.username || 'friend') + '</small></span>' +
+      '<span class="sg-friend-identity"><b>' + esc(name) + '</b><small>@' + esc(friend.username || 'friend') + '</small>' +
+      '<em>' + esc(snapshot.label) + '</em></span>' +
       '<span class="sg-friend-streak"><strong>' + (snapshot.count === null ? '✿' : '🔥 ' + countLabel) +
-      '</strong><small>' + (snapshot.count === null ? esc(snapshot.label) : esc(snapshot.label + ' · ' + (snapshot.count === 1 ? '1 day' : snapshot.count + ' days'))) + '</small></span>' +
-      '</button>';
+      '</strong><small>' + (snapshot.count === null ? 'streak' : 'day streak') + '</small></span></button>';
   }).join('');
-  const more = friends.length > 4
-    ? '<button type="button" class="sg-more-friends" data-go="friends">See all ' + friends.length + ' friends →</button>'
-    : '';
-  return '<div class="sg-friend-list">' + rows + '</div>' + more;
+  return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>';
 }
 
 function renderStreakPage() {
