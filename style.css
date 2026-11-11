@@ -2760,3 +2760,51 @@ body.notes-page-active .app>header {
   -webkit-overflow-scrolling:touch;
   overflow-anchor:auto;
 }
+
+
+/* Notes is a single-scroll layout: lock outer page scrolling while this view is active. */
+html:has(body.notes-page-active) {
+  height:100dvh!important;
+  overflow:hidden!important;
+  overscroll-behavior:none;
+}
+body.notes-page-active {
+  height:100dvh!important;
+  min-height:100dvh!important;
+  overflow:hidden!important;
+  overscroll-behavior:none;
+}
+body.notes-page-active .app {
+  height:100dvh!important;
+  min-height:100dvh!important;
+  padding-bottom:0!important;
+  overflow:hidden!important;
+}
+body.notes-page-active .app main,
+body.notes-page-active .app #content {
+  min-height:0!important;
+  padding-bottom:0!important;
+  overflow:hidden!important;
+}
+
+/* One real scrollport; its bottom inset leaves the final line clear of the composer. */
+#content .chat-page {
+  height:var(--notes-page-height,calc(100dvh - 180px))!important;
+  min-height:0!important;
+  overflow:visible!important;
+}
+#content .chat-page .chat-thread {
+  flex:1 1 0!important;
+  min-height:0!important;
+  max-height:none!important;
+  box-sizing:border-box;
+  padding-top:36px!important;
+  padding-bottom:12px!important;
+  scroll-padding-top:36px;
+  scroll-padding-bottom:12px;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  overflow-anchor:auto;
+}
