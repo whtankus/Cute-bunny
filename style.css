@@ -2671,3 +2671,32 @@ html,body,* {
   width:0!important;
   height:0!important;
 }
+
+
+/* Notes layout correction: keep the app masthead visible above the message scrollport. */
+body.notes-page-active .app>header {
+  position:sticky!important;
+  top:0!important;
+  z-index:40!important;
+}
+
+/* Reserve space inside the scrollport for the first message's overhanging heart. */
+#content .chat-page .chat-thread {
+  box-sizing:border-box;
+  padding-top:36px!important;
+  padding-bottom:28px!important;
+  scroll-padding-top:36px;
+  overflow-x:clip!important;
+  overflow-y:auto!important;
+}
+
+/* Follow the changing visual viewport directly; do not animate the composer behind the keyboard. */
+#content .chat-page .chat-composer {
+  transition:none!important;
+}
+@media(max-width:480px) {
+  #content .chat-page .chat-thread {
+    padding-top:36px!important;
+    scroll-padding-top:36px;
+  }
+}
