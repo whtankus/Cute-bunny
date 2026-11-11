@@ -2468,3 +2468,27 @@ body[data-mode="dark"] #content .chat-page .chat-composer textarea:focus {
     min-height:34px!important;
   }
 }
+
+/* Chat bubble shadow refinement: retain lavender tones with a 3px resting offset. */
+.chat-bubble-wrap>.chat-bubble {
+  box-shadow:0 3px 0 #c6a2e8!important;
+}
+.chat-message.is-mine .chat-bubble-wrap>.chat-bubble {
+  box-shadow:0 3px 0 #c3a0e8!important;
+}
+body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble {
+  box-shadow:0 3px 0 #765c91!important;
+}
+body[data-mode="dark"] .chat-message.is-mine .chat-bubble-wrap>.chat-bubble {
+  box-shadow:0 3px 0 #705889!important;
+}
+
+.chat-bubble-wrap>.chat-bubble:active,
+.chat-bubble-wrap>.chat-bubble.is-pressed {
+  box-shadow:0 2px 0 #b58bd8!important;
+}
+body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble:active,
+body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-pressed {
+  box-shadow:0 2px 0 #5e4677!important;
+}
+
