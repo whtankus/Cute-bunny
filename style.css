@@ -6437,25 +6437,25 @@ body[data-mode="dark"] .streak-garden-page .sg-week-day .sg-week-flower.is-click
 .streak-garden-page .sg-game-compact .sg-game-reset-compact {display:none!important}
 .streak-garden-page .sg-game-compact .sg-petal-card.is-celebrating {
   transform-origin:50% 50%;animation:sg-petal-win-pop .92s cubic-bezier(.2,.8,.2,1) both!important;
-  animation-delay:calc(var(--sg-petal-order,0) * 34ms)!important;will-change:transform;
+  animation-delay:var(--sg-petal-delay,0ms)!important;will-change:transform;
 }
 .streak-garden-page .sg-game-compact .sg-petal-card.is-celebrating .sg-petal-face {
   display:block!important;animation:sg-petal-win-spin .92s cubic-bezier(.2,.8,.2,1) both!important;
-  animation-delay:calc(var(--sg-petal-order,0) * 34ms)!important;
+  animation-delay:var(--sg-petal-delay,0ms)!important;
 }
 .streak-garden-page .sg-game-compact .sg-petal-card.is-celebrating .sg-petal-back {display:none!important}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(1){--sg-petal-order:0}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(2){--sg-petal-order:1}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(3){--sg-petal-order:2}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(4){--sg-petal-order:3}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(5){--sg-petal-order:4}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(6){--sg-petal-order:5}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(7){--sg-petal-order:6}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(8){--sg-petal-order:7}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(9){--sg-petal-order:8}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(10){--sg-petal-order:9}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(11){--sg-petal-order:10}
-.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(12){--sg-petal-order:11}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(1){--sg-petal-delay:0ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(2){--sg-petal-delay:34ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(3){--sg-petal-delay:68ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(4){--sg-petal-delay:102ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(5){--sg-petal-delay:136ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(6){--sg-petal-delay:170ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(7){--sg-petal-delay:204ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(8){--sg-petal-delay:238ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(9){--sg-petal-delay:272ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(10){--sg-petal-delay:306ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(11){--sg-petal-delay:340ms}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(12){--sg-petal-delay:374ms}
 @keyframes sg-petal-win-pop {
   0% {transform:scale(.84);filter:brightness(1)}
   38% {transform:scale(1.13);filter:brightness(1.12)}
