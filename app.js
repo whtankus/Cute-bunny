@@ -14,6 +14,10 @@ let notificationRows = [], notificationLoaded = false, notificationLoading = fal
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
 let notesHeaderLastScrollTop = null;
+let notesKeyboardDismissed = false;
+const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
+  ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+  : null;
 const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false, suppressTimer:null };
 
 
@@ -659,7 +663,11 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
   const mine = String(ownerId) === String(me?.id || '');
   const id = String(m.id);
   const liked = reactedMemories.has(id);
-  const hasHeartReaction = (String(m.text || '').match(/\p{L}/gu) || []).length >= 6;
+  const messageValue = String(m.text || '');
+  const messageCharacterCount = noteGraphemeSegmenter
+    ? [...noteGraphemeSegmenter.segment(messageValue)].length
+    : Array.from(messageValue).length;
+  const hasHeartReaction = messageCharacterCount >= 6;
   const heartButton = hasHeartReaction
     ? `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>`
     : '';
@@ -2065,6 +2073,7 @@ function syncNotesKeyboardLayout() {
     document.body.classList.remove('notes-keyboard-open');
     document.body.classList.remove('notes-header-hidden');
     notesHeaderLastScrollTop = null;
+    notesKeyboardDismissed = false;
     document.documentElement.style.setProperty('--notes-keyboard-inset', '0px');
     document.documentElement.style.removeProperty('--notes-page-height');
     notesKeyboardFollowLatest = false;
@@ -2104,13 +2113,14 @@ function syncNotesKeyboardLayout() {
 
   notesPage.classList.toggle('notes-keyboard-open', keyboardOpen);
   document.body.classList.toggle('notes-keyboard-open', keyboardOpen);
-  if (keyboardOpen) {
+  if (keyboardOpen && focused && !notesKeyboardDismissed) {
     document.body.classList.add('notes-header-hidden');
     notesHeaderLastScrollTop = thread?.scrollTop ?? notesHeaderLastScrollTop;
-  } else if (wasOpen) {
+  } else if (wasOpen || notesKeyboardDismissed) {
     document.body.classList.remove('notes-header-hidden');
     notesHeaderLastScrollTop = thread?.scrollTop ?? null;
   }
+  if (!keyboardOpen) notesKeyboardDismissed = false;
   document.documentElement.style.setProperty(
     '--notes-keyboard-inset',
     keyboardOpen ? keyboardInset + 'px' : '0px'
@@ -2154,10 +2164,18 @@ function scheduleNotesKeyboardLayout() {
 }
 
 document.addEventListener('focusin', event => {
-  if (event.target.id === 'chatInput') scheduleNotesKeyboardLayout();
+  if (event.target.id === 'chatInput') {
+    notesKeyboardDismissed = false;
+    scheduleNotesKeyboardLayout();
+  }
 });
 document.addEventListener('focusout', event => {
-  if (event.target.id === 'chatInput') scheduleNotesKeyboardLayout();
+  if (event.target.id === 'chatInput') {
+    notesKeyboardDismissed = true;
+    document.body.classList.remove('notes-header-hidden');
+    notesHeaderLastScrollTop = $('#chatThread')?.scrollTop ?? null;
+    scheduleNotesKeyboardLayout();
+  }
 });
 window.addEventListener('resize', scheduleNotesKeyboardLayout);
 window.addEventListener('orientationchange', scheduleNotesKeyboardLayout);
@@ -2170,7 +2188,7 @@ document.addEventListener('scroll', event => {
   if (page !== 'notes' || thread?.id !== 'chatThread') return;
 
   const currentTop = Math.max(0, Math.round(thread.scrollTop));
-  if (document.body.classList.contains('notes-keyboard-open')) {
+  if (document.body.classList.contains('notes-keyboard-open') && !notesKeyboardDismissed) {
     document.body.classList.add('notes-header-hidden');
     notesHeaderLastScrollTop = currentTop;
     return;
