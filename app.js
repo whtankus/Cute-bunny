@@ -13,6 +13,7 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
+let streakCalendarOffset = 0, streakSelectedDate = '';
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
 const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
@@ -430,14 +431,14 @@ function friendRow(user) {
   return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}</span><span class="friend-copy"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
 }
 
+
 function streakBadge(count) {
   return count >= 30 ? '🌟 Love-garden legend' : count >= 7 ? '🌼 Week in bloom' : count >= 3 ? '🌱 Growing steadily' : count > 0 ? '🌷 First blossoms' : '✨ Fresh start';
 }
-
 function streakWidget() {
-  const count = Math.max(0, Number(me?.login_streak) || 0), filled = count ? ((count - 1) % 7) + 1 : 0;
-  const days = Array.from({ length: 7 }, (_, i) => `<span class="streak-day${i < filled ? ' is-filled' : ''}" aria-hidden="true">${i < filled ? '✿' : '·'}</span>`).join('');
-  return `<article class="tile streak-widget" aria-label="Login streak: ${count} ${count === 1 ? 'day' : 'days'}"><div class="streak-top"><div class="tile-art streak-mascot" aria-hidden="true"><span class="streak-art-count" aria-label="${count} day streak">${count}<i aria-hidden="true">🔥</i></span></div><div class="streak-copy"><small>Your streak</small><strong>${count ? `${count} ${count === 1 ? 'day' : 'days'}` : 'Your first day'}</strong></div></div><p>${count ? count + (count === 1 ? ' day, Keep it going!' : ' days, Keep it going!') : 'Start your streak today ♡'}</p><div class="streak-progress" role="img" aria-label="${filled} of 7 days toward the next milestone">${days}</div><small class="streak-badge">${esc(streakBadge(count))}</small><button type="button" class="primary streak-profile-link" data-open-profile>Open profile →</button></article>`;
+  const count = Math.max(0, Number(me?.login_streak) || 0);
+  const subtitle = count ? count + (count === 1 ? ' day, keep it going!' : ' days, keep it going!') : 'Start your streak today ♡';
+  return '<article class="tile streak-tile"><div class="tile-art streak-art"><span class="streak-art-value">🔥 ' + count + '</span><i>✿</i></div><h3>Your streak</h3><p>' + esc(subtitle) + '</p><button type="button" class="primary" data-go="streak">Open streak →</button></article>';
 }
 
 function recordLoginStreak() {
@@ -460,6 +461,8 @@ function recordLoginStreak() {
   me.login_streak = localCount;
   me.last_login_date = today;
   try { localStorage.setItem(key, JSON.stringify({ count: localCount, date: today })); } catch {}
+  saveStreakHistory(today, localCount);
+  saveStreakMilestones(localCount);
   if (!sb) return;
   void sb.rpc('record_login_streak').then(({ data, error }) => {
     if (error) throw error;
@@ -470,7 +473,227 @@ function recordLoginStreak() {
     me.login_streak = count;
     me.last_login_date = date;
     try { localStorage.setItem(key, JSON.stringify({ count, date })); } catch {}
+    saveStreakHistory(date, count);
+    saveStreakMilestones(count);
   }).catch(() => {});
+}
+
+
+function streakStorageKey(suffix) {
+  return 'cuteBunnyStreak:' + String(me?.id || me?.username || 'guest') + ':' + suffix;
+}
+function streakDateKey(date) {
+  return date.getUTCFullYear() + '-' + String(date.getUTCMonth() + 1).padStart(2, '0') + '-' + String(date.getUTCDate()).padStart(2, '0');
+}
+function shiftStreakDate(key, amount) {
+  const date = new Date(key + 'T00:00:00.000Z');
+  if (Number.isNaN(date.getTime())) return key;
+  date.setUTCDate(date.getUTCDate() + amount);
+  return streakDateKey(date);
+}
+function readStreakHistory() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(streakStorageKey('history')) || '[]');
+    return new Set(Array.isArray(saved) ? saved.filter(value => /^\d{4}-\d{2}-\d{2}$/.test(value)) : []);
+  } catch { return new Set(); }
+}
+function saveStreakHistory(dateKey, count) {
+  const history = readStreakHistory();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey || '')) return;
+  history.add(dateKey);
+  for (let i = 1; i < Math.min(730, Math.max(1, Number(count) || 1)); i++) {
+    history.add(shiftStreakDate(dateKey, -i));
+  }
+  try {
+    localStorage.setItem(streakStorageKey('history'), JSON.stringify([...history].sort().slice(-1095)));
+  } catch {}
+}
+function readStreakGoals() {
+  const defaults = [
+    {id:'memory', label:'Share a happy memory'},
+    {id:'note', label:'Send a little love note'},
+    {id:'music', label:'Enjoy a cozy song'}
+  ];
+  try {
+    const saved = JSON.parse(localStorage.getItem(streakStorageKey('goals')) || 'null');
+    if (Array.isArray(saved)) return saved.filter(goal => goal && goal.id && goal.label).slice(0, 6);
+  } catch {}
+  try { localStorage.setItem(streakStorageKey('goals'), JSON.stringify(defaults)); } catch {}
+  return defaults;
+}
+function writeStreakGoals(goals) {
+  try { localStorage.setItem(streakStorageKey('goals'), JSON.stringify(goals.slice(0, 6))); } catch {}
+}
+function readStreakGoalChecks(dateKey) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(streakStorageKey('checks:' + dateKey)) || '{}');
+    return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+  } catch { return {}; }
+}
+function updateStreakGoalProgress() {
+  const list = $('#streakGoalsList');
+  if (!list) return;
+  const checks = readStreakGoalChecks(new Date().toISOString().slice(0, 10));
+  const boxes = [...list.querySelectorAll('[data-streak-goal]')];
+  const completed = boxes.filter(box => !!checks[box.dataset.streakGoal]).length;
+  const label = $('#streakGoalProgress');
+  const bar = $('#streakGoalProgressBar');
+  if (label) label.textContent = completed + ' of ' + boxes.length + ' completed';
+  if (bar) bar.style.width = (boxes.length ? completed / boxes.length * 100 : 0) + '%';
+  boxes.forEach(box => box.closest('.streak-goal')?.classList.toggle('is-done', !!checks[box.dataset.streakGoal]));
+}
+function readStreakMilestones() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(streakStorageKey('milestones')) || '[]');
+    return new Set(Array.isArray(saved) ? saved.map(Number) : []);
+  } catch { return new Set(); }
+}
+function saveStreakMilestones(count) {
+  const earned = readStreakMilestones();
+  [3, 7, 14, 30, 50, 100, 180, 365].forEach(value => { if (count >= value) earned.add(value); });
+  try { localStorage.setItem(streakStorageKey('milestones'), JSON.stringify([...earned].sort((a,b) => a-b))); } catch {}
+}
+function streakCalendarMarkup(todayKey, history) {
+  const monthDate = new Date();
+  monthDate.setUTCDate(1);
+  monthDate.setUTCMonth(monthDate.getUTCMonth() + streakCalendarOffset);
+  const year = monthDate.getUTCFullYear();
+  const month = monthDate.getUTCMonth();
+  const firstDay = new Date(Date.UTC(year, month, 1));
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const leadingDays = (firstDay.getUTCDay() + 6) % 7;
+  const prefix = year + '-' + String(month + 1).padStart(2, '0') + '-';
+  const monthTitle = new Intl.DateTimeFormat(undefined, {month:'long', year:'numeric', timeZone:'UTC'}).format(firstDay);
+  const monthCount = [...history].filter(key => key.startsWith(prefix)).length;
+  const selected = streakSelectedDate || (streakCalendarOffset === 0 ? todayKey : '');
+  const cells = [];
+  for (let i = 0; i < leadingDays; i++) cells.push('<span class="streak-calendar-empty" aria-hidden="true"></span>');
+  for (let day = 1; day <= daysInMonth; day++) {
+    const key = prefix + String(day).padStart(2, '0');
+    const visited = history.has(key);
+    const isToday = key === todayKey;
+    const isFuture = key > todayKey;
+    const isSelected = key === selected;
+    cells.push(
+      '<button type="button" class="streak-calendar-day' +
+      (visited ? ' is-visited' : '') + (isToday ? ' is-today' : '') + (isSelected ? ' is-selected' : '') +
+      '" data-streak-date="' + key + '" aria-pressed="' + isSelected + '"' + (isFuture ? ' disabled' : '') + '>' +
+      '<span>' + day + '</span><i aria-hidden="true">' + (visited ? '✿' : '') + '</i></button>'
+    );
+  }
+  let detail = 'Select a date to see its check-in.';
+  if (selected) {
+    const date = new Date(selected + 'T00:00:00.000Z');
+    const label = new Intl.DateTimeFormat(undefined, {weekday:'long', month:'long', day:'numeric', timeZone:'UTC'}).format(date);
+    detail = history.has(selected) ? 'You showed up for your garden on ' + label + '. ♡' : 'No saved check-in for ' + label + '.';
+  }
+  return '<section class="streak-panel"><div class="streak-section-heading"><div><small>YOUR VISITS</small><h3>Monthly calendar</h3></div>' +
+    '<span class="streak-month-count">' + monthCount + ' ' + (monthCount === 1 ? 'day' : 'days') + '</span></div>' +
+    '<div class="streak-calendar-toolbar"><button type="button" data-streak-month="prev" aria-label="Previous month">‹</button>' +
+    '<strong>' + monthTitle + '</strong><button type="button" data-streak-month="next" aria-label="Next month" ' +
+    (streakCalendarOffset >= 0 ? 'disabled' : '') + '>›</button></div>' +
+    '<div class="streak-calendar-grid streak-week-labels">' + ['M','T','W','T','F','S','S'].map(day => '<span>' + day + '</span>').join('') + '</div>' +
+    '<div class="streak-calendar-grid">' + cells.join('') + '</div>' +
+    '<p class="streak-calendar-detail">' + esc(detail) + '</p>' +
+    '<p class="streak-calendar-note">Your existing active streak fills its consecutive days. New check-ins are saved on this device.</p></section>';
+}
+function renderStreakPage() {
+  const content = $('#content');
+  if (!content || !me) return;
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const lastDate = String(me.last_login_date || todayKey).slice(0, 10);
+  const gap = Math.round((Date.parse(todayKey + 'T00:00:00Z') - Date.parse(lastDate + 'T00:00:00Z')) / 86400000);
+  const count = gap > 1 ? 0 : Math.max(0, Number(me.login_streak) || 0);
+  if (count) {
+    saveStreakHistory(lastDate, count);
+    saveStreakMilestones(count);
+  }
+  const history = readStreakHistory();
+  const sortedHistory = [...history].sort();
+  let bestRun = 0, run = 0, previous = '';
+  sortedHistory.forEach(day => {
+    run = previous && shiftStreakDate(previous, 1) === day ? run + 1 : 1;
+    bestRun = Math.max(bestRun, run);
+    previous = day;
+  });
+
+  const milestones = [
+    {days:3, icon:'🌱', name:'First sprout'},
+    {days:7, icon:'🌼', name:'Week in bloom'},
+    {days:14, icon:'🌷', name:'Little gardener'},
+    {days:30, icon:'🌸', name:'Love-garden legend'},
+    {days:50, icon:'💐', name:'Golden bouquet'},
+    {days:100, icon:'🌟', name:'Shining garden'},
+    {days:180, icon:'🏵️', name:'Evergreen heart'},
+    {days:365, icon:'💮', name:'Eternal garden'}
+  ];
+  const earned = readStreakMilestones();
+  const next = milestones.find(item => !earned.has(item.days)) || milestones[milestones.length - 1];
+  const previousMilestone = [...milestones].reverse().find(item => earned.has(item.days));
+  const base = previousMilestone ? previousMilestone.days : 0;
+  const progress = Math.max(0, Math.min(100, (count - base) / Math.max(1, next.days - base) * 100));
+  const left = Math.max(0, next.days - count);
+  const stage = count >= 30 ? 'Your garden is in full bloom.' : count >= 14 ? 'Your flowers are thriving.' :
+    count >= 7 ? 'Your garden is blooming.' : count ? 'A little sprout is growing.' : 'Your garden is waiting for its first flower.';
+
+  const week = [];
+  for (let i = 6; i >= 0; i--) {
+    const key = shiftStreakDate(todayKey, -i);
+    const date = new Date(key + 'T00:00:00Z');
+    const letter = new Intl.DateTimeFormat(undefined, {weekday:'short', timeZone:'UTC'}).format(date).slice(0, 1);
+    const visited = history.has(key);
+    week.push('<div class="streak-week-day' + (visited ? ' is-visited' : '') + (key === todayKey ? ' is-today' : '') +
+      '"><span>' + letter + '</span><i>' + (visited ? '✿' : '·') + '</i><small>' + Number(key.slice(-2)) + '</small></div>');
+  }
+
+  const goals = readStreakGoals();
+  const checks = readStreakGoalChecks(todayKey);
+  const completed = Object.keys(checks).filter(id => checks[id] && goals.some(goal => goal.id === id)).length;
+  const goalMarkup = goals.map(goal =>
+    '<div class="streak-goal' + (checks[goal.id] ? ' is-done' : '') + '">' +
+    '<label class="streak-goal-main"><input type="checkbox" data-streak-goal="' + esc(goal.id) + '"' +
+    (checks[goal.id] ? ' checked' : '') + '><span>' + esc(goal.label) + '</span></label>' +
+    '<button type="button" class="streak-goal-remove" data-streak-remove-goal="' + esc(goal.id) +
+    '" aria-label="Remove ' + esc(goal.label) + '">×</button></div>'
+  ).join('') || '<div class="streak-empty-goals">Add a tiny goal to make today feel special ♡</div>';
+
+  const badges = milestones.map(item => {
+    const unlocked = earned.has(item.days);
+    return '<article class="streak-milestone' + (unlocked ? ' is-earned' : '') + '">' +
+      '<span>' + (unlocked ? item.icon : '🔒') + '</span><b>' + item.days + ' days</b><small>' + item.name + '</small></article>';
+  }).join('');
+
+  content.innerHTML = [
+    '<div class="heading streak-page-heading"><h2>Streak Garden ♡</h2><p>A little visit, a little bloom, one day at a time.</p></div>',
+    '<section class="streak-hero-card"><div class="streak-hero-copy"><small>YOUR LITTLE GARDEN</small>' +
+      '<div class="streak-hero-count"><strong>' + count + '</strong><span>day streak</span></div>' +
+      '<h3>' + stage + '</h3><p>' + (count ? 'You have kept your little garden growing. Keep showing up for yourself. ♡' : 'Visit again today and plant the first little flower.') + '</p>' +
+      '<div class="streak-next-label"><span>Next bloom</span><b>' + (left ? left + ' ' + (left === 1 ? 'day' : 'days') + ' to go' : 'Milestone reached!') + '</b></div>' +
+      '<div class="streak-next-track"><i style="width:' + progress + '%"></i></div><small class="streak-next-caption">' +
+      next.days + '-day milestone · ' + next.name + '</small></div><div class="streak-hero-art"><span class="streak-hero-spark">✦</span>' +
+      '<span class="streak-hero-buddy">' + esc(me.mascot || '🐰') + '</span><span class="streak-hero-flower flower-one">🌷</span>' +
+      '<span class="streak-hero-flower flower-two">🌼</span><span class="streak-hero-flower flower-three">✿</span></div></section>',
+    '<div class="streak-stats-grid"><article class="streak-stat"><small>Current streak</small><strong>' + count +
+      '</strong><span>days in a row</span></article><article class="streak-stat"><small>Best recorded</small><strong>' +
+      Math.max(bestRun, count) + '</strong><span>on this device</span></article><article class="streak-stat"><small>Days recorded</small><strong>' +
+      history.size + '</strong><span>garden visits</span></article></div>',
+    '<section class="streak-panel"><div class="streak-section-heading"><div><small>ONE WEEK AT A TIME</small><h3>Your weekly rhythm</h3></div>' +
+      '<span class="streak-week-total">' + week.filter(day => day.includes('is-visited')).length + '/7</span></div>' +
+      '<div class="streak-week-grid">' + week.join('') + '</div><p class="streak-soft-note">Every flower is a day you came back. Your streak is about showing up, not being perfect. ♡</p></section>',
+    streakCalendarMarkup(todayKey, history),
+    '<section class="streak-panel"><div class="streak-section-heading"><div><small>JUST FOR YOU</small><h3>Little daily goals</h3></div>' +
+      '<span class="streak-goal-count" id="streakGoalProgress">' + completed + ' of ' + goals.length + ' completed</span></div>' +
+      '<div class="streak-goal-track"><i id="streakGoalProgressBar" style="width:' + (goals.length ? completed / goals.length * 100 : 0) + '%"></i></div>' +
+      '<div class="streak-goal-list" id="streakGoalsList">' + goalMarkup + '</div>' +
+      '<button type="button" class="streak-add-goal" id="streakAddGoal">＋ Add a tiny goal</button>' +
+      '<form class="streak-add-form hidden" id="streakGoalForm"><input class="input" id="streakGoalInput" maxlength="56" placeholder="A little thing I want to do…" required>' +
+      '<button type="submit" class="primary">Add goal ♡</button></form>' +
+      '<p class="streak-soft-note">These goals are personal reminders. They never reduce or break your login streak.</p></section>',
+    '<section class="streak-panel"><div class="streak-section-heading"><div><small>GROWING OVER TIME</small><h3>Milestone garden</h3></div>' +
+      '<span class="streak-week-total">' + earned.size + '/' + milestones.length + ' unlocked</span></div>' +
+      '<div class="streak-milestone-grid">' + badges + '</div></section>',
+    '<p class="streak-signoff">Your little garden grows at your own pace ♡</p>'
+  ].join('');
 }
 
 function playBoing() {
@@ -527,7 +750,7 @@ function popLoveHeart(card, e) {
 }
 
 function go(p, options = {}) {
-  const validPages = ['home', 'gallery', 'music', 'notes', 'friends'];
+  const validPages = ['home', 'gallery', 'music', 'notes', 'friends', 'streak'];
   if (!validPages.includes(p)) return;
   if (options.resetStack) appPageStack = [p];
   else if (!options.fromBack && p !== page && appBackGuardInstalled) appPageStack.push(p);
@@ -545,7 +768,7 @@ function go(p, options = {}) {
   }
 
   page = p;
-  $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends' })[p];
+  $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends', streak: 'Streak Garden' })[p];
   document.querySelectorAll('#nav button[data-page]').forEach(b => {
     const isCurrentPage = b.dataset.page === p;
     b.classList.toggle('active', isCurrentPage);
@@ -829,6 +1052,10 @@ function render() {
 
   if (page === 'notes') {
     renderNotesPage();
+    return;
+  }
+  if (page === 'streak') {
+    renderStreakPage();
     return;
   }
 
@@ -1606,6 +1833,28 @@ document.addEventListener('pointerdown', e => {
 
 }, { passive: true });
 
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'streakGoalForm') return;
+  e.preventDefault();
+  const label = String($('#streakGoalInput')?.value || '').trim();
+  if (!label) return;
+  const goals = readStreakGoals();
+  if (goals.length >= 6) return toast('Keep up to six little goals at a time ♡');
+  goals.push({id:'goal-' + Date.now(), label});
+  writeStreakGoals(goals);
+  renderStreakPage();
+  toast('A little goal has been planted ♡');
+});
+document.addEventListener('change', e => {
+  const box = e.target.closest('[data-streak-goal]');
+  if (!box) return;
+  const today = new Date().toISOString().slice(0,10);
+  const checks = readStreakGoalChecks(today);
+  checks[box.dataset.streakGoal] = box.checked;
+  try { localStorage.setItem(streakStorageKey('checks:' + today), JSON.stringify(checks)); } catch {}
+  updateStreakGoalProgress();
+});
+
 // Touch free space to dismiss any modal / gate
 document.addEventListener('click', e => {
   // If clicking on photo lightbox: touching ANYWHERE except Save/Delete closes it
@@ -1793,6 +2042,14 @@ document.addEventListener('click', async e => {
     go(goBtn.dataset.go);
     return;
   }
+
+  const streakMonth = e.target.closest('[data-streak-month]');
+  if (streakMonth) { streakCalendarOffset += streakMonth.dataset.streakMonth === 'next' ? 1 : -1; streakSelectedDate = ''; renderStreakPage(); return; }
+  const streakDate = e.target.closest('[data-streak-date]');
+  if (streakDate && !streakDate.disabled) { streakSelectedDate = streakDate.dataset.streakDate; renderStreakPage(); return; }
+  if (e.target.closest('#streakAddGoal')) { const form = $('#streakGoalForm'); form?.classList.toggle('hidden'); if (form && !form.classList.contains('hidden')) $('#streakGoalInput')?.focus(); return; }
+  const removeStreakGoal = e.target.closest('[data-streak-remove-goal]');
+  if (removeStreakGoal) { writeStreakGoals(readStreakGoals().filter(goal => goal.id !== removeStreakGoal.dataset.streakRemoveGoal)); renderStreakPage(); return; }
 
   // Mascot button
   if (e.target.closest('#bunnyBuddy')) {
