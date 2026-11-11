@@ -2634,3 +2634,40 @@ body[data-mode="dark"][data-theme="sky"] {
   box-shadow:0 2px 0 var(--chat-bubble-mine-pressed)!important;
 }
 
+
+
+/* Composer interaction polish: the field grows smoothly and scrolls without a visible bar. */
+#content .chat-page .chat-composer textarea {
+  overflow-y:hidden!important;
+  overscroll-behavior:contain;
+  touch-action:pan-y;
+  transition:height .12s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+#content .chat-page .chat-composer.has-message .primary:not([hidden]) {
+  animation:chat-send-button-in .16s ease-out both;
+}
+@keyframes chat-send-button-in {
+  from { opacity:0;transform:scale(.82); }
+  to { opacity:1;transform:scale(1); }
+}
+#content .chat-page .chat-composer .primary {
+  touch-action:manipulation;
+}
+@media(prefers-reduced-motion:reduce) {
+  #content .chat-page .chat-composer textarea,
+  #content .chat-page .chat-composer.has-message .primary:not([hidden]) {
+    transition:none!important;
+    animation:none!important;
+  }
+}
+
+/* Hide scrollbar tracks throughout the app without disabling page or chat scrolling. */
+html,body,* {
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+*::-webkit-scrollbar {
+  display:none!important;
+  width:0!important;
+  height:0!important;
+}
