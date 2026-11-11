@@ -2492,3 +2492,145 @@ body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-pressed {
   box-shadow:0 2px 0 #5e4677!important;
 }
 
+/* Theme-aware chat bubbles: soft surfaces matched to the active app palette. */
+:root {
+  --chat-bubble-friend-bg:linear-gradient(108deg,#ffe8f0 0%,#fbdde8 100%);
+  --chat-bubble-friend-border:#e8b9cc;
+  --chat-bubble-friend-text:#70485c;
+  --chat-bubble-friend-shadow:#d49ab4;
+  --chat-bubble-friend-pressed:#bd829d;
+  --chat-bubble-mine-bg:linear-gradient(108deg,#fff0f5 0%,#f8e5ee 100%);
+  --chat-bubble-mine-border:#e4bfd0;
+  --chat-bubble-mine-text:#684b5d;
+  --chat-bubble-mine-shadow:#ca9ab0;
+  --chat-bubble-mine-pressed:#b77d98;
+}
+
+/* Rose garden */
+body[data-theme="rose"] {
+  --chat-bubble-friend-bg:linear-gradient(108deg,#ffe8f0 0%,#fbdde8 100%);
+  --chat-bubble-friend-border:#e8b9cc;
+  --chat-bubble-friend-text:#70485c;
+  --chat-bubble-friend-shadow:#d49ab4;
+  --chat-bubble-friend-pressed:#bd829d;
+  --chat-bubble-mine-bg:linear-gradient(108deg,#fff0f5 0%,#f8e5ee 100%);
+  --chat-bubble-mine-border:#e4bfd0;
+  --chat-bubble-mine-text:#684b5d;
+  --chat-bubble-mine-shadow:#ca9ab0;
+  --chat-bubble-mine-pressed:#b77d98;
+}
+
+/* Lavender skies */
+body[data-theme="lavender"] {
+  --chat-bubble-friend-bg:linear-gradient(108deg,#f1eafd 0%,#e8def8 100%);
+  --chat-bubble-friend-border:#cab7e4;
+  --chat-bubble-friend-text:#59486f;
+  --chat-bubble-friend-shadow:#b39bce;
+  --chat-bubble-friend-pressed:#947bb3;
+  --chat-bubble-mine-bg:linear-gradient(108deg,#e9e0f7 0%,#dfd3f0 100%);
+  --chat-bubble-mine-border:#beabd9;
+  --chat-bubble-mine-text:#514167;
+  --chat-bubble-mine-shadow:#a993c6;
+  --chat-bubble-mine-pressed:#8972ad;
+}
+
+/* Mint meadow */
+body[data-theme="mint"] {
+  --chat-bubble-friend-bg:linear-gradient(108deg,#eaf5ec 0%,#e0efe3 100%);
+  --chat-bubble-friend-border:#b8d4be;
+  --chat-bubble-friend-text:#48654e;
+  --chat-bubble-friend-shadow:#98bba0;
+  --chat-bubble-friend-pressed:#779e80;
+  --chat-bubble-mine-bg:linear-gradient(108deg,#deefe2 0%,#d5e9d9 100%);
+  --chat-bubble-mine-border:#a9cdb1;
+  --chat-bubble-mine-text:#3e5d45;
+  --chat-bubble-mine-shadow:#8db99a;
+  --chat-bubble-mine-pressed:#6f9e7d;
+}
+
+/* Bluebird day */
+body[data-theme="sky"] {
+  --chat-bubble-friend-bg:linear-gradient(108deg,#eaf4f9 0%,#deedf5 100%);
+  --chat-bubble-friend-border:#bad4e2;
+  --chat-bubble-friend-text:#476171;
+  --chat-bubble-friend-shadow:#9cbccc;
+  --chat-bubble-friend-pressed:#789fb4;
+  --chat-bubble-mine-bg:linear-gradient(108deg,#dfeef5 0%,#d4e7f1 100%);
+  --chat-bubble-mine-border:#aacbdc;
+  --chat-bubble-mine-text:#3c5a6c;
+  --chat-bubble-mine-shadow:#8eb6c9;
+  --chat-bubble-mine-pressed:#6e9bb1;
+}
+
+/* Dark mode keeps each theme's hue, with deeper readable surfaces. */
+body[data-mode="dark"][data-theme="rose"] {
+  --chat-bubble-friend-bg:linear-gradient(108deg,#543748 0%,#493242 100%);
+  --chat-bubble-friend-border:#94647d;
+  --chat-bubble-friend-text:#ffeaf2;
+  --chat-bubble-friend-shadow:#74475f;
+  --chat-bubble-friend-pressed:#a86b88;
+  --chat-bubble-mine-bg:linear-gradient(108deg,#4b3548 0%,#403044 100%);
+  --chat-bubble-mine-border:#9b6c85;
+  --chat-bubble-mine-text:#ffeaf2;
+  --chat-bubble-mine-shadow:#79536d;
+  --chat-bubble-mine-pressed:#b07893;
+}
+body[data-mode="dark"][data-theme="lavender"] {
+  --chat-bubble-friend-bg:linear-gradient(108deg,#44364f 0%,#3c3048 100%);
+  --chat-bubble-friend-border:#8d77a5;
+  --chat-bubble-friend-text:#f5edff;
+  --chat-bubble-friend-shadow:#69547f;
+  --chat-bubble-friend-pressed:#9d83bc;
+  --chat-bubble-mine-bg:linear-gradient(108deg,#4b3a59 0%,#41334f 100%);
+  --chat-bubble-mine-border:#9a82b4;
+  --chat-bubble-mine-text:#f8f0ff;
+  --chat-bubble-mine-shadow:#715d8d;
+  --chat-bubble-mine-pressed:#aa91c8;
+}
+body[data-mode="dark"][data-theme="mint"] {
+  --chat-bubble-friend-bg:linear-gradient(108deg,#30483b 0%,#293f34 100%);
+  --chat-bubble-friend-border:#668c72;
+  --chat-bubble-friend-text:#effaf0;
+  --chat-bubble-friend-shadow:#496b53;
+  --chat-bubble-friend-pressed:#7fa88a;
+  --chat-bubble-mine-bg:linear-gradient(108deg,#354f40 0%,#2d4437 100%);
+  --chat-bubble-mine-border:#759b80;
+  --chat-bubble-mine-text:#f2fff3;
+  --chat-bubble-mine-shadow:#54765e;
+  --chat-bubble-mine-pressed:#8bb496;
+}
+body[data-mode="dark"][data-theme="sky"] {
+  --chat-bubble-friend-bg:linear-gradient(108deg,#304654 0%,#293d49 100%);
+  --chat-bubble-friend-border:#688a9d;
+  --chat-bubble-friend-text:#eff8ff;
+  --chat-bubble-friend-shadow:#49697a;
+  --chat-bubble-friend-pressed:#7d9fb1;
+  --chat-bubble-mine-bg:linear-gradient(108deg,#354d5e 0%,#2c4353 100%);
+  --chat-bubble-mine-border:#789bad;
+  --chat-bubble-mine-text:#f3faff;
+  --chat-bubble-mine-shadow:#567a8e;
+  --chat-bubble-mine-pressed:#8bb0c2;
+}
+
+/* Apply only bubble colors and shadow tones; geometry and spacing remain unchanged. */
+.chat-bubble-wrap>.chat-bubble {
+  background:var(--chat-bubble-friend-bg)!important;
+  border-color:var(--chat-bubble-friend-border)!important;
+  color:var(--chat-bubble-friend-text)!important;
+  box-shadow:0 3px 0 var(--chat-bubble-friend-shadow)!important;
+}
+.chat-message.is-mine .chat-bubble-wrap>.chat-bubble {
+  background:var(--chat-bubble-mine-bg)!important;
+  border-color:var(--chat-bubble-mine-border)!important;
+  color:var(--chat-bubble-mine-text)!important;
+  box-shadow:0 3px 0 var(--chat-bubble-mine-shadow)!important;
+}
+.chat-bubble-wrap>.chat-bubble:active,
+.chat-bubble-wrap>.chat-bubble.is-pressed {
+  box-shadow:0 2px 0 var(--chat-bubble-friend-pressed)!important;
+}
+.chat-message.is-mine .chat-bubble-wrap>.chat-bubble:active,
+.chat-message.is-mine .chat-bubble-wrap>.chat-bubble.is-pressed {
+  box-shadow:0 2px 0 var(--chat-bubble-mine-pressed)!important;
+}
+
