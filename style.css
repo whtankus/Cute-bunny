@@ -8038,3 +8038,38 @@ body.notes-page-active #content .chat-bubble-wrap {
     max-width:min(28.05ch,calc(76.5% - 2.3562rem))!important;
   }
 }
+
+
+/* Bubble sizing: 30% narrower than the original full-width limits.
+   Keep type size, padding, alignment and message interaction unchanged. */
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap {
+  max-width:min(28ch,calc(70% - 2.8rem))!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(28ch,calc(70% - 2.485rem))!important;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(28ch,calc(70% - 2.156rem))!important;
+  }
+}
+
+/* Notes uses a separate original 33ch/90% cap; reduce it by 30% as well. */
+body.notes-page-active #content .chat-bubble-wrap {
+  max-width:min(23.1ch,calc(63% - 2.52rem))!important;
+}
+@media(max-width:720px) {
+  body.notes-page-active #content .chat-bubble-wrap {
+    max-width:min(23.1ch,calc(63% - 2.2365rem))!important;
+  }
+}
+@media(max-width:480px) {
+  body.notes-page-active #content .chat-bubble-wrap {
+    max-width:min(23.1ch,calc(63% - 1.9404rem))!important;
+  }
+}
