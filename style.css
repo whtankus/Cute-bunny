@@ -2638,7 +2638,7 @@ body[data-mode="dark"][data-theme="sky"] {
 
 /* Composer interaction polish: the field grows smoothly and scrolls without a visible bar. */
 #content .chat-page .chat-composer textarea {
-  overflow-y:hidden!important;
+  overflow-y:hidden;
   overscroll-behavior:contain;
   touch-action:pan-y;
   transition:height .12s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
