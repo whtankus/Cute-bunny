@@ -4155,3 +4155,103 @@ body[data-mode="dark"] .friend-profile-garden b{color:#f4e4ef}
 .sg-find-friends{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin:10px 0 0;padding:8px 14px;border:1px solid #e4ccd8;border-radius:999px;background:#fffaf9;color:#925d7b;font-size:12px;font-weight:800}
 .sg-find-friends:hover{background:#f9eaf0;border-color:#d7aec1}
 body[data-mode="dark"] .sg-find-friends{background:#493744;border-color:#765c70;color:#efccdd}
+
+
+/* v100 — match the Streak Garden hero banner to Home's memory-garden hero. */
+.streak-garden-page .sg-hero-paper{
+  min-height:220px;
+  grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);
+  border:2px dashed #e1cadc;
+  border-radius:30px;
+  background:linear-gradient(125deg,#f8dce3 0%,#eee2fa 65%,#fff0cc 100%);
+  box-shadow:0 7px 0 #e4d4df;
+}
+.streak-garden-page .sg-hero-paper:before{
+  opacity:.08;
+  background-image:radial-gradient(#b98da9 .8px,transparent .8px);
+  background-size:20px 20px;
+}
+.streak-garden-page .sg-hero-copy{
+  padding:17px 10px 17px 25px;
+}
+.streak-garden-page .sg-count-line{margin:5px 0 0}
+.streak-garden-page .sg-count-line>strong{
+  color:#654d68;
+  font-size:clamp(42px,5vw,50px);
+  text-shadow:none;
+}
+.streak-garden-page .sg-count-line b{color:#654d68;font-size:16px}
+.streak-garden-page .sg-count-line small{color:#856f85;font-size:11px}
+.streak-garden-page .sg-garden-stage{
+  margin:5px 0 1px!important;
+  color:#654d68!important;
+  font:700 17px/1.25 Quicksand,sans-serif!important;
+}
+.streak-garden-page .sg-today-status{
+  margin:7px 0 2px;
+  padding:5px 8px;
+  background:#ffffff85;
+}
+.streak-garden-page .sg-progress-head{
+  margin:8px 0 5px;
+  color:#856f85;
+  font-size:10px;
+}
+.streak-garden-page .sg-progress-head b{font-size:11px;color:#8d5f7a}
+.streak-garden-page .sg-growth-track{height:7px;background:#ffffffa8}
+.streak-garden-page .sg-next-milestone{margin-top:5px;font-size:11px;color:#806b82}
+.streak-garden-page .sg-hero-scene{min-height:220px}
+.streak-garden-page .sg-garden-art{min-height:220px}
+.streak-garden-page .sg-garden-svg{width:100%;height:100%;object-fit:cover}
+.streak-garden-page .sg-garden-bloom-count{
+  left:9px;bottom:9px;
+  min-height:24px;padding:4px 9px;
+  border:1px solid #ffffffb0;
+  background:#fffaf0e8;
+  color:#80627c;
+  font-size:10px;
+}
+body[data-mode="dark"] .streak-garden-page .sg-hero-paper{
+  border-color:#8f6c84;
+  background:linear-gradient(125deg,#493541 0%,#443b53 65%,#514334 100%);
+  box-shadow:0 7px 0 #302735;
+}
+body[data-mode="dark"] .streak-garden-page .sg-hero-paper:before{opacity:.035}
+body[data-mode="dark"] .streak-garden-page .sg-count-line>strong,
+body[data-mode="dark"] .streak-garden-page .sg-count-line b,
+body[data-mode="dark"] .streak-garden-page .sg-garden-stage{color:#f5e4ef!important}
+body[data-mode="dark"] .streak-garden-page .sg-count-line small,
+body[data-mode="dark"] .streak-garden-page .sg-progress-head{color:#d4bdcf}
+body[data-mode="dark"] .streak-garden-page .sg-progress-head b{color:#edc6d9}
+body[data-mode="dark"] .streak-garden-page .sg-growth-track{background:#ffffff2a}
+@media(max-width:620px){
+  .streak-garden-page .sg-hero-paper{
+    grid-template-columns:minmax(0,1.08fr) minmax(118px,.92fr);
+    min-height:215px;
+    border-radius:26px;
+  }
+  .streak-garden-page .sg-hero-copy{padding:15px 5px 15px 16px}
+  .streak-garden-page .sg-eyebrow{font-size:10px;letter-spacing:.7px}
+  .streak-garden-page .sg-count-line{gap:7px}
+  .streak-garden-page .sg-count-line>strong{font-size:40px;letter-spacing:-1.5px}
+  .streak-garden-page .sg-count-line b{font-size:14px}
+  .streak-garden-page .sg-count-line small{font-size:10px}
+  .streak-garden-page .sg-garden-stage{font-size:15px!important;line-height:1.2!important}
+  .streak-garden-page .sg-today-status{gap:5px;margin:6px 0 1px;padding:4px 6px}
+  .streak-garden-page .sg-today-status>span:first-child{width:21px;height:21px}
+  .streak-garden-page .sg-today-status b{font-size:10px}
+  .streak-garden-page .sg-progress-head{gap:3px;margin:7px 0 4px;font-size:9px}
+  .streak-garden-page .sg-progress-head b{font-size:10px}
+  .streak-garden-page .sg-next-milestone{font-size:10px;line-height:1.25}
+  .streak-garden-page .sg-hero-scene,
+  .streak-garden-page .sg-garden-art{height:215px;min-height:215px}
+  .streak-garden-page .sg-garden-art{border-radius:0 24px 24px 0}
+  .streak-garden-page .sg-garden-svg{width:100%;height:100%;object-fit:cover}
+  .streak-garden-page .sg-garden-bloom-count{left:5px;bottom:7px;max-width:calc(100% - 10px);font-size:9px;padding:4px 6px}
+}
+@media(max-width:380px){
+  .streak-garden-page .sg-hero-paper{grid-template-columns:minmax(0,1.12fr) minmax(105px,.88fr)}
+  .streak-garden-page .sg-hero-copy{padding-left:13px}
+  .streak-garden-page .sg-count-line>strong{font-size:37px}
+  .streak-garden-page .sg-garden-stage{font-size:14px!important}
+}
