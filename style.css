@@ -6890,3 +6890,32 @@ body[data-mode="dark"] .streak-tile [data-streak-live-subtitle] {color:#f0cadd!i
     font-size:.76rem!important;
   }
 }
+
+
+/* v118 — enlarge the streak count and garden stage message in the Streak Garden banner. */
+.streak-garden-page .sg-hero-topline .sg-count-line>strong {
+  font-size:29px!important;
+  line-height:1.05!important;
+}
+.streak-garden-page .sg-hero-copy .sg-garden-stage {
+  font-size:18px!important;
+  font-weight:800!important;
+  line-height:1.28!important;
+  letter-spacing:-.35px!important;
+}
+@media(max-width:620px) {
+  .streak-garden-page .sg-hero-topline .sg-count-line>strong {
+    font-size:25px!important;
+  }
+  .streak-garden-page .sg-hero-copy .sg-garden-stage {
+    font-size:16px!important;
+  }
+}
+@media(max-width:370px) {
+  .streak-garden-page .sg-hero-topline .sg-count-line>strong {
+    font-size:23px!important;
+  }
+  .streak-garden-page .sg-hero-copy .sg-garden-stage {
+    font-size:14px!important;
+  }
+}
