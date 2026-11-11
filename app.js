@@ -3011,12 +3011,14 @@ window.addEventListener('orientationchange', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('resize', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('scroll', scheduleNotesKeyboardLayout);
 
-// Hide the masthead while reading downward and reveal it when scrolling upward.
+// Reveal the Notes masthead on a deliberate upward gesture; tuck it away on a deliberate downward gesture.
 document.addEventListener('scroll', event => {
   const thread = event.target;
   if (page !== 'notes' || thread?.id !== 'chatThread') return;
 
-  const currentTop = Math.max(0, Math.round(thread.scrollTop));
+  const currentTop = Math.max(0, thread.scrollTop);
+  const headerHidden = document.body.classList.contains('notes-header-hidden');
+
   if (document.body.classList.contains('notes-keyboard-open') && !notesKeyboardDismissed) {
     document.body.classList.add('notes-header-hidden');
     notesHeaderLastScrollTop = currentTop;
@@ -3028,12 +3030,23 @@ document.addEventListener('scroll', event => {
     return;
   }
 
-  const delta = currentTop - notesHeaderLastScrollTop;
-  if (Math.abs(delta) >= 5) {
-    document.body.classList.toggle('notes-header-hidden', delta < 0);
+  if (currentTop <= 8) {
+    if (headerHidden) document.body.classList.remove('notes-header-hidden');
     notesHeaderLastScrollTop = currentTop;
+    return;
   }
-}, true);
+
+  const delta = currentTop - notesHeaderLastScrollTop;
+  const directionThreshold = headerHidden ? 9 : 18;
+  if (Math.abs(delta) < directionThreshold) return;
+
+  if (delta < 0 && headerHidden) {
+    document.body.classList.remove('notes-header-hidden');
+  } else if (delta > 0 && !headerHidden && currentTop > 42) {
+    document.body.classList.add('notes-header-hidden');
+  }
+  notesHeaderLastScrollTop = currentTop;
+}, { capture:true, passive:true });
 
 // Chat form submission
 document.addEventListener('submit', event => {
