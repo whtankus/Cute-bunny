@@ -6871,3 +6871,22 @@ body[data-mode="dark"] .streak-tile [data-streak-live-subtitle] {color:#f0cadd!i
     font-size:.76rem!important;
   }
 }
+
+
+/* v117 — use the exact shared Home tile heading and description typography for Your Streak. */
+.happy-things-grid>.streak-tile>h3 {
+  font:700 1rem Quicksand,sans-serif!important;
+  color:var(--ink)!important;
+}
+.happy-things-grid>.streak-tile>p[data-streak-live-subtitle] {
+  color:var(--muted)!important;
+  font:400 .83rem/1.4 Nunito,sans-serif!important;
+}
+@media(max-width:520px) {
+  .happy-things-grid>.streak-tile>h3 {
+    font-size:.92rem!important;
+  }
+  .happy-things-grid>.streak-tile>p[data-streak-live-subtitle] {
+    font-size:.76rem!important;
+  }
+}
