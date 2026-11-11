@@ -4954,3 +4954,74 @@ body[data-mode="dark"] .streak-garden-page .sg-week-legend .is-missed{border-col
   .streak-garden-page .sg-week-flower svg{width:24px;height:24px}
   .streak-garden-page .sg-week-legend{gap:7px 10px;font-size:11px}
 }
+ 
+/* v106 — Streak Garden section order, seven living flower slots, compact game/friends, and bottom tabs. */
+.streak-garden-page .sg-garden-flower-hit{width:36px;height:36px;pointer-events:auto}
+.streak-garden-page .sg-garden-flower-hit:before{width:23px;height:23px}
+.streak-garden-page .sg-game-compact{display:grid;justify-items:center;gap:9px;padding:4px 0 2px;border:0;border-radius:0;background:transparent;box-shadow:none}
+.streak-garden-page .sg-game-compact:after{display:none}
+.streak-garden-page .sg-compact-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:0}
+.streak-garden-page .sg-compact-section-heading h3,.streak-garden-page .sg-friends-heading h3{margin:0;color:#624b65;font:800 18px/1.2 Quicksand,sans-serif}
+.streak-garden-page #streakGamePairsLeft{color:#98617f;font-size:12px;font-weight:900;white-space:nowrap}
+.streak-garden-page .sg-game-compact .sg-petal-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;width:min(100%,278px);margin:0 auto;padding:9px;border:1px solid #ead9e5;border-radius:19px;background:#fff9f7;box-shadow:0 3px 10px #80657b0b,inset 0 0 0 2px #fff}
+.streak-garden-page .sg-game-compact .sg-petal-card{width:100%;max-width:56px;min-height:0;aspect-ratio:1;justify-self:center;padding:0;border:1px solid #e8d8e5;border-radius:12px;background:linear-gradient(145deg,#fffdf8,#f1e9f7);box-shadow:0 2px 0 #e1d4e1}
+.streak-garden-page .sg-game-compact .sg-petal-back{font-size:19px}
+.streak-garden-page .sg-game-compact .sg-petal-face{font-size:23px}
+.streak-garden-page .sg-game-compact .sg-game-reset-compact{min-height:29px;margin:0;padding:5px 11px;border:1px solid #e5cedb;border-radius:99px;background:#fffaf7;color:#895d78;font-size:11px;font-weight:800;box-shadow:none}
+.streak-garden-page .sg-game-compact .sg-game-reset-compact:hover{background:#f8eaf0}
+.streak-garden-page .sg-friends-compact{padding:5px 0 3px;border:0;border-radius:0;background:transparent;box-shadow:none}
+.streak-garden-page .sg-friends-compact:after{display:none}
+.streak-garden-page .sg-friends-heading{display:flex;align-items:center;margin:0 0 9px}
+.streak-garden-page .sg-friends-compact .sg-friend-list{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.streak-garden-page .sg-friends-compact .sg-friend-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:54px;padding:4px 6px;border:0;border-radius:14px;background:transparent;box-shadow:none;cursor:default}
+.streak-garden-page .sg-friends-compact .sg-friend-avatar{display:grid;place-items:center;width:38px;height:38px;border:1px solid #ead7e2;border-radius:50%;background:linear-gradient(145deg,#f9e6ed,#eee7f6);box-shadow:none;font-size:21px}
+.streak-garden-page .sg-friend-flower-count{display:inline-flex;align-items:center;justify-content:center;gap:4px;color:#945f7c;line-height:1.1}
+.streak-garden-page .sg-friend-flower-count i{color:#c17b9b;font-size:12px;font-style:normal}
+.streak-garden-page .sg-friend-flower-count strong{color:#644b68;font:800 12px/1 Quicksand,sans-serif;font-variant-numeric:tabular-nums}
+.streak-garden-page .sg-friends-compact .sg-friends-empty{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border:1px dashed #e5d2dc;border-radius:14px;background:#fff9f7}
+.streak-garden-page .sg-friends-compact .sg-friends-empty p{margin:0;color:#836f83;font-size:12px}
+.streak-garden-page .sg-friends-compact .sg-find-friends{flex:none;padding:6px 10px;font-size:11px}
+.streak-garden-page .sg-bottom-tabs-wrap{display:grid;gap:0;margin-top:2px}
+.streak-garden-page .sg-bottom-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:5px;border:1px solid #eadbe4;border-radius:16px;background:#fff7f6}
+.streak-garden-page .sg-bottom-tab{display:flex;align-items:center;justify-content:center;min-width:0;min-height:42px;padding:8px 10px;border:1px solid transparent;border-radius:11px;background:transparent;color:#806b82;font:800 12px/1.25 Quicksand,sans-serif;text-align:center;cursor:pointer;transition:background .2s,color .2s,border-color .2s,box-shadow .2s}
+.streak-garden-page .sg-bottom-tab.is-active{border-color:#dcb7c9;background:linear-gradient(135deg,#f7e2e9,#eee6f6);color:#604761;box-shadow:0 2px 5px #85678010}
+.streak-garden-page .sg-bottom-tab:focus-visible{outline:2px solid #a56f90;outline-offset:2px}
+.streak-garden-page .sg-tab-panel{min-width:0;padding-top:13px}
+.streak-garden-page .sg-tab-panel[hidden]{display:none!important}
+.streak-garden-page .sg-tab-panel.is-active{animation:sg-tab-arrive .22s ease-out both}
+@keyframes sg-tab-arrive{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.streak-garden-page .sg-tab-panel .sg-milestones-section,.streak-garden-page .sg-tab-panel .sg-goals-section{margin:0}
+.streak-garden-page .sg-tab-panel .sg-milestones-section{padding:0;border:0}
+.streak-garden-page .sg-tab-panel .sg-milestones-section .sg-section-heading{margin-bottom:10px}
+.streak-garden-page .sg-tab-panel .sg-goals-section{padding:4px 0 8px;border:0;background:transparent;box-shadow:none}
+.streak-garden-page .sg-tab-panel .sg-goals-section:after,.streak-garden-page .sg-tab-panel .sg-goal-note{display:none}
+.streak-garden-page .sg-tab-panel .sg-goal-list{gap:4px}
+body[data-mode="dark"] .streak-garden-page .sg-compact-section-heading h3,body[data-mode="dark"] .streak-garden-page .sg-friends-heading h3{color:#f3e2ed}
+body[data-mode="dark"] .streak-garden-page #streakGamePairsLeft{color:#e6bad0}
+body[data-mode="dark"] .streak-garden-page .sg-game-compact .sg-petal-board{border-color:#5b4b60;background:#3a3341;box-shadow:0 3px 10px #0002,inset 0 0 0 2px #ffffff08}
+body[data-mode="dark"] .streak-garden-page .sg-game-compact .sg-petal-card{border-color:#64546a;background:linear-gradient(145deg,#514253,#403748);box-shadow:0 2px 0 #342c3b}
+body[data-mode="dark"] .streak-garden-page .sg-game-compact .sg-petal-back{color:#e2acc5}
+body[data-mode="dark"] .streak-garden-page .sg-game-compact .sg-game-reset-compact{border-color:#70566a;background:#473744;color:#f0d6e5}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-avatar{border-color:#6a5469;background:linear-gradient(145deg,#544051,#454052)}
+body[data-mode="dark"] .streak-garden-page .sg-friend-flower-count,body[data-mode="dark"] .streak-garden-page .sg-friend-flower-count strong{color:#f0dbe9}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friends-empty{border-color:#665369;background:#3d3441}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friends-empty p{color:#d0bdd0}
+body[data-mode="dark"] .streak-garden-page .sg-bottom-tabs{border-color:#5d4c5e;background:#38313d}
+body[data-mode="dark"] .streak-garden-page .sg-bottom-tab{color:#c7b3c8}
+body[data-mode="dark"] .streak-garden-page .sg-bottom-tab.is-active{border-color:#8b657f;background:linear-gradient(135deg,#58404f,#4b4058);color:#f5e3ef}
+@media(max-width:620px){
+  .streak-garden-page .sg-game-compact .sg-petal-board{width:min(100%,256px);padding:8px;gap:6px;border-radius:17px}
+  .streak-garden-page .sg-game-compact .sg-petal-card{max-width:50px;border-radius:11px}
+  .streak-garden-page .sg-game-compact .sg-petal-back{font-size:17px}
+  .streak-garden-page .sg-game-compact .sg-petal-face{font-size:21px}
+  .streak-garden-page .sg-bottom-tab{min-height:40px;padding:7px 6px;font-size:11px}
+  .streak-garden-page .sg-friends-compact .sg-friend-list{gap:7px 9px}
+}
+@media(max-width:380px){
+  .streak-garden-page .sg-friends-compact .sg-friend-avatar{width:35px;height:35px;font-size:19px}
+  .streak-garden-page .sg-bottom-tabs{gap:4px;padding:4px}
+  .streak-garden-page .sg-bottom-tab{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .streak-garden-page .sg-tab-panel.is-active,.streak-garden-page .sg-bottom-tab{animation:none;transition:none}
+}
