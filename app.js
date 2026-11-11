@@ -940,6 +940,16 @@ function renderStreakPage() {
       <stop stop-color="#fff3f4"/>
       <stop offset="1" stop-color="#e8a5bc"/>
     </linearGradient>
+    <linearGradient id="sgGardenPetal" x1="0" y1="0" x2=".72" y2="1">
+      <stop stop-color="#fffafd"/>
+      <stop offset=".42" stop-color="#f9c4d5"/>
+      <stop offset="1" stop-color="#df8eae"/>
+    </linearGradient>
+    <radialGradient id="sgGardenCenter" cx=".36" cy=".28" r=".8">
+      <stop stop-color="#fff1ad"/>
+      <stop offset=".58" stop-color="#f1c75e"/>
+      <stop offset="1" stop-color="#d99a42"/>
+    </radialGradient>
     <g id="sgCherryBloom">
       <g fill="url(#sgPetal)" stroke="#d58da9" stroke-opacity=".45" stroke-width="1.2">
         <ellipse cy="-8" rx="5.8" ry="10"/>
@@ -951,17 +961,36 @@ function renderStreakPage() {
       <circle r="3.8" fill="#e8c77f"/>
     </g>
     <g id="sgGardenFlower">
-      <path d="M0 9 C-1 22 -2 32 0 43" fill="none" stroke="#668868" stroke-width="3" stroke-linecap="round"/>
-      <path d="M-1 28 Q-18 16 -18 27 Q-11 36 -1 28Z" fill="#8fae85"/>
-      <path d="M0 34 Q17 21 18 32 Q11 41 0 34Z" fill="#a7bf99"/>
-      <g fill="url(#sgPetal)" stroke="#d58da9" stroke-opacity=".45" stroke-width="1">
-        <ellipse cy="0" ry="9" rx="5"/>
-        <ellipse cy="0" ry="9" rx="5" transform="rotate(72)"/>
-        <ellipse cy="0" ry="9" rx="5" transform="rotate(144)"/>
-        <ellipse cy="0" ry="9" rx="5" transform="rotate(216)"/>
-        <ellipse cy="0" ry="9" rx="5" transform="rotate(288)"/>
+      <path d="M0 8 C-1 17 -1 26 0 35" fill="none" stroke="#668868" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M-1 24 Q-18 12 -18 24 Q-10 33 -1 24Z" fill="#87a982" stroke="#668868" stroke-opacity=".45" stroke-width=".8"/>
+      <path d="M0 30 Q17 17 18 29 Q10 38 0 30Z" fill="#a8c49a" stroke="#668868" stroke-opacity=".4" stroke-width=".8"/>
+      <g transform="scale(1.25)">
+        <g fill="url(#sgGardenPetal)" stroke="#cc7f9e" stroke-width=".9" stroke-linejoin="round">
+          <path d="M0 -1 C-4 -3 -7 -6 -6 -11 C-5 -16 -1 -18 3 -15 C7 -11 6 -5 2 -2Z"/>
+          <path d="M0 -1 C-4 -3 -7 -6 -6 -11 C-5 -16 -1 -18 3 -15 C7 -11 6 -5 2 -2Z" transform="rotate(72)"/>
+          <path d="M0 -1 C-4 -3 -7 -6 -6 -11 C-5 -16 -1 -18 3 -15 C7 -11 6 -5 2 -2Z" transform="rotate(144)"/>
+          <path d="M0 -1 C-4 -3 -7 -6 -6 -11 C-5 -16 -1 -18 3 -15 C7 -11 6 -5 2 -2Z" transform="rotate(216)"/>
+          <path d="M0 -1 C-4 -3 -7 -6 -6 -11 C-5 -16 -1 -18 3 -15 C7 -11 6 -5 2 -2Z" transform="rotate(288)"/>
+        </g>
+        <g fill="none" stroke="#fff8fb" stroke-width=".85" stroke-linecap="round" opacity=".9">
+          <path d="M0 -4 Q-2 -9 -1 -13"/>
+          <path d="M0 -4 Q-2 -9 -1 -13" transform="rotate(72)"/>
+          <path d="M0 -4 Q-2 -9 -1 -13" transform="rotate(144)"/>
+          <path d="M0 -4 Q-2 -9 -1 -13" transform="rotate(216)"/>
+          <path d="M0 -4 Q-2 -9 -1 -13" transform="rotate(288)"/>
+        </g>
+        <circle r="4.2" fill="url(#sgGardenCenter)" stroke="#d49a4a" stroke-width=".65"/>
+        <g stroke="#e8b548" stroke-width="1.15" stroke-linecap="round">
+          <path d="M0 -2 L0 -7 M2 0 L7 -2 M2 2 L5 7 M-2 2 L-5 7 M-2 0 L-7 -2"/>
+        </g>
+        <g fill="#f6d879" stroke="#dba64b" stroke-width=".4">
+          <circle cy="-7.2" r="1.3"/>
+          <circle cx="7.2" cy="-2" r="1.3"/>
+          <circle cx="5" cy="7" r="1.3"/>
+          <circle cx="-5" cy="7" r="1.3"/>
+          <circle cx="-7.2" cy="-2" r="1.3"/>
+        </g>
       </g>
-      <circle r="3.8" fill="#edc978"/>
     </g>
     <g id="sgGardenBud">
       <path d="M0 8 C-1 21 -1 31 0 43" fill="none" stroke="#668868" stroke-width="3" stroke-linecap="round"/>
