@@ -2220,3 +2220,52 @@ body:has(.chat-page) #content {
   transform:translateY(4px) scale(.99)!important;
   box-shadow:0 2px 0 #b58bd8!important;
 }
+
+
+/* Notes and Home history: make note bubbles 10% narrower without shrinking the text. */
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap {
+  max-width:min(39.6ch,calc(100% - 4rem));
+}
+.chat-page .chat-bubble-wrap>.chat-bubble,
+.home-note-memory .chat-bubble-wrap>.chat-bubble {
+  padding-left:19.8px!important;
+  padding-right:19.8px!important;
+}
+.chat-page .chat-message-time,
+.home-note-memory .chat-message-time {
+  position:relative;
+  top:3px;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(39.6ch,calc(100% - 3.5rem));
+  }
+  .chat-page .chat-bubble-wrap>.chat-bubble {
+    min-width:144px;
+    padding-left:18px!important;
+    padding-right:18px!important;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(39.6ch,calc(100% - 3.1rem));
+  }
+  .chat-page .chat-bubble-wrap>.chat-bubble {
+    min-width:130px;
+    padding-left:16.2px!important;
+    padding-right:16.2px!important;
+  }
+}
+
+/* Navigation buttons remain buttons and expose the selected page accessibly. */
+#nav button[data-page] {
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+#nav button[data-page]:focus-visible {
+  outline:2px solid #d58eaa;
+  outline-offset:3px;
+}
