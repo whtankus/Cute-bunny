@@ -7539,3 +7539,90 @@ body[data-mode="dark"] .streak-garden-page .sg-week-day:focus-visible .sg-week-f
     border-radius:9px!important;
   }
 }
+
+
+/* Streak Garden follow-up: rebalance Petal Pairs, remove the day tap ring,
+   and keep the streak count and supporting words at one type size. */
+.streak-garden-page .sg-week-day,
+.streak-garden-page .sg-week-day:hover,
+.streak-garden-page .sg-week-day:active,
+.streak-garden-page .sg-week-day:focus,
+.streak-garden-page .sg-week-day:focus-visible,
+.streak-garden-page .sg-week-day.is-selected,
+.streak-garden-page .sg-week-day.is-today,
+.streak-garden-page .sg-week-day.is-visited {
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.streak-garden-page .sg-week-day .sg-week-flower,
+.streak-garden-page .sg-week-day.is-selected .sg-week-flower,
+.streak-garden-page .sg-week-day:focus-visible .sg-week-flower,
+.streak-garden-page .sg-week-day .sg-week-flower.is-clicked {
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+/* Give Petal Pairs a little more presence under its full-width heading. */
+.streak-garden-page .sg-game-compact .sg-petal-board {
+  width:min(100%,278px)!important;
+  max-width:278px!important;
+  gap:7px!important;
+  padding:8px!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-card {
+  max-width:56px!important;
+  border-radius:11px!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-back {
+  font-size:19px!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-face {
+  font-size:23px!important;
+}
+
+/* Number, unit, and "in a row" now share the same size and type weight. */
+.streak-garden-page .sg-hero-topline .sg-count-line>strong,
+.streak-garden-page .sg-hero-topline .sg-count-line span b,
+.streak-garden-page .sg-hero-topline .sg-count-line span small {
+  font:800 20px/1 Quicksand,sans-serif!important;
+  letter-spacing:-.35px!important;
+}
+.streak-garden-page .sg-hero-topline .sg-count-line span {
+  align-items:baseline!important;
+  gap:4px!important;
+}
+@media(max-width:620px) {
+  .streak-garden-page .sg-hero-topline .sg-count-line>strong,
+  .streak-garden-page .sg-hero-topline .sg-count-line span b,
+  .streak-garden-page .sg-hero-topline .sg-count-line span small {
+    font-size:16px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-board {
+    width:min(100%,264px)!important;
+    max-width:264px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-card {
+    max-width:53px!important;
+  }
+}
+@media(max-width:380px) {
+  .streak-garden-page .sg-hero-topline .sg-count-line>strong,
+  .streak-garden-page .sg-hero-topline .sg-count-line span b,
+  .streak-garden-page .sg-hero-topline .sg-count-line span small {
+    font-size:15px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-board {
+    width:min(100%,250px)!important;
+    max-width:250px!important;
+    gap:6px!important;
+    padding:7px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-petal-card {
+    max-width:50px!important;
+  }
+}
