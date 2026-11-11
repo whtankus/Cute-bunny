@@ -2998,10 +2998,23 @@ body.notes-page-active .app>header {
 }
 
 
-/* Left-align every wrapped line inside incoming and outgoing chat bubbles. */
-.chat-bubble-wrap>.chat-bubble,
-.chat-bubble-wrap>.chat-bubble .chat-message-text {
+/* Keep each message bubble in its existing outer position while aligning its text. */
+.chat-page .chat-bubble-wrap>.chat-bubble,
+.home-note-memory .chat-bubble-wrap>.chat-bubble {
+  align-items:stretch!important;
+  justify-content:flex-start!important;
   text-align:left!important;
+}
+.chat-page .chat-bubble-wrap>.chat-bubble>.chat-message-text,
+.home-note-memory .chat-bubble-wrap>.chat-bubble>.chat-message-text {
+  display:block!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  margin:0!important;
+  text-align:left!important;
+  text-align-last:left!important;
 }
 
 /* Slightly reduce the Copy/Delete action pill's overall width. */
