@@ -6975,58 +6975,43 @@ body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboa
 }
 
 
-/* v121 — invert Notes masthead scroll direction without moving the conversation content. */
+
+
+/* v125 — single authoritative Notes layout, gesture-driven masthead and composer boundary. */
 body.notes-page-active {
-  --notes-header-collapse:0px!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  overflow:hidden!important;
+  overscroll-behavior:none;
 }
-body.notes-page-active .app>header,
-body.notes-page-active.notes-header-hidden .app>header {
-  margin-bottom:0!important;
-  transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .16s ease!important;
-}
-body.notes-page-active.notes-header-hidden .app>header {
-  transform:translate3d(0,-105%,0)!important;
-  opacity:0!important;
-  pointer-events:none!important;
-}
-/* Keep the same chat viewport height whether the masthead is shown or hidden. */
-body.notes-page-active #content .chat-page:not(.notes-keyboard-open),
-body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
-  height:var(--notes-page-height,calc(100dvh - 180px))!important;
-  margin-top:0!important;
-  margin-bottom:0!important;
-  transition:none!important;
-}
-@media(prefers-reduced-motion:reduce) {
-  body.notes-page-active .app>header {
-    transition:none!important;
-  }
-}
-
-
-/* v122 — size Notes from its real flex viewport and reserve measured composer clearance. */
 body.notes-page-active .app {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
   height:100dvh!important;
   min-height:0!important;
   overflow:hidden!important;
 }
 body.notes-page-active .app>header {
-  flex:0 0 auto!important;
-  position:sticky!important;
-  top:0!important;
+  position:relative!important;
+  top:auto!important;
   z-index:40!important;
-  transform:none!important;
+  flex:0 0 auto!important;
+  margin:0!important;
+  transform:translate3d(0,0,0)!important;
   opacity:1!important;
-  margin-bottom:0!important;
   pointer-events:auto!important;
-  transition:none!important;
-  will-change:auto!important;
+  transition:transform .24s cubic-bezier(.22,.61,.36,1),opacity .16s ease!important;
+  will-change:transform,opacity;
+}
+body.notes-page-active.notes-header-hidden .app>header,
+body.notes-page-active.notes-keyboard-open .app>header {
+  margin-bottom:calc(0px - var(--notes-header-collapse-size,0px))!important;
 }
 body.notes-page-active.notes-header-hidden .app>header {
-  transform:none!important;
-  opacity:1!important;
-  margin-bottom:0!important;
-  pointer-events:auto!important;
+  transform:translate3d(0,-105%,0)!important;
+  opacity:0!important;
+  pointer-events:none!important;
 }
 body.notes-page-active .app>main {
   display:flex!important;
@@ -7065,9 +7050,11 @@ body.notes-page-active #content .chat-page {
   min-height:0!important;
   max-height:none!important;
   height:auto!important;
+  box-sizing:border-box!important;
   margin:0!important;
-  padding:0!important;
+  padding:0 0 var(--notes-composer-space,76px)!important;
   overflow:visible!important;
+  transition:none!important;
 }
 body.notes-page-active #content .chat-page.notes-keyboard-open {
   flex:0 0 var(--notes-page-height,0px)!important;
@@ -7084,58 +7071,45 @@ body.notes-page-active #content .chat-page .chat-thread {
   max-height:none!important;
   box-sizing:border-box!important;
   padding-top:16px!important;
-  padding-bottom:0!important;
+  padding-bottom:10px!important;
   scroll-padding-top:16px!important;
-  scroll-padding-bottom:0!important;
+  scroll-padding-bottom:10px!important;
   overflow-x:hidden!important;
   overflow-y:auto!important;
   overscroll-behavior-y:contain!important;
   -webkit-overflow-scrolling:touch;
+  scroll-behavior:auto!important;
   overflow-anchor:auto;
 }
-
-
-/* v123 — restore Instagram-style Notes header and composer-boundary scrolling. */
-body.notes-page-active .app>header {
-  transform:translate3d(0,0,0)!important;
-  opacity:1!important;
-  margin-bottom:0!important;
-  pointer-events:auto!important;
-  transition:transform .24s cubic-bezier(.22,.61,.36,1),opacity .16s ease!important;
-  will-change:transform,opacity;
+body.notes-page-active #content .chat-page .chat-thread>.chat-message,
+body.notes-page-active #content .chat-page .chat-thread>.chat-day-divider,
+body.notes-page-active #content .chat-page .chat-thread>.chat-empty {
+  flex:0 0 auto!important;
 }
-body.notes-page-active.notes-header-hidden .app>header {
-  transform:translate3d(0,-105%,0)!important;
-  opacity:0!important;
-  margin-bottom:calc(-1 * var(--notes-header-collapse-size,0px))!important;
-  pointer-events:none!important;
+body.notes-page-active #content .chat-page .chat-composer {
+  position:fixed!important;
+  left:50%!important;
+  bottom:calc(var(--notes-nav-height,68px) + 8px)!important;
+  z-index:60!important;
+  width:min(680px,calc(100vw - 30px))!important;
+  max-width:calc(100vw - 30px)!important;
+  min-width:0!important;
+  margin:0!important;
+  transform:translateX(-50%)!important;
+  transition:bottom .16s ease-out!important;
 }
-/* Collapse the masthead's layout slot immediately; animate only the masthead itself. */
-body.notes-page-active.notes-keyboard-open .app>header {
-  margin-bottom:calc(-1 * var(--notes-header-collapse-size,0px))!important;
+body.notes-page-active #content .chat-page.notes-keyboard-open .chat-composer {
+  bottom:calc(var(--notes-keyboard-inset,0px) + 8px)!important;
 }
-body.notes-page-active #content .chat-page {
-  box-sizing:border-box!important;
-  padding:0 0 var(--notes-composer-space,76px)!important;
-  overflow:hidden!important;
+body.notes-page-active #content .chat-page .chat-composer .primary[hidden] {
+  display:none!important;
 }
-body.notes-page-active #content .chat-page .chat-thread {
-  padding-bottom:10px!important;
-  scroll-padding-bottom:10px!important;
+body.notes-page-active.notes-keyboard-open #nav {
+  display:none!important;
 }
 @media(prefers-reduced-motion:reduce) {
   body.notes-page-active .app>header {
     transition:none!important;
     will-change:auto;
   }
-}
-
-
-/* v124 — keep the fixed composer outside ancestor clipping and use broadly supported calc syntax. */
-body.notes-page-active.notes-header-hidden .app>header,
-body.notes-page-active.notes-keyboard-open .app>header {
-  margin-bottom:calc(0px - var(--notes-header-collapse-size,0px))!important;
-}
-body.notes-page-active #content .chat-page {
-  overflow:visible!important;
 }
