@@ -7335,3 +7335,13 @@ body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboa
 body.notes-page-active #content .chat-page.notes-keyboard-open {
   height:var(--notes-page-height)!important;
 }
+
+
+/* User-owned songs: replace Save with a smaller, centered Delete button. */
+#memoryActionGate .memory-action-card.is-song #memoryDelete:not(.hidden) {
+  flex:0 0 124px;
+  width:124px;
+  min-width:124px;
+  min-height:36px;
+  padding:7px 10px;
+}
