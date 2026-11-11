@@ -6108,3 +6108,137 @@ body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-flower
   .streak-garden-page .sg-friends-compact .sg-friend-list{gap:6px 7px!important}
   .streak-garden-page .sg-friends-compact .sg-friend-avatar{width:29px!important;height:29px!important;font-size:16px!important}
 }
+
+
+/* v111 — shorter garden banner with a compact streak label above the stage. */
+/* A compact topline puts the streak on the right above the garden message. */
+.streak-garden-page .sg-hero-paper{
+  min-height:0!important;
+  align-items:center!important;
+}
+.streak-garden-page .sg-hero-copy{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  gap:0!important;
+  min-height:0!important;
+  padding:14px 13px 14px 23px!important;
+}
+.streak-garden-page .sg-hero-topline{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:7px;
+  width:100%;
+  min-width:0;
+}
+.streak-garden-page .sg-hero-topline .sg-eyebrow{
+  flex:1 1 auto;
+  min-width:0;
+  font-size:9px!important;
+  letter-spacing:1px!important;
+  white-space:nowrap;
+}
+.streak-garden-page .sg-hero-topline .sg-count-line{
+  display:inline-flex!important;
+  flex:none!important;
+  align-items:center!important;
+  gap:4px!important;
+  margin:0!important;
+  padding:5px 8px!important;
+  border:1px solid #e7c9d8!important;
+  border-radius:999px!important;
+  background:#fff8f8d9!important;
+  color:#765773!important;
+  white-space:nowrap;
+  box-shadow:0 2px 5px #9a71830d;
+}
+.streak-garden-page .sg-hero-topline .sg-count-line>strong{
+  color:#a36080!important;
+  font:800 14px/1 Quicksand,sans-serif!important;
+  letter-spacing:-.2px!important;
+  text-shadow:none!important;
+}
+.streak-garden-page .sg-hero-topline .sg-count-line span{
+  display:flex;
+  flex-direction:row;
+  align-items:baseline;
+  gap:3px;
+  line-height:1;
+}
+.streak-garden-page .sg-hero-topline .sg-count-line b{
+  color:#805d79!important;
+  font:800 10px/1 Quicksand,sans-serif!important;
+}
+.streak-garden-page .sg-hero-topline .sg-count-line small{
+  color:#9a7b91!important;
+  font-size:9px!important;
+  line-height:1!important;
+}
+.streak-garden-page .sg-hero-copy .sg-garden-stage{
+  margin:7px 0 0!important;
+  font-size:17px!important;
+  line-height:1.22!important;
+}
+.streak-garden-page .sg-hero-scene{
+  min-height:0!important;
+  padding:5px 10px 8px 0!important;
+}
+.streak-garden-page .sg-hero-scene .sg-garden-art{
+  width:100%!important;
+  max-width:340px!important;
+  min-height:0!important;
+  height:auto!important;
+  aspect-ratio:680/460!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line{
+  border-color:#75576d!important;
+  background:#3d303f!important;
+  box-shadow:0 2px 5px #0002;
+}
+body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line>strong{color:#f0bdd2!important}
+body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line b{color:#f1dce9!important}
+body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line small{color:#cfb5ca!important}
+@media(max-width:620px){
+  .streak-garden-page .sg-hero-paper{
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;
+    min-height:0!important;
+  }
+  .streak-garden-page .sg-hero-copy{
+    padding:12px 15px 3px!important;
+  }
+  .streak-garden-page .sg-hero-topline .sg-eyebrow{
+    font-size:9px!important;
+    letter-spacing:.9px!important;
+  }
+  .streak-garden-page .sg-hero-topline .sg-count-line{
+    padding:4px 8px!important;
+  }
+  .streak-garden-page .sg-hero-topline .sg-count-line>strong{font-size:13px!important}
+  .streak-garden-page .sg-hero-topline .sg-count-line b{font-size:9px!important}
+  .streak-garden-page .sg-hero-topline .sg-count-line small{font-size:8px!important}
+  .streak-garden-page .sg-hero-copy .sg-garden-stage{
+    margin-top:5px!important;
+    font-size:15px!important;
+    line-height:1.2!important;
+  }
+  .streak-garden-page .sg-hero-scene{
+    min-height:0!important;
+    height:auto!important;
+    padding:0 9px 11px!important;
+  }
+  .streak-garden-page .sg-hero-scene .sg-garden-art{
+    width:min(100%,340px)!important;
+    max-width:340px!important;
+    height:auto!important;
+  }
+}
+@media(max-width:360px){
+  .streak-garden-page .sg-hero-copy{padding:11px 12px 2px!important}
+  .streak-garden-page .sg-hero-topline{gap:5px}
+  .streak-garden-page .sg-hero-topline .sg-eyebrow{font-size:8px!important}
+  .streak-garden-page .sg-hero-topline .sg-count-line{padding:4px 6px!important}
+  .streak-garden-page .sg-hero-copy .sg-garden-stage{font-size:14px!important}
+  .streak-garden-page .sg-hero-scene .sg-garden-art{width:min(100%,320px)!important}
+}
