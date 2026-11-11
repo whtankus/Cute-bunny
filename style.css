@@ -3203,3 +3203,22 @@ body.notes-page-active.notes-header-hidden .app>header {
 body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
   height:var(--notes-page-height,calc(100dvh - 180px))!important;
 }
+
+
+/* v88 — allow 30 characters in a Notes message bubble. */
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap {
+  max-width:min(30ch,calc(72.9% - 2.916rem))!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(30ch,calc(72.9% - 2.5515rem))!important;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(30ch,calc(72.9% - 2.2599rem))!important;
+  }
+}
