@@ -14,6 +14,7 @@ let notificationRows = [], notificationLoaded = false, notificationLoading = fal
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
 let streakCalendarOffset = 0, streakSelectedDate = '', streakSelectedWeekDate = '';
+let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false };
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
 const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
@@ -437,8 +438,8 @@ function streakBadge(count) {
 }
 function streakWidget() {
   const count = Math.max(0, Number(me?.login_streak) || 0);
-  const subtitle = count ? count + (count === 1 ? ' day, keep it going!' : ' days, keep it going!') : 'Start your streak today ♡';
-  return '<article class="tile streak-tile"><div class="tile-art streak-art"><span class="streak-art-value">🔥 ' + count + '</span><i>✿</i></div><h3>Your streak</h3><p>' + esc(subtitle) + '</p><button type="button" class="primary" data-go="streak">Open streak →</button></article>';
+  const subtitle = count ? count + (count === 1 ? ' day in a row' : ' days in a row') : 'Start your streak today ♡';
+  return '<article class="tile streak-tile"><div class="tile-art streak-art"><span class="streak-art-value"><span class="streak-fire-emoji" aria-hidden="true">🔥</span><strong>' + count + '</strong></span><i aria-hidden="true">✿</i></div><h3>Your streak</h3><p title="' + esc(subtitle) + '">' + esc(subtitle) + '</p><button type="button" class="primary streak-open-button" data-open-streak>Open streak →</button></article>';
 }
 
 function recordLoginStreak() {
@@ -628,6 +629,104 @@ function streakCalendarMarkup(todayKey, history) {
     '<p class="sg-calendar-detail" aria-live="polite">' + esc(detail) + '</p>' +
     '<div class="sg-calendar-legend"><span><i class="is-bloomed">✿</i>Visit recorded</span><span><i class="is-today">•</i>Today</span></div></section>';
 }
+
+function resetStreakPetalGame() {
+  const symbols = ['🌷','🌼','🌸','🍀'];
+  const cards = [...symbols, ...symbols].map((symbol, index) => ({ id: String(index), symbol }));
+  for (let index = cards.length - 1; index > 0; index--) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [cards[index], cards[swap]] = [cards[swap], cards[index]];
+  }
+  streakPetalGame = { cards, flipped: [], matched: [], moves: 0, locked: false, completed: false };
+  renderStreakPetalGame();
+}
+function renderStreakPetalGame() {
+  const board = $('#streakGameBoard');
+  if (!board) return;
+  const state = streakPetalGame;
+  board.innerHTML = state.cards.map(card => {
+    const matched = state.matched.includes(card.id);
+    const revealed = matched || state.flipped.includes(card.id);
+    return '<button type="button" class="sg-petal-card' + (revealed ? ' is-revealed' : '') +
+      (matched ? ' is-matched' : '') + '" data-streak-game-card="' + card.id +
+      '" aria-pressed="' + revealed + '" aria-label="' + (revealed ? card.symbol : 'Reveal a flower') +
+      '"' + (matched || state.locked || state.completed ? ' disabled' : '') + '>' +
+      '<span class="sg-petal-back" aria-hidden="true">✿</span><span class="sg-petal-face" aria-hidden="true">' +
+      card.symbol + '</span></button>';
+  }).join('');
+  const pairs = state.matched.length / 2;
+  const status = $('#streakGameStatus');
+  const moves = $('#streakGameMoves');
+  if (status) status.textContent = state.completed
+    ? 'Every flower found — lovely work! ♡'
+    : state.locked ? 'A little moment… remember those two flowers.' : 'Find all four matching pairs.';
+  if (moves) moves.textContent = state.moves + ' moves · ' + pairs + ' / 4 pairs';
+}
+function flipStreakPetalCard(cardId) {
+  const state = streakPetalGame;
+  if (state.locked || state.completed || state.matched.includes(cardId) || state.flipped.includes(cardId)) return;
+  state.flipped.push(cardId);
+  if (state.flipped.length === 2) {
+    state.moves += 1;
+    const [firstId,secondId] = state.flipped;
+    const first = state.cards.find(card => card.id === firstId);
+    const second = state.cards.find(card => card.id === secondId);
+    if (first && second && first.symbol === second.symbol) {
+      state.matched.push(firstId,secondId);
+      state.flipped = [];
+      state.completed = state.matched.length === state.cards.length;
+      renderStreakPetalGame();
+      return;
+    }
+    state.locked = true;
+    renderStreakPetalGame();
+    setTimeout(() => {
+      if (streakPetalGame !== state) return;
+      state.flipped = [];
+      state.locked = false;
+      if (page === 'streak') renderStreakPetalGame();
+    }, 720);
+    return;
+  }
+  renderStreakPetalGame();
+}
+function streakFriendSnapshot(friend, todayKey) {
+  if (!Object.prototype.hasOwnProperty.call(friend || {}, 'last_login_date')) {
+    return { count: null, label: 'Streak details unavailable' };
+  }
+  const lastDate = String(friend.last_login_date || '').slice(0,10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(lastDate)) {
+    return { count: 0, label: 'No visit recorded yet' };
+  }
+  const gap = Math.round((Date.parse(todayKey + 'T00:00:00Z') - Date.parse(lastDate + 'T00:00:00Z')) / 86400000);
+  if (!Number.isFinite(gap) || gap < 0) return { count: null, label: 'Streak details unavailable' };
+  if (gap > 1) return { count: 0, label: 'Streak paused' };
+  const count = Math.max(0, Number(friend.login_streak) || 0);
+  return { count, label: gap === 0 ? 'Here today' : 'Visited yesterday' };
+}
+function streakFriendsMarkup(todayKey) {
+  if (!Array.isArray(friends) || !friends.length) {
+    return '<div class="sg-friends-empty"><span aria-hidden="true">🐰</span><p>Your little circle is waiting for its first friend.</p><button type="button" class="sg-find-friends" data-go="friends">Find a friend →</button></div>';
+  }
+  const rows = friends.slice(0,4).map(friend => {
+    const name = friend.displayName || friend.display_name || friend.username || 'Friend';
+    const snapshot = streakFriendSnapshot(friend,todayKey);
+    const countLabel = snapshot.count === null ? '—' : String(snapshot.count);
+    const duration = snapshot.count === null ? 'streak unavailable' : snapshot.count === 1 ? 'day streak' : 'day streak';
+    return '<button type="button" class="sg-friend-card" data-streak-friend="' + esc(friend.username || '') +
+      '" aria-label="Open ' + esc(name) + ' profile">' +
+      '<span class="sg-friend-avatar">' + esc(friend.mascot || '🐰') + '</span>' +
+      '<span class="sg-friend-identity"><b>' + esc(name) + '</b><small>@' + esc(friend.username || 'friend') + '</small></span>' +
+      '<span class="sg-friend-streak"><strong>' + (snapshot.count === null ? '✿' : '🔥 ' + countLabel) +
+      '</strong><small>' + (snapshot.count === null ? esc(snapshot.label) : esc(snapshot.label + ' · ' + (snapshot.count === 1 ? '1 day' : snapshot.count + ' days'))) + '</small></span>' +
+      '</button>';
+  }).join('');
+  const more = friends.length > 4
+    ? '<button type="button" class="sg-more-friends" data-go="friends">See all ' + friends.length + ' friends →</button>'
+    : '';
+  return '<div class="sg-friend-list">' + rows + '</div>' + more;
+}
+
 function renderStreakPage() {
   const content = $('#content');
   if (!content || !me) return;
@@ -665,6 +764,7 @@ function renderStreakPage() {
   const progress = next ? Math.max(0, Math.min(100, (count - base) / Math.max(1, next.days - base) * 100)) : 100;
   const left = next ? Math.max(0, next.days - count) : 0;
   const todayCompleted = history.has(todayKey);
+  if (!streakPetalGame.cards.length) resetStreakPetalGame();
   const allTimeGoalCompletions = countSavedStreakGoalCompletions();
   const stage = count >= 30 ? 'Your garden is in full bloom.' : count >= 14 ? 'Your flowers are thriving.' :
     count >= 7 ? 'Your garden is blooming.' : count ? 'A little sprout is growing.' : 'Your garden is waiting for its first flower.';
@@ -821,12 +921,22 @@ function renderStreakPage() {
       '<button type="button" class="sg-add-goal" id="streakAddGoal"><span>＋</span> Plant a little goal</button>' +
       '<form class="sg-add-form hidden" id="streakGoalForm"><input class="input" id="streakGoalInput" maxlength="56" placeholder="Something kind I want to do…" required><button type="submit" class="primary">Add to my garden ♡</button></form>' +
       '<p class="sg-goal-footnote">Your goals are gentle reminders. They never reduce or break your login streak.</p></section>',
+    '<div class="sg-growth-extras">',
+    '<section class="sg-section sg-game-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">A TINY BRAIN BREAK</span><h3>Petal pairs</h3><p>Find the four matching flowers.</p></div><span class="sg-game-stamp">8 petals</span></div>' +
+      '<div class="sg-game-score"><span id="streakGameStatus">Find all four matching pairs.</span><b id="streakGameMoves">0 moves · 0 / 4 pairs</b></div>' +
+      '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game"></div>' +
+      '<button type="button" class="sg-game-reset" id="streakGameReset">Shuffle flowers ↻</button>' +
+      '<p class="sg-game-note">Just for fun. Playing never changes your streak or goals.</p></section>',
+    '<section class="sg-section sg-friends-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">GROWING TOGETHER</span><h3>Friends in bloom</h3><p>Little updates from your circle.</p></div><span class="sg-friends-count">' + friends.length + '</span></div>' +
+      streakFriendsMarkup(todayKey) + '</section>',
+    '</div>',
     '<section class="sg-section sg-milestones-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">LOOK HOW FAR YOU HAVE GROWN</span><h3>Your garden journey</h3><p>Each bloom has its own little milestone.</p></div><span class="sg-section-note">' + earned.size + ' / ' + milestones.length + ' unlocked</span></div>' +
       '<div class="sg-milestone-route">' + badges + '</div><div class="sg-botanical-rule"><span>❧</span><i>one day at a time</i><span>❧</span></div></section>',
     '</div>',
     '<p class="sg-signoff">Made of little moments, growing into something lovely. <span>♡</span></p>',
     '</div>'
   ].join('');
+  renderStreakPetalGame();
 }
 
 function playBoing() {
@@ -1240,6 +1350,14 @@ function render() {
         }).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
       </div>
     `;
+    const openStreakButton = c.querySelector('[data-open-streak]');
+    if (openStreakButton) {
+      openStreakButton.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        go('streak');
+      });
+    }
   } else if (page === 'gallery') {
     c.innerHTML = `
       <div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div>
@@ -2173,6 +2291,22 @@ document.addEventListener('click', async e => {
   const goBtn = e.target.closest('[data-go]');
   if (goBtn) {
     go(goBtn.dataset.go);
+    return;
+  }
+
+  const streakFriendButton = e.target.closest('[data-streak-friend]');
+  if (streakFriendButton) {
+    const friend = friends.find(user => user.username === streakFriendButton.dataset.streakFriend);
+    if (friend) showFriendProfile(friend);
+    return;
+  }
+  if (e.target.closest('#streakGameReset')) {
+    resetStreakPetalGame();
+    return;
+  }
+  const petalCard = e.target.closest('[data-streak-game-card]');
+  if (petalCard) {
+    flipStreakPetalCard(petalCard.dataset.streakGameCard);
     return;
   }
 
