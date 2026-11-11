@@ -6335,10 +6335,10 @@ body[data-mode="dark"] .streak-garden-page .sg-garden-flower-hit.is-watered:afte
 }
 
 /* Keep randomized card colors, but remove extra card movement/reveal animation. */
-.streak-garden-page .sg-game-compact .sg-petal-card,
-.streak-garden-page .sg-game-compact .sg-petal-card:not(:disabled):hover,
-.streak-garden-page .sg-game-compact .sg-petal-card:active {
-  transform:none!important;
+.streak-garden-page .sg-game-compact .sg-petal-card:not(.is-celebrating),
+.streak-garden-page .sg-game-compact .sg-petal-card:not(.is-celebrating):not(:disabled):hover,
+.streak-garden-page .sg-game-compact .sg-petal-card:not(.is-celebrating):active {
+  transform:none;
   animation:none!important;
   transition:border-color .16s ease,background .16s ease,box-shadow .16s ease!important;
 }
@@ -6366,4 +6366,140 @@ body[data-mode="dark"] .streak-garden-page .sg-garden-flower-hit.is-watered:afte
 }
 @media(prefers-reduced-motion:reduce) {
   .streak-garden-page .sg-garden-flower-hit.is-watered:after {animation:none!important}
+}
+
+
+/* v113 — final garden polish, automatic Petal Pairs rounds, live friend streaks. */
+.streak-garden-page .sg-week-section .sg-week-detail,
+.streak-garden-page .sg-week-section .sg-week-legend {display:none!important}
+.streak-garden-page .sg-week-day,
+.streak-garden-page .sg-week-day.is-visited,
+.streak-garden-page .sg-week-day.is-today,
+.streak-garden-page .sg-week-day.is-selected {
+  border:0!important;background:transparent!important;box-shadow:none!important;
+}
+.streak-garden-page .sg-week-day .sg-week-flower,
+.streak-garden-page .sg-week-day.is-visited .sg-week-flower {
+  width:37px;height:37px;border:1px solid transparent!important;border-radius:50%!important;
+  background:transparent!important;box-shadow:none!important;
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.streak-garden-page .sg-week-day.is-selected .sg-week-flower,
+.streak-garden-page .sg-week-day .sg-week-flower.is-clicked {
+  border-color:#e6abc1!important;background:#f9e3ec!important;box-shadow:0 0 0 3px #f8eaf0!important;
+}
+.streak-garden-page .sg-week-day.is-selected .sg-week-flower svg,
+.streak-garden-page .sg-week-day .sg-week-flower.is-clicked svg {
+  animation:sg-week-flower-spin .68s cubic-bezier(.2,.72,.24,1) both!important;transform-origin:50% 50%;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-visited,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-today,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-selected {
+  border:0!important;background:transparent!important;box-shadow:none!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-selected .sg-week-flower,
+body[data-mode="dark"] .streak-garden-page .sg-week-day .sg-week-flower.is-clicked {
+  border-color:#c98eaa!important;background:#634354!important;box-shadow:0 0 0 3px #513b4a!important;
+}
+
+/* No stars or rings remain around the flowers in the garden scene. */
+.streak-garden-page .sg-garden-flower-hit:before,
+.streak-garden-page .sg-garden-flower-hit:hover:before,
+.streak-garden-page .sg-garden-flower-hit:focus-visible:before,
+.streak-garden-page .sg-garden-flower-hit.is-watered:before,
+.streak-garden-page .sg-garden-flower-hit.is-watered:after,
+.streak-garden-page .sg-hero-corner.sg-corner-two {
+  display:none!important;content:none!important;border:0!important;background:transparent!important;
+  box-shadow:none!important;animation:none!important;
+}
+
+/* Two tiny flowers rotate and bounce independently around the page heading. */
+.streak-garden-page .sg-heading-doodle {
+  display:flex!important;align-items:center;justify-content:center;gap:9px;padding:4px 7px 0 0!important;white-space:nowrap;
+}
+.streak-garden-page .sg-heading-bloom {
+  display:inline-block;color:#d989a8;font:normal 1.65rem/1 Caveat,cursive;transform-origin:50% 58%;
+  animation:sg-heading-bloom-wander var(--sg-bloom-speed,4.2s) ease-in-out infinite;
+  animation-delay:var(--sg-bloom-delay,0s);will-change:transform;
+}
+.streak-garden-page .sg-heading-bloom-two {color:#b7a2d2;font-size:1.35rem;animation-direction:reverse}
+@keyframes sg-heading-bloom-wander {
+  0%,100% {transform:translate3d(0,0,0) rotate(0deg) scale(1)}
+  24% {transform:translate3d(-2px,-6px,0) rotate(92deg) scale(1.08)}
+  50% {transform:translate3d(1px,1px,0) rotate(190deg) scale(.96)}
+  76% {transform:translate3d(2px,-8px,0) rotate(278deg) scale(1.1)}
+}
+
+/* All six pairs celebrate together once, then the game automatically deals a new board. */
+.streak-garden-page .sg-game-compact {grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"copy" "board"!important}
+.streak-garden-page .sg-game-compact .sg-petal-board {grid-area:board}
+.streak-garden-page .sg-game-compact .sg-game-reset-compact {display:none!important}
+.streak-garden-page .sg-game-compact .sg-petal-card.is-celebrating {
+  transform-origin:50% 50%;animation:sg-petal-win-pop .92s cubic-bezier(.2,.8,.2,1) both!important;
+  animation-delay:calc(var(--sg-petal-order,0) * 34ms)!important;will-change:transform;
+}
+.streak-garden-page .sg-game-compact .sg-petal-card.is-celebrating .sg-petal-face {
+  display:block!important;animation:sg-petal-win-spin .92s cubic-bezier(.2,.8,.2,1) both!important;
+  animation-delay:calc(var(--sg-petal-order,0) * 34ms)!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-card.is-celebrating .sg-petal-back {display:none!important}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(1){--sg-petal-order:0}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(2){--sg-petal-order:1}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(3){--sg-petal-order:2}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(4){--sg-petal-order:3}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(5){--sg-petal-order:4}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(6){--sg-petal-order:5}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(7){--sg-petal-order:6}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(8){--sg-petal-order:7}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(9){--sg-petal-order:8}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(10){--sg-petal-order:9}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(11){--sg-petal-order:10}
+.streak-garden-page .sg-game-compact .sg-petal-card:nth-child(12){--sg-petal-order:11}
+@keyframes sg-petal-win-pop {
+  0% {transform:scale(.84);filter:brightness(1)}
+  38% {transform:scale(1.13);filter:brightness(1.12)}
+  70% {transform:scale(.98);filter:brightness(1.04)}
+  100% {transform:scale(1);filter:brightness(1)}
+}
+@keyframes sg-petal-win-spin {
+  0% {transform:rotate(0deg) scale(.72)}
+  48% {transform:rotate(205deg) scale(1.28)}
+  100% {transform:rotate(360deg) scale(1)}
+}
+
+/* Both Friends views show each friend's current streak. */
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count {gap:3px!important;min-width:0!important;color:#9e6c86!important}
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count strong {font-size:10px!important;font-weight:900!important}
+.friend-row .friend-row-streak {display:block;margin-top:3px;color:#ad7794!important;font-size:.67rem!important;font-weight:800;line-height:1.25}
+body[data-mode="dark"] .friend-row .friend-row-streak {color:#e6bad0!important}
+
+/* Home: thumbnail is a direct shortcut with a clear live day count. */
+.streak-tile .streak-art-trigger {position:relative;width:100%;border:0;cursor:pointer;outline-offset:3px}
+.streak-tile .streak-art-trigger:focus-visible {outline:2px solid #c984a3;outline-offset:3px}
+.streak-tile .streak-art-sprig {
+  position:absolute;top:10px;left:13px;font-size:1.5rem;filter:drop-shadow(0 2px 2px #fff8);
+  animation:sg-home-streak-sprig 3.6s ease-in-out infinite;
+}
+.streak-tile .streak-art-value {
+  display:grid!important;justify-items:center;align-content:center;gap:1px!important;min-width:86px;min-height:86px;
+  padding:8px;border:1px solid #ffffffa8;border-radius:26px;background:#fff9;
+  box-shadow:0 5px 14px #8b6b8a16,inset 0 1px #fff;
+}
+.streak-tile .streak-art-value .streak-fire-emoji {color:#bd7b9d;font-size:1.05rem!important;line-height:1}
+.streak-tile .streak-art-value strong {color:#795a7e!important;font-size:2.25rem!important;line-height:1!important}
+.streak-tile .streak-art-value small {color:#98778e;font-size:.53rem;font-weight:900;letter-spacing:1px}
+.streak-tile .streak-art-trigger>i {position:absolute;right:15px;bottom:10px;color:#fff;font:normal 1.7rem Caveat,cursive}
+@keyframes sg-home-streak-sprig {
+  0%,100% {transform:translateY(0) rotate(-8deg)}
+  50% {transform:translateY(-5px) rotate(9deg)}
+}
+body[data-mode="dark"] .streak-tile .streak-art-value {border-color:#776179;background:#382e3eaa;box-shadow:0 5px 14px #0002}
+body[data-mode="dark"] .streak-tile .streak-art-value strong {color:#f2dce9!important}
+body[data-mode="dark"] .streak-tile .streak-art-value small {color:#d5b5cb}
+
+@media(prefers-reduced-motion:reduce) {
+  .streak-garden-page .sg-heading-bloom,.streak-tile .streak-art-sprig {animation:none!important}
+  .streak-garden-page .sg-game-compact .sg-petal-card.is-celebrating,
+  .streak-garden-page .sg-game-compact .sg-petal-card.is-celebrating .sg-petal-face {animation:none!important}
 }
