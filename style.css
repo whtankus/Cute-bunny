@@ -6242,3 +6242,128 @@ body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line small
   .streak-garden-page .sg-hero-copy .sg-garden-stage{font-size:14px!important}
   .streak-garden-page .sg-hero-scene .sg-garden-art{width:min(100%,320px)!important}
 }
+
+
+/* v112 — simpler weekly selection, randomized Petal Pairs, softer garden flowers. */
+
+/* Weekly Blooms: remove all day-tile rectangles; the selected flower alone gets a circle. */
+.streak-garden-page .sg-week-day,
+.streak-garden-page .sg-week-day.is-visited,
+.streak-garden-page .sg-week-day.is-today,
+.streak-garden-page .sg-week-day.is-pending,
+.streak-garden-page .sg-week-day.is-future,
+.streak-garden-page .sg-week-day.is-missed,
+.streak-garden-page .sg-week-day.is-selected,
+.streak-garden-page .sg-week-day.is-selected.is-today {
+  border-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  outline:none!important;
+}
+.streak-garden-page .sg-week-day .sg-week-flower,
+.streak-garden-page .sg-week-day.is-visited .sg-week-flower {
+  border:1px solid transparent!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.streak-garden-page .sg-week-day.is-selected .sg-week-flower,
+.streak-garden-page .sg-week-day .sg-week-flower.is-clicked {
+  border-color:#e6abc1!important;
+  background:#f9e3ec!important;
+  box-shadow:0 0 0 3px #f8eaf0!important;
+}
+.streak-garden-page .sg-week-day.is-selected .sg-week-flower svg,
+.streak-garden-page .sg-week-day .sg-week-flower.is-clicked svg {
+  display:block;
+  transform-origin:50% 50%;
+}
+.streak-garden-page .sg-week-day.is-selected .sg-week-name {color:#a2577b}
+body[data-mode="dark"] .streak-garden-page .sg-week-day,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-visited,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-today,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-selected {
+  border-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day .sg-week-flower,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-visited .sg-week-flower {
+  border-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-selected .sg-week-flower,
+body[data-mode="dark"] .streak-garden-page .sg-week-day .sg-week-flower.is-clicked {
+  border-color:#c98eaa!important;
+  background:#634354!important;
+  box-shadow:0 0 0 3px #513b4a!important;
+}
+
+/* Banner flowers: remove the circular hit-target halo, keep a floating star on watered blooms. */
+.streak-garden-page .sg-garden-flower-hit:before,
+.streak-garden-page .sg-garden-flower-hit:hover:before,
+.streak-garden-page .sg-garden-flower-hit:focus-visible:before,
+.streak-garden-page .sg-garden-flower-hit.is-watered:before {
+  display:none!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  animation:none!important;
+}
+.streak-garden-page .sg-garden-flower-hit.is-watered:after {
+  content:"✦";
+  position:absolute;
+  top:-7px;
+  right:-3px;
+  z-index:2;
+  color:#bd7b9c;
+  font:1.05rem/1 Caveat,cursive;
+  text-shadow:0 1px 3px #fff8f4;
+  transform-origin:50% 50%;
+  animation:sg-bloom-star-float 1.8s ease-in-out infinite!important;
+  pointer-events:none;
+}
+@keyframes sg-bloom-star-float {
+  0%,100% {transform:translate3d(0,0,0) rotate(-8deg) scale(.86);opacity:.72}
+  50% {transform:translate3d(1px,-5px,0) rotate(18deg) scale(1.14);opacity:1}
+}
+body[data-mode="dark"] .streak-garden-page .sg-garden-flower-hit.is-watered:after {
+  color:#f0b8d0;
+  text-shadow:0 1px 4px #211c28;
+}
+
+/* Keep randomized card colors, but remove extra card movement/reveal animation. */
+.streak-garden-page .sg-game-compact .sg-petal-card,
+.streak-garden-page .sg-game-compact .sg-petal-card:not(:disabled):hover,
+.streak-garden-page .sg-game-compact .sg-petal-card:active {
+  transform:none!important;
+  animation:none!important;
+  transition:border-color .16s ease,background .16s ease,box-shadow .16s ease!important;
+}
+.streak-garden-page .sg-game-compact .sg-petal-card.is-revealed .sg-petal-face {
+  animation:none!important;
+}
+
+/* The streak stays on the top-right as a compact text label on narrow phones. */
+.streak-garden-page .sg-hero-topline {
+  justify-content:space-between!important;
+  align-items:center!important;
+}
+.streak-garden-page .sg-hero-topline .sg-count-line {
+  gap:4px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.streak-garden-page .sg-hero-topline .sg-count-line>strong {font-size:14px!important}
+.streak-garden-page .sg-hero-topline .sg-count-line span {gap:3px!important}
+@media(max-width:620px) {
+  .streak-garden-page .sg-hero-topline .sg-count-line>strong {font-size:13px!important}
+}
+@media(prefers-reduced-motion:reduce) {
+  .streak-garden-page .sg-garden-flower-hit.is-watered:after {animation:none!important}
+}
