@@ -2808,3 +2808,79 @@ body.notes-page-active .app #content {
   -webkit-overflow-scrolling:touch;
   overflow-anchor:auto;
 }
+
+
+/* Notes scroll stability: make the app shell a constrained column and the thread its only vertical scroller. */
+body.notes-page-active .app {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+}
+body.notes-page-active .app>header {
+  flex:0 0 auto!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:40!important;
+}
+body.notes-page-active .app>main {
+  display:flex!important;
+  flex:1 1 0%!important;
+  flex-direction:column!important;
+  width:100%!important;
+  max-width:none!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+body.notes-page-active .app #content {
+  display:flex!important;
+  flex:1 1 0%!important;
+  flex-direction:column!important;
+  width:min(100%,760px)!important;
+  max-width:760px!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0 auto!important;
+  padding:0 clamp(14px,3vw,22px)!important;
+  overflow:hidden!important;
+  animation:none!important;
+  transform:none!important;
+}
+
+/* Remove stale percentage-height/flex sizing conflicts from the message list. */
+#content .chat-page {
+  display:flex!important;
+  flex:0 0 auto!important;
+  flex-direction:column!important;
+  width:100%!important;
+  height:var(--notes-page-height,calc(100dvh - 180px))!important;
+  min-height:0!important;
+  overflow:visible!important;
+}
+#content .chat-page .chat-thread {
+  display:flex!important;
+  flex:1 1 0%!important;
+  flex-direction:column!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  box-sizing:border-box!important;
+  padding-top:36px!important;
+  padding-bottom:12px!important;
+  scroll-padding-top:36px;
+  scroll-padding-bottom:12px;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  overflow-anchor:auto;
+}
+
+/* Conversation rows must retain their natural height inside the column scroller. */
+#content .chat-page .chat-thread>.chat-message,
+#content .chat-page .chat-thread>.chat-day-divider,
+#content .chat-page .chat-thread>.chat-empty {
+  flex:0 0 auto!important;
+}
