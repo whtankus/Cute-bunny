@@ -640,7 +640,15 @@ function saveStreakMilestones(count) {
 }
 function resetStreakPetalGame() {
   const symbols = ['🌷','🌼','🌸','🌻','🌺','🍀'];
-  const cards = [...symbols, ...symbols].map((symbol, index) => ({ id: String(index), symbol }));
+  const tones = ['rose','sunshine','lilac','gold','peach','mint'];
+  for (let index = tones.length - 1; index > 0; index--) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [tones[index], tones[swap]] = [tones[swap], tones[index]];
+  }
+  const flowerPairs = symbols.map((symbol, index) => ({ symbol, tone: tones[index] }));
+  const cards = [...flowerPairs, ...flowerPairs].map(({symbol,tone}, index) => ({
+    id: String(index), symbol, tone
+  }));
   for (let index = cards.length - 1; index > 0; index--) {
     const swap = Math.floor(Math.random() * (index + 1));
     [cards[index], cards[swap]] = [cards[swap], cards[index]];
@@ -655,7 +663,7 @@ function renderStreakPetalGame() {
   board.innerHTML = state.cards.map(card => {
     const matched = state.matched.includes(card.id);
     const revealed = matched || state.flipped.includes(card.id);
-    const petalTone = ({'🌷':'rose','🌼':'sunshine','🌸':'lilac','🌻':'gold','🌺':'peach','🍀':'mint'})[card.symbol] || 'rose';
+    const petalTone = card.tone || 'rose';
     return '<button type="button" class="sg-petal-card sg-petal-' + petalTone + (revealed ? ' is-revealed' : '') +
       (matched ? ' is-matched' : '') + '" data-streak-game-card="' + card.id +
       '" aria-pressed="' + revealed + '" aria-label="' + (revealed ? card.symbol : 'Reveal a flower') +
@@ -953,16 +961,16 @@ function renderStreakPage() {
   <path d="M409 216 C389 180 405 137 443 124 C452 77 503 56 540 83 C574 49 632 69 641 116 C679 132 681 177 651 199 C642 239 587 253 552 231 C518 258 450 250 432 225Z" fill="#a7b99b"/>
   <path d="M443 180 C432 151 454 128 476 128 C491 101 521 104 536 124 C557 103 586 113 591 139 C617 138 632 159 619 180 C603 204 565 201 548 190 C519 214 475 208 463 191Z" fill="#b7c5a7" opacity=".82"/>
   <g>
-    <use href="#sgCherryBloom" transform="translate(438 153) scale(1.05)"/>
-    <use href="#sgCherryBloom" transform="translate(470 106) scale(.88)"/>
-    <use href="#sgCherryBloom" transform="translate(512 83) scale(.92)"/>
-    <use href="#sgCherryBloom" transform="translate(554 111) scale(1.02)"/>
-    <use href="#sgCherryBloom" transform="translate(603 107) scale(.93)"/>
-    <use href="#sgCherryBloom" transform="translate(638 151) scale(.9)"/>
-    <use href="#sgCherryBloom" transform="translate(581 179) scale(.85)"/>
-    <use href="#sgCherryBloom" transform="translate(520 188) scale(.9)"/>
-    <use href="#sgCherryBloom" transform="translate(474 204) scale(.76)"/>
-    <use href="#sgCherryBloom" transform="translate(626 202) scale(.82)"/>
+    <use href="#sgCherryBloom" transform="translate(438 153) scale(1.15)"/>
+    <use href="#sgCherryBloom" transform="translate(470 106) scale(.97)"/>
+    <use href="#sgCherryBloom" transform="translate(512 83) scale(1.02)"/>
+    <use href="#sgCherryBloom" transform="translate(554 111) scale(1.12)"/>
+    <use href="#sgCherryBloom" transform="translate(603 107) scale(1.03)"/>
+    <use href="#sgCherryBloom" transform="translate(638 151) scale(.99)"/>
+    <use href="#sgCherryBloom" transform="translate(581 179) scale(.94)"/>
+    <use href="#sgCherryBloom" transform="translate(520 188) scale(.99)"/>
+    <use href="#sgCherryBloom" transform="translate(474 204) scale(.84)"/>
+    <use href="#sgCherryBloom" transform="translate(626 202) scale(.91)"/>
   </g>
 
   <!-- The little bunny gardener is the clear foreground focal point. -->
@@ -1008,13 +1016,13 @@ function renderStreakPage() {
     ? Math.min(7, 2 + Math.floor(streakFlowerTotal / 7))
     : 0;
   const gardenFlowers = [
-    {id:'pink', label:'pink flower', x:14.7, y:79.3, svgX:100, svgY:365, scale:.94},
-    {id:'lavender', label:'lavender flower', x:27.9, y:85.2, svgX:190, svgY:392, scale:.82},
-    {id:'honey', label:'yellow flower', x:40.4, y:87.8, svgX:275, svgY:404, scale:.78},
-    {id:'rose', label:'rose flower', x:61, y:88.7, svgX:415, svgY:408, scale:.82},
-    {id:'peach', label:'peach flower', x:72.5, y:85.2, svgX:493, svgY:392, scale:.84},
-    {id:'lilac', label:'lilac flower', x:83.8, y:80.7, svgX:570, svgY:371, scale:.82},
-    {id:'cream', label:'cream flower', x:93.4, y:87.6, svgX:635, svgY:403, scale:.72}
+    {id:'pink', label:'pink flower', x:14.7, y:79.3, svgX:100, svgY:365, scale:1.08},
+    {id:'lavender', label:'lavender flower', x:27.9, y:85.2, svgX:190, svgY:392, scale:.94},
+    {id:'honey', label:'yellow flower', x:40.4, y:87.8, svgX:275, svgY:404, scale:.90},
+    {id:'rose', label:'rose flower', x:61, y:88.7, svgX:415, svgY:408, scale:.94},
+    {id:'peach', label:'peach flower', x:72.5, y:85.2, svgX:493, svgY:392, scale:.96},
+    {id:'lilac', label:'lilac flower', x:83.8, y:80.7, svgX:570, svgY:371, scale:.94},
+    {id:'cream', label:'cream flower', x:93.4, y:87.6, svgX:635, svgY:403, scale:.84}
   ];
   const gardenPlantMarkup = gardenFlowers.map((flower, index) =>
     '<use href="#' + (index < earnedGardenFlowers ? 'sgGardenFlower' : 'sgGardenBud') +
