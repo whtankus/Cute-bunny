@@ -531,6 +531,7 @@ function go(p, options = {}) {
     $('#chatInput')?.blur();
     document.querySelector('.chat-page')?.classList.remove('notes-keyboard-open');
     document.body.classList.remove('notes-keyboard-open');
+    document.body.classList.remove('notes-page-active');
     document.documentElement.style.setProperty('--notes-keyboard-inset', '0px');
     document.documentElement.style.removeProperty('--notes-page-height');
     document.documentElement.style.removeProperty('--notes-nav-height');
@@ -546,7 +547,10 @@ function go(p, options = {}) {
   });
 
   hideMessageActions();
-  if (p !== 'notes') window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.body.classList.toggle('notes-page-active', p === 'notes');
+  // Start Notes at the app's top-level header rather than inheriting another
+  // page's document scroll position.
+  window.scrollTo({ top: 0, behavior: 'auto' });
   render();
 
   if (p === 'notes') {
@@ -1955,19 +1959,20 @@ function syncNotesKeyboardLayout() {
   const mobile = isTouchNotesViewport();
   const visualHeight = viewport?.height || window.innerHeight;
   const visualTop = viewport?.offsetTop || 0;
-  const keyboardInset = viewport
-    ? Math.max(0, Math.round(window.innerHeight - visualTop - visualHeight))
-    : 0;
-  const viewportHeightDrop = viewport ? Math.max(0, window.innerHeight - visualHeight) : 0;
-  const wasOpen = document.body.classList.contains('notes-keyboard-open');
+  const visibleViewportBottom = visualTop + visualHeight;
+  const keyboardInset = Math.max(0, Math.round(window.innerHeight - visibleViewportBottom));
+  const viewportHeightDrop = Math.max(0, window.innerHeight - visualHeight);
+  // Wait for a real viewport reduction before moving the composer. Focus alone
+  // happens before the mobile keyboard finishes opening and caused a visible jump.
   const viewportSuggestsKeyboard = viewport
     ? (
-      keyboardInset > 100 ||
-      viewportHeightDrop > 100 ||
+      keyboardInset > 80 ||
+      (focused && keyboardInset > 0) ||
+      viewportHeightDrop > 120 ||
       visualHeight < window.screen.height * 0.72
     )
     : window.innerHeight < window.screen.height * 0.72;
-  const keyboardOpen = mobile && (viewportSuggestsKeyboard || (focused && !wasOpen));
+  const keyboardOpen = mobile && viewportSuggestsKeyboard;
   const nav = $('#nav');
   const composer = $('#chatComposer');
 
@@ -1987,12 +1992,13 @@ function syncNotesKeyboardLayout() {
   // Preserve a negative top offset when the mobile browser has scrolled the page
   // upward to keep the focused field visible. Clamping it to zero shortens the
   // chat area and leaves an artificial gap above the fixed composer.
-  const pageTop = notesPage.getBoundingClientRect().top - visualTop;
+  const pageTop = notesPage.getBoundingClientRect().top;
   const composerHeight = composer?.getBoundingClientRect().height || 62;
   const navHeight = keyboardOpen ? 0 : (nav?.getBoundingClientRect().height || 68);
   document.documentElement.style.setProperty('--notes-nav-height', navHeight + 'px');
   const lowerGap = keyboardOpen ? 8 : navHeight + 8;
-  const availableHeight = Math.max(150, Math.floor(visualHeight - pageTop - composerHeight - lowerGap));
+  // Size the Notes viewport between the sticky app header and the composer/dock.
+  const availableHeight = Math.max(0, Math.floor(visibleViewportBottom - pageTop - composerHeight - lowerGap));
   notesPage.style.setProperty('--notes-page-height', availableHeight + 'px');
 
   if (thread && threadWasNearBottom) {
