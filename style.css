@@ -3770,3 +3770,88 @@ body[data-mode="dark"] .sg-calendar-foldout .sg-calendar-section{border-top-colo
   .sg-stat{padding:2px 4px}
   .sg-stat small{font-size:.5rem;letter-spacing:.35px}
 }
+
+
+/* Streak Garden v97 — rounder botanical cards, scenic banner and clearer social/game panels. */
+.streak-garden-page{gap:14px}
+.sg-page-heading{align-items:center;margin-bottom:0}
+.sg-page-heading h2{letter-spacing:-.7px}
+.sg-heading-doodle{display:inline-block;transform-origin:50% 50%;animation:sg-heading-flower-spin 12s linear infinite}
+@keyframes sg-heading-flower-spin{to{transform:rotate(348deg)}}
+.sg-hero-paper{border-radius:34px;overflow:hidden}
+.sg-hero-scene{padding:8px 7px 37px 0}
+.sg-garden-art{aspect-ratio:880/520;max-width:410px;border-radius:26px;overflow:hidden;box-shadow:0 10px 28px #705c7b18}
+.sg-garden-svg{width:100%;height:100%;max-height:none;object-fit:cover;border-radius:inherit}
+.sg-garden-bloom-count{left:9px;bottom:8px;border-radius:999px}
+.sg-today-status{border-radius:999px}
+.sg-stats-ribbon{border-radius:999px;padding:14px 6px}
+.sg-section{border-radius:27px}
+.sg-week-section,.sg-goals-section,.sg-game-section,.sg-friends-section{border-radius:27px}
+.sg-week-day{border-radius:17px}
+.sg-week-flower{border-radius:50%}
+.sg-week-detail{border-radius:0 17px 17px 0}
+.sg-goal-row{border-radius:17px}
+.sg-goal-remove{border-radius:50%}
+.sg-petal-board{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.sg-petal-card{aspect-ratio:1;border-radius:18px;border:1px solid #e8d5e2;background:linear-gradient(145deg,#fff7f7 0%,#f4eafa 100%);box-shadow:0 4px 0 #e7d5e1,0 7px 12px #73556e0c}
+.sg-petal-card:hover:not(:disabled){transform:translateY(-3px) rotate(-1deg);box-shadow:0 6px 0 #e7d5e1,0 10px 16px #73556e14}
+.sg-petal-back{font-size:1.6rem}
+.sg-petal-face{font-size:1.8rem}
+.sg-petal-card.is-matched{border-color:#b9d3ae;background:linear-gradient(145deg,#eff7e9,#fff8e9);box-shadow:0 4px 0 #d2e1c8}
+.sg-game-score{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;margin-bottom:12px}
+.sg-game-score>span{font-weight:800}
+.sg-game-score>b{justify-self:end}
+.sg-game-score>small{grid-column:1/-1;color:#9b8296;font-size:.64rem;font-weight:800}
+.sg-game-reset{min-height:36px;padding:8px 15px;border-radius:999px}
+.sg-growth-extras>.sg-section{border-radius:27px}
+.sg-friend-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sg-friend-card{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px 11px;border-radius:20px;background:linear-gradient(135deg,#fffefa,#fff6f7);box-shadow:0 3px 10px #7964770a}
+.sg-friend-card:hover{transform:translateY(-2px);border-color:#d8a9bd;background:#fff9fa}
+.sg-friend-avatar{width:42px;height:42px;border-radius:50%;border:2px solid #f3dce6;background:linear-gradient(145deg,#f9e5ec,#eee8f7);box-shadow:0 2px 7px #83657918}
+.sg-friend-identity{gap:3px}
+.sg-friend-identity b{font-size:.78rem}
+.sg-friend-identity small{font-size:.61rem}
+.sg-friend-identity em{display:block;overflow:hidden;color:#9b8496;font-size:.58rem;font-style:normal;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}
+.sg-friend-streak{max-width:76px;align-items:center;gap:3px;padding:6px 7px;border:1px solid #f0dce4;border-radius:15px;background:#fff6f7}
+.sg-friend-streak strong{font-size:.73rem}
+.sg-friend-streak small{font-size:.53rem;text-align:center}
+.sg-friend-card.is-active .sg-friend-streak{border-color:#d5e5ca;background:#f3f8ee}
+.sg-friend-card.is-active .sg-friend-streak strong{color:#65875f}
+.sg-friend-card.is-due .sg-friend-streak{border-color:#efcfad;background:#fff7ec}
+.sg-friend-card.is-due .sg-friend-identity em{color:#a56e48}
+.sg-friend-card.is-paused{opacity:.82}
+.sg-friend-card.is-paused .sg-friend-streak{background:#f2efed;border-color:#e1d9d5}
+.sg-friends-empty{border:1px dashed #e8d3dd;border-radius:22px;background:#fff9f7}
+.sg-find-friends{padding:8px 15px;border:1px solid #ead4de;border-radius:999px;background:#fff;color:#98627e}
+.sg-milestones-foldout{border-radius:24px}
+.sg-milestones-foldout>summary{min-height:51px;border-radius:24px}
+.sg-milestone{border-radius:20px}
+body[data-mode="dark"] .sg-petal-card{background:linear-gradient(145deg,#4c3d50,#393342);border-color:#6b576e;box-shadow:0 4px 0 #302a38,0 7px 12px #100d151f}
+body[data-mode="dark"] .sg-petal-card.is-matched{background:linear-gradient(145deg,#394b3b,#414039);border-color:#718868;box-shadow:0 4px 0 #2e382f}
+body[data-mode="dark"] .sg-game-score>small{color:#cab6c8}
+body[data-mode="dark"] .sg-friend-card{background:linear-gradient(135deg,#443844,#39323f);border-color:#665566}
+body[data-mode="dark"] .sg-friend-avatar{background:linear-gradient(145deg,#594456,#494052);border-color:#765d70}
+body[data-mode="dark"] .sg-friend-identity em{color:#c8b3c7}
+body[data-mode="dark"] .sg-friend-streak{background:#4d3a48;border-color:#6c5267}
+body[data-mode="dark"] .sg-friend-card.is-active .sg-friend-streak{background:#39483a;border-color:#617a5b}
+body[data-mode="dark"] .sg-friend-card.is-active .sg-friend-streak strong{color:#c0dcae}
+body[data-mode="dark"] .sg-friend-card.is-due .sg-friend-streak{background:#4f4136;border-color:#8a6a4d}
+body[data-mode="dark"] .sg-friend-card.is-paused .sg-friend-streak{background:#403a40;border-color:#625661}
+body[data-mode="dark"] .sg-friends-empty{background:#403440;border-color:#6a5266}
+body[data-mode="dark"] .sg-find-friends{background:#493744;border-color:#765c70;color:#efccdd}
+@media(max-width:620px){
+  .sg-hero-paper{border-radius:29px}
+  .sg-hero-scene{padding:3px 10px 36px;min-height:0}
+  .sg-garden-art{width:100%;max-width:430px;border-radius:23px}
+  .sg-stats-ribbon{border-radius:23px}
+  .sg-friend-list{grid-template-columns:1fr;gap:8px}
+  .sg-friend-card{grid-template-columns:42px minmax(0,1fr) auto;padding:9px 11px;border-radius:18px}
+  .sg-petal-board{gap:7px}
+  .sg-petal-card{border-radius:15px}
+  .sg-petal-face{font-size:1.6rem}
+  .sg-game-score{grid-template-columns:1fr auto}
+}
+@media(prefers-reduced-motion:reduce){
+  .sg-heading-doodle{animation:none!important}
+  .sg-petal-card,.sg-friend-card{transition:none!important}
+}
