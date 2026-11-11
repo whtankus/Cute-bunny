@@ -1990,16 +1990,17 @@ function syncNotesKeyboardLayout() {
     ? thread.scrollHeight - thread.scrollTop - thread.clientHeight < 72
     : false;
 
-  // Preserve a negative top offset when the mobile browser has scrolled the page
-  // upward to keep the focused field visible. Clamping it to zero shortens the
-  // chat area and leaves an artificial gap above the fixed composer.
-  const pageTop = notesPage.getBoundingClientRect().top;
-  const composerHeight = composer?.getBoundingClientRect().height || 62;
   const navHeight = keyboardOpen ? 0 : (nav?.getBoundingClientRect().height || 68);
   document.documentElement.style.setProperty('--notes-nav-height', navHeight + 'px');
-  const lowerGap = keyboardOpen ? 8 : navHeight + 8;
-  // Size the Notes viewport between the sticky app header and the composer/dock.
-  const availableHeight = Math.max(0, Math.floor(visibleViewportBottom - pageTop - composerHeight - lowerGap));
+
+  // Measure the composer after its keyboard/navigation offset has been applied.
+  // The chat page ends just above that real top edge; no guessed composer height
+  // is subtracted from the flex area, so the message viewport cannot drift.
+  const pageTop = notesPage.getBoundingClientRect().top;
+  const composerTop = composer?.getBoundingClientRect().top
+    ?? (visibleViewportBottom - (keyboardOpen ? keyboardInset : navHeight) - 58);
+  const composerGap = 8;
+  const availableHeight = Math.max(0, Math.floor(composerTop - pageTop - composerGap));
   notesPage.style.setProperty('--notes-page-height', availableHeight + 'px');
 
   if (thread && threadWasNearBottom) {
