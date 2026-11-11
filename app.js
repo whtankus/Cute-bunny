@@ -2911,25 +2911,42 @@ let notesHeaderWheelTotal = 0;
 // A chat opens at its newest message, so scrollTop deltas mean the opposite of
 // what a reader normally calls an upward/downward swipe through the conversation.
 function applyNotesHeaderGesture(direction, thread) {
-  if (page !== 'notes') return;
+  if (page !== 'notes' || !thread || !direction) return;
+
+  // Keep the header tucked away while the on-screen keyboard is active.
   if (document.body.classList.contains('notes-keyboard-open')) {
     document.body.classList.add('notes-header-hidden');
     return;
   }
 
-  // Keep the masthead available at the beginning of the conversation.
-  if (!thread || thread.scrollTop <= 8) {
-    document.body.classList.remove('notes-header-hidden');
-    return;
-  }
+  // Finger movement, not scrollTop, defines the requested direction:
+  // negative Y reveals; positive Y hides. This works at either scroll boundary.
+  const shouldHide = direction > 0;
+  const isHidden = document.body.classList.contains('notes-header-hidden');
+  if (shouldHide === isHidden) return;
 
-  // The finger direction is the requested control: swipe up reveals,
-  // swipe down hides. Keep this independent from scrollTop's inverse sign.
-  if (direction < 0) {
-    document.body.classList.remove('notes-header-hidden');
-  } else if (direction > 0) {
-    document.body.classList.add('notes-header-hidden');
-  }
+  // Keep the visible message anchored while the header changes the viewport.
+  const maxScrollTop = Math.max(0, thread.scrollHeight - thread.clientHeight);
+  const previousTop = thread.scrollTop;
+  const wasAtBottom = maxScrollTop - previousTop <= 2;
+  const wasAtTop = previousTop <= 2;
+  const previousThreadTop = thread.getBoundingClientRect().top;
+
+  document.body.classList.toggle('notes-header-hidden', shouldHide);
+
+  requestAnimationFrame(() => {
+    if (page !== 'notes' || !thread.isConnected) return;
+
+    if (wasAtBottom) {
+      // Keep the newest message pinned when the available viewport grows/shrinks.
+      thread.scrollTop = Math.max(0, thread.scrollHeight - thread.clientHeight);
+    } else if (!wasAtTop) {
+      // Preserve the same visible message when the thread's top edge moves.
+      const layoutShift = thread.getBoundingClientRect().top - previousThreadTop;
+      const nextMax = Math.max(0, thread.scrollHeight - thread.clientHeight);
+      thread.scrollTop = Math.max(0, Math.min(nextMax, thread.scrollTop + layoutShift));
+    }
+  });
 }
 
 // Size the Notes viewport from the live header, dock, composer and visual viewport.
