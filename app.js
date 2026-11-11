@@ -1150,51 +1150,46 @@ function showMessageActions(id, bubbleElement) {
   popup.style.zIndex = '1000';
   document.body.append(popup);
 
-  const thread = bubbleElement.closest('.chat-thread');
-  const messageRows = thread ? [...thread.querySelectorAll('.chat-message[data-memory]')] : [];
-  const lastMessage = messageRows[messageRows.length - 1];
-  const isLastMessage = !!lastMessage && lastMessage.contains(bubbleElement);
   const viewport = window.visualViewport;
+  const viewportLeft = viewport?.offsetLeft || 0;
   const viewportTop = viewport?.offsetTop || 0;
-  const viewportBottom = viewportTop + (viewport?.height || window.innerHeight);
   const viewportWidth = viewport?.width || window.innerWidth;
-  const sidePadding = 12;
-  const gap = 9;
+  const viewportHeight = viewport?.height || window.innerHeight;
+  const sidePadding = 10;
+  const gap = 7;
+  const isMine = !!bubbleElement.closest('.chat-message.is-mine');
 
   const placePopup = () => {
     if (!popup.isConnected || !bubbleElement.isConnected) return;
     const bubbleRect = bubbleElement.getBoundingClientRect();
     const popupRect = popup.getBoundingClientRect();
-    const halfWidth = popupRect.width / 2;
-    const centerX = Math.max(
-      halfWidth + sidePadding,
-      Math.min(viewportWidth - halfWidth - sidePadding, bubbleRect.left + bubbleRect.width / 2)
+
+    // Put the options in front of the bubble: incoming on the right,
+    // the current user's own messages on the left.
+    const desiredLeft = isMine
+      ? bubbleRect.left - popupRect.width - gap
+      : bubbleRect.right + gap;
+    const minLeft = viewportLeft + sidePadding;
+    const maxLeft = Math.max(
+      minLeft,
+      viewportLeft + viewportWidth - popupRect.width - sidePadding
+    );
+    const left = Math.max(minLeft, Math.min(maxLeft, desiredLeft));
+
+    // Center the action pill vertically alongside its message and keep it
+    // fully visible on short screens or when the keyboard is open.
+    const minCenterY = viewportTop + sidePadding + popupRect.height / 2;
+    const maxCenterY = Math.max(
+      minCenterY,
+      viewportTop + viewportHeight - sidePadding - popupRect.height / 2
+    );
+    const centerY = Math.max(
+      minCenterY,
+      Math.min(maxCenterY, bubbleRect.top + bubbleRect.height / 2)
     );
 
-    // Ordinary messages open the menu below. The newest message opens it above
-    // so it never runs into the fixed writing bar.
-    let top = isLastMessage
-      ? bubbleRect.top - popupRect.height - gap
-      : bubbleRect.bottom + gap;
-
-    if (!isLastMessage && top + popupRect.height > viewportBottom - sidePadding && thread) {
-      const overflow = top + popupRect.height - (viewportBottom - sidePadding);
-      const previousScrollTop = thread.scrollTop;
-      thread.scrollTop = Math.min(
-        thread.scrollHeight - thread.clientHeight,
-        previousScrollTop + overflow
-      );
-      const adjustedBubbleRect = bubbleElement.getBoundingClientRect();
-      top = adjustedBubbleRect.bottom + gap;
-    }
-
-    top = Math.max(
-      viewportTop + sidePadding,
-      Math.min(viewportBottom - popupRect.height - sidePadding, top)
-    );
-
-    popup.style.left = centerX + 'px';
-    popup.style.top = top + 'px';
+    popup.style.left = left + 'px';
+    popup.style.top = centerY + 'px';
   };
 
   placePopup();
@@ -2102,7 +2097,7 @@ function syncNotesKeyboardLayout() {
     // to ensure the last message can scroll fully into view above the input.
     if (thread) {
       const composerHeight = Math.ceil(composer?.getBoundingClientRect().height || 50);
-      const bottomClearance = composerHeight + 32;
+      const bottomClearance = composerHeight + 20;
       thread.style.setProperty('padding-bottom', bottomClearance + 'px', 'important');
       thread.style.setProperty('scroll-padding-bottom', bottomClearance + 'px');
     }
