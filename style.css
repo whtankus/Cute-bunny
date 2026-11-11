@@ -5025,3 +5025,14 @@ body[data-mode="dark"] .streak-garden-page .sg-bottom-tab.is-active{border-color
 @media(prefers-reduced-motion:reduce){
   .streak-garden-page .sg-tab-panel.is-active,.streak-garden-page .sg-bottom-tab{animation:none;transition:none}
 }
+
+
+/* v107 — compact Streak Garden page spacing and keep milestone cards balanced on phones. */
+.streak-garden-page{gap:16px;padding-bottom:12px}
+@media(max-width:620px){
+  .streak-garden-page{gap:14px}
+  .streak-garden-page .sg-tab-panel .sg-milestone-route{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+  }
+}
