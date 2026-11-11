@@ -290,10 +290,7 @@ async function api(path, options = {}) {
 
   if (path === '/media' && method === 'POST') {
     const form = body, file = form.get('file'), kind = form.get('kind'), caption = form.get('caption') || file.name;
-    const maxFileBytes = kind === 'song' ? 16 * 1024 * 1024 : 8 * 1024 * 1024;
-    if (file.size > maxFileBytes) {
-      throw Error(kind === 'song' ? 'Choose a song under 16 MB.' : 'Choose a photo under 8 MB.');
-    }
+    if (file.size > 8 * 1024 * 1024) throw Error('Choose a file under 8 MB.');
     const photoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], songTypes = ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/webm'];
     if (!(kind === 'photo' ? photoTypes.includes(file.type) : kind === 'song' ? songTypes.includes(file.type) : false)) {
       throw Error(kind === 'photo' ? 'Choose a JPG, PNG, WebP, or GIF image.' : 'Choose an MP3, MP4, OGG, WAV, or WebM audio file.');
@@ -1415,34 +1412,6 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
   `;
 }
 
-function musicTrackDetails(track) {
-  const fileName = String(track?.fileName || track?.file_name || track?.text || 'A little song')
-    .replace(/\.(mp3|m4a|aac|ogg|wav|webm)$/i, '')
-    .replace(/\s+official music video$/i, '')
-    .trim();
-  const curated = [
-    { match: /^ordinary$/i, title: 'Ordinary', artist: 'Alex Warren' },
-    { match: /^birds of a feather$/i, title: 'BIRDS OF A FEATHER', artist: 'Billie Eilish' },
-    { match: /^manchild$/i, title: 'Manchild', artist: 'Sabrina Carpenter' },
-    { match: /^i don['’]t care$/i, title: 'I Don’t Care', artist: 'Ed Sheeran & Justin Bieber' },
-    { match: /^perfect$/i, title: 'Perfect', artist: 'Ed Sheeran' },
-    { match: /^lover$/i, title: 'Lover', artist: 'Taylor Swift' },
-    { match: /^snowman$/i, title: 'Snowman', artist: 'Sia' }
-  ];
-  const known = curated.find(item => item.match.test(fileName));
-  if (known) return known;
-  const splitAt = fileName.indexOf(' - ');
-  if (splitAt > 0) return { title: fileName.slice(splitAt + 3).trim(), artist: fileName.slice(0, splitAt).trim() };
-  return { title: fileName || 'A little song', artist: track?.author?.displayName || 'Shared favorite' };
-}
-
-function getMusicPlaylist(source = feed) {
-  return source
-    .filter(track => track.kind === 'song')
-    .slice()
-    .sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0));
-}
-
 function memoryCard(m, options = {}) {
   const owner = m.author || {};
   const name = esc(owner.displayName || owner.display_name || 'Friend');
@@ -1461,19 +1430,16 @@ function memoryCard(m, options = {}) {
   if (m.kind === 'photo') {
     body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
   } else if (m.kind === 'song') {
-    const details = musicTrackDetails(m);
-    const trackNumber = options.musicPlaylist ? `<span class="music-track-index">${String(options.trackNumber || '').padStart(2, '0')}</span>` : '';
-    const trackCopy = `<span class="memory-title song-title-label music-track-copy" title="${esc(details.title)}"><b>${esc(details.title)}</b><small>${esc(details.artist)}</small>${m.isPending ? '<em>Adding to Bunny’s playlist…</em>' : ''}</span>`;
-    body = `<div class="tile song-card${liked}${options.musicPlaylist ? ' bunny-song-row' : ''}">${heartButton}${trackNumber}<button class="album-art play-song" data-play-song="${esc(m.id)}" aria-label="Play ${esc(details.title)}" aria-pressed="false" ${m.isPending ? "disabled" : ""}><span class="song-glyph" aria-hidden="true">♫</span><span class="song-note" aria-hidden="true">✦</span></button>${trackCopy}${m.isPending ? "" : `<button class="song-download card-song-save" type="button" data-memory-download="${esc(m.id)}" aria-label="Save song">↓</button>`}</div>`;
+    body = `<div class="tile song-card${liked}">${heartButton}<button class="album-art play-song" data-play-song="${esc(m.id)}" aria-label="Play ${esc(m.fileName || 'song')}" aria-pressed="false" ${m.isPending ? "disabled" : ""}><span class="song-glyph" aria-hidden="true">🎼</span><span class="song-note" aria-hidden="true">♫</span></button><span class="memory-title song-title-label" title="${esc(m.fileName || m.text || 'A little song')}">${esc(m.fileName || m.text || 'A little song')}</span>${m.isPending ? "" : `<button class="song-download card-song-save" type="button" data-memory-download="${esc(m.id)}" aria-label="Save song">Save</button>`}</div>`;
   } else {
     const isContinuation = m.kind === 'note' && !!options.isContinuation;
     body = chatMessageMarkup(m, !isContinuation, isContinuation);
   }
 
-  const authorLine = m.kind === 'note' || options.musicPlaylist ? '' : `<div class="feed-by"><span class="sender-pet" aria-label="${pet}">${pet}</span> <b title="${name}">${name}</b> <small>@${handle}</small></div>`;
+  const authorLine = m.kind === 'note' ? '' : `<div class="feed-by"><span class="sender-pet" aria-label="${pet}">${pet}</span> <b title="${name}">${name}</b> <small>@${handle}</small></div>`;
   const ownerIndicator = mine && m.kind !== 'note' ? `<span class="memory-owner-indicator" aria-hidden="true">Your memory</span>` : '';
   const continuationClass = m.kind === 'note' && options.isContinuation ? ' is-continuation' : '';
-  return `<article class="feed-item ${tone}${pending}${uploading}${options.musicPlaylist ? ' music-library-item' : ''}${m.kind === 'note' ? ' home-note-memory' : ''}${continuationClass}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
+  return `<article class="feed-item ${tone}${pending}${uploading}${m.kind === 'note' ? ' home-note-memory' : ''}${continuationClass}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
 }
 
 /* Clean Notes conversation; message markup is shared with Home → Memory History. */
@@ -1631,36 +1597,11 @@ function render() {
       <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || '<div class="empty">Your garden is waiting for its first photo ♡</div>'}</section>
     `;
   } else if (page === 'music') {
-    const orderedSongs = getMusicPlaylist(visibleFeed);
     c.innerHTML = `
-      <section class="bunny-music-page" aria-label="Bunny music playlist">
-        <div class="bunny-music-hero">
-          <div class="bunny-music-copy">
-            <span class="bunny-music-kicker">A LITTLE MUSIC NOOK</span>
-            <h2>Bunny's playlist <span aria-hidden="true">♫</span></h2>
-            <p>Soft favorites, happy tunes, and songs worth keeping close.</p>
-            <div class="bunny-music-count"><span>${esc(me?.mascot || '🐰')}</span><b>${songs.length} ${songs.length === 1 ? 'song' : 'songs'} in the burrow</b></div>
-          </div>
-          <div class="bunny-music-art" aria-hidden="true">
-            <span class="bunny-music-buddy">${esc(me?.mascot || '🐰')}</span>
-            <span class="bunny-music-headphones">🎧</span>
-            <i class="bunny-music-note note-one">♫</i><i class="bunny-music-note note-two">♪</i>
-            <i class="bunny-music-sparkle">✦</i>
-          </div>
-        </div>
-        <div class="bunny-music-tools">
-          <div>
-            <span class="bunny-music-section-label">THE COLLECTION</span>
-            <h3>Little playlist <span>${songs.length}</span></h3>
-          </div>
-          <label class="bunny-add-songs">
-            <span aria-hidden="true">＋</span><b>Add songs</b><small>MP3 · up to 16 MB each</small>
-            <input data-upload="song" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
-          </label>
-        </div>
-        <p class="bunny-music-tip">Choose several songs at once. They'll be saved to your signed-in profile and shared in your little garden ♡</p>
-        <div class="bunny-song-list">${orderedSongs.map((song, index) => memoryCard(song, { musicPlaylist: true, trackNumber: index + 1 })).join('') || '<div class="bunny-music-empty"><span>🐰</span><b>Your playlist is waiting</b><small>Add a few favorite songs to fill this cozy little corner ♡</small></div>'}</div>
-      </section>
+      <div class="heading"><h2>Cozy music 🎵</h2><p>Your songs play right here in the garden.</p></div>
+      <label class="primary upload-label">＋ Add a song<input data-upload="song" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" hidden></label>
+      <h3 class="shared-songs-title">Your shared songs</h3>
+      <div class="grid media-grid music-grid">${songs.map(memoryCard).join('') || '<div class="empty">Add a song file and listen together right here ♡</div>'}</div>
     `;
   } else if (page === 'friends') {
     c.innerHTML = `
@@ -1815,7 +1756,7 @@ function syncPlayer() {
 }
 
 async function playSong(id) {
-  const songs = getMusicPlaylist(), index = songs.findIndex(x => String(x.id) === String(id)), audio = $('#globalAudio');
+  const songs = feed.filter(x => x.kind === 'song'), index = songs.findIndex(x => String(x.id) === String(id)), audio = $('#globalAudio');
   if (index < 0) return toast('This song is no longer in your garden ♡');
   if (String(playlist[playlistIndex]?.id) === String(id) && audio.src) {
     if (audio.paused) await audio.play().catch(() => {});
@@ -3202,14 +3143,32 @@ document.addEventListener('submit', async e => {
   }
 });
 
-// Upload one selected media file. Song files can be up to 16 MB each.
-async function uploadSelectedMediaFile(file, kind) {
+// Media upload change listener
+document.addEventListener('change', async e => {
+  const input = e.target.closest('[data-upload]');
+  if (!input || !input.files?.length) return;
+  const file = input.files[0], kind = input.dataset.upload;
+  input.value = '';
+  if (file.size > 8 * 1024 * 1024) {
+    toast('Choose a file under 8 MB ♡');
+    return;
+  }
+  const photoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], songTypes = ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/webm'];
+  if (!(kind === 'photo' ? photoTypes.includes(file.type) : songTypes.includes(file.type))) {
+    toast(kind === 'photo' ? 'Choose a JPG, PNG, WebP, or GIF image ♡' : 'Choose an MP3, MP4, OGG, WAV, or WebM audio file ♡');
+    return;
+  }
   const tempId = 'upload-' + crypto.randomUUID();
   const previewUrl = kind === 'photo' ? URL.createObjectURL(file) : '';
   const optimistic = {
-    id: tempId, kind, fileName: file.name, text: file.name,
-    contentType: file.type, createdAt: new Date().toISOString(),
-    isPending: true, previewUrl,
+    id: tempId,
+    kind,
+    fileName: file.name,
+    text: file.name,
+    contentType: file.type,
+    createdAt: new Date().toISOString(),
+    isPending: true,
+    previewUrl,
     author: { id: me.id, username: me.username, displayName: me.displayName, mascot: me.mascot }
   };
   if (previewUrl) pendingMediaUrls.set(tempId, previewUrl);
@@ -3233,60 +3192,13 @@ async function uploadSelectedMediaFile(file, kind) {
     };
     feed = feed.map(m => String(m.id) === tempId ? item : m);
     render();
-    return true;
-  } catch (error) {
+    toast('Added to your shared scrapbook ♡');
+  } catch (err) {
     feed = feed.filter(m => String(m.id) !== tempId);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     render();
-    throw error;
+    toast(err.message);
   }
-}
-
-// Media upload listener. Music accepts multiple songs in one selection.
-document.addEventListener('change', async e => {
-  const input = e.target.closest('[data-upload]');
-  if (!input || !input.files?.length) return;
-  const files = Array.from(input.files);
-  const kind = input.dataset.upload;
-  input.value = '';
-
-  const photoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  const songTypes = ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/webm'];
-  const valid = [], rejected = [];
-  for (const file of files) {
-    const maxBytes = kind === 'song' ? 16 * 1024 * 1024 : 8 * 1024 * 1024;
-    const validType = kind === 'photo' ? photoTypes.includes(file.type) : songTypes.includes(file.type);
-    if (!validType || file.size > maxBytes) {
-      rejected.push(file.name);
-      continue;
-    }
-    valid.push(file);
-  }
-  if (!valid.length) {
-    toast(kind === 'photo'
-      ? 'Choose a JPG, PNG, WebP, or GIF image under 8 MB ♡'
-      : 'Choose MP3, MP4, OGG, WAV, or WebM songs under 16 MB ♡');
-    return;
-  }
-
-  let uploaded = 0, failed = 0;
-  const errors = [];
-  for (const file of valid) {
-    try {
-      await uploadSelectedMediaFile(file, kind);
-      uploaded++;
-    } catch (error) {
-      failed++;
-      errors.push(error?.message || 'Upload failed');
-    }
-  }
-  if (kind === 'song' && files.length > 1) {
-    toast(`${uploaded} of ${files.length} songs added to Bunny's playlist${failed ? ` · ${failed} failed` : ''} ♡`);
-  } else if (uploaded) {
-    toast(kind === 'photo' ? 'Photo added to your shared scrapbook ♡' : 'Song added to Bunny’s playlist ♡');
-  }
-  if (rejected.length) toast(`${rejected.length} file(s) skipped · check type and size ♡`);
-  else if (errors.length && !uploaded) toast(errors[0]);
 });
 
 // Setup audio event listeners
