@@ -878,13 +878,133 @@ function renderStreakPage() {
       '<small class="sg-milestone-progress-copy">' + (unlocked ? item.days + ' days reached' : Math.min(count, item.days) + ' / ' + item.days + ' days') + '</small></article>';
   }).join('');
 
-  const gardenScene = "<svg class=\"sg-garden-svg\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 880 520\" preserveAspectRatio=\"xMidYMid slice\" role=\"img\" aria-labelledby=\"title desc\">\n  <title id=\"title\">A quiet blossom garden at sunset</title>\n  <desc id=\"desc\">Layered lavender mountains, a warm peach sunset, flowering cherry branches and a meadow of pink, cream and lilac flowers.</desc>\n  <defs>\n    <linearGradient id=\"sky\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n      <stop stop-color=\"#f6dce9\"/>\n      <stop offset=\".58\" stop-color=\"#f7e6e7\"/>\n      <stop offset=\"1\" stop-color=\"#e9e5f1\"/>\n    </linearGradient>\n    <radialGradient id=\"sun\">\n      <stop stop-color=\"#fff8df\" stop-opacity=\".98\"/>\n      <stop offset=\".72\" stop-color=\"#ffe8c9\" stop-opacity=\".66\"/>\n      <stop offset=\"1\" stop-color=\"#ffe8c9\" stop-opacity=\"0\"/>\n    </radialGradient>\n    <linearGradient id=\"farHill\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop stop-color=\"#c9b9d8\"/><stop offset=\"1\" stop-color=\"#a99bbb\"/>\n    </linearGradient>\n    <linearGradient id=\"midHill\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop stop-color=\"#b8b2d1\"/><stop offset=\"1\" stop-color=\"#8e9bb5\"/>\n    </linearGradient>\n    <linearGradient id=\"meadow\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n      <stop stop-color=\"#a9b99d\"/><stop offset=\"1\" stop-color=\"#6f927c\"/>\n    </linearGradient>\n    <linearGradient id=\"petalPink\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop stop-color=\"#fff1f4\"/><stop offset=\"1\" stop-color=\"#e69bb8\"/>\n    </linearGradient>\n    <linearGradient id=\"petalLilac\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop stop-color=\"#f7ecfb\"/><stop offset=\"1\" stop-color=\"#baa6d4\"/>\n    </linearGradient>\n    <filter id=\"soft\"><feGaussianBlur stdDeviation=\"18\"/></filter>\n    <g id=\"blossom\">\n      <g fill=\"url(#petalPink)\" stroke=\"#d88eaa\" stroke-opacity=\".45\" stroke-width=\"1.5\">\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\"/>\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\" transform=\"rotate(72)\"/>\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\" transform=\"rotate(144)\"/>\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\" transform=\"rotate(216)\"/>\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\" transform=\"rotate(288)\"/>\n      </g>\n      <circle r=\"6\" fill=\"#f3c875\"/>\n      <circle r=\"2\" fill=\"#fff5d8\"/>\n    </g>\n    <g id=\"smallBloom\">\n      <g fill=\"url(#petalLilac)\">\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(60)\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(120)\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(180)\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(240)\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(300)\"/>\n      </g><circle r=\"4.5\" fill=\"#f5d17c\"/>\n    </g>\n  </defs>\n\n  <rect width=\"880\" height=\"520\" fill=\"url(#sky)\"/>\n  <circle cx=\"640\" cy=\"185\" r=\"165\" fill=\"url(#sun)\"/>\n  <circle cx=\"640\" cy=\"185\" r=\"46\" fill=\"#fff1d1\" opacity=\".78\"/>\n  <path d=\"M0 260 Q110 193 225 240 T450 230 T690 215 T880 244 V520 H0Z\" fill=\"#e6dced\" opacity=\".55\"/>\n  <path d=\"M0 310 L110 220 195 276 295 194 415 292 535 214 650 283 758 207 880 290 V520 H0Z\" fill=\"url(#farHill)\" opacity=\".9\"/>\n  <path d=\"M0 337 Q120 268 236 321 T470 305 T695 314 T880 292 V520 H0Z\" fill=\"url(#midHill)\" opacity=\".94\"/>\n  <path d=\"M0 380 Q128 327 260 367 T510 354 T735 354 T880 340 V520 H0Z\" fill=\"#9cabaf\" opacity=\".78\"/>\n  <path d=\"M0 418 Q120 356 245 395 T480 387 T700 383 T880 375 V520 H0Z\" fill=\"url(#meadow)\"/>\n  <path d=\"M0 454 Q160 415 300 442 T560 438 T880 412 V520 H0Z\" fill=\"#78947a\" opacity=\".78\"/>\n\n  <!-- Distant flower terraces -->\n  <g opacity=\".54\" fill=\"#f8e6ef\">\n    <circle cx=\"105\" cy=\"366\" r=\"5\"/><circle cx=\"145\" cy=\"351\" r=\"4\"/><circle cx=\"218\" cy=\"374\" r=\"5\"/>\n    <circle cx=\"332\" cy=\"348\" r=\"4\"/><circle cx=\"412\" cy=\"367\" r=\"5\"/><circle cx=\"535\" cy=\"343\" r=\"4\"/>\n    <circle cx=\"720\" cy=\"366\" r=\"5\"/><circle cx=\"792\" cy=\"348\" r=\"4\"/>\n  </g>\n\n  <!-- Cherry branch entering from the upper left -->\n  <path d=\"M-42 80 C95 60 132 105 216 125 S355 135 435 76\" fill=\"none\" stroke=\"#765a62\" stroke-width=\"17\" stroke-linecap=\"round\"/>\n  <path d=\"M84 88 C124 34 157 13 210 -5 M194 120 C224 68 269 42 316 25 M300 135 C338 103 372 94 425 90\"\n        fill=\"none\" stroke=\"#806169\" stroke-width=\"7\" stroke-linecap=\"round\"/>\n  <g fill=\"#8eaa82\">\n    <ellipse cx=\"80\" cy=\"65\" rx=\"18\" ry=\"7\" transform=\"rotate(-34 80 65)\"/>\n    <ellipse cx=\"135\" cy=\"45\" rx=\"20\" ry=\"8\" transform=\"rotate(-48 135 45)\"/>\n    <ellipse cx=\"180\" cy=\"94\" rx=\"22\" ry=\"8\" transform=\"rotate(22 180 94)\"/>\n    <ellipse cx=\"255\" cy=\"73\" rx=\"22\" ry=\"8\" transform=\"rotate(-22 255 73)\"/>\n    <ellipse cx=\"333\" cy=\"112\" rx=\"21\" ry=\"8\" transform=\"rotate(15 333 112)\"/>\n    <ellipse cx=\"390\" cy=\"79\" rx=\"19\" ry=\"7\" transform=\"rotate(-22 390 79)\"/>\n  </g>\n  <g>\n    <use href=\"#blossom\" transform=\"translate(46 78) scale(1.1)\"/>\n    <use href=\"#blossom\" transform=\"translate(118 39) scale(.88)\"/>\n    <use href=\"#blossom\" transform=\"translate(165 122) scale(1.05)\"/>\n    <use href=\"#blossom\" transform=\"translate(235 57) scale(.9)\"/>\n    <use href=\"#blossom\" transform=\"translate(292 107) scale(1.08)\"/>\n    <use href=\"#blossom\" transform=\"translate(366 84) scale(.8)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(78 132) scale(.82)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(207 20) scale(.76)\"/>\n  </g>\n\n  <!-- Flowering shrubs at the edges -->\n  <g stroke=\"#62866b\" stroke-width=\"5\" stroke-linecap=\"round\" fill=\"none\">\n    <path d=\"M35 520 Q49 445 70 385 M98 520 Q102 456 135 410 M810 520 Q786 454 795 386 M865 520 Q833 452 848 405\"/>\n    <path d=\"M740 520 Q720 455 740 418 M175 520 Q178 468 207 432\"/>\n  </g>\n  <g fill=\"#9db991\">\n    <path d=\"M68 447 Q23 405 17 434 Q37 469 68 447Z\"/><path d=\"M69 422 Q95 380 111 404 Q97 435 69 422Z\"/>\n    <path d=\"M132 467 Q90 428 83 457 Q104 485 132 467Z\"/><path d=\"M798 452 Q758 412 752 440 Q772 471 798 452Z\"/>\n    <path d=\"M797 427 Q828 387 844 414 Q829 440 797 427Z\"/><path d=\"M846 476 Q815 442 807 466 Q823 492 846 476Z\"/>\n    <path d=\"M739 468 Q706 432 698 456 Q715 485 739 468Z\"/><path d=\"M207 473 Q175 438 166 461 Q181 489 207 473Z\"/>\n  </g>\n  <g>\n    <use href=\"#blossom\" transform=\"translate(45 390) scale(.9)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(103 420) scale(.76)\"/>\n    <use href=\"#blossom\" transform=\"translate(154 457) scale(.76)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(210 440) scale(.72)\"/>\n    <use href=\"#blossom\" transform=\"translate(742 422) scale(.82)\"/>\n    <use href=\"#blossom\" transform=\"translate(803 388) scale(1.05)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(850 446) scale(.8)\"/>\n    <use href=\"#blossom\" transform=\"translate(690 468) scale(.76)\"/>\n  </g>\n\n  <!-- Meadow flowers -->\n  <g stroke=\"#65866a\" stroke-width=\"3\" stroke-linecap=\"round\">\n    <path d=\"M280 520 Q283 474 291 434 M340 520 Q333 475 351 450 M440 520 Q438 464 455 420 M540 520 Q533 478 551 447 M620 520 Q627 465 641 430\" fill=\"none\"/>\n  </g>\n  <g fill=\"#a9c19b\">\n    <path d=\"M286 486 Q258 461 251 480 Q264 500 286 486Z\"/><path d=\"M294 476 Q314 450 324 468 Q313 489 294 476Z\"/>\n    <path d=\"M347 493 Q322 470 315 491 Q330 507 347 493Z\"/><path d=\"M548 491 Q519 470 513 491 Q530 510 548 491Z\"/>\n    <path d=\"M638 484 Q610 462 604 482 Q621 501 638 484Z\"/>\n  </g>\n  <g>\n    <use href=\"#blossom\" transform=\"translate(291 431) scale(.86)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(351 447) scale(.92)\"/>\n    <use href=\"#blossom\" transform=\"translate(455 417) scale(1.08)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(551 444) scale(.8)\"/>\n    <use href=\"#blossom\" transform=\"translate(641 425) scale(.88)\"/>\n  </g>\n\n  <!-- Falling petals -->\n  <g fill=\"#fff0f4\" stroke=\"#dc9eb6\" stroke-opacity=\".45\" stroke-width=\"1.2\">\n    <path d=\"M485 133 q18-15 22 4 q-13 13-22-4Z\" transform=\"rotate(25 496 136)\"/>\n    <path d=\"M570 275 q17-13 20 5 q-14 11-20-5Z\" transform=\"rotate(-28 580 278)\"/>\n    <path d=\"M390 236 q14-12 18 4 q-10 12-18-4Z\" transform=\"rotate(35 400 238)\"/>\n    <path d=\"M755 300 q15-12 18 5 q-12 10-18-5Z\" transform=\"rotate(18 766 303)\"/>\n    <path d=\"M228 280 q14-11 17 5 q-11 10-17-5Z\" transform=\"rotate(-18 238 282)\"/>\n  </g>\n  <g fill=\"#fff8ef\" opacity=\".78\">\n    <circle cx=\"492\" cy=\"62\" r=\"3\"/><circle cx=\"573\" cy=\"110\" r=\"2.5\"/><circle cx=\"700\" cy=\"90\" r=\"2\"/>\n    <circle cx=\"420\" cy=\"315\" r=\"2.5\"/><circle cx=\"605\" cy=\"340\" r=\"2\"/>\n  </g>\n  <rect x=\"1.5\" y=\"1.5\" width=\"877\" height=\"517\" rx=\"34\" fill=\"none\" stroke=\"#fff8f4\" stroke-opacity=\".45\" stroke-width=\"3\"/>\n</svg>";
+  const gardenScene = `<svg class="sg-garden-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 460" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="sgGardenTitle sgGardenDesc">
+  <title id="sgGardenTitle">A little bunny's cherry blossom garden</title>
+  <desc id="sgGardenDesc">A gentle garden with lavender mountains, sage grass, a flowering cherry tree and a small bunny gardener.</desc>
+  <defs>
+    <linearGradient id="sgMountainFar" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#c9badd"/>
+      <stop offset="1" stop-color="#a9a1c7"/>
+    </linearGradient>
+    <linearGradient id="sgMountainNear" x1="0" y1="0" x2="0.9" y2="1">
+      <stop stop-color="#b9b2d0"/>
+      <stop offset="1" stop-color="#9998b6"/>
+    </linearGradient>
+    <linearGradient id="sgMeadow" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#b7c6a7"/>
+      <stop offset="1" stop-color="#829d7d"/>
+    </linearGradient>
+    <linearGradient id="sgBunnyFur" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fffdf4"/>
+      <stop offset="1" stop-color="#eadfd7"/>
+    </linearGradient>
+    <linearGradient id="sgScarf" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#d995ae"/>
+      <stop offset="1" stop-color="#bd7898"/>
+    </linearGradient>
+    <linearGradient id="sgPetal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff3f4"/>
+      <stop offset="1" stop-color="#e8a5bc"/>
+    </linearGradient>
+    <g id="sgCherryBloom">
+      <g fill="url(#sgPetal)" stroke="#d58da9" stroke-opacity=".45" stroke-width="1.2">
+        <ellipse cy="-8" rx="5.8" ry="10"/>
+        <ellipse cy="-8" rx="5.8" ry="10" transform="rotate(72)"/>
+        <ellipse cy="-8" rx="5.8" ry="10" transform="rotate(144)"/>
+        <ellipse cy="-8" rx="5.8" ry="10" transform="rotate(216)"/>
+        <ellipse cy="-8" rx="5.8" ry="10" transform="rotate(288)"/>
+      </g>
+      <circle r="3.8" fill="#e8c77f"/>
+    </g>
+    <g id="sgGardenFlower">
+      <path d="M0 9 C-1 22 -2 32 0 43" fill="none" stroke="#668868" stroke-width="3" stroke-linecap="round"/>
+      <path d="M-1 28 Q-18 16 -18 27 Q-11 36 -1 28Z" fill="#8fae85"/>
+      <path d="M0 34 Q17 21 18 32 Q11 41 0 34Z" fill="#a7bf99"/>
+      <g fill="url(#sgPetal)" stroke="#d58da9" stroke-opacity=".45" stroke-width="1">
+        <ellipse cy="0" ry="9" rx="5"/>
+        <ellipse cy="0" ry="9" rx="5" transform="rotate(72)"/>
+        <ellipse cy="0" ry="9" rx="5" transform="rotate(144)"/>
+        <ellipse cy="0" ry="9" rx="5" transform="rotate(216)"/>
+        <ellipse cy="0" ry="9" rx="5" transform="rotate(288)"/>
+      </g>
+      <circle r="3.8" fill="#edc978"/>
+    </g>
+  </defs>
+
+  <!-- Quiet mountain layers leave open sky around the focal scene. -->
+  <path d="M0 263 L76 151 121 202 207 105 300 228 387 148 470 230 556 158 680 237 V460 H0Z" fill="url(#sgMountainFar)" opacity=".7"/>
+  <path d="M0 286 Q115 238 224 271 T441 261 T680 267 V460 H0Z" fill="url(#sgMountainNear)" opacity=".62"/>
+  <path d="M0 319 Q122 281 248 307 T486 302 T680 296 V460 H0Z" fill="#c0c6b7" opacity=".78"/>
+
+  <!-- Soft, connected meadow shapes. -->
+  <path d="M0 334 Q115 298 231 329 T453 319 T680 314 V460 H0Z" fill="#aabd9d"/>
+  <path d="M0 368 Q115 331 245 361 T472 350 T680 346 V460 H0Z" fill="url(#sgMeadow)"/>
+  <path d="M0 414 Q145 372 277 407 T520 395 T680 390 V460 H0Z" fill="#819d7b" opacity=".8"/>
+
+  <!-- One flowering cherry tree, with blossoms attached to its branches. -->
+  <path d="M555 455 C550 383 535 326 541 272 C545 227 574 183 625 145" fill="none" stroke="#80645f" stroke-width="22" stroke-linecap="round"/>
+  <path d="M548 286 C506 250 473 220 426 212 M568 237 C594 204 624 191 664 183 M542 333 C510 306 487 286 460 268" fill="none" stroke="#886b65" stroke-width="10" stroke-linecap="round"/>
+  <path d="M409 216 C389 180 405 137 443 124 C452 77 503 56 540 83 C574 49 632 69 641 116 C679 132 681 177 651 199 C642 239 587 253 552 231 C518 258 450 250 432 225Z" fill="#a7b99b"/>
+  <path d="M443 180 C432 151 454 128 476 128 C491 101 521 104 536 124 C557 103 586 113 591 139 C617 138 632 159 619 180 C603 204 565 201 548 190 C519 214 475 208 463 191Z" fill="#b7c5a7" opacity=".82"/>
+  <g>
+    <use href="#sgCherryBloom" transform="translate(438 153) scale(1.05)"/>
+    <use href="#sgCherryBloom" transform="translate(470 106) scale(.88)"/>
+    <use href="#sgCherryBloom" transform="translate(512 83) scale(.92)"/>
+    <use href="#sgCherryBloom" transform="translate(554 111) scale(1.02)"/>
+    <use href="#sgCherryBloom" transform="translate(603 107) scale(.93)"/>
+    <use href="#sgCherryBloom" transform="translate(638 151) scale(.9)"/>
+    <use href="#sgCherryBloom" transform="translate(581 179) scale(.85)"/>
+    <use href="#sgCherryBloom" transform="translate(520 188) scale(.9)"/>
+    <use href="#sgCherryBloom" transform="translate(474 204) scale(.76)"/>
+    <use href="#sgCherryBloom" transform="translate(626 202) scale(.82)"/>
+  </g>
+
+  <!-- The little bunny gardener is the clear foreground focal point. -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="347" cy="394" rx="45" ry="13" fill="#627c65" opacity=".18" stroke="none"/>
+    <path d="M323 271 C309 231 318 194 337 196 C357 198 357 242 350 275Z" fill="url(#sgBunnyFur)" stroke="#d8c9c1" stroke-width="2.3"/>
+    <path d="M354 267 C350 227 362 193 380 202 C397 211 384 252 373 278Z" fill="url(#sgBunnyFur)" stroke="#d8c9c1" stroke-width="2.3"/>
+    <path d="M329 258 C319 226 330 210 339 212 C348 220 346 244 342 263Z" fill="#e9b3c2" opacity=".9" stroke="none"/>
+    <path d="M360 258 C359 229 370 213 378 218 C384 229 374 251 369 263Z" fill="#e9b3c2" opacity=".9" stroke="none"/>
+
+    <ellipse cx="349" cy="352" rx="39" ry="53" fill="url(#sgBunnyFur)" stroke="#d8c9c1" stroke-width="2.2"/>
+    <ellipse cx="320" cy="355" rx="13" ry="23" transform="rotate(-24 320 355)" fill="url(#sgBunnyFur)" stroke="#d8c9c1" stroke-width="2"/>
+    <ellipse cx="378" cy="354" rx="13" ry="23" transform="rotate(24 378 354)" fill="url(#sgBunnyFur)" stroke="#d8c9c1" stroke-width="2"/>
+    <path d="M321 330 Q349 312 378 330 L382 377 Q350 392 318 377Z" fill="#91a98a" stroke="#718d74" stroke-width="2"/>
+    <path d="M338 324 Q349 334 360 324 L367 340 Q349 350 331 340Z" fill="url(#sgScarf)" stroke="none"/>
+    <path d="M357 335 L376 342 L364 354Z" fill="#cf88a5" stroke="none"/>
+    <ellipse cx="349" cy="383" rx="15" ry="7" fill="#e9c8ce" opacity=".78" stroke="none"/>
+    <ellipse cx="334" cy="397" rx="18" ry="9" fill="#fff8ed" stroke="#d8c9c1" stroke-width="2"/>
+    <ellipse cx="364" cy="397" rx="18" ry="9" fill="#fff8ed" stroke="#d8c9c1" stroke-width="2"/>
+
+    <circle cx="350" cy="293" r="43" fill="url(#sgBunnyFur)" stroke="#d8c9c1" stroke-width="2.4"/>
+    <ellipse cx="331" cy="307" rx="8" ry="4.5" fill="#efb8c5" opacity=".78" stroke="none"/>
+    <ellipse cx="369" cy="307" rx="8" ry="4.5" fill="#efb8c5" opacity=".78" stroke="none"/>
+    <ellipse cx="337" cy="291" rx="3.2" ry="4.2" fill="#59465b" stroke="none"/>
+    <ellipse cx="363" cy="291" rx="3.2" ry="4.2" fill="#59465b" stroke="none"/>
+    <path d="M346 301 Q350 297 354 301 Q352 307 350 307 Q348 307 346 301Z" fill="#c9829d" stroke="none"/>
+    <path d="M350 307 Q345 314 340 310 M350 307 Q355 314 360 310" fill="none" stroke="#80616f" stroke-width="1.8"/>
+    <path d="M335 277 Q350 267 365 277" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="3"/>
+  </g>
+
+  <!-- Four rooted flowers are the existing touch targets. -->
+  <use href="#sgGardenFlower" transform="translate(116 366) scale(1.02)"/>
+  <use href="#sgGardenFlower" transform="translate(228 381) scale(.88)"/>
+  <use href="#sgGardenFlower" transform="translate(470 370) scale(1.02)"/>
+  <use href="#sgGardenFlower" transform="translate(584 357) scale(.94)"/>
+
+  <!-- A few low grass strokes ground the illustration without extra ornaments. -->
+  <g fill="none" stroke="#6e906f" stroke-width="3" stroke-linecap="round" opacity=".78">
+    <path d="M48 433 Q41 411 31 403 M56 434 Q63 411 77 405 M188 440 Q182 417 169 410 M196 440 Q207 420 218 416"/>
+    <path d="M435 436 Q428 411 415 405 M445 438 Q456 415 468 410 M627 432 Q618 409 607 404 M637 434 Q650 412 663 410"/>
+  </g>
+</svg>`;
 
   const gardenFlowers = [
-    {id:'pink', label:'pink flower', x:17, y:88},
-    {id:'lavender', label:'lavender flower', x:52, y:80},
-    {id:'honey', label:'yellow flower', x:73, y:82},
-    {id:'rose', label:'rose flower', x:91, y:75}
+    {id:'pink', label:'pink flower', x:17, y:79},
+    {id:'lavender', label:'lavender flower', x:33, y:83},
+    {id:'honey', label:'yellow flower', x:69, y:80},
+    {id:'rose', label:'rose flower', x:86, y:78}
   ];
   const gardenFlowerMarkup = gardenFlowers.map(flower => {
     const watered = gardenBlooms.has(flower.id);
