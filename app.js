@@ -738,7 +738,7 @@ function streakFriendsMarkup(todayKey) {
     const snapshot = streakFriendSnapshot(friend,todayKey);
     const countLabel = snapshot.count === null ? '—' : String(snapshot.count);
     return '<button type="button" class="sg-friend-card is-' + snapshot.state + '" data-streak-friend="' + esc(friend.username || '') +
-      '" aria-label="Open ' + esc(name) + ' profile">' +
+      '" aria-label="Open ' + esc(name) + ' garden">' +
       '<span class="sg-friend-avatar">' + esc(friend.mascot || '🐰') + '</span>' +
       '<span class="sg-friend-identity"><b>' + esc(name) + '</b><small>@' + esc(friend.username || 'friend') + '</small>' +
       '<em' + (snapshot.state === 'due' ? ' data-streak-friend-countdown' : '') + '>' + esc(snapshot.label) + '</em>' +
