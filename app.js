@@ -3017,6 +3017,8 @@ document.addEventListener('scroll', event => {
   if (page !== 'notes' || thread?.id !== 'chatThread') return;
 
   const currentTop = Math.max(0, thread.scrollTop);
+  const maxScrollTop = Math.max(0, thread.scrollHeight - thread.clientHeight);
+  const distanceFromBottom = Math.max(0, maxScrollTop - currentTop);
   const headerHidden = document.body.classList.contains('notes-header-hidden');
 
   if (document.body.classList.contains('notes-keyboard-open') && !notesKeyboardDismissed) {
@@ -3030,23 +3032,25 @@ document.addEventListener('scroll', event => {
     return;
   }
 
-  // At the beginning of the conversation, always keep the masthead visible.
-  if (currentTop <= 8) {
+  // Keep the masthead available at both ends of the conversation.
+  if (currentTop <= 12 || distanceFromBottom <= 12) {
     if (headerHidden) document.body.classList.remove('notes-header-hidden');
     notesHeaderLastScrollTop = currentTop;
     return;
   }
 
   const delta = currentTop - notesHeaderLastScrollTop;
-  const directionThreshold = headerHidden ? 9 : 18;
-  if (Math.abs(delta) < directionThreshold) return;
+  const directionThreshold = headerHidden ? 8 : 16;
 
   // Upward movement hides the masthead; downward movement brings it back.
-  if (delta < 0 && !headerHidden) {
-    document.body.classList.add('notes-header-hidden');
-  } else if (delta > 0 && headerHidden && currentTop > 42) {
-    document.body.classList.remove('notes-header-hidden');
+  if (Math.abs(delta) >= directionThreshold) {
+    if (delta < 0 && !headerHidden) {
+      document.body.classList.add('notes-header-hidden');
+    } else if (delta > 0 && headerHidden) {
+      document.body.classList.remove('notes-header-hidden');
+    }
   }
+  // Track every movement so small scrolls do not accumulate into a sudden jump.
   notesHeaderLastScrollTop = currentTop;
 }, { capture:true, passive:true });
 
