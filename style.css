@@ -6919,3 +6919,21 @@ body[data-mode="dark"] .streak-tile [data-streak-live-subtitle] {color:#f0cadd!i
     font-size:14px!important;
   }
 }
+
+
+/* v119 — refined, fuller blossoms inside the garden banner. */
+.streak-garden-page .sg-garden-flower-hit {
+  width:50px!important;
+  height:50px!important;
+  border-radius:50%;
+  background:transparent!important;
+}
+.streak-garden-page .sg-garden-flower-hit:before,
+.streak-garden-page .sg-garden-flower-hit:after {
+  display:none!important;
+  content:none!important;
+}
+.streak-garden-page .sg-garden-flower-hit:focus-visible {
+  outline:2px solid #d99bb4!important;
+  outline-offset:2px;
+}
