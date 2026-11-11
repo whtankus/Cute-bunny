@@ -3222,13 +3222,3 @@ body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboa
     max-width:min(30ch,calc(72.9% - 2.2599rem))!important;
   }
 }
-
-
-/* v89 — place outline hearts fully above the bubble so wallpaper shows through. */
-#content .chat-page .chat-bubble .memory-heart-toggle,
-.home-note-memory .chat-bubble .memory-heart-toggle {
-  top:-30px!important;
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-}
