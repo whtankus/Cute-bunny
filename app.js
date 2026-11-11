@@ -661,15 +661,21 @@ function saveStreakMilestones(count) {
 function resetStreakPetalGame() {
   const symbols = ['🌷','🌼','🌸','🌻','🌺','🍀'];
   const tones = ['rose','sunshine','lilac','gold','peach','mint'];
-  for (let index = tones.length - 1; index > 0; index--) {
+  const flowerPairs = symbols.map((symbol, index) => {
+    const firstTone = tones[Math.floor(Math.random() * tones.length)];
+    const otherTones = tones.filter(tone => tone !== firstTone);
+    const secondTone = otherTones[Math.floor(Math.random() * otherTones.length)];
+    const pairKey = String(index);
+    return [
+      { id: pairKey + '-a', pairKey, symbol, tone: firstTone },
+      { id: pairKey + '-b', pairKey, symbol, tone: secondTone }
+    ];
+  });
+  const cards = flowerPairs.flat();
+  for (let index = cards.length - 1; index > 0; index--) {
     const swap = Math.floor(Math.random() * (index + 1));
-    [tones[index], tones[swap]] = [tones[swap], tones[index]];
+    [cards[index], cards[swap]] = [cards[swap], cards[index]];
   }
-  const flowerPairs = symbols.map((symbol, index) => ({ symbol, tone: tones[index], pairKey: String(index) }));
-  const cards = flowerPairs.flatMap(pair => [
-    { id: pair.pairKey + '-a', pairKey: pair.pairKey, symbol: pair.symbol, tone: pair.tone },
-    { id: pair.pairKey + '-b', pairKey: pair.pairKey, symbol: pair.symbol, tone: pair.tone }
-  ]);
   for (let index = cards.length - 1; index > 0; index--) {
     const swap = Math.floor(Math.random() * (index + 1));
     [cards[index], cards[swap]] = [cards[swap], cards[index]];
@@ -727,6 +733,7 @@ function flipStreakPetalCard(cardId) {
       }
       renderStreakPetalGame();
       if (state.completed) {
+        playBoing();
         window.setTimeout(() => {
           if (streakPetalGame === state) resetStreakPetalGame();
         }, 1500);
@@ -845,10 +852,17 @@ function renderStreakPage() {
     const date = new Date(key + 'T00:00:00Z');
     const shortName = new Intl.DateTimeFormat(undefined, {weekday:'short', timeZone:'UTC'}).format(date);
     const fullDate = new Intl.DateTimeFormat(undefined, {weekday:'long', month:'short', day:'numeric', timeZone:'UTC'}).format(date);
+    const visited = history.has(key), isToday = key === todayKey, isFuture = key > todayKey;
     const selected = key === streakSelectedWeekDate;
-    const marker = '<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="#d989a8"><ellipse cx="20" cy="8" rx="5.2" ry="8"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(60 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(120 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(180 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(240 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(300 20 20)"/></g><circle cx="20" cy="20" r="5" fill="#efc978"/><path d="M20 26v10" stroke="#789775" stroke-width="2" stroke-linecap="round"/></svg>';
-    week.push('<button type="button" class="sg-week-day' + (selected ? ' is-selected' : '') +
-      '" data-streak-week-date="' + key + '" aria-pressed="' + selected + '" aria-label="' + fullDate + '">' +
+    const stateClass = (visited ? ' is-visited' : isFuture ? ' is-future' : ' is-missed') + (isToday ? ' is-today' : '');
+    const marker = visited
+      ? '<svg viewBox="0 0 40 40"><g fill="#d989a8"><ellipse cx="20" cy="8" rx="5.2" ry="8"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(60 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(120 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(180 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(240 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(300 20 20)"/></g><circle cx="20" cy="20" r="5" fill="#efc978"/><path d="M20 26v10" stroke="#789775" stroke-width="2" stroke-linecap="round"/></svg>'
+      : isFuture
+        ? '<svg viewBox="0 0 40 40"><path d="M20 35V20" stroke="#91a98b" stroke-width="2" stroke-linecap="round"/><path d="M20 27c-8-9-14-4-12 1 4 5 9 3 12-1Z" fill="#dce8d4"/><path d="M20 20c-7-7-5-15 0-17 7 5 7 12 0 17Z" fill="#f4dfe8" stroke="#cfadc1" stroke-width="1.5"/></svg>'
+        : '<span class="sg-week-missed-mark" aria-hidden="true">–</span>';
+    week.push('<button type="button" class="sg-week-day' + stateClass + (selected ? ' is-selected' : '') +
+      '" data-streak-week-date="' + key + '" aria-pressed="' + selected + '" aria-label="' + fullDate + ': ' +
+      (visited ? 'visit recorded' : isFuture ? 'upcoming day' : 'no visit recorded') + '">' +
       '<span class="sg-week-name">' + shortName + '</span><span class="sg-week-flower" aria-hidden="true">' + marker +
       '</span><small class="sg-week-date">' + Number(key.slice(-2)) + '</small></button>');
   }
@@ -1024,13 +1038,13 @@ function renderStreakPage() {
     ? Math.min(7, 2 + Math.floor(streakFlowerTotal / 7))
     : 0;
   const gardenFlowers = [
-    {id:'pink', label:'pink flower', x:14.7, y:79.3, svgX:100, svgY:365, scale:1.18},
-    {id:'lavender', label:'lavender flower', x:27.9, y:85.2, svgX:190, svgY:392, scale:1.06},
-    {id:'honey', label:'yellow flower', x:40.4, y:87.8, svgX:275, svgY:404, scale:1.02},
-    {id:'rose', label:'rose flower', x:61, y:88.7, svgX:415, svgY:408, scale:1.06},
-    {id:'peach', label:'peach flower', x:72.5, y:85.2, svgX:493, svgY:392, scale:1.08},
-    {id:'lilac', label:'lilac flower', x:83.8, y:80.7, svgX:570, svgY:371, scale:1.06},
-    {id:'cream', label:'cream flower', x:93.4, y:87.6, svgX:635, svgY:403, scale:.94}
+    {id:'pink', label:'pink flower', x:14.7, y:79.3, svgX:100, svgY:365, scale:1.46},
+    {id:'lavender', label:'lavender flower', x:27.9, y:85.2, svgX:190, svgY:392, scale:1.34},
+    {id:'honey', label:'yellow flower', x:40.4, y:87.8, svgX:275, svgY:404, scale:1.30},
+    {id:'rose', label:'rose flower', x:61, y:88.7, svgX:415, svgY:408, scale:1.34},
+    {id:'peach', label:'peach flower', x:72.5, y:85.2, svgX:493, svgY:392, scale:1.36},
+    {id:'lilac', label:'lilac flower', x:83.8, y:80.7, svgX:570, svgY:371, scale:1.34},
+    {id:'cream', label:'cream flower', x:93.4, y:87.6, svgX:635, svgY:403, scale:1.22}
   ];
   const gardenPlantMarkup = gardenFlowers.map((flower, index) =>
     '<use href="#' + (index < earnedGardenFlowers ? 'sgGardenFlower' : 'sgGardenBud') +
@@ -1045,21 +1059,24 @@ function renderStreakPage() {
       (watered ? ' disabled' : '') + '><span aria-hidden="true"></span></button>';
   }).join('');
 
+  const headingFlowerDecor = ['✿','❀','✽','✿','❁','✾','❀','✽','✿'].map(symbol =>
+    '<i class="sg-heading-bloom">' + symbol + '</i>'
+  ).join('');
+
   content.innerHTML = [
     '<div class="streak-garden-page">',
-    '<div class="sg-page-heading"><div><h2>Your Streak Garden</h2></div><span class="sg-heading-doodle" aria-hidden="true">' +
-      '<i class="sg-heading-bloom sg-heading-bloom-one" style="--sg-bloom-speed:' + (3.4 + Math.random() * 1.9).toFixed(2) + 's;--sg-bloom-delay:-' + (Math.random() * 2.4).toFixed(2) + 's">✿</i>' +
-      '<i class="sg-heading-bloom sg-heading-bloom-two" style="--sg-bloom-speed:' + (4.1 + Math.random() * 1.8).toFixed(2) + 's;--sg-bloom-delay:-' + (Math.random() * 2.8).toFixed(2) + 's">✿</i></span></div>',
+    '<div class="sg-page-heading"><div><h2>Your Streak Garden</h2></div><span class="sg-heading-doodle sg-heading-bloom-cloud" aria-hidden="true">' +
+      headingFlowerDecor + '</span></div>',
 
     '<div class="sg-page-group sg-garden-group" id="sgGardenGroup">',
     '<section class="sg-hero" aria-label="Your current streak garden"><div class="sg-hero-paper">' +
-      '<div class="sg-hero-copy"><div class="sg-hero-topline"><span class="sg-eyebrow">CURRENT STREAK</span>' +
+      '<div class="sg-hero-copy"><div class="sg-hero-topline">' +
+      '<div class="sg-hero-streak-meta"><span class="sg-eyebrow">CURRENT STREAK</span>' +
       '<div class="sg-count-line"><strong>' + count + '</strong><span><b>' + (count === 1 ? 'day' : 'days') + '</b><small>in a row</small></span></div></div>' +
-      '<h3 class="sg-garden-stage">' + gardenStage + '</h3></div>' +
+      '<h3 class="sg-garden-stage">' + gardenStage + '</h3></div></div>' +
       '<div class="sg-hero-scene"><div class="sg-garden-art" id="sgGardenArt">' + gardenSceneMarkup +
         '<div class="sg-garden-hit-layer">' + gardenFlowerMarkup + '</div></div>' +
-        '<span class="sg-garden-bloom-count' + (gardenBlooms.size === 7 ? ' is-complete' : '') + '" id="sgGardenBloomCount">' +
-        (gardenBlooms.size === 7 ? 'Garden in bloom ✿' : 'Tap flowers · ' + gardenBlooms.size + ' / 7') + '</span></div>' +
+        '</div>' +
       '<span class="sg-hero-corner sg-corner-one" aria-hidden="true">❧</span></div></section>',
     '</div>',
 
@@ -2503,11 +2520,6 @@ document.addEventListener('click', async e => {
     gardenFlowerButton.disabled = true;
     gardenFlowerButton.setAttribute('aria-pressed', 'true');
     gardenFlowerButton.setAttribute('aria-label', 'Watered flower');
-    const bloomCount = $('#sgGardenBloomCount');
-    if (bloomCount) {
-      bloomCount.textContent = blooms.size === 4 ? 'Garden in bloom ✿' : 'Tap flowers · ' + blooms.size + ' / 4';
-      bloomCount.classList.toggle('is-complete', blooms.size === 4);
-    }
     const gardenArt = $('#sgGardenArt');
     if (gardenArt) {
       gardenArt.classList.remove('sg-water-pop');
