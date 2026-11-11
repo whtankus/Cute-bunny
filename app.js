@@ -685,7 +685,7 @@ function renderStreakPage() {
     const shortName = new Intl.DateTimeFormat(undefined, {weekday:'short', timeZone:'UTC'}).format(date);
     const fullDate = new Intl.DateTimeFormat(undefined, {weekday:'long', month:'short', day:'numeric', timeZone:'UTC'}).format(date);
     const visited = history.has(key), isToday = key === todayKey, isFuture = key > todayKey, selected = key === streakSelectedWeekDate;
-    const stateClass = visited ? ' is-visited' : isFuture ? ' is-future' : isToday ? ' is-pending' : ' is-missed';
+    const stateClass = (visited ? ' is-visited' : isFuture ? ' is-future' : isToday ? ' is-pending' : ' is-missed') + (isToday ? ' is-today' : '');
     const marker = visited
       ? '<svg viewBox="0 0 40 40"><g fill="#d989a8"><ellipse cx="20" cy="8" rx="5.2" ry="8"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(60 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(120 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(180 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(240 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(300 20 20)"/></g><circle cx="20" cy="20" r="5" fill="#efc978"/><path d="M20 26v10" stroke="#789775" stroke-width="2" stroke-linecap="round"/></svg>'
       : isFuture
@@ -699,7 +699,6 @@ function renderStreakPage() {
   }
   const weekVisited = weekKeys.filter(key => history.has(key)).length;
   const selectedWeekLabel = new Intl.DateTimeFormat(undefined, {weekday:'long', month:'long', day:'numeric', timeZone:'UTC'}).format(new Date(streakSelectedWeekDate + 'T00:00:00Z'));
-  const selectedWeekVisited = history.has(streakSelectedWeekDate);
   const selectedWeekFuture = streakSelectedWeekDate > todayKey;
   const selectedWeekChecks = readStreakGoalChecks(streakSelectedWeekDate);
   const selectedWeekGoals = Object.values(selectedWeekChecks).filter(value => value === true).length;
@@ -748,7 +747,7 @@ function renderStreakPage() {
       '<span class="sg-milestone-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
       Math.round(milestoneProgress) + '" aria-label="' + Math.round(milestoneProgress) + '% toward ' + item.name + '">' +
       '<i style="width:' + milestoneProgress + '%"></i></span>' +
-      '<small class="sg-milestone-progress-copy">' + Math.min(count, item.days) + ' / ' + item.days + ' days</small></article>';
+      '<small class="sg-milestone-progress-copy">' + (unlocked ? item.days + ' days reached' : Math.min(count, item.days) + ' / ' + item.days + ' days') + '</small></article>';
   }).join('');
 
   const gardenScene = '<svg class="sg-garden-svg" viewBox="0 0 440 300" role="img" aria-label="A little bunny in a blooming flower garden">' +
