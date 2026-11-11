@@ -678,7 +678,7 @@ function renderStreakPetalGame() {
   const best = $('#streakGameBest');
   if (best) best.textContent = readStreakPetalBest() ? 'Best ' + readStreakPetalBest() : 'No best yet';
   const reset = $('#streakGameReset');
-  if (reset) reset.textContent = state.completed ? 'Play again ↻' : 'Shuffle ↻';
+  if (reset) reset.textContent = state.completed ? 'Play again ✿' : 'Shuffle ✿';
 }
 function flipStreakPetalCard(cardId) {
   const state = streakPetalGame;
@@ -744,12 +744,14 @@ function streakFriendsMarkup(todayKey) {
   });
   const rows = orderedFriends.map(friend => {
     const snapshot = streakFriendSnapshot(friend,todayKey);
-    const flowerCount = snapshot.count === null ? '—' : String(snapshot.count);
+    const hasSingleFlower = snapshot.count === 1;
     const displayName = String(friend.display_name || friend.username || 'Friend').trim() || 'Friend';
     return '<div class="sg-friend-card" data-friend-id="' + esc(friend.id || '') + '" aria-label="' + esc(displayName) + ' garden">' +
-      '<span class="sg-friend-person"><span class="sg-friend-avatar" aria-hidden="true">' + esc(friend.mascot || '🐰') + '</span>' +
-      '<strong class="sg-friend-name">' + esc(displayName) + '</strong><small class="sg-friend-presence">Offline</small></span>' +
-      '<span class="sg-friend-flower-count" aria-label="' + flowerCount + ' flowers"><strong>× ' + flowerCount + '</strong><i aria-hidden="true">🌸</i></span></div>';
+      '<span class="sg-friend-avatar" aria-hidden="true">' + esc(friend.mascot || '🐰') + '</span>' +
+      '<span class="sg-friend-details"><strong class="sg-friend-name">' + esc(displayName) + '</strong>' +
+      '<span class="sg-friend-meta"><small class="sg-friend-presence">Offline</small>' +
+      '<span class="sg-friend-flower-count" aria-label="' + (hasSingleFlower ? '1 flower' : 'Flower') + '">' +
+      (hasSingleFlower ? '<strong>1</strong>' : '') + '<i aria-hidden="true">🌸</i></span></span></span></div>';
   }).join('');
   return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>';
 }
@@ -1056,8 +1058,9 @@ function renderStreakPage() {
     '<section class="sg-game-section sg-game-compact"><div class="sg-petal-banner-copy">' +
       '<div class="sg-compact-section-heading"><h3>Petal Pairs</h3><b id="streakGamePairsLeft">6 pairs left</b></div>' +
       '<p class="sg-petal-banner-note">Find all six little pairs</p>' +
-      '<button type="button" class="sg-game-reset sg-game-reset-compact" id="streakGameReset">Shuffle ↻</button></div>' +
-      '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div></section>',
+      '</div>' +
+      '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div>' +
+      '<button type="button" class="sg-game-reset sg-game-reset-compact" id="streakGameReset">Shuffle ✿</button></section>',
     '<section class="sg-friends-section sg-friends-compact"><div class="sg-friends-heading"><h3>Friends in Bloom</h3></div>' +
       streakFriendsMarkup(todayKey) + '</section>',
     '<div class="sg-bottom-tabs-wrap">',
@@ -2553,6 +2556,13 @@ document.addEventListener('click', async e => {
       day.classList.toggle('is-selected', selected);
       day.setAttribute('aria-pressed', String(selected));
     });
+    document.querySelectorAll('.streak-garden-page .sg-week-flower.is-clicked').forEach(flower => flower.classList.remove('is-clicked'));
+    const clickedFlower = streakWeekDate.querySelector('.sg-week-flower');
+    if (clickedFlower) {
+      clickedFlower.classList.remove('is-clicked');
+      void clickedFlower.offsetWidth;
+      clickedFlower.classList.add('is-clicked');
+    }
     const detail = $('#sgWeekDetail');
     if (detail) {
       const title = detail.querySelector('b');
