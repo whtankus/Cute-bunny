@@ -3187,3 +3187,19 @@ body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboa
     transition:none!important;
   }
 }
+
+
+/* v87 — keep the Notes message viewport fixed while the masthead slides away. */
+body.notes-page-active {
+  --notes-header-collapse:0px;
+}
+body.notes-page-active .app>header {
+  margin-bottom:0!important;
+  transition:transform .24s cubic-bezier(.2,.75,.25,1), opacity .18s ease!important;
+}
+body.notes-page-active.notes-header-hidden .app>header {
+  margin-bottom:0!important;
+}
+body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
+  height:var(--notes-page-height,calc(100dvh - 180px))!important;
+}
