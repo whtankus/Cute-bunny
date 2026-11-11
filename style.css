@@ -8073,3 +8073,37 @@ body.notes-page-active #content .chat-bubble-wrap {
     max-width:min(23.1ch,calc(63% - 1.9404rem))!important;
   }
 }
+
+
+/* Widen bubbles by 45% from the immediately preceding 30%-reduced sizing. */
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap {
+  max-width:min(40.6ch,calc(101.5% - 4.06rem))!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(40.6ch,calc(101.5% - 3.60325rem))!important;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(40.6ch,calc(101.5% - 3.1262rem))!important;
+  }
+}
+
+/* Notes has its own original cap; apply the same 1.45x increase to it. */
+body.notes-page-active #content .chat-bubble-wrap {
+  max-width:min(33.495ch,calc(91.35% - 3.654rem))!important;
+}
+@media(max-width:720px) {
+  body.notes-page-active #content .chat-bubble-wrap {
+    max-width:min(33.495ch,calc(91.35% - 3.243925rem))!important;
+  }
+}
+@media(max-width:480px) {
+  body.notes-page-active #content .chat-bubble-wrap {
+    max-width:min(33.495ch,calc(91.35% - 2.81358rem))!important;
+  }
+}
