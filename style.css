@@ -4151,3 +4151,7 @@ body[data-mode="dark"] .friend-profile-garden{border-color:#655266;background:li
 body[data-mode="dark"] .friend-profile-garden-icon{background:#614354;color:#f2cade}
 body[data-mode="dark"] .friend-profile-garden small,body[data-mode="dark"] .friend-profile-garden em{color:#d1b8ce}
 body[data-mode="dark"] .friend-profile-garden b{color:#f4e4ef}
+
+.sg-find-friends{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin:10px 0 0;padding:8px 14px;border:1px solid #e4ccd8;border-radius:999px;background:#fffaf9;color:#925d7b;font-size:12px;font-weight:800}
+.sg-find-friends:hover{background:#f9eaf0;border-color:#d7aec1}
+body[data-mode="dark"] .sg-find-friends{background:#493744;border-color:#765c70;color:#efccdd}
