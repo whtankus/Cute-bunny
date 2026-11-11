@@ -1421,6 +1421,11 @@ function showFriendProfile(user) {
   $('#friendProfileHandle').textContent = '@' + user.username;
   $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
   $('#friendProfileCreated').textContent = 'Joined ' + formatJoinDate(user.created_at);
+  const friendGarden = streakFriendSnapshot(user, new Date().toISOString().slice(0, 10));
+  $('#friendProfileStreakCount').textContent = friendGarden.count === null
+    ? 'Streak unavailable'
+    : friendGarden.count + (friendGarden.count === 1 ? ' day' : ' days');
+  $('#friendProfileStreakStatus').textContent = friendGarden.label;
   $('#friendProfileStyle').dataset.themePreview = user.theme || 'rose';
   $('#friendProfileThemeName').textContent = themeNames[user.theme] || 'Rose garden';
   $('#friendProfileFollow').textContent = user.isFollowing ? 'Following ✓' : 'Follow ♡';
