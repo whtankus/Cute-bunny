@@ -7304,3 +7304,34 @@ body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboa
   height:var(--notes-page-height,calc(100dvh - 180px))!important;
   transition:none!important;
 }
+
+
+/* Notes scroll area: use the masthead as an overlay, not a scroll boundary.
+   Extend the message viewport up by the header height while preserving its
+   lower edge, so older messages can travel behind the masthead without a jump. */
+body.notes-page-active {
+  --notes-header-height:70px;
+}
+@media(max-width:520px) {
+  body.notes-page-active {
+    --notes-header-height:60px;
+  }
+}
+body.notes-page-active .app {
+  position:relative!important;
+}
+body.notes-page-active .app>header,
+body.notes-page-active.notes-header-hidden .app>header {
+  position:absolute!important;
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  margin:0 auto!important;
+}
+body.notes-page-active #content .chat-page:not(.notes-keyboard-open),
+body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
+  height:calc(var(--notes-page-height,calc(100dvh - 180px)) + var(--notes-header-height))!important;
+}
+body.notes-page-active #content .chat-page.notes-keyboard-open {
+  height:var(--notes-page-height)!important;
+}
