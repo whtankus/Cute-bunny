@@ -7264,19 +7264,19 @@ body.notes-page-active.notes-keyboard-open #nav {
   display:none!important;
 }
 
-/* Notes bubbles: allow up to a 40-character line while keeping short notes content-sized. */
+/* Notes bubbles: cap at 33ch and reduce available width by 10% at every breakpoint. */
 body.notes-page-active #content .chat-bubble-wrap {
   width:fit-content!important;
-  max-width:min(40ch,calc(100% - 4rem))!important;
+  max-width:min(33ch,calc(90% - 3.6rem))!important;
 }
 @media(max-width:720px) {
   body.notes-page-active #content .chat-bubble-wrap {
-    max-width:min(40ch,calc(100% - 3.55rem))!important;
+    max-width:min(33ch,calc(90% - 3.195rem))!important;
   }
 }
 @media(max-width:480px) {
   body.notes-page-active #content .chat-bubble-wrap {
-    max-width:min(40ch,calc(100% - 3.08rem))!important;
+    max-width:min(33ch,calc(90% - 2.772rem))!important;
   }
 }
 @media(prefers-reduced-motion:reduce) {
