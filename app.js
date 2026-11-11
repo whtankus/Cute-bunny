@@ -1989,16 +1989,23 @@ document.addEventListener('input', event => {
 });
 
 // Keep the Notes composer attached to the visible viewport as the mobile keyboard changes size.
+let notesKeyboardFollowLatest = false;
+
+// Resize only the Notes conversation viewport when the mobile keyboard appears.
+// The app header and its profile / notification / moon controls are not repositioned.
 function syncNotesKeyboardLayout() {
   const notesPage = document.querySelector('.chat-page');
   if (!notesPage || page !== 'notes') {
     document.body.classList.remove('notes-keyboard-open');
     document.documentElement.style.setProperty('--notes-keyboard-inset', '0px');
     document.documentElement.style.removeProperty('--notes-page-height');
+    notesKeyboardFollowLatest = false;
     return;
   }
 
   const input = $('#chatInput');
+  const thread = $('#chatThread');
+  const composer = $('#chatComposer');
   const focused = document.activeElement === input;
   const viewport = window.visualViewport;
   const mobile = isTouchNotesViewport();
@@ -2008,8 +2015,8 @@ function syncNotesKeyboardLayout() {
   const keyboardInset = Math.max(0, Math.round(window.innerHeight - visibleViewportBottom));
   const viewportHeightDrop = Math.max(0, window.innerHeight - visualHeight);
   const wasOpen = document.body.classList.contains('notes-keyboard-open');
-  // Use separate open/close thresholds to prevent the composer flickering while
-  // the virtual keyboard animates and the visual viewport reports small changes.
+
+  // Use separate open/close thresholds to avoid flicker while the keyboard animates.
   const viewportSuggestsKeyboard = viewport
     ? (
       keyboardInset > (wasOpen ? 48 : 100) ||
@@ -2017,10 +2024,15 @@ function syncNotesKeyboardLayout() {
       visualHeight < window.screen.height * 0.72
     )
     : window.innerHeight < window.screen.height * 0.72;
-  // Focus opens the keyboard; after blur, keep the layout until the viewport returns.
   const keyboardOpen = mobile && viewportSuggestsKeyboard && (focused || wasOpen);
-  const nav = $('#nav');
-  const composer = $('#chatComposer');
+
+  // Follow the newest message only when the reader was already at the bottom.
+  // This keeps the latest conversation visible without pulling someone away
+  // from older messages they were intentionally reading.
+  if (keyboardOpen && !wasOpen && thread) {
+    const distanceFromBottom = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
+    notesKeyboardFollowLatest = distanceFromBottom < 88;
+  }
 
   notesPage.classList.toggle('notes-keyboard-open', keyboardOpen);
   document.body.classList.toggle('notes-keyboard-open', keyboardOpen);
@@ -2029,6 +2041,32 @@ function syncNotesKeyboardLayout() {
     keyboardOpen ? keyboardInset + 'px' : '0px'
   );
 
+  if (keyboardOpen) {
+    // Constrain the message list to the visible viewport ending just above
+    // the software keyboard, while keeping the top app header in its original place.
+    const pageTop = notesPage.getBoundingClientRect().top;
+    const availableHeight = Math.max(180, Math.floor(visibleViewportBottom - pageTop));
+    document.documentElement.style.setProperty('--notes-page-height', availableHeight + 'px');
+
+    // The composer floats over the bottom of the thread, so reserve its height
+    // to ensure the last message can scroll fully into view above the input.
+    if (thread) {
+      const composerHeight = Math.ceil(composer?.getBoundingClientRect().height || 50);
+      const bottomClearance = composerHeight + 16;
+      thread.style.setProperty('padding-bottom', bottomClearance + 'px', 'important');
+      thread.style.setProperty('scroll-padding-bottom', bottomClearance + 'px');
+    }
+
+    requestAnimationFrame(() => {
+      if (!notesPage.isConnected || !thread?.isConnected || !notesKeyboardFollowLatest) return;
+      thread.scrollTop = thread.scrollHeight;
+    });
+  } else {
+    document.documentElement.style.removeProperty('--notes-page-height');
+    thread?.style.removeProperty('padding-bottom');
+    thread?.style.removeProperty('scroll-padding-bottom');
+    notesKeyboardFollowLatest = false;
+  }
 }
 
 let notesKeyboardSyncFrame = 0;
