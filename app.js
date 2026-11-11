@@ -1840,6 +1840,11 @@ function syncChatComposerState(field = $('#chatInput')) {
   send.setAttribute('aria-hidden', String(!hasMessage));
 }
 
+function isTouchNotesViewport() {
+  const touchDevice = window.matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints || 0) > 0;
+  return window.matchMedia('(max-width: 720px)').matches && touchDevice;
+}
+
 document.addEventListener('input', event => {
   if (event.target.id !== 'chatInput') return;
   const field = event.target;
@@ -1862,8 +1867,7 @@ function syncNotesKeyboardLayout() {
   const input = $('#chatInput');
   const focused = document.activeElement === input;
   const viewport = window.visualViewport;
-  const touchDevice = window.matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints || 0) > 0;
-  const mobile = window.matchMedia('(max-width: 720px)').matches && touchDevice;
+  const mobile = isTouchNotesViewport();
   const visualHeight = viewport?.height || window.innerHeight;
   const visualTop = viewport?.offsetTop || 0;
   const keyboardInset = viewport
@@ -1921,7 +1925,7 @@ document.addEventListener('keydown', event => {
     !event.shiftKey &&
     !event.isComposing &&
     event.keyCode !== 229 &&
-    !window.matchMedia('(max-width: 720px)').matches
+    !isTouchNotesViewport()
   ) {
     event.preventDefault();
     void sendChatMessage();
