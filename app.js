@@ -446,14 +446,20 @@ function streakWidget() {
   const subtitle = count ? count + (count === 1 ? ' day in a row' : ' days in a row') : 'Start your streak today ♡';
   const thumbnailLabel = count ? 'Open your ' + count + '-day streak garden' : 'Open your streak garden';
   return '<article class="tile streak-tile"><div class="tile-art streak-art streak-art-trigger" data-open-streak role="button" tabindex="0" aria-label="' + esc(thumbnailLabel) + '">' +
-    '<span class="streak-art-sprig" aria-hidden="true">🌸</span><span class="streak-art-value"><span class="streak-fire-emoji" aria-hidden="true">✿</span><strong data-streak-live-count>' + count + '</strong><small>DAY STREAK</small></span><i aria-hidden="true">✧</i></div>' +
+    '<span class="streak-plant-illustration" aria-hidden="true">' +
+      '<span class="streak-plant-flower streak-plant-flower-one">🌸</span>' +
+      '<span class="streak-plant-flower streak-plant-flower-two">🌼</span>' +
+      '<span class="streak-plant-flower streak-plant-flower-three">🌷</span>' +
+      '<span class="streak-plant-leaf streak-plant-leaf-one">🌿</span>' +
+      '<span class="streak-plant-leaf streak-plant-leaf-two">🍃</span>' +
+      '<span class="streak-plant-pot"><i>♡</i></span>' +
+    '</span></div>' +
     '<h3>Your streak</h3><p data-streak-live-subtitle title="' + esc(subtitle) + '">' + esc(subtitle) + '</p><button type="button" class="primary streak-open-button" data-open-streak>Open streak →</button></article>';
 }
 
 function syncStreakWidget() {
   const count = Math.max(0, Number(me?.login_streak) || 0);
   const subtitle = count ? count + (count === 1 ? ' day in a row' : ' days in a row') : 'Start your streak today ♡';
-  document.querySelectorAll('[data-streak-live-count]').forEach(node => { node.textContent = String(count); });
   document.querySelectorAll('[data-streak-live-subtitle]').forEach(node => {
     node.textContent = subtitle;
     node.title = subtitle;
@@ -716,6 +722,7 @@ function renderStreakPetalGame() {
 function flipStreakPetalCard(cardId) {
   const state = streakPetalGame;
   if (state.locked || state.completed || state.matched.includes(cardId) || state.flipped.includes(cardId)) return;
+  playBoing();
   state.flipped.push(cardId);
   if (state.flipped.length === 2) {
     state.moves += 1;
@@ -733,7 +740,6 @@ function flipStreakPetalCard(cardId) {
       }
       renderStreakPetalGame();
       if (state.completed) {
-        playBoing();
         window.setTimeout(() => {
           if (streakPetalGame === state) resetStreakPetalGame();
         }, 1500);
@@ -1038,13 +1044,13 @@ function renderStreakPage() {
     ? Math.min(7, 2 + Math.floor(streakFlowerTotal / 7))
     : 0;
   const gardenFlowers = [
-    {id:'pink', label:'pink flower', x:14.7, y:79.3, svgX:100, svgY:365, scale:1.46},
-    {id:'lavender', label:'lavender flower', x:27.9, y:85.2, svgX:190, svgY:392, scale:1.34},
-    {id:'honey', label:'yellow flower', x:40.4, y:87.8, svgX:275, svgY:404, scale:1.30},
-    {id:'rose', label:'rose flower', x:61, y:88.7, svgX:415, svgY:408, scale:1.34},
-    {id:'peach', label:'peach flower', x:72.5, y:85.2, svgX:493, svgY:392, scale:1.36},
-    {id:'lilac', label:'lilac flower', x:83.8, y:80.7, svgX:570, svgY:371, scale:1.34},
-    {id:'cream', label:'cream flower', x:93.4, y:87.6, svgX:635, svgY:403, scale:1.22}
+    {id:'pink', label:'pink flower', x:14.7, y:79.3, svgX:100, svgY:365, scale:1.72},
+    {id:'lavender', label:'lavender flower', x:27.9, y:85.2, svgX:190, svgY:392, scale:1.60},
+    {id:'honey', label:'yellow flower', x:40.4, y:87.8, svgX:275, svgY:404, scale:1.54},
+    {id:'rose', label:'rose flower', x:61, y:88.7, svgX:415, svgY:408, scale:1.60},
+    {id:'peach', label:'peach flower', x:72.5, y:85.2, svgX:493, svgY:392, scale:1.62},
+    {id:'lilac', label:'lilac flower', x:83.8, y:80.7, svgX:570, svgY:371, scale:1.60},
+    {id:'cream', label:'cream flower', x:93.4, y:87.6, svgX:635, svgY:403, scale:1.48}
   ];
   const gardenPlantMarkup = gardenFlowers.map((flower, index) =>
     '<use href="#' + (index < earnedGardenFlowers ? 'sgGardenFlower' : 'sgGardenBud') +
@@ -1059,13 +1065,13 @@ function renderStreakPage() {
       (watered ? ' disabled' : '') + '><span aria-hidden="true"></span></button>';
   }).join('');
 
-  const headingFlowerDecor = ['✿','❀','✽','✿','❁','✾','❀','✽','✿'].map(symbol =>
-    '<i class="sg-heading-bloom">' + symbol + '</i>'
-  ).join('');
+  const headingFlowerDecor =
+    '<i class="sg-heading-bloom sg-heading-bloom-one" style="--sg-bloom-speed:' + (3.4 + Math.random() * 1.9).toFixed(2) + 's;--sg-bloom-delay:-' + (Math.random() * 2.4).toFixed(2) + 's">✿</i>' +
+    '<i class="sg-heading-bloom sg-heading-bloom-two" style="--sg-bloom-speed:' + (4.1 + Math.random() * 1.8).toFixed(2) + 's;--sg-bloom-delay:-' + (Math.random() * 2.8).toFixed(2) + 's">✿</i>';
 
   content.innerHTML = [
     '<div class="streak-garden-page">',
-    '<div class="sg-page-heading"><div><h2>Your Streak Garden</h2></div><span class="sg-heading-doodle sg-heading-bloom-cloud" aria-hidden="true">' +
+    '<div class="sg-page-heading"><div><h2>Your Streak Garden</h2></div><span class="sg-heading-doodle" aria-hidden="true">' +
       headingFlowerDecor + '</span></div>',
 
     '<div class="sg-page-group sg-garden-group" id="sgGardenGroup">',
