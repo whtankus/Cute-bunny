@@ -13,6 +13,7 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
+let notesHeaderLastScrollTop = null;
 const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false, suppressTimer:null };
 
 
@@ -532,6 +533,8 @@ function go(p, options = {}) {
     document.querySelector('.chat-page')?.classList.remove('notes-keyboard-open');
     document.body.classList.remove('notes-keyboard-open');
     document.body.classList.remove('notes-page-active');
+    document.body.classList.remove('notes-header-hidden');
+    notesHeaderLastScrollTop = null;
     document.documentElement.style.setProperty('--notes-keyboard-inset', '0px');
     document.documentElement.style.removeProperty('--notes-page-height');
     document.documentElement.style.removeProperty('--notes-nav-height');
@@ -548,6 +551,10 @@ function go(p, options = {}) {
 
   hideMessageActions();
   document.body.classList.toggle('notes-page-active', p === 'notes');
+  if (p === 'notes') {
+    document.body.classList.remove('notes-header-hidden');
+    notesHeaderLastScrollTop = null;
+  }
   // Start Notes at the app's top-level header rather than inheriting another
   // page's document scroll position.
   window.scrollTo({ top: 0, behavior: 'auto' });
@@ -558,6 +565,7 @@ function go(p, options = {}) {
       if (page !== 'notes') return;
       const thread = $('#chatThread');
       if (thread) thread.scrollTop = thread.scrollHeight;
+      notesHeaderLastScrollTop = thread?.scrollTop ?? null;
       syncNotesKeyboardLayout();
     });
   }
@@ -2050,12 +2058,13 @@ document.addEventListener('input', event => {
 // Keep the Notes composer attached to the visible viewport as the mobile keyboard changes size.
 let notesKeyboardFollowLatest = false;
 
-// Resize only the Notes conversation viewport when the mobile keyboard appears.
-// The app header and its profile / notification / moon controls are not repositioned.
+// Resize the Notes conversation viewport and synchronize its masthead with the keyboard.
 function syncNotesKeyboardLayout() {
   const notesPage = document.querySelector('.chat-page');
   if (!notesPage || page !== 'notes') {
     document.body.classList.remove('notes-keyboard-open');
+    document.body.classList.remove('notes-header-hidden');
+    notesHeaderLastScrollTop = null;
     document.documentElement.style.setProperty('--notes-keyboard-inset', '0px');
     document.documentElement.style.removeProperty('--notes-page-height');
     notesKeyboardFollowLatest = false;
@@ -2095,6 +2104,13 @@ function syncNotesKeyboardLayout() {
 
   notesPage.classList.toggle('notes-keyboard-open', keyboardOpen);
   document.body.classList.toggle('notes-keyboard-open', keyboardOpen);
+  if (keyboardOpen) {
+    document.body.classList.add('notes-header-hidden');
+    notesHeaderLastScrollTop = thread?.scrollTop ?? notesHeaderLastScrollTop;
+  } else if (wasOpen) {
+    document.body.classList.remove('notes-header-hidden');
+    notesHeaderLastScrollTop = thread?.scrollTop ?? null;
+  }
   document.documentElement.style.setProperty(
     '--notes-keyboard-inset',
     keyboardOpen ? keyboardInset + 'px' : '0px'
@@ -2147,6 +2163,39 @@ window.addEventListener('resize', scheduleNotesKeyboardLayout);
 window.addEventListener('orientationchange', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('resize', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('scroll', scheduleNotesKeyboardLayout);
+
+// Hide the masthead while reading downward and reveal it when scrolling upward.
+document.addEventListener('scroll', event => {
+  const thread = event.target;
+  if (page !== 'notes' || thread?.id !== 'chatThread') return;
+
+  const currentTop = Math.max(0, Math.round(thread.scrollTop));
+  if (document.body.classList.contains('notes-keyboard-open')) {
+    document.body.classList.add('notes-header-hidden');
+    notesHeaderLastScrollTop = currentTop;
+    return;
+  }
+
+  if (notesHeaderLastScrollTop === null) {
+    notesHeaderLastScrollTop = currentTop;
+    return;
+  }
+
+  const delta = currentTop - notesHeaderLastScrollTop;
+  if (Math.abs(delta) >= 5) {
+    document.body.classList.toggle('notes-header-hidden', delta > 0);
+    notesHeaderLastScrollTop = currentTop;
+  }
+}, true);
+
+// Re-measure the Notes viewport after the masthead's height-collapse animation.
+document.addEventListener('transitionend', event => {
+  if (
+    event.target.matches?.('.app>header') &&
+    event.propertyName === 'margin-bottom' &&
+    page === 'notes'
+  ) scheduleNotesKeyboardLayout();
+});
 
 // Chat form submission
 document.addEventListener('submit', event => {
