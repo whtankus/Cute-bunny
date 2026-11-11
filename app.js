@@ -627,7 +627,7 @@ function resetStreakPetalGame() {
     const swap = Math.floor(Math.random() * (index + 1));
     [cards[index], cards[swap]] = [cards[swap], cards[index]];
   }
-  streakPetalGame = { cards, flipped: [], matched: [], moves: 0, locked: false, completed: false };
+  streakPetalGame = { cards, flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
   renderStreakPetalGame();
 }
 function renderStreakPetalGame() {
@@ -648,7 +648,7 @@ function renderStreakPetalGame() {
   const status = $('#streakGameStatus');
   const moves = $('#streakGameMoves');
   if (status) status.textContent = state.completed
-    ? (state.moves === readStreakPetalBest() ? 'New personal best! ✿' : 'All six pairs found!')
+    ? (state.newBest ? 'New personal best! ✿' : 'All six pairs found!')
     : state.locked ? 'Remember the flowers…' : 'Find all six pairs';
   if (moves) moves.textContent = state.moves + ' moves · ' + pairs + ' / 6';
   const best = $('#streakGameBest');
@@ -669,7 +669,11 @@ function flipStreakPetalCard(cardId) {
       state.matched.push(firstId,secondId);
       state.flipped = [];
       state.completed = state.matched.length === state.cards.length;
-      if (state.completed) saveStreakPetalBest(state.moves);
+      if (state.completed) {
+        const previousBest = readStreakPetalBest();
+        saveStreakPetalBest(state.moves);
+        state.newBest = !previousBest || state.moves < previousBest;
+      }
       renderStreakPetalGame();
       return;
     }
