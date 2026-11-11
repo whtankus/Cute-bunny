@@ -13,6 +13,7 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
+let hiddenNoteIds = new Set();
 let homeNavRefreshInFlight = false;
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
@@ -363,6 +364,12 @@ function setUser(u) {
     notificationLoading = false;
   }
   me = u;
+  try {
+    const savedHiddenNotes = JSON.parse(localStorage.getItem('cuteBunnyHiddenNotes:' + u.id) || '[]');
+    hiddenNoteIds = new Set(Array.isArray(savedHiddenNotes) ? savedHiddenNotes.map(String) : []);
+  } catch {
+    hiddenNoteIds = new Set();
+  }
   try {
     reactedMemories = new Set(JSON.parse(localStorage.getItem('cuteBunnyHearts:' + u.username) || '[]'));
   } catch {
@@ -1448,7 +1455,7 @@ function renderNotesPage(options = {}) {
   if (!content) return;
 
   const chatNotes = feed
-    .filter(m => m.kind === 'note' && !pendingDeleteTimers.has(String(m.id)))
+    .filter(m => m.kind === 'note' && !hiddenNoteIds.has(String(m.id)) && !pendingDeleteTimers.has(String(m.id)))
     .slice()
     .reverse();
 
@@ -1542,7 +1549,7 @@ function render() {
     return;
   }
 
-  const visibleFeed = feed.filter(x => !pendingDeleteTimers.has(String(x.id)));
+  const visibleFeed = feed.filter(x => !pendingDeleteTimers.has(String(x.id)) && !(x.kind === 'note' && hiddenNoteIds.has(String(x.id))));
   const pics = visibleFeed.filter(x => x.kind === 'photo');
   const songs = visibleFeed.filter(x => x.kind === 'song');
   const notes = visibleFeed.filter(x => x.kind === 'note');
@@ -1884,13 +1891,14 @@ function showMessageActions(id, bubbleElement) {
   if (!memory || !bubbleElement) return;
 
   activeMessageActionsId = String(id);
+  const ownsMessage = String(memory.author?.id || memory.owner_id || '') === String(me?.id || '');
   const popup = document.createElement('div');
   popup.className = 'chat-actions-popup';
   popup.setAttribute('role', 'toolbar');
   popup.setAttribute('aria-label', 'Message options');
   popup.innerHTML = `
     <button type="button" class="chat-action-btn" data-chat-copy="${esc(id)}">Copy</button>
-    <button type="button" class="chat-action-btn delete-btn" data-chat-delete="${esc(id)}">Delete</button>
+    <button type="button" class="chat-action-btn delete-btn" ${ownsMessage ? 'data-chat-delete' : 'data-chat-hide'}="${esc(id)}">${ownsMessage ? 'Delete' : 'Remove for me'}</button>
   `;
   popup.style.position = 'fixed';
   popup.style.zIndex = '1000';
@@ -1970,6 +1978,21 @@ async function copyMemoryText(id) {
     }
     field.remove();
   }
+}
+
+function hideNoteForMe(id) {
+  const item = feed.find(memory => String(memory.id) === String(id));
+  if (!item || item.kind !== 'note') return;
+  hiddenNoteIds.add(String(id));
+  try {
+    localStorage.setItem('cuteBunnyHiddenNotes:' + me.id, JSON.stringify([...hiddenNoteIds]));
+  } catch {
+    toast('Could not save this hidden message on this device.');
+  }
+  hideMessageActions();
+  if (page === 'notes') renderNotesPage();
+  else render();
+  toast('Message removed from your view ♡');
 }
 
 async function deleteSafely(id) {
@@ -2506,6 +2529,15 @@ document.addEventListener('click', async e => {
     const id = copyBtn.dataset.chatCopy;
     hideMessageActions();
     await copyMemoryText(id);
+    return;
+  }
+
+  // Chat action: hide someone else's note only in this account's view.
+  const hideBtn = e.target.closest('[data-chat-hide]');
+  if (hideBtn) {
+    const id = hideBtn.dataset.chatHide;
+    hideMessageActions();
+    hideNoteForMe(id);
     return;
   }
 
