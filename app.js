@@ -13,7 +13,7 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
-let streakCalendarOffset = 0, streakSelectedDate = '', streakSelectedWeekDate = '';
+let streakCalendarOffset = 0, streakSelectedDate = '', streakSelectedWeekDate = '', streakCalendarExpanded = false;
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false };
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
@@ -934,7 +934,7 @@ function renderStreakPage() {
       '<div class="sg-week-row">' + week.join('') + '</div>' +
       '<div class="sg-week-detail" id="sgWeekDetail" aria-live="polite"><b>' + selectedWeekLabel + '</b><span>' + esc(selectedWeekMessage) + '</span></div>' +
       '<div class="sg-week-legend"><span><i class="is-bloomed">✿</i>Visited</span><span><i class="is-today">●</i>Today</span><span><i class="is-future">○</i>Future</span><span><i class="is-missed">·</i>Missed</span></div></section>',
-    '<details class="sg-calendar-foldout"><summary><span>Month calendar</span><b>Open</b></summary>',
+    '<details class="sg-calendar-foldout"' + (streakCalendarExpanded ? ' open' : '') + '><summary><span>Month calendar</span><b>Open</b></summary>',
     streakCalendarMarkup(todayKey, history),
     '</details>',
     '</div>',
@@ -2364,6 +2364,12 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  const calendarSummary = e.target.closest('.sg-calendar-foldout > summary');
+  if (calendarSummary) {
+    streakCalendarExpanded = !calendarSummary.parentElement.open;
+    return;
+  }
+
   const streakFriendButton = e.target.closest('[data-streak-friend]');
   if (streakFriendButton) {
     const friend = friends.find(user => user.username === streakFriendButton.dataset.streakFriend);
@@ -2381,9 +2387,9 @@ document.addEventListener('click', async e => {
   }
 
   const streakMonth = e.target.closest('[data-streak-month]');
-  if (streakMonth) { streakCalendarOffset += streakMonth.dataset.streakMonth === 'next' ? 1 : -1; streakSelectedDate = ''; renderStreakPage(); return; }
+  if (streakMonth) { streakCalendarExpanded = true; streakCalendarOffset += streakMonth.dataset.streakMonth === 'next' ? 1 : -1; streakSelectedDate = ''; renderStreakPage(); return; }
   const streakDate = e.target.closest('[data-streak-date]');
-  if (streakDate && !streakDate.disabled) { streakSelectedDate = streakDate.dataset.streakDate; renderStreakPage(); return; }
+  if (streakDate && !streakDate.disabled) { streakCalendarExpanded = true; streakSelectedDate = streakDate.dataset.streakDate; renderStreakPage(); return; }
   const streakWeekDate = e.target.closest('[data-streak-week-date]');
   if (streakWeekDate) { streakSelectedWeekDate = streakWeekDate.dataset.streakWeekDate; renderStreakPage(); return; }
   if (e.target.closest('#streakAddGoal')) { const form = $('#streakGoalForm'); form?.classList.toggle('hidden'); if (form && !form.classList.contains('hidden')) $('#streakGoalInput')?.focus(); return; }
