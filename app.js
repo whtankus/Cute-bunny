@@ -1185,11 +1185,11 @@ async function sendChatMessage() {
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
     feed = feed.map(m => String(m.id) === tempId ? record : m);
     renderNotesPage();
-    requestAnimationFrame(() => refocusComposer());
+    refocusComposer();
   } catch (error) {
     feed = feed.filter(m => String(m.id) !== tempId);
     renderNotesPage();
-    requestAnimationFrame(() => refocusComposer(true));
+    refocusComposer(true);
     toast(error.message);
   }
 }
