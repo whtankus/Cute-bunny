@@ -1243,9 +1243,9 @@ function go(p, options = {}) {
   if (p === 'notes') {
     requestAnimationFrame(() => {
       if (page !== 'notes') return;
+      syncNotesKeyboardLayout();
       const thread = $('#chatThread');
       if (thread) thread.scrollTop = thread.scrollHeight;
-        syncNotesKeyboardLayout();
     });
   }
 }
