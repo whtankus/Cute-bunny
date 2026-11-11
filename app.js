@@ -655,7 +655,8 @@ function renderStreakPetalGame() {
   board.innerHTML = state.cards.map(card => {
     const matched = state.matched.includes(card.id);
     const revealed = matched || state.flipped.includes(card.id);
-    return '<button type="button" class="sg-petal-card' + (revealed ? ' is-revealed' : '') +
+    const petalTone = ({'🌷':'rose','🌼':'sunshine','🌸':'lilac','🌻':'gold','🌺':'peach','🍀':'mint'})[card.symbol] || 'rose';
+    return '<button type="button" class="sg-petal-card sg-petal-' + petalTone + (revealed ? ' is-revealed' : '') +
       (matched ? ' is-matched' : '') + '" data-streak-game-card="' + card.id +
       '" aria-pressed="' + revealed + '" aria-label="' + (revealed ? card.symbol : 'Reveal a flower') +
       '"' + (matched || state.locked || state.completed ? ' disabled' : '') + '>' +
@@ -745,10 +746,10 @@ function streakFriendsMarkup(todayKey) {
     const snapshot = streakFriendSnapshot(friend,todayKey);
     const flowerCount = snapshot.count === null ? '—' : String(snapshot.count);
     const displayName = String(friend.display_name || friend.username || 'Friend').trim() || 'Friend';
-    return '<div class="sg-friend-card" aria-label="' + esc(displayName) + ' garden">' +
+    return '<div class="sg-friend-card" data-friend-id="' + esc(friend.id || '') + '" aria-label="' + esc(displayName) + ' garden">' +
       '<span class="sg-friend-person"><span class="sg-friend-avatar" aria-hidden="true">' + esc(friend.mascot || '🐰') + '</span>' +
-      '<strong class="sg-friend-name">' + esc(displayName) + '</strong></span>' +
-      '<span class="sg-friend-flower-count" aria-label="' + flowerCount + ' flowers"><i aria-hidden="true">✿</i><strong>' + flowerCount + '</strong></span></div>';
+      '<strong class="sg-friend-name">' + esc(displayName) + '</strong><small class="sg-friend-presence">Offline</small></span>' +
+      '<span class="sg-friend-flower-count" aria-label="' + flowerCount + ' flowers"><strong>× ' + flowerCount + '</strong><i aria-hidden="true">🌸</i></span></div>';
   }).join('');
   return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>';
 }
@@ -1078,6 +1079,7 @@ function renderStreakPage() {
   ].join('');
   renderStreakPetalGame();
   startStreakCountdown();
+  syncPresenceUI();
 }
 
 function playBoing() {
@@ -2118,7 +2120,11 @@ function syncPresenceUI() {
   if (!presenceChannel) return;
   const state = presenceChannel.presenceState();
   document.querySelectorAll('[data-friend-id]').forEach(node => {
-    node.classList.toggle('is-online', !!state[node.dataset.friendId]?.length);
+    const online = !!state[node.dataset.friendId]?.length;
+    node.classList.toggle('is-online', online);
+    node.classList.toggle('is-offline', !online);
+    const presenceLabel = node.querySelector('.sg-friend-presence');
+    if (presenceLabel) presenceLabel.textContent = online ? 'Online' : 'Offline';
   });
 }
 
