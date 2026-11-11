@@ -2183,7 +2183,7 @@ document.addEventListener('scroll', event => {
 
   const delta = currentTop - notesHeaderLastScrollTop;
   if (Math.abs(delta) >= 5) {
-    document.body.classList.toggle('notes-header-hidden', delta > 0);
+    document.body.classList.toggle('notes-header-hidden', delta < 0);
     notesHeaderLastScrollTop = currentTop;
   }
 }, true);
