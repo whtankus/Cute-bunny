@@ -13,6 +13,8 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
+let notesHeaderLastScrollTop = null;
+let notesKeyboardDismissed = false;
 let streakSelectedWeekDate = '';
 let streakGardenActiveTab = 'promises';
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
@@ -1221,14 +1223,10 @@ function go(p, options = {}) {
     document.documentElement.style.removeProperty('--notes-nav-height');
     document.documentElement.style.removeProperty('--notes-header-collapse-size');
     document.querySelector('.chat-page')?.style.removeProperty('--notes-composer-space');
-    notesHeaderGestureLastY = null;
-    notesHeaderGestureTotal = 0;
-    notesHeaderWheelTotal = 0;
+    notesHeaderLastScrollTop = null;
+    notesKeyboardDismissed = false;
     notesKeyboardFollowLatest = false;
-    if (notesKeyboardFollowTimer) {
-      clearTimeout(notesKeyboardFollowTimer);
-      notesKeyboardFollowTimer = 0;
-    }
+    
   }
 
   page = p;
@@ -1244,9 +1242,8 @@ function go(p, options = {}) {
   document.body.classList.toggle('notes-page-active', p === 'notes');
   if (p === 'notes') {
     document.body.classList.remove('notes-header-hidden');
-    notesHeaderGestureLastY = null;
-    notesHeaderGestureTotal = 0;
-    notesHeaderWheelTotal = 0;
+    notesHeaderLastScrollTop = null;
+    notesKeyboardDismissed = false;
   }
   // Start Notes at the app's top-level header rather than inheriting another
   // page's document scroll position.
@@ -1256,9 +1253,10 @@ function go(p, options = {}) {
   if (p === 'notes') {
     requestAnimationFrame(() => {
       if (page !== 'notes') return;
-      syncNotesKeyboardLayout();
       const thread = $('#chatThread');
       if (thread) thread.scrollTop = thread.scrollHeight;
+      notesHeaderLastScrollTop = thread?.scrollTop ?? null;
+      syncNotesKeyboardLayout();
     });
   }
 }
@@ -2902,85 +2900,24 @@ document.addEventListener('input', event => {
 
 // Keep the Notes composer attached to the visible viewport as the mobile keyboard changes size.
 let notesKeyboardFollowLatest = false;
-let notesKeyboardFollowTimer = 0;
-let notesHeaderGestureLastY = null;
-let notesHeaderGestureTotal = 0;
-let notesHeaderWheelTotal = 0;
 
-// Use the user's actual gesture direction instead of inferring it from scrollTop.
-// A chat opens at its newest message, so scrollTop deltas mean the opposite of
-// what a reader normally calls an upward/downward swipe through the conversation.
-function applyNotesHeaderGesture(direction, thread) {
-  if (page !== 'notes' || !thread || !direction) return;
-
-  // Keep the header tucked away while the on-screen keyboard is active.
-  if (document.body.classList.contains('notes-keyboard-open')) {
-    document.body.classList.add('notes-header-hidden');
-    return;
-  }
-
-  // Finger movement, not scrollTop, defines the requested direction:
-  // negative Y reveals; positive Y hides. This works at either scroll boundary.
-  const shouldHide = direction > 0;
-  const isHidden = document.body.classList.contains('notes-header-hidden');
-  if (shouldHide === isHidden) return;
-
-  // Keep the visible message anchored while the header changes the viewport.
-  const maxScrollTop = Math.max(0, thread.scrollHeight - thread.clientHeight);
-  const previousTop = thread.scrollTop;
-  const wasAtBottom = maxScrollTop - previousTop <= 2;
-  const wasAtTop = previousTop <= 2;
-  const previousThreadTop = thread.getBoundingClientRect().top;
-
-  document.body.classList.toggle('notes-header-hidden', shouldHide);
-
-  requestAnimationFrame(() => {
-    if (page !== 'notes' || !thread.isConnected) return;
-
-    if (wasAtBottom) {
-      // Keep the newest message pinned when the available viewport grows/shrinks.
-      thread.scrollTop = Math.max(0, thread.scrollHeight - thread.clientHeight);
-    } else if (!wasAtTop) {
-      // Preserve the same visible message when the thread's top edge moves.
-      const layoutShift = thread.getBoundingClientRect().top - previousThreadTop;
-      const nextMax = Math.max(0, thread.scrollHeight - thread.clientHeight);
-      thread.scrollTop = Math.max(0, Math.min(nextMax, thread.scrollTop + layoutShift));
-    }
-  });
-}
-
-// Size the Notes viewport from the live header, dock, composer and visual viewport.
+// Resize the Notes conversation viewport and synchronize its masthead with the keyboard.
 function syncNotesKeyboardLayout() {
   const notesPage = document.querySelector('.chat-page');
-  const root = document.documentElement;
-
   if (!notesPage || page !== 'notes') {
-    document.body.classList.remove('notes-keyboard-open', 'notes-header-hidden');
-    root.style.setProperty('--notes-keyboard-inset', '0px');
-    root.style.removeProperty('--notes-page-height');
-    root.style.removeProperty('--notes-nav-height');
-    root.style.removeProperty('--notes-header-collapse-size');
-    const oldPage = document.querySelector('.chat-page');
-    oldPage?.style.removeProperty('--notes-composer-space');
-    const oldThread = $('#chatThread');
-    oldThread?.style.removeProperty('padding-bottom');
-    oldThread?.style.removeProperty('scroll-padding-bottom');
+    document.body.classList.remove('notes-keyboard-open');
+    document.body.classList.remove('notes-header-hidden');
+    notesHeaderLastScrollTop = null;
+    notesKeyboardDismissed = false;
+    document.documentElement.style.setProperty('--notes-keyboard-inset', '0px');
+    document.documentElement.style.removeProperty('--notes-page-height');
     notesKeyboardFollowLatest = false;
-    notesHeaderGestureLastY = null;
-    notesHeaderGestureTotal = 0;
-    notesHeaderWheelTotal = 0;
-    if (notesKeyboardFollowTimer) {
-      clearTimeout(notesKeyboardFollowTimer);
-      notesKeyboardFollowTimer = 0;
-    }
     return;
   }
 
   const input = $('#chatInput');
   const thread = $('#chatThread');
   const composer = $('#chatComposer');
-  const nav = $('#nav');
-  const header = document.querySelector('.app>header');
   const focused = document.activeElement === input;
   const viewport = window.visualViewport;
   const mobile = isTouchNotesViewport();
@@ -2991,8 +2928,7 @@ function syncNotesKeyboardLayout() {
   const viewportHeightDrop = Math.max(0, window.innerHeight - visualHeight);
   const wasOpen = document.body.classList.contains('notes-keyboard-open');
 
-  // Require both an active composer and a meaningful visual-viewport reduction.
-  // Hysteresis avoids treating browser chrome changes as a software keyboard.
+  // Use separate open/close thresholds to avoid flicker while the keyboard animates.
   const viewportSuggestsKeyboard = viewport
     ? (
       keyboardInset > (wasOpen ? 48 : 100) ||
@@ -3002,79 +2938,54 @@ function syncNotesKeyboardLayout() {
     : window.innerHeight < window.screen.height * 0.72;
   const keyboardOpen = mobile && viewportSuggestsKeyboard && (focused || wasOpen);
 
-  if (keyboardOpen && !wasOpen) {
-    // Always bring the newest message directly above the composer on keyboard open.
-    notesKeyboardFollowLatest = true;
-  }
-  if (keyboardOpen) {
-    document.body.classList.add('notes-header-hidden');
-  } else if (wasOpen) {
-    notesKeyboardFollowLatest = false;
-    document.body.classList.remove('notes-header-hidden');
-    if (notesKeyboardFollowTimer) {
-      clearTimeout(notesKeyboardFollowTimer);
-      notesKeyboardFollowTimer = 0;
-    }
+  // Follow the newest message only when the reader was already at the bottom.
+  // This keeps the latest conversation visible without pulling someone away
+  // from older messages they were intentionally reading.
+  if (keyboardOpen && !wasOpen && thread) {
+    const distanceFromBottom = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
+    notesKeyboardFollowLatest = distanceFromBottom < 88;
   }
 
   notesPage.classList.toggle('notes-keyboard-open', keyboardOpen);
   document.body.classList.toggle('notes-keyboard-open', keyboardOpen);
-
-  // Cache the real header height. Its layout slot collapses while it is hidden.
-  const headerHeight = header?.offsetHeight || header?.getBoundingClientRect().height || 0;
-  root.style.setProperty('--notes-header-collapse-size', Math.ceil(headerHeight) + 'px');
-
-  // Measure the actual dock; it is hidden while the keyboard is open.
-  const navRect = nav?.getBoundingClientRect();
-  const navInset = !keyboardOpen && navRect?.height > 0
-    ? Math.max(0, Math.ceil(window.innerHeight - navRect.top))
-    : 0;
-  root.style.setProperty('--notes-nav-height', navInset + 'px');
-  root.style.setProperty('--notes-keyboard-inset', keyboardOpen ? keyboardInset + 'px' : '0px');
+  if (keyboardOpen && focused && !notesKeyboardDismissed) {
+    document.body.classList.add('notes-header-hidden');
+    notesHeaderLastScrollTop = thread?.scrollTop ?? notesHeaderLastScrollTop;
+  } else if (wasOpen || notesKeyboardDismissed) {
+    document.body.classList.remove('notes-header-hidden');
+    notesHeaderLastScrollTop = thread?.scrollTop ?? null;
+  }
+  if (!keyboardOpen) notesKeyboardDismissed = false;
+  document.documentElement.style.setProperty(
+    '--notes-keyboard-inset',
+    keyboardOpen ? keyboardInset + 'px' : '0px'
+  );
 
   if (keyboardOpen) {
-    // Reading the rect after toggling the header class forces the collapsed
-    // masthead layout to be measured before the keyboard viewport is sized.
+    // Constrain the message list to the visible viewport ending just above
+    // the software keyboard, while keeping the top app header in its original place.
     const pageTop = notesPage.getBoundingClientRect().top;
-    const availableHeight = Math.max(0, Math.floor(visibleViewportBottom - pageTop));
-    root.style.setProperty('--notes-page-height', availableHeight + 'px');
-  } else {
-    root.style.removeProperty('--notes-page-height');
-  }
+    const availableHeight = Math.max(180, Math.floor(visibleViewportBottom - pageTop));
+    document.documentElement.style.setProperty('--notes-page-height', availableHeight + 'px');
 
-  // Reserve exactly the composer height and its 8px gap in the flex layout.
-  // This makes the thread's physical bottom edge line up with the write bar's top.
-  const composerRect = composer?.getBoundingClientRect();
-  const composerVisible = !!composer && !!composerRect &&
-    composerRect.width > 0 && composerRect.height > 0;
-  const composerSpace = composerVisible
-    ? Math.ceil(composerRect.height) + 8
-    : 76;
-  notesPage.style.setProperty('--notes-composer-space', composerSpace + 'px');
+    // The composer floats over the bottom of the thread, so reserve its height
+    // to ensure the last message can scroll fully into view above the input.
+    if (thread) {
+      const composerHeight = Math.ceil(composer?.getBoundingClientRect().height || 50);
+      const bottomClearance = composerHeight + 20;
+      thread.style.setProperty('padding-bottom', bottomClearance + 'px', 'important');
+      thread.style.setProperty('scroll-padding-bottom', bottomClearance + 'px');
+    }
 
-  if (keyboardOpen && notesKeyboardFollowLatest) {
     requestAnimationFrame(() => {
-      if (
-        !notesPage.isConnected ||
-        !thread?.isConnected ||
-        !document.body.classList.contains('notes-keyboard-open') ||
-        !notesKeyboardFollowLatest
-      ) return;
+      if (!notesPage.isConnected || !thread?.isConnected || !notesKeyboardFollowLatest) return;
       thread.scrollTop = thread.scrollHeight;
     });
-
-    // Keep the latest message aligned while the visual viewport is animating.
-    if (notesKeyboardFollowTimer) clearTimeout(notesKeyboardFollowTimer);
-    notesKeyboardFollowTimer = setTimeout(() => {
-      notesKeyboardFollowLatest = false;
-      notesKeyboardFollowTimer = 0;
-    }, 260);
-  } else if (!keyboardOpen) {
+  } else {
+    document.documentElement.style.removeProperty('--notes-page-height');
+    thread?.style.removeProperty('padding-bottom');
+    thread?.style.removeProperty('scroll-padding-bottom');
     notesKeyboardFollowLatest = false;
-    if (notesKeyboardFollowTimer) {
-      clearTimeout(notesKeyboardFollowTimer);
-      notesKeyboardFollowTimer = 0;
-    }
   }
 }
 
@@ -3089,11 +3000,15 @@ function scheduleNotesKeyboardLayout() {
 
 document.addEventListener('focusin', event => {
   if (event.target.id === 'chatInput') {
+    notesKeyboardDismissed = false;
     scheduleNotesKeyboardLayout();
   }
 });
 document.addEventListener('focusout', event => {
   if (event.target.id === 'chatInput') {
+    notesKeyboardDismissed = true;
+    document.body.classList.remove('notes-header-hidden');
+    notesHeaderLastScrollTop = $('#chatThread')?.scrollTop ?? null;
     scheduleNotesKeyboardLayout();
   }
 });
@@ -3102,68 +3017,29 @@ window.addEventListener('orientationchange', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('resize', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('scroll', scheduleNotesKeyboardLayout);
 
-// Track finger movement directly. On a chat at its newest message, scrollTop
-// changes in the opposite direction from the finger, which caused the prior bug.
-document.addEventListener('touchstart', event => {
-  if (page !== 'notes' || !event.target?.closest?.('#chatThread')) return;
-  if (event.touches.length !== 1) {
-    notesHeaderGestureLastY = null;
-    notesHeaderGestureTotal = 0;
+// Hide the masthead while reading downward and reveal it when scrolling upward.
+document.addEventListener('scroll', event => {
+  const thread = event.target;
+  if (page !== 'notes' || thread?.id !== 'chatThread') return;
+
+  const currentTop = Math.max(0, Math.round(thread.scrollTop));
+  if (document.body.classList.contains('notes-keyboard-open') && !notesKeyboardDismissed) {
+    document.body.classList.add('notes-header-hidden');
+    notesHeaderLastScrollTop = currentTop;
     return;
   }
-  notesHeaderGestureLastY = event.touches[0].clientY;
-  notesHeaderGestureTotal = 0;
-}, { capture:true, passive:true });
 
-document.addEventListener('touchmove', event => {
-  if (page !== 'notes' || !event.target?.closest?.('#chatThread')) return;
-  if (event.touches.length !== 1 || notesHeaderGestureLastY === null) return;
-
-  const currentY = event.touches[0].clientY;
-  const step = currentY - notesHeaderGestureLastY;
-  notesHeaderGestureLastY = currentY;
-  if (Math.abs(step) < 1) return;
-
-  // Reset the accumulator when the finger reverses direction.
-  if (notesHeaderGestureTotal && Math.sign(step) !== Math.sign(notesHeaderGestureTotal)) {
-    notesHeaderGestureTotal = 0;
+  if (notesHeaderLastScrollTop === null) {
+    notesHeaderLastScrollTop = currentTop;
+    return;
   }
-  notesHeaderGestureTotal += step;
 
-  if (notesHeaderGestureTotal <= -14) {
-    applyNotesHeaderGesture(-1, $('#chatThread'));
-    notesHeaderGestureTotal = 0;
-  } else if (notesHeaderGestureTotal >= 14) {
-    applyNotesHeaderGesture(1, $('#chatThread'));
-    notesHeaderGestureTotal = 0;
+  const delta = currentTop - notesHeaderLastScrollTop;
+  if (Math.abs(delta) >= 5) {
+    document.body.classList.toggle('notes-header-hidden', delta < 0);
+    notesHeaderLastScrollTop = currentTop;
   }
-}, { capture:true, passive:true });
-
-const resetNotesHeaderTouch = () => {
-  notesHeaderGestureLastY = null;
-  notesHeaderGestureTotal = 0;
-};
-document.addEventListener('touchend', resetNotesHeaderTouch, { capture:true, passive:true });
-document.addEventListener('touchcancel', resetNotesHeaderTouch, { capture:true, passive:true });
-
-// Mouse wheel / trackpad gestures use WheelEvent direction directly.
-document.addEventListener('wheel', event => {
-  const thread = event.target?.closest?.('#chatThread');
-  if (page !== 'notes' || !thread || document.body.classList.contains('notes-keyboard-open')) return;
-  const step = event.deltaY;
-  if (!step) return;
-  if (notesHeaderWheelTotal && Math.sign(step) !== Math.sign(notesHeaderWheelTotal)) {
-    notesHeaderWheelTotal = 0;
-  }
-  notesHeaderWheelTotal += step;
-  if (notesHeaderWheelTotal <= -18) {
-    applyNotesHeaderGesture(-1, thread);
-    notesHeaderWheelTotal = 0;
-  } else if (notesHeaderWheelTotal >= 18) {
-    applyNotesHeaderGesture(1, thread);
-    notesHeaderWheelTotal = 0;
-  }
-}, { capture:true, passive:true });
+}, true);
 
 // Chat form submission
 // Chat form submission
