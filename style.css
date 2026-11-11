@@ -7694,3 +7694,17 @@ body[data-mode] .streak-garden-page .sg-week-row .sg-week-day:focus-visible .sg-
     min-height:56px!important;
   }
 }
+
+
+/* Streak banner: match the number and day label, and lift the full count line slightly. */
+.streak-garden-page .sg-hero-topline .sg-count-line {
+  transform:translateY(-2px)!important;
+}
+.streak-garden-page .sg-hero-topline .sg-count-line>strong,
+.streak-garden-page .sg-hero-topline .sg-count-line span b {
+  color:#9e6684!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line>strong,
+body[data-mode="dark"] .streak-garden-page .sg-hero-topline .sg-count-line span b {
+  color:#f1ddea!important;
+}
