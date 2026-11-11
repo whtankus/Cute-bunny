@@ -1134,11 +1134,10 @@ function closeMemoryActions() {
 /* Two-button floating popup above pressed message: Copy and Delete */
 function showMessageActions(id, bubbleElement) {
   hideMessageActions();
-  activeMessageActionsId = String(id);
   const memory = feed.find(m => String(m.id) === String(id));
   if (!memory || !bubbleElement) return;
 
-  const wrap = bubbleElement.closest('.chat-bubble-wrap') || bubbleElement;
+  activeMessageActionsId = String(id);
   const popup = document.createElement('div');
   popup.className = 'chat-actions-popup';
   popup.setAttribute('role', 'toolbar');
@@ -1147,7 +1146,39 @@ function showMessageActions(id, bubbleElement) {
     <button type="button" class="chat-action-btn" data-chat-copy="${esc(id)}">Copy</button>
     <button type="button" class="chat-action-btn delete-btn" data-chat-delete="${esc(id)}">Delete</button>
   `;
-  wrap.appendChild(popup);
+
+  // Render the menu directly under <body>, not inside the scrollable thread.
+  // This prevents overflow clipping when a message is near the top or bottom.
+  popup.style.position = 'fixed';
+  popup.style.zIndex = '1000';
+  document.body.append(popup);
+
+  const bubbleRect = bubbleElement.getBoundingClientRect();
+  const popupRect = popup.getBoundingClientRect();
+  const viewport = window.visualViewport;
+  const viewportTop = viewport?.offsetTop || 0;
+  const viewportBottom = viewportTop + (viewport?.height || window.innerHeight);
+  const viewportWidth = viewport?.width || window.innerWidth;
+  const sidePadding = 12;
+  const halfWidth = popupRect.width / 2;
+  const centerX = Math.max(
+    halfWidth + sidePadding,
+    Math.min(viewportWidth - halfWidth - sidePadding, bubbleRect.left + bubbleRect.width / 2)
+  );
+  const popupHeight = popupRect.height;
+  const gap = 10;
+
+  let top = bubbleRect.top - popupHeight - gap;
+  if (top < viewportTop + sidePadding) {
+    top = bubbleRect.bottom + gap;
+  }
+  top = Math.max(
+    viewportTop + sidePadding,
+    Math.min(viewportBottom - popupHeight - sidePadding, top)
+  );
+
+  popup.style.left = centerX + 'px';
+  popup.style.top = top + 'px';
 }
 
 function hideMessageActions() {
