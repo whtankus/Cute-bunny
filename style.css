@@ -2469,3 +2469,38 @@ body[data-mode="dark"] #content .chat-page .chat-composer textarea:focus {
   }
 }
 
+
+
+/* Message text button: native button semantics with the existing bubble geometry and press feedback. */
+#content .chat-page .chat-message-text-button,
+.home-note-memory .chat-message-text-button {
+  display:block;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:inherit;
+  font:inherit;
+  line-height:inherit;
+  text-align:center;
+  cursor:pointer;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:pan-y;
+}
+
+#content .chat-page .chat-message-text-button:focus-visible,
+.home-note-memory .chat-message-text-button:focus-visible {
+  outline:2px solid #d58eaa;
+  outline-offset:3px;
+  border-radius:8px;
+}
+
+#content .chat-page .chat-message-text-button:active,
+.home-note-memory .chat-message-text-button:active {
+  filter:brightness(.98);
+}
