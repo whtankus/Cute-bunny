@@ -2269,3 +2269,67 @@ body:has(.chat-page) #content {
   outline:2px solid #d58eaa;
   outline-offset:3px;
 }
+
+
+/* Notes conversation behavior: keep one composer pinned above the navigation dock or keyboard. */
+#content .chat-page {
+  display:flex;
+  flex-direction:column;
+  height:var(--notes-page-height,calc(100dvh - 180px));
+  min-height:0;
+  padding-bottom:0!important;
+  overflow:hidden;
+}
+#content .chat-page .chat-header {
+  flex:0 0 auto;
+}
+#content .chat-page .chat-thread {
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:auto;
+}
+#content .chat-page .chat-composer {
+  position:fixed!important;
+  left:50%;
+  bottom:calc(76px + env(safe-area-inset-bottom));
+  z-index:60;
+  width:min(680px,calc(100vw - 30px));
+  max-width:calc(100vw - 30px);
+  min-width:0;
+  margin:0;
+  transform:translateX(-50%);
+  transition:bottom .16s ease-out;
+}
+#content .chat-page.notes-keyboard-open {
+  padding-bottom:0!important;
+}
+#content .chat-page.notes-keyboard-open .chat-composer {
+  bottom:calc(var(--notes-keyboard-inset,0px) + 8px);
+}
+#content .chat-page .chat-composer .primary[hidden] {
+  display:none!important;
+}
+
+/* Navigation feedback is temporary; the selected tab remains indicated by its active color. */
+.app #nav button[data-page] {
+  transform-origin:center;
+  transition:transform .14s ease,box-shadow .14s ease,filter .14s ease,background .14s ease;
+}
+.app #nav button[data-page].active {
+  transform:none!important;
+}
+.app #nav button[data-page]:active {
+  transform:translateY(2px) scale(.95)!important;
+  filter:brightness(.98);
+}
+@media(hover:none) {
+  .app #nav button[data-page]:hover:not(:active) {
+    transform:none!important;
+    filter:none;
+  }
+}
