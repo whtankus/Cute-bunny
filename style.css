@@ -7115,35 +7115,173 @@ body.notes-page-active.notes-keyboard-open #nav {
 }
 
 
-/* v90 Notes details restored: 30ch messages, clear scroll edges and smooth header-space release. */
-.chat-page .chat-bubble-wrap,
-.home-note-memory .chat-bubble-wrap {
+
+
+/* v90 Notes — restore the original Notes viewport, masthead collapse, composer and bubble geometry. */
+html:has(body.notes-page-active) {
+  height:100dvh!important;
+  overflow:hidden!important;
+  overscroll-behavior:none;
+}
+body.notes-page-active {
+  height:100dvh!important;
+  min-height:100dvh!important;
+  overflow:hidden!important;
+  overscroll-behavior:none;
+  --notes-header-collapse:64px;
+}
+@media(max-width:520px) {
+  body.notes-page-active {
+    --notes-header-collapse:60px;
+  }
+}
+body.notes-page-active .app {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  padding-bottom:0!important;
+  overflow:hidden!important;
+}
+body.notes-page-active .app>header {
+  flex:0 0 auto!important;
+  width:100%!important;
+  margin:0 auto!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:40!important;
+  transform:translateY(0)!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  margin-bottom:0!important;
+  transition:transform .24s cubic-bezier(.2,.75,.25,1),opacity .18s ease,margin-bottom .24s cubic-bezier(.2,.75,.25,1)!important;
+}
+body.notes-page-active.notes-header-hidden .app>header {
+  transform:translateY(-105%)!important;
+  opacity:0!important;
+  margin-bottom:calc(-1 * var(--notes-header-collapse))!important;
+  pointer-events:none!important;
+}
+body.notes-page-active .app>main {
+  display:flex!important;
+  flex:1 1 0%!important;
+  flex-direction:column!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  min-height:0!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+body.notes-page-active .app #content {
+  display:flex!important;
+  flex:1 1 0%!important;
+  flex-direction:column!important;
+  width:min(100%,760px)!important;
+  max-width:760px!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0 auto!important;
+  padding:0 clamp(14px,3vw,22px)!important;
+  overflow:hidden!important;
+  animation:none!important;
+  transform:none!important;
+}
+body.notes-page-active #content .chat-page {
+  display:flex!important;
+  flex:0 0 auto!important;
+  flex-direction:column!important;
+  width:100%!important;
+  height:var(--notes-page-height,calc(100dvh - 180px))!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin:0!important;
+  padding-bottom:0!important;
+  overflow:visible!important;
+}
+body.notes-page-active #content .chat-page:not(.notes-keyboard-open) {
+  transition:height .24s cubic-bezier(.2,.75,.25,1)!important;
+}
+body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
+  height:calc(var(--notes-page-height,calc(100dvh - 180px)) + var(--notes-header-collapse))!important;
+}
+body.notes-page-active #content .chat-page .chat-thread {
+  display:flex!important;
+  flex:1 1 0%!important;
+  flex-direction:column!important;
+  width:100%!important;
+  height:auto!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  box-sizing:border-box!important;
+  padding-top:36px!important;
+  padding-bottom:24px!important;
+  scroll-padding-top:36px!important;
+  scroll-padding-bottom:24px!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior-y:contain!important;
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:auto!important;
+  overflow-anchor:auto;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+body.notes-page-active #content .chat-page .chat-thread>.chat-message,
+body.notes-page-active #content .chat-page .chat-thread>.chat-day-divider,
+body.notes-page-active #content .chat-page .chat-thread>.chat-empty {
+  flex:0 0 auto!important;
+}
+body.notes-page-active #content .chat-page .chat-composer {
+  position:fixed!important;
+  left:50%!important;
+  bottom:calc(var(--notes-nav-height,68px) + 8px)!important;
+  z-index:60!important;
+  width:min(680px,calc(100vw - 30px))!important;
+  max-width:calc(100vw - 30px)!important;
+  min-width:0!important;
+  margin:0!important;
+  transform:translateX(-50%)!important;
+  transition:none!important;
+}
+body.notes-page-active #content .chat-page.notes-keyboard-open {
+  padding-bottom:0!important;
+}
+body.notes-page-active #content .chat-page.notes-keyboard-open .chat-composer {
+  bottom:calc(var(--notes-keyboard-inset,0px) + 8px)!important;
+}
+body.notes-page-active #content .chat-page .chat-composer .primary[hidden] {
+  display:none!important;
+}
+body.notes-page-active.notes-keyboard-open #nav {
+  display:none!important;
+}
+
+/* v90 Notes bubble width: cap at 30 characters while keeping short messages content-sized. */
+body.notes-page-active #content .chat-bubble-wrap {
+  width:fit-content!important;
   max-width:min(30ch,calc(72.9% - 2.916rem))!important;
 }
 @media(max-width:720px) {
-  .chat-page .chat-bubble-wrap,
-  .home-note-memory .chat-bubble-wrap {
+  body.notes-page-active #content .chat-bubble-wrap {
     max-width:min(30ch,calc(72.9% - 2.5515rem))!important;
   }
 }
 @media(max-width:480px) {
-  .chat-page .chat-bubble-wrap,
-  .home-note-memory .chat-bubble-wrap {
+  body.notes-page-active #content .chat-bubble-wrap {
     max-width:min(30ch,calc(72.9% - 2.2599rem))!important;
   }
 }
-body.notes-page-active #content .chat-page .chat-thread {
-  padding-top:36px!important;
-  padding-bottom:12px!important;
-  scroll-padding-top:36px!important;
-  scroll-padding-bottom:12px!important;
-}
-body.notes-page-active .app>header {
-  transition:
-    transform .24s cubic-bezier(.2,.75,.25,1),
-    opacity .18s ease,
-    margin-bottom .24s cubic-bezier(.2,.75,.25,1)!important;
-}
-body.notes-page-active.notes-header-hidden .app>header {
-  margin-bottom:calc(0px - var(--notes-header-collapse-size,64px))!important;
+@media(prefers-reduced-motion:reduce) {
+  body.notes-page-active .app>header,
+  body.notes-page-active #content .chat-page:not(.notes-keyboard-open) {
+    transition:none!important;
+  }
 }
