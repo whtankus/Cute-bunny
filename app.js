@@ -651,6 +651,10 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
   const mine = String(ownerId) === String(me?.id || '');
   const id = String(m.id);
   const liked = reactedMemories.has(id);
+  const hasHeartReaction = (String(m.text || '').match(/\p{L}/gu) || []).length >= 6;
+  const heartButton = hasHeartReaction
+    ? `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>`
+    : '';
   const name = esc(owner.displayName || owner.display_name || owner.username || 'Friend');
   const handle = esc(owner.username || 'friend');
   const pet = esc(owner.mascot || '🐰');
@@ -674,8 +678,8 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
         <div class="chat-message-line">
           <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>
           <div class="chat-bubble-wrap">
-            <div class="chat-bubble" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
-              <button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>
+            <div class="chat-bubble${hasHeartReaction ? '' : ' no-heart-reaction'}" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
+              ${heartButton}
               <span class="chat-message-text" dir="auto">${messageText}</span>
             </div>
           </div>
@@ -1639,7 +1643,7 @@ document.addEventListener('pointerdown', e => {
     messagePressState.longPressed = true;
     messagePressState.suppressClick = true;
     showMessageActions(id, messagePressState.bubble);
-  }, 190);
+  }, 205);
 });
 
 function cancelNotesMessagePress(e) {
@@ -1713,6 +1717,7 @@ document.addEventListener('click', async e => {
       messagePressState.longPressed = false;
       return;
     }
+    if (bubble.classList.contains('no-heart-reaction')) return;
     popLoveHeart(bubble, e);
     return;
   }
