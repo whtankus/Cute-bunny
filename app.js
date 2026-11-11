@@ -1836,16 +1836,18 @@ function openMemoryActions(id) {
   actionCard.classList.toggle('is-note', isNote);
   actionCard.classList.toggle('is-photo', isPhoto);
 
-  const canDelete = String(item.author?.id || item.owner_id || '') === String(me?.id || '') && !item.isPending;
+  const isOwnItem = String(item.author?.id || item.owner_id || '') === String(me?.id || '');
+  const canDelete = isOwnItem && !item.isPending;
   $('#memoryDelete').classList.toggle('hidden', !canDelete);
+  // Uploaded songs belong to their owner: offer Delete, not a redundant Save action.
+  $('#memoryDownload').classList.toggle('hidden', isNote || (item.kind === 'song' && isOwnItem));
   // Clean delete text without dustbin box / emoji
   $('#memoryDelete').textContent = isNote ? 'Delete note' : item.kind === 'song' ? 'Delete song' : 'Delete photo';
   $('#memoryCopy').classList.toggle('hidden', !isNote);
   $('#memoryActionKicker').textContent = isPhoto ? 'A LITTLE PHOTO' : isNote ? 'A LITTLE NOTE' : 'A SONG TO KEEP';
   $('#memoryActionTitle').textContent = isPhoto ? 'A lovely moment' : isNote ? 'A note to keep' : (item.fileName || 'A little song');
-  $('#memoryActionText').textContent = isPhoto ? 'Keep this sweet moment on your device?' : isNote ? 'Copy this message or delete it softly?' : 'Save this song file for later?';
+  $('#memoryActionText').textContent = isPhoto ? 'Keep this sweet moment on your device?' : isNote ? 'Copy this message or delete it softly?' : isOwnItem ? 'You added this song to your garden.' : 'Save this song file for later?';
   $('#memoryDownload').textContent = isPhoto ? 'Save photo' : item.kind === 'song' ? 'Save song' : 'Save';
-  $('#memoryDownload').classList.toggle('hidden', isNote);
 
   const art = $('#memoryActionArt');
   art.classList.toggle('is-photo', isPhoto);
