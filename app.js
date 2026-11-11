@@ -506,6 +506,13 @@ function popLoveHeart(card, e) {
       control.setAttribute('aria-pressed', String(likedNow));
       control.setAttribute('aria-label', likedNow ? (message ? 'Unlike message' : 'Unlike memory') : (message ? 'Like message' : 'Like memory'));
     }
+
+    const textButton = message?.querySelector('[data-chat-bubble-action]');
+    if (textButton) {
+      textButton.setAttribute('aria-pressed', String(likedNow));
+      const sender = textButton.dataset.sender || 'message';
+      textButton.setAttribute('aria-label', `${likedNow ? 'Unlike' : 'Like'} message from ${sender}`);
+    }
   }
   card.classList.remove('heart-tap');
   void card.offsetWidth;
@@ -585,9 +592,11 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
         <div class="chat-message-line">
           <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>
           <div class="chat-bubble-wrap">
-            <div class="chat-bubble" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
+            <div class="chat-bubble" data-chat-message-id="${esc(id)}">
+              <button type="button" class="chat-message-text-button" data-chat-bubble-action data-sender="${name}" aria-label="${liked ? 'Unlike' : 'Like'} message from ${name}" aria-pressed="${liked}">
+                <span class="chat-message-text" dir="auto">${messageText}</span>
+              </button>
               <button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>
-              <span class="chat-message-text" dir="auto">${messageText}</span>
             </div>
           </div>
         </div>
@@ -1439,7 +1448,8 @@ document.addEventListener('click', e => {
 // Notes message gestures: button press feedback, tap to like, hold for Copy/Delete.
 document.addEventListener('pointerdown', e => {
   const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
-  if (!bubble || e.target.closest('button, .chat-actions-popup') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  // The message-text button is the bubble's main action; only the separate heart and popup buttons bypass long-press handling.
+  if (!bubble || e.target.closest('button:not([data-chat-bubble-action]), .chat-actions-popup') || (e.pointerType === 'mouse' && e.button !== 0)) return;
 
   clearTimeout(messagePressState.timer);
   clearTimeout(messagePressState.suppressTimer);
@@ -1521,7 +1531,23 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // A short tap on a Notes bubble likes/unlikes it. Long-press is handled above.
+  // The message text is a real keyboard-accessible button, with the same short-tap and long-press actions as before.
+  const textAction = e.target.closest('[data-chat-bubble-action]');
+  if (textAction) {
+    if (messagePressState.suppressClick) {
+      messagePressState.suppressClick = false;
+      clearTimeout(messagePressState.suppressTimer);
+      messagePressState.suppressTimer = null;
+      messagePressState.longPressed = false;
+      return;
+    }
+    const textBubble = textAction.closest('.chat-bubble');
+    const selectedText = window.getSelection?.()?.toString().trim();
+    if (textBubble && !selectedText) popLoveHeart(textBubble, e);
+    return;
+  }
+
+  // Preserve the existing tap action for the non-text area around the bubble.
   const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
   const selectedText = window.getSelection?.()?.toString().trim();
   if (bubble && !e.target.closest('button') && !selectedText) {
