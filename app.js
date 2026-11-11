@@ -14,7 +14,8 @@ let notificationRows = [], notificationLoaded = false, notificationLoading = fal
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
 let streakSelectedWeekDate = '';
-let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false };
+let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
+let streakCountdownInterval = null;
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
 const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
@@ -506,6 +507,15 @@ function streakUtcTimeRemaining() {
   const rest = minutes % 60;
   return hours ? hours + 'h ' + String(rest).padStart(2, '0') + 'm' : rest + 'm';
 }
+function updateStreakCountdownLabels() {
+  const remaining = streakUtcTimeRemaining();
+  document.querySelectorAll('[data-streak-self-countdown]').forEach(node => { node.textContent = remaining; });
+  document.querySelectorAll('[data-streak-friend-countdown]').forEach(node => { node.textContent = 'Visit today · ' + remaining + ' left'; });
+}
+function startStreakCountdown() {
+  updateStreakCountdownLabels();
+  if (!streakCountdownInterval) streakCountdownInterval = window.setInterval(updateStreakCountdownLabels, 60000);
+}
 function readStreakPetalBest() {
   try {
     const value = Number(localStorage.getItem(streakStorageKey('petal-pairs-best')));
@@ -651,6 +661,11 @@ function renderStreakPetalGame() {
     ? (state.newBest ? 'New personal best! ✿' : 'All six pairs found!')
     : state.locked ? 'Remember the flowers…' : 'Find all six pairs';
   if (moves) moves.textContent = state.moves + ' moves · ' + pairs + ' / 6';
+  const progress = $('#streakGameProgressBar');
+  if (progress) {
+    progress.style.width = (pairs / 6 * 100) + '%';
+    progress.setAttribute('aria-valuenow', String(pairs));
+  }
   const best = $('#streakGameBest');
   if (best) best.textContent = readStreakPetalBest() ? 'Best ' + readStreakPetalBest() : 'No best yet';
   const reset = $('#streakGameReset');
@@ -721,7 +736,8 @@ function streakFriendsMarkup(todayKey) {
       '" aria-label="Open ' + esc(name) + ' profile">' +
       '<span class="sg-friend-avatar">' + esc(friend.mascot || '🐰') + '</span>' +
       '<span class="sg-friend-identity"><b>' + esc(name) + '</b><small>@' + esc(friend.username || 'friend') + '</small>' +
-      '<em>' + esc(snapshot.label) + '</em></span>' +
+      '<em' + (snapshot.state === 'due' ? ' data-streak-friend-countdown' : '') + '>' + esc(snapshot.label) + '</em>' +
+      '<span class="sg-friend-action">View garden <i aria-hidden="true">→</i></span></span>' +
       '<span class="sg-friend-streak"><strong>' + (snapshot.count === null ? '✿' : '🔥 ' + countLabel) +
       '</strong><small>' + (snapshot.count === null ? 'streak' : 'day streak') + '</small></span></button>';
   }).join('');
@@ -748,6 +764,9 @@ function renderStreakPage() {
     bestRun = Math.max(bestRun, run);
     previous = day;
   });
+
+  const gardenStage = count >= 30 ? 'Your garden is in full bloom.' : count >= 14 ? 'Your flowers are thriving.' :
+    count >= 7 ? 'Your garden is blooming.' : count ? 'Your garden is growing.' : 'Your first bloom is waiting.';
 
   const milestones = [
     {days:3, icon:'🌱', name:'Tiny sprout'},
@@ -846,7 +865,7 @@ function renderStreakPage() {
       '<small class="sg-milestone-progress-copy">' + (unlocked ? item.days + ' days reached' : Math.min(count, item.days) + ' / ' + item.days + ' days') + '</small></article>';
   }).join('');
 
-  const gardenScene = '<img class="sg-garden-svg" src="./streak-garden-banner.svg" alt="Sunset over lavender mountains and a meadow of cherry blossoms" loading="eager">';
+  const gardenScene = "<svg class=\"sg-garden-svg\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 880 520\" role=\"img\" aria-labelledby=\"title desc\">\n  <title id=\"title\">A quiet blossom garden at sunset</title>\n  <desc id=\"desc\">Layered lavender mountains, a warm peach sunset, flowering cherry branches and a meadow of pink, cream and lilac flowers.</desc>\n  <defs>\n    <linearGradient id=\"sky\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n      <stop stop-color=\"#f6dce9\"/>\n      <stop offset=\".58\" stop-color=\"#f7e6e7\"/>\n      <stop offset=\"1\" stop-color=\"#e9e5f1\"/>\n    </linearGradient>\n    <radialGradient id=\"sun\">\n      <stop stop-color=\"#fff8df\" stop-opacity=\".98\"/>\n      <stop offset=\".72\" stop-color=\"#ffe8c9\" stop-opacity=\".66\"/>\n      <stop offset=\"1\" stop-color=\"#ffe8c9\" stop-opacity=\"0\"/>\n    </radialGradient>\n    <linearGradient id=\"farHill\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop stop-color=\"#c9b9d8\"/><stop offset=\"1\" stop-color=\"#a99bbb\"/>\n    </linearGradient>\n    <linearGradient id=\"midHill\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop stop-color=\"#b8b2d1\"/><stop offset=\"1\" stop-color=\"#8e9bb5\"/>\n    </linearGradient>\n    <linearGradient id=\"meadow\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n      <stop stop-color=\"#a9b99d\"/><stop offset=\"1\" stop-color=\"#6f927c\"/>\n    </linearGradient>\n    <linearGradient id=\"petalPink\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop stop-color=\"#fff1f4\"/><stop offset=\"1\" stop-color=\"#e69bb8\"/>\n    </linearGradient>\n    <linearGradient id=\"petalLilac\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop stop-color=\"#f7ecfb\"/><stop offset=\"1\" stop-color=\"#baa6d4\"/>\n    </linearGradient>\n    <filter id=\"soft\"><feGaussianBlur stdDeviation=\"18\"/></filter>\n    <g id=\"blossom\">\n      <g fill=\"url(#petalPink)\" stroke=\"#d88eaa\" stroke-opacity=\".45\" stroke-width=\"1.5\">\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\"/>\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\" transform=\"rotate(72)\"/>\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\" transform=\"rotate(144)\"/>\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\" transform=\"rotate(216)\"/>\n        <ellipse cy=\"-15\" rx=\"8\" ry=\"15\" transform=\"rotate(288)\"/>\n      </g>\n      <circle r=\"6\" fill=\"#f3c875\"/>\n      <circle r=\"2\" fill=\"#fff5d8\"/>\n    </g>\n    <g id=\"smallBloom\">\n      <g fill=\"url(#petalLilac)\">\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(60)\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(120)\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(180)\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(240)\"/>\n        <ellipse cy=\"-10\" rx=\"5.5\" ry=\"10\" transform=\"rotate(300)\"/>\n      </g><circle r=\"4.5\" fill=\"#f5d17c\"/>\n    </g>\n  </defs>\n\n  <rect width=\"880\" height=\"520\" fill=\"url(#sky)\"/>\n  <circle cx=\"640\" cy=\"185\" r=\"165\" fill=\"url(#sun)\"/>\n  <circle cx=\"640\" cy=\"185\" r=\"46\" fill=\"#fff1d1\" opacity=\".78\"/>\n  <path d=\"M0 260 Q110 193 225 240 T450 230 T690 215 T880 244 V520 H0Z\" fill=\"#e6dced\" opacity=\".55\"/>\n  <path d=\"M0 310 L110 220 195 276 295 194 415 292 535 214 650 283 758 207 880 290 V520 H0Z\" fill=\"url(#farHill)\" opacity=\".9\"/>\n  <path d=\"M0 337 Q120 268 236 321 T470 305 T695 314 T880 292 V520 H0Z\" fill=\"url(#midHill)\" opacity=\".94\"/>\n  <path d=\"M0 380 Q128 327 260 367 T510 354 T735 354 T880 340 V520 H0Z\" fill=\"#9cabaf\" opacity=\".78\"/>\n  <path d=\"M0 418 Q120 356 245 395 T480 387 T700 383 T880 375 V520 H0Z\" fill=\"url(#meadow)\"/>\n  <path d=\"M0 454 Q160 415 300 442 T560 438 T880 412 V520 H0Z\" fill=\"#78947a\" opacity=\".78\"/>\n\n  <!-- Distant flower terraces -->\n  <g opacity=\".54\" fill=\"#f8e6ef\">\n    <circle cx=\"105\" cy=\"366\" r=\"5\"/><circle cx=\"145\" cy=\"351\" r=\"4\"/><circle cx=\"218\" cy=\"374\" r=\"5\"/>\n    <circle cx=\"332\" cy=\"348\" r=\"4\"/><circle cx=\"412\" cy=\"367\" r=\"5\"/><circle cx=\"535\" cy=\"343\" r=\"4\"/>\n    <circle cx=\"720\" cy=\"366\" r=\"5\"/><circle cx=\"792\" cy=\"348\" r=\"4\"/>\n  </g>\n\n  <!-- Cherry branch entering from the upper left -->\n  <path d=\"M-42 80 C95 60 132 105 216 125 S355 135 435 76\" fill=\"none\" stroke=\"#765a62\" stroke-width=\"17\" stroke-linecap=\"round\"/>\n  <path d=\"M84 88 C124 34 157 13 210 -5 M194 120 C224 68 269 42 316 25 M300 135 C338 103 372 94 425 90\"\n        fill=\"none\" stroke=\"#806169\" stroke-width=\"7\" stroke-linecap=\"round\"/>\n  <g fill=\"#8eaa82\">\n    <ellipse cx=\"80\" cy=\"65\" rx=\"18\" ry=\"7\" transform=\"rotate(-34 80 65)\"/>\n    <ellipse cx=\"135\" cy=\"45\" rx=\"20\" ry=\"8\" transform=\"rotate(-48 135 45)\"/>\n    <ellipse cx=\"180\" cy=\"94\" rx=\"22\" ry=\"8\" transform=\"rotate(22 180 94)\"/>\n    <ellipse cx=\"255\" cy=\"73\" rx=\"22\" ry=\"8\" transform=\"rotate(-22 255 73)\"/>\n    <ellipse cx=\"333\" cy=\"112\" rx=\"21\" ry=\"8\" transform=\"rotate(15 333 112)\"/>\n    <ellipse cx=\"390\" cy=\"79\" rx=\"19\" ry=\"7\" transform=\"rotate(-22 390 79)\"/>\n  </g>\n  <g>\n    <use href=\"#blossom\" transform=\"translate(46 78) scale(1.1)\"/>\n    <use href=\"#blossom\" transform=\"translate(118 39) scale(.88)\"/>\n    <use href=\"#blossom\" transform=\"translate(165 122) scale(1.05)\"/>\n    <use href=\"#blossom\" transform=\"translate(235 57) scale(.9)\"/>\n    <use href=\"#blossom\" transform=\"translate(292 107) scale(1.08)\"/>\n    <use href=\"#blossom\" transform=\"translate(366 84) scale(.8)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(78 132) scale(.82)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(207 20) scale(.76)\"/>\n  </g>\n\n  <!-- Flowering shrubs at the edges -->\n  <g stroke=\"#62866b\" stroke-width=\"5\" stroke-linecap=\"round\" fill=\"none\">\n    <path d=\"M35 520 Q49 445 70 385 M98 520 Q102 456 135 410 M810 520 Q786 454 795 386 M865 520 Q833 452 848 405\"/>\n    <path d=\"M740 520 Q720 455 740 418 M175 520 Q178 468 207 432\"/>\n  </g>\n  <g fill=\"#9db991\">\n    <path d=\"M68 447 Q23 405 17 434 Q37 469 68 447Z\"/><path d=\"M69 422 Q95 380 111 404 Q97 435 69 422Z\"/>\n    <path d=\"M132 467 Q90 428 83 457 Q104 485 132 467Z\"/><path d=\"M798 452 Q758 412 752 440 Q772 471 798 452Z\"/>\n    <path d=\"M797 427 Q828 387 844 414 Q829 440 797 427Z\"/><path d=\"M846 476 Q815 442 807 466 Q823 492 846 476Z\"/>\n    <path d=\"M739 468 Q706 432 698 456 Q715 485 739 468Z\"/><path d=\"M207 473 Q175 438 166 461 Q181 489 207 473Z\"/>\n  </g>\n  <g>\n    <use href=\"#blossom\" transform=\"translate(45 390) scale(.9)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(103 420) scale(.76)\"/>\n    <use href=\"#blossom\" transform=\"translate(154 457) scale(.76)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(210 440) scale(.72)\"/>\n    <use href=\"#blossom\" transform=\"translate(742 422) scale(.82)\"/>\n    <use href=\"#blossom\" transform=\"translate(803 388) scale(1.05)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(850 446) scale(.8)\"/>\n    <use href=\"#blossom\" transform=\"translate(690 468) scale(.76)\"/>\n  </g>\n\n  <!-- Meadow flowers -->\n  <g stroke=\"#65866a\" stroke-width=\"3\" stroke-linecap=\"round\">\n    <path d=\"M280 520 Q283 474 291 434 M340 520 Q333 475 351 450 M440 520 Q438 464 455 420 M540 520 Q533 478 551 447 M620 520 Q627 465 641 430\" fill=\"none\"/>\n  </g>\n  <g fill=\"#a9c19b\">\n    <path d=\"M286 486 Q258 461 251 480 Q264 500 286 486Z\"/><path d=\"M294 476 Q314 450 324 468 Q313 489 294 476Z\"/>\n    <path d=\"M347 493 Q322 470 315 491 Q330 507 347 493Z\"/><path d=\"M548 491 Q519 470 513 491 Q530 510 548 491Z\"/>\n    <path d=\"M638 484 Q610 462 604 482 Q621 501 638 484Z\"/>\n  </g>\n  <g>\n    <use href=\"#blossom\" transform=\"translate(291 431) scale(.86)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(351 447) scale(.92)\"/>\n    <use href=\"#blossom\" transform=\"translate(455 417) scale(1.08)\"/>\n    <use href=\"#smallBloom\" transform=\"translate(551 444) scale(.8)\"/>\n    <use href=\"#blossom\" transform=\"translate(641 425) scale(.88)\"/>\n  </g>\n\n  <!-- Falling petals -->\n  <g fill=\"#fff0f4\" stroke=\"#dc9eb6\" stroke-opacity=\".45\" stroke-width=\"1.2\">\n    <path d=\"M485 133 q18-15 22 4 q-13 13-22-4Z\" transform=\"rotate(25 496 136)\"/>\n    <path d=\"M570 275 q17-13 20 5 q-14 11-20-5Z\" transform=\"rotate(-28 580 278)\"/>\n    <path d=\"M390 236 q14-12 18 4 q-10 12-18-4Z\" transform=\"rotate(35 400 238)\"/>\n    <path d=\"M755 300 q15-12 18 5 q-12 10-18-5Z\" transform=\"rotate(18 766 303)\"/>\n    <path d=\"M228 280 q14-11 17 5 q-11 10-17-5Z\" transform=\"rotate(-18 238 282)\"/>\n  </g>\n  <g fill=\"#fff8ef\" opacity=\".78\">\n    <circle cx=\"492\" cy=\"62\" r=\"3\"/><circle cx=\"573\" cy=\"110\" r=\"2.5\"/><circle cx=\"700\" cy=\"90\" r=\"2\"/>\n    <circle cx=\"420\" cy=\"315\" r=\"2.5\"/><circle cx=\"605\" cy=\"340\" r=\"2\"/>\n  </g>\n  <rect x=\"1.5\" y=\"1.5\" width=\"877\" height=\"517\" rx=\"34\" fill=\"none\" stroke=\"#fff8f4\" stroke-opacity=\".45\" stroke-width=\"3\"/>\n</svg>";
 
   const gardenFlowers = [
     {id:'pink', label:'pink flower', x:17, y:88},
@@ -866,37 +885,38 @@ function renderStreakPage() {
     '<div class="streak-garden-page">',
     '<div class="sg-page-heading"><div><h2>Your Streak Garden</h2></div><span class="sg-heading-doodle" aria-hidden="true">✿</span></div>',
 
-    '<div class="sg-page-group sg-garden-group" id="sgGardenGroup"><div class="sg-group-heading"><span>01</span><b>MY GARDEN</b></div>',
+    '<div class="sg-page-group sg-garden-group" id="sgGardenGroup">',
     '<section class="sg-hero" aria-label="Your current streak garden"><div class="sg-hero-paper">' +
-      '<div class="sg-hero-copy"><span class="sg-eyebrow"><i>✦</i> CURRENT STREAK</span>' +
-      '<div class="sg-count-line"><strong>' + count + '</strong><span><b>' + (count === 1 ? 'day in a row' : 'days in a row') + '</b></span></div>' +
+      '<div class="sg-hero-copy"><span class="sg-eyebrow">CURRENT STREAK</span>' +
+      '<div class="sg-count-line"><strong>' + count + '</strong><span><b>' + (count === 1 ? 'day' : 'days') + '</b><small>in a row</small></span></div>' +
+      '<h3 class="sg-garden-stage">' + gardenStage + '</h3>' +
       '<div class="sg-today-status ' + (todayCompleted ? 'is-complete' : 'is-pending') + '" aria-live="polite"><span aria-hidden="true">' +
-      (todayCompleted ? '✿' : '○') + '</span><span><b>' + (todayCompleted ? 'Today’s visit is saved' :
-      gap === 1 ? 'Log in within ' + streakUtcTimeRemaining() + ' to keep it' : 'Today’s visit is waiting') +
+      (todayCompleted ? '✿' : '○') + '</span><span><b>' + (todayCompleted ? 'Visit saved today' :
+      gap === 1 ? 'Keep your streak for ' + '<i data-streak-self-countdown>' + streakUtcTimeRemaining() + '</i>' : 'Your next visit is waiting') +
       '</b></span></div>' +
       '<div class="sg-progress-head"><span>NEXT BLOOM</span><b>' + (next ? (left ? left + ' ' + (left === 1 ? 'day' : 'days') + ' to go' : 'Ready to bloom!') : 'All blooms unlocked') + '</b></div>' +
       '<div class="sg-growth-track" style="--progress:' + progress + '%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(progress) + '" aria-label="' + Math.round(progress) + '% progress toward next bloom"><span style="width:' + progress + '%"></span><i>✿</i></div>' +
-      '<small class="sg-next-milestone">' + (next ? next.days + '-day milestone <span>·</span> ' + next.name : 'All eight garden blooms unlocked') + '</small></div>' +
+      '<small class="sg-next-milestone">' + (next ? 'Next: ' + next.days + ' days · ' + next.name : 'Every milestone reached') + '</small></div>' +
       '<div class="sg-hero-scene"><div class="sg-garden-art" id="sgGardenArt">' + gardenScene +
         '<div class="sg-garden-hit-layer">' + gardenFlowerMarkup + '</div></div>' +
         '<span class="sg-garden-bloom-count' + (gardenBlooms.size === 4 ? ' is-complete' : '') + '" id="sgGardenBloomCount">' +
         (gardenBlooms.size === 4 ? 'Garden in bloom ✿' : 'Tap flowers · ' + gardenBlooms.size + ' / 4') + '</span></div>' +
       '<span class="sg-hero-corner sg-corner-one" aria-hidden="true">❧</span><span class="sg-hero-corner sg-corner-two" aria-hidden="true">✧</span></div></section>',
-    '<section class="sg-stats-ribbon" aria-label="Your garden numbers">' +
-      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-sprout" aria-hidden="true">♧</span><div><small>LONGEST RUN</small><strong>' + Math.max(bestRun, count) + '</strong><em>days in a row</em></div></div>' +
-      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-bloom" aria-hidden="true">✾</span><div><small>GARDEN VISITS</small><strong>' + history.size + '</strong><em>days recorded</em></div></div>' +
-      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-award" aria-hidden="true">✧</span><div><small>BLOOMS FOUND</small><strong>' + earned.size + '</strong><em>of ' + milestones.length + '</em></div></div></section>',
+    '<section class="sg-stats-ribbon" aria-label="Your streak statistics">' +
+      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-flame" aria-hidden="true">🔥</span><div><small>CURRENT STREAK</small><strong>' + count + '</strong><em>' + (count === 1 ? 'day' : 'days') + '</em></div></div>' +
+      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-sprout" aria-hidden="true">♧</span><div><small>BEST STREAK</small><strong>' + Math.max(bestRun, count) + '</strong><em>days</em></div></div>' +
+      '<div class="sg-stat"><span class="sg-stat-illustration sg-stat-bloom" aria-hidden="true">✾</span><div><small>GARDEN VISITS</small><strong>' + history.size + '</strong><em>days recorded</em></div></div></section>',
     '</div>',
 
-    '<div class="sg-page-group sg-journal-group" id="sgJournalGroup"><div class="sg-group-heading"><span>02</span><b>MY JOURNAL</b></div>',
-    '<section class="sg-section sg-week-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">THIS WEEK</span><h3>Weekly blooms</h3></div><span class="sg-section-note">' + weekVisited + ' / 7</span></div>' +
+    '<div class="sg-page-group sg-journal-group" id="sgJournalGroup">',
+    '<section class="sg-week-section"><div class="sg-section-heading"><div><h3>Weekly blooms</h3></div><span class="sg-section-note">' + weekVisited + ' of 7 visited</span></div>' +
       '<div class="sg-week-row">' + week.join('') + '</div>' +
       '<div class="sg-week-detail" id="sgWeekDetail" aria-live="polite"><b>' + selectedWeekLabel + '</b><span>' + esc(selectedWeekMessage) + '</span></div>' +
-      '<div class="sg-week-legend"><span><i class="is-bloomed">✿</i>Visited</span><span><i class="is-today">●</i>Today</span><span><i class="is-future">○</i>Future</span><span><i class="is-missed">·</i>Missed</span></div></section>',
+      '<div class="sg-week-legend"><span><i class="is-bloomed">✿</i>Visited</span><span><i class="is-today">●</i>Today</span><span><i class="is-future">○</i>Future</span><span><i class="is-missed">–</i>Missed</span></div></section>',
     '</div>',
 
-    '<div class="sg-page-group sg-growth-group" id="sgGrowthGroup"><div class="sg-group-heading"><span>03</span><b>MY GROWTH</b></div>',
-    '<section class="sg-section sg-goals-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">TODAY</span><h3>Little goals</h3></div><span class="sg-goal-count" id="streakGoalProgress">' + completed + ' / ' + goals.length + '</span></div>' +
+    '<div class="sg-page-group sg-growth-group" id="sgGrowthGroup">',
+    '<section class="sg-goals-section"><div class="sg-section-heading"><div><h3>Your little promises</h3><p>Optional goals for today</p></div><span class="sg-goal-count" id="streakGoalProgress">' + completed + ' / ' + goals.length + '</span></div>' +
       '<div class="sg-goal-progress"><span id="streakGoalProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + (goals.length ? Math.round(completed / goals.length * 100) : 0) + '" style="width:' + (goals.length ? completed / goals.length * 100 : 0) + '%"></span></div>' +
       '<div class="sg-goal-list" id="streakGoalsList">' + goalMarkup + '</div>' +
       '<p class="sg-alltime-goals" id="sgAllTimeGoalCount"' + (allTimeGoalCompletions ? '' : ' hidden') + '>' +
@@ -904,19 +924,21 @@ function renderStreakPage() {
       '<button type="button" class="sg-add-goal" id="streakAddGoal"><span>＋</span> Add a goal</button>' +
       '<form class="sg-add-form hidden" id="streakGoalForm"><input class="input" id="streakGoalInput" maxlength="56" placeholder="Add a little goal…" required><button type="submit" class="primary">Plant goal</button></form></section>',
     '<div class="sg-growth-extras">',
-    '<section class="sg-section sg-game-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">PLAY</span><h3>Petal pairs</h3></div><span class="sg-game-stamp">6 pairs</span></div>' +
+    '<section class="sg-game-section"><div class="sg-section-heading"><div><h3>Petal Pairs</h3><p>Find six matching flower pairs</p></div><span class="sg-game-stamp">12 cards</span></div>' +
       '<div class="sg-game-score"><span id="streakGameStatus">Find all six pairs.</span><b id="streakGameMoves">0 moves · 0 / 6</b><small id="streakGameBest">No best yet</small></div>' +
+      '<div class="sg-game-progress" aria-label="Game progress"><span id="streakGameProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0" style="width:0%"></span></div>' +
       '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div>' +
       '<button type="button" class="sg-game-reset" id="streakGameReset">Shuffle ↻</button></section>',
-    '<section class="sg-section sg-friends-section"><div class="sg-section-heading"><div><span class="sg-section-kicker">YOUR CIRCLE</span><h3>Friends in bloom</h3></div><span class="sg-friends-count">' + friends.length + '</span></div>' +
+    '<section class="sg-friends-section"><div class="sg-section-heading"><div><h3>Friends in Bloom</h3><p>' + friends.length + ' followed ' + (friends.length === 1 ? 'friend' : 'friends') + '</p></div><span class="sg-friends-count">✿ ' + friends.length + '</span></div>' +
       streakFriendsMarkup(todayKey) + '</section>',
     '</div>',
-    '<details class="sg-section sg-milestones-foldout"><summary><span>Milestones</span><b>' + earned.size + ' / ' + milestones.length + '</b></summary>' +
-      '<div class="sg-milestone-route">' + badges + '</div></details>',
+    '<section class="sg-milestones-section"><div class="sg-section-heading"><div><h3>Your garden milestones</h3><p>' + earned.size + ' of ' + milestones.length + ' blooms unlocked</p></div><span class="sg-section-note">8 blooms</span></div>' +
+      '<div class="sg-milestone-route">' + badges + '</div></section>',
     '</div>',
     '</div>'
   ].join('');
   renderStreakPetalGame();
+  startStreakCountdown();
 }
 
 function playBoing() {
@@ -977,6 +999,10 @@ function go(p, options = {}) {
   if (!validPages.includes(p)) return;
   if (options.resetStack) appPageStack = [p];
   else if (!options.fromBack && p !== page && appBackGuardInstalled) appPageStack.push(p);
+  if (p !== 'streak' && streakCountdownInterval) {
+    window.clearInterval(streakCountdownInterval);
+    streakCountdownInterval = null;
+  }
 
   if (page === 'notes' && p !== 'notes') {
     $('#chatInput')?.blur();
