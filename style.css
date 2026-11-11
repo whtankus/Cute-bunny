@@ -2737,3 +2737,26 @@ body.notes-page-active .app>header {
     min-height:41px!important;
   }
 }
+
+
+/* Notes uses one vertical scrollport whose bounds are measured against the composer. */
+#content .chat-page {
+  position:relative;
+  overflow:visible!important;
+  min-height:0!important;
+}
+#content .chat-page .chat-thread {
+  flex:1 1 0%!important;
+  min-height:0!important;
+  height:100%;
+  box-sizing:border-box;
+  padding-top:36px!important;
+  padding-bottom:12px!important;
+  scroll-padding-top:36px;
+  scroll-padding-bottom:12px;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  overflow-anchor:auto;
+}
