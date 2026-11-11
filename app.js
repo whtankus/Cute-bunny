@@ -715,7 +715,7 @@ function memoryCard(m) {
 }
 
 /* Clean Notes conversation; message markup is shared with Home → Memory History. */
-function renderNotesPage() {
+function renderNotesPage(options = {}) {
   const content = $('#content');
   if (!content) return;
 
@@ -736,11 +736,57 @@ function renderNotesPage() {
     previousOwnerId = ownerId;
     return divider + chatMessageMarkup(m, !isContinuation, isContinuation);
   }).join('');
+  const emptyMarkup = '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>';
+  const existingThread = $('#chatThread');
+
+  // Update the existing scrollport in place so realtime refreshes never rebuild
+  // the page or reset the reader's position in a long conversation.
+  if (existingThread) {
+    const threadRect = existingThread.getBoundingClientRect();
+    const visibleTop = threadRect.top + existingThread.clientTop;
+    const wasNearBottom =
+      existingThread.scrollHeight - existingThread.scrollTop - existingThread.clientHeight < 72;
+    const anchor = [...existingThread.querySelectorAll('.chat-message[data-memory]')]
+      .find(message => message.getBoundingClientRect().bottom > visibleTop);
+    const anchorId = anchor?.dataset.memory || '';
+    const anchorOffset = anchor
+      ? anchor.getBoundingClientRect().top - visibleTop
+      : 0;
+    const previousScrollTop = existingThread.scrollTop;
+
+    existingThread.innerHTML = messagesHtml || emptyMarkup;
+
+    requestAnimationFrame(() => {
+      if (!existingThread.isConnected) return;
+      if (options.followLatest || wasNearBottom) {
+        existingThread.scrollTop = existingThread.scrollHeight;
+      } else if (anchorId) {
+        const nextAnchor = existingThread.querySelector(`[data-memory="${CSS.escape(anchorId)}"]`);
+        if (nextAnchor) {
+          const nextVisibleTop = existingThread.getBoundingClientRect().top + existingThread.clientTop;
+          const nextOffset = nextAnchor.getBoundingClientRect().top - nextVisibleTop;
+          existingThread.scrollTop += nextOffset - anchorOffset;
+        } else {
+          existingThread.scrollTop = Math.min(
+            previousScrollTop,
+            Math.max(0, existingThread.scrollHeight - existingThread.clientHeight)
+          );
+        }
+      } else {
+        existingThread.scrollTop = Math.min(
+          previousScrollTop,
+          Math.max(0, existingThread.scrollHeight - existingThread.clientHeight)
+        );
+      }
+      syncNotesKeyboardLayout();
+    });
+    return;
+  }
 
   content.innerHTML = `
     <section class="chat-page" aria-label="Notes conversation">
       <div class="chat-thread" id="chatThread" aria-live="polite">
-        ${messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>'}
+        ${messagesHtml || emptyMarkup}
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
@@ -755,7 +801,6 @@ function renderNotesPage() {
     syncNotesKeyboardLayout();
   });
 }
-
 function render() {
   const c = $('#content');
   if (!c) return;
@@ -1251,7 +1296,7 @@ async function sendChatMessage() {
   field.style.overflowY = 'hidden';
   feed = [optimistic, ...feed];
   hideMessageActions();
-  renderNotesPage();
+  renderNotesPage({ followLatest: true });
 
   const refocusComposer = (restoreDraft = false) => {
     const nextField = $('#chatInput');
@@ -1267,11 +1312,11 @@ async function sendChatMessage() {
     const saved = await api('/memories', { method: 'POST', body: JSON.stringify({ kind: 'note', text }) });
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
     feed = feed.map(m => String(m.id) === tempId ? record : m);
-    renderNotesPage();
+    renderNotesPage({ followLatest: true });
     refocusComposer();
   } catch (error) {
     feed = feed.filter(m => String(m.id) !== tempId);
-    renderNotesPage();
+    renderNotesPage({ followLatest: true });
     refocusComposer(true);
     toast(error.message);
   }
@@ -1295,7 +1340,7 @@ async function saveIgNote() {
     const saved = await api('/memories', { method: 'POST', body: JSON.stringify({ kind: 'note', text }) });
     const record = { ...saved, createdAt: saved.created_at, author: { ...me, displayName: me?.displayName || me?.username, mascot: me?.mascot || '🐰' } };
     feed = [record, ...feed];
-    renderNotesPage();
+    renderNotesPage({ followLatest: true });
     toast('Your note is updated ♡');
   } catch (err) {
     toast(err.message);
@@ -1984,28 +2029,6 @@ function syncNotesKeyboardLayout() {
     keyboardOpen ? keyboardInset + 'px' : '0px'
   );
 
-  // Keep the latest message anchored while the visible viewport changes.
-  const thread = $('#chatThread');
-  const threadWasNearBottom = thread
-    ? thread.scrollHeight - thread.scrollTop - thread.clientHeight < 72
-    : false;
-
-  const navHeight = keyboardOpen ? 0 : (nav?.getBoundingClientRect().height || 68);
-  document.documentElement.style.setProperty('--notes-nav-height', navHeight + 'px');
-
-  // Measure the actual rendered composer edge after its keyboard/navigation
-  // offset has been applied. The sole scrollport ends 8px above that edge.
-  const pageTop = notesPage.getBoundingClientRect().top;
-  const composerRect = composer?.getBoundingClientRect();
-  const composerTop = composerRect?.top ?? visibleViewportBottom - (keyboardOpen ? keyboardInset : navHeight) - 58;
-  const availableHeight = Math.max(0, Math.floor(composerTop - pageTop - 8));
-  notesPage.style.setProperty('--notes-page-height', availableHeight + 'px');
-
-  if (thread && threadWasNearBottom) {
-    requestAnimationFrame(() => {
-      if (thread.isConnected) thread.scrollTop = thread.scrollHeight;
-    });
-  }
 }
 
 let notesKeyboardSyncFrame = 0;
