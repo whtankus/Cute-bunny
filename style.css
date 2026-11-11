@@ -3107,3 +3107,35 @@ body.notes-page-active .app>header {
   text-align:left!important;
   text-align-last:left!important;
 }
+
+
+/* v82 — reduce message bubble width by another 10% while preserving content-driven sizing. */
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap {
+  max-width:min(32.076ch,calc(81% - 3.24rem))!important;
+}
+.chat-page .chat-bubble-wrap>.chat-bubble,
+.home-note-memory .chat-bubble-wrap>.chat-bubble {
+  padding-left:16.04px!important;
+  padding-right:16.04px!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(32.076ch,calc(81% - 2.835rem))!important;
+  }
+  .chat-page .chat-bubble-wrap>.chat-bubble {
+    padding-left:14.58px!important;
+    padding-right:14.58px!important;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(32.076ch,calc(81% - 2.511rem))!important;
+  }
+  .chat-page .chat-bubble-wrap>.chat-bubble {
+    padding-left:13.12px!important;
+    padding-right:13.12px!important;
+  }
+}
