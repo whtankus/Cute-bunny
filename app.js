@@ -1229,10 +1229,6 @@ function go(p, options = {}) {
       clearTimeout(notesKeyboardFollowTimer);
       notesKeyboardFollowTimer = 0;
     }
-    if (notesKeyboardFollowTimer) {
-      clearTimeout(notesKeyboardFollowTimer);
-      notesKeyboardFollowTimer = 0;
-    }
   }
 
   page = p;
@@ -2927,10 +2923,12 @@ function applyNotesHeaderGesture(direction, thread) {
     return;
   }
 
+  // The finger direction is the requested control: swipe up reveals,
+  // swipe down hides. Keep this independent from scrollTop's inverse sign.
   if (direction < 0) {
-    document.body.classList.add('notes-header-hidden');
-  } else if (direction > 0) {
     document.body.classList.remove('notes-header-hidden');
+  } else if (direction > 0) {
+    document.body.classList.add('notes-header-hidden');
   }
 }
 
@@ -3098,7 +3096,7 @@ document.addEventListener('touchstart', event => {
   }
   notesHeaderGestureLastY = event.touches[0].clientY;
   notesHeaderGestureTotal = 0;
-}, { passive:true });
+}, { capture:true, passive:true });
 
 document.addEventListener('touchmove', event => {
   if (page !== 'notes' || !event.target?.closest?.('#chatThread')) return;
@@ -3122,14 +3120,14 @@ document.addEventListener('touchmove', event => {
     applyNotesHeaderGesture(1, $('#chatThread'));
     notesHeaderGestureTotal = 0;
   }
-}, { passive:true });
+}, { capture:true, passive:true });
 
 const resetNotesHeaderTouch = () => {
   notesHeaderGestureLastY = null;
   notesHeaderGestureTotal = 0;
 };
-document.addEventListener('touchend', resetNotesHeaderTouch, { passive:true });
-document.addEventListener('touchcancel', resetNotesHeaderTouch, { passive:true });
+document.addEventListener('touchend', resetNotesHeaderTouch, { capture:true, passive:true });
+document.addEventListener('touchcancel', resetNotesHeaderTouch, { capture:true, passive:true });
 
 // Mouse wheel / trackpad gestures use WheelEvent direction directly.
 document.addEventListener('wheel', event => {
@@ -3148,7 +3146,7 @@ document.addEventListener('wheel', event => {
     applyNotesHeaderGesture(1, thread);
     notesHeaderWheelTotal = 0;
   }
-}, { passive:true });
+}, { capture:true, passive:true });
 
 // Chat form submission
 // Chat form submission
