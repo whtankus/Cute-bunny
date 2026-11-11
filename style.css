@@ -6937,3 +6937,39 @@ body[data-mode="dark"] .streak-tile [data-streak-live-subtitle] {color:#f0cadd!i
   outline:2px solid #d99bb4!important;
   outline-offset:2px;
 }
+
+
+/* v120 — allow longer 40-character Notes bubbles and remove scroll-layout animation jitter. */
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap {
+  width:fit-content!important;
+  max-width:min(40ch,calc(100% - 4rem))!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(40ch,calc(100% - 3.55rem))!important;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(40ch,calc(100% - 3.08rem))!important;
+  }
+}
+
+/* Animate only the masthead itself, not the message viewport's height. */
+body.notes-page-active .app>header {
+  transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .16s ease!important;
+  will-change:transform;
+}
+body.notes-page-active #content .chat-page:not(.notes-keyboard-open),
+body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
+  transition:none!important;
+}
+@media(prefers-reduced-motion:reduce) {
+  body.notes-page-active .app>header {
+    transition:none!important;
+    will-change:auto;
+  }
+}
