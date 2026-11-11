@@ -1130,7 +1130,7 @@ function renderStreakPage() {
 
     '<section class="sg-game-section sg-game-compact"><div class="sg-petal-banner-copy">' +
       '<div class="sg-compact-section-heading"><h3>Petal Pairs</h3><b id="streakGamePairsLeft">6 pairs left</b></div>' +
-      '<p class="sg-petal-banner-note">Find all six little pairs</p>' +
+      '<p class="sg-petal-banner-note">Find and match the hidden pairs</p>' +
       '</div>' +
       '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div></section>',
     '<section class="sg-friends-section sg-friends-compact"><div class="sg-friends-heading"><h3>Friends in Bloom</h3></div>' +
