@@ -4492,7 +4492,7 @@ body[data-mode="dark"] .streak-garden-page .sg-garden-bloom-count.is-complete{co
 @media(max-width:620px){
   .streak-garden-page .sg-hero-paper{
     grid-template-columns:minmax(0,1fr);
-    grid-template-rows:auto 205px;
+    grid-template-rows:auto auto;
     min-height:0;
     border-radius:26px;
   }
@@ -4506,12 +4506,12 @@ body[data-mode="dark"] .streak-garden-page .sg-garden-bloom-count.is-complete{co
   .streak-garden-page .sg-next-milestone{margin-top:8px;font-size:10px}
   .streak-garden-page .sg-hero-scene{
     min-height:0;
-    height:205px;
+    height:auto;
     padding:0 14px 17px;
   }
   .streak-garden-page .sg-garden-art{
-    width:min(100%,430px);
-    max-width:430px;
+    width:min(100%,390px);
+    max-width:390px;
     height:auto;
     aspect-ratio:680/460;
   }
@@ -4519,11 +4519,12 @@ body[data-mode="dark"] .streak-garden-page .sg-garden-bloom-count.is-complete{co
   .streak-garden-page .sg-garden-bloom-count{bottom:5px;font-size:9px}
 }
 @media(max-width:390px){
-  .streak-garden-page .sg-hero-paper{grid-template-rows:auto 188px}
+  .streak-garden-page .sg-hero-paper{grid-template-rows:auto auto}
   .streak-garden-page .sg-hero-copy{padding:16px 15px 4px}
   .streak-garden-page .sg-count-line>strong{font-size:45px}
   .streak-garden-page .sg-count-line{gap:8px}
   .streak-garden-page .sg-garden-stage{font-size:15px!important}
-  .streak-garden-page .sg-hero-scene{height:188px;padding:0 8px 15px}
+  .streak-garden-page .sg-hero-scene{height:auto;padding:0 8px 15px}
+  .streak-garden-page .sg-garden-art{width:100%;max-width:360px}
   .streak-garden-page .sg-garden-flower-hit{width:42px;height:42px}
 }
