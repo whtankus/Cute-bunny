@@ -8109,9 +8109,9 @@ body.notes-page-active #content .chat-bubble-wrap {
 }
 
 
-/* Notes and Home memory bubbles: reduce only vertical padding by 10%. */
+/* Notes and Home memory bubbles: reduce only vertical padding by 20%. */
 #content .chat-page .chat-bubble-wrap>.chat-bubble,
 .home-note-memory .chat-bubble-wrap>.chat-bubble {
-  padding-top:12.6px!important;
-  padding-bottom:10.8px!important;
+  padding-top:11.2px!important;
+  padding-bottom:9.6px!important;
 }
