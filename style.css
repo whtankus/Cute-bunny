@@ -7285,3 +7285,22 @@ body.notes-page-active #content .chat-bubble-wrap {
     transition:none!important;
   }
 }
+
+
+/* Notes scroll anchor: the masthead is visual-only while hiding/showing.
+   Keep its layout slot and the message viewport at constant coordinates. */
+body.notes-page-active .app>header,
+body.notes-page-active.notes-header-hidden .app>header {
+  margin-bottom:0!important;
+  transition:transform .24s cubic-bezier(.2,.75,.25,1),opacity .18s ease!important;
+}
+body.notes-page-active.notes-header-hidden .app>header {
+  transform:translate3d(0,-105%,0)!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+body.notes-page-active #content .chat-page:not(.notes-keyboard-open),
+body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
+  height:var(--notes-page-height,calc(100dvh - 180px))!important;
+  transition:none!important;
+}
