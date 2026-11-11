@@ -13,6 +13,7 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
+let homeNavRefreshInFlight = false;
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
 let streakSelectedWeekDate = '';
@@ -2540,11 +2541,34 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // Navigation: one delegated route per click, with no redundant rerender of the current page.
+  // Navigation: route once; the active Home button scrolls to the top,
+  // then refreshes the Home data when it is already at the top.
   const nav = e.target.closest('#nav button[data-page]');
   if (nav) {
     e.preventDefault();
-    if (nav.dataset.page !== page) go(nav.dataset.page);
+    if (nav.dataset.page !== page) {
+      go(nav.dataset.page);
+      return;
+    }
+
+    if (page === 'home') {
+      const scrollRoot = document.scrollingElement || document.documentElement;
+      const currentScrollTop = Math.max(window.scrollY || 0, scrollRoot.scrollTop || 0);
+      if (currentScrollTop > 8) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      if (homeNavRefreshInFlight) return;
+      homeNavRefreshInFlight = true;
+      try {
+        await refresh();
+      } catch (error) {
+        toast(error?.message || 'Home could not be refreshed. Please try again.');
+      } finally {
+        homeNavRefreshInFlight = false;
+      }
+    }
     return;
   }
   const goBtn = e.target.closest('[data-go]');
