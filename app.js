@@ -519,9 +519,17 @@ function popLoveHeart(card, e) {
 }
 
 function go(p) {
+  const validPages = ['home', 'gallery', 'music', 'notes', 'friends'];
+  if (!validPages.includes(p)) return;
+
   page = p;
-  $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends' })[p] || 'Home';
-  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.page === p));
+  $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends' })[p];
+  document.querySelectorAll('#nav button[data-page]').forEach(b => {
+    const isCurrentPage = b.dataset.page === p;
+    b.classList.toggle('active', isCurrentPage);
+    if (isCurrentPage) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
   hideMessageActions();
   if (p !== 'notes') {
     window.scrollTo({ top: 0, behavior: 'smooth' });
