@@ -522,6 +522,15 @@ function go(p) {
   const validPages = ['home', 'gallery', 'music', 'notes', 'friends'];
   if (!validPages.includes(p)) return;
 
+  if (page === 'notes' && p !== 'notes') {
+    $('#chatInput')?.blur();
+    document.querySelector('.chat-page')?.classList.remove('notes-keyboard-open');
+    document.body.classList.remove('notes-keyboard-open');
+    document.documentElement.style.setProperty('--notes-keyboard-inset', '0px');
+    document.documentElement.style.removeProperty('--notes-page-height');
+    document.documentElement.style.removeProperty('--notes-nav-height');
+  }
+
   page = p;
   $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends' })[p];
   document.querySelectorAll('#nav button[data-page]').forEach(b => {
@@ -530,18 +539,17 @@ function go(p) {
     if (isCurrentPage) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
+
   hideMessageActions();
-  if (p !== 'notes') {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+  if (p !== 'notes') window.scrollTo({ top: 0, behavior: 'smooth' });
   render();
+
   if (p === 'notes') {
     requestAnimationFrame(() => {
       if (page !== 'notes') return;
-      window.scrollTo({
-        top: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
-        behavior: 'auto'
-      });
+      const thread = $('#chatThread');
+      if (thread) thread.scrollTop = thread.scrollHeight;
+      syncNotesKeyboardLayout();
     });
   }
 }
@@ -653,13 +661,18 @@ function renderNotesPage() {
       <div class="chat-thread" id="chatThread" aria-live="polite">
         ${messagesHtml || '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>'}
       </div>
-      <form id="chatComposer" class="chat-composer">
-        <textarea id="chatInput" class="input" maxlength="1000" rows="1" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
-        <button type="submit" class="primary" id="chatSend">Send ♡</button>
+      <form id="chatComposer" class="chat-composer" autocomplete="off">
+        <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
+        <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>➤</button>
       </form>
     </section>
   `;
 
+  requestAnimationFrame(() => {
+    const thread = $('#chatThread');
+    if (thread) thread.scrollTop = thread.scrollHeight;
+    syncNotesKeyboardLayout();
+  });
 }
 
 function render() {
@@ -1137,8 +1150,9 @@ async function downloadMemoryById(id, button) {
 }
 
 async function sendChatMessage() {
-  const field = $('#chatInput'), text = field?.value.trim();
-  if (!text) return toast('Write a little message first ♡');
+  const field = $('#chatInput');
+  const text = field?.value.trim();
+  if (!text) return;
   const tempId = 'local-note-' + Date.now();
   const createdAt = new Date().toISOString();
   const optimistic = {
@@ -1150,20 +1164,33 @@ async function sendChatMessage() {
     isPending: true,
     author: { ...me, id: me?.id, displayName: me?.displayName || me?.username, mascot: me?.mascot || '🐰' }
   };
+
   field.value = '';
+  field.style.height = '';
   feed = [optimistic, ...feed];
   hideMessageActions();
   renderNotesPage();
-  const keepTyping = $('#chatInput');
-  keepTyping?.focus({ preventScroll: true });
+
+  const refocusComposer = (restoreDraft = false) => {
+    const nextField = $('#chatInput');
+    if (!nextField) return;
+    if (restoreDraft && !nextField.value) nextField.value = text;
+    nextField.focus({ preventScroll: true });
+    syncChatComposerState(nextField);
+    syncNotesKeyboardLayout();
+  };
+  refocusComposer();
+
   try {
     const saved = await api('/memories', { method: 'POST', body: JSON.stringify({ kind: 'note', text }) });
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
     feed = feed.map(m => String(m.id) === tempId ? record : m);
     renderNotesPage();
+    refocusComposer();
   } catch (error) {
     feed = feed.filter(m => String(m.id) !== tempId);
     renderNotesPage();
+    refocusComposer(true);
     toast(error.message);
   }
 }
@@ -1552,10 +1579,11 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // Navigation
-  const nav = e.target.closest('#nav [data-page]');
+  // Navigation: one delegated route per click, with no redundant rerender of the current page.
+  const nav = e.target.closest('#nav button[data-page]');
   if (nav) {
-    go(nav.dataset.page);
+    e.preventDefault();
+    if (nav.dataset.page !== page) go(nav.dataset.page);
     return;
   }
   const goBtn = e.target.closest('[data-go]');
@@ -1805,61 +1833,85 @@ document.addEventListener('click', async e => {
   }
 });
 
+function syncChatComposerState(field = $('#chatInput')) {
+  const send = $('#chatSend');
+  if (!send) return;
+  const hasMessage = !!field?.value.trim();
+  send.hidden = !hasMessage;
+  send.setAttribute('aria-hidden', String(!hasMessage));
+}
+
+function isTouchNotesViewport() {
+  const touchDevice = window.matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints || 0) > 0;
+  return window.matchMedia('(max-width: 720px)').matches && touchDevice;
+}
+
 document.addEventListener('input', event => {
   if (event.target.id !== 'chatInput') return;
   const field = event.target;
   field.style.height = 'auto';
   field.style.height = Math.min(field.scrollHeight, 116) + 'px';
+  syncChatComposerState(field);
+  syncNotesKeyboardLayout();
 });
 
-// Keep the Notes composer and conversation clear of the mobile keyboard.
+// Keep the Notes composer attached to the visible viewport as the mobile keyboard changes size.
 function syncNotesKeyboardLayout() {
   const notesPage = document.querySelector('.chat-page');
-  const input = $('#chatInput');
-  const focused = page === 'notes' && !!notesPage && document.activeElement === input;
-  const viewport = window.visualViewport;
-  const mobile = window.matchMedia('(max-width: 720px)').matches;
-  const keyboardInset = focused && viewport
-    ? Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop))
-    : 0;
-  const viewportClearlyReduced = !!viewport && viewport.height < window.screen.height * 0.72;
-  const keyboardOpen = focused && mobile && (!viewport || keyboardInset > 100 || viewportClearlyReduced);
-  const wasOpen = document.body.classList.contains('notes-keyboard-open');
-
-  notesPage?.classList.toggle('notes-keyboard-open', keyboardOpen);
-  document.body.classList.toggle('notes-keyboard-open', keyboardOpen);
-  document.documentElement.style.setProperty('--notes-keyboard-inset', keyboardOpen ? keyboardInset + 'px' : '0px');
-
-  if (keyboardOpen && !wasOpen) {
-    requestAnimationFrame(() => {
-      if (page !== 'notes' || document.activeElement !== $('#chatInput')) return;
-      const composer = $('#chatComposer');
-      if (!composer) return;
-
-      const visual = window.visualViewport;
-      const visibleTop = visual?.offsetTop || 0;
-      const visibleBottom = visibleTop + (visual?.height || window.innerHeight);
-      const rect = composer.getBoundingClientRect();
-      const bottomOverflow = rect.bottom + 10 - visibleBottom;
-      const topOverflow = visibleTop + 4 - rect.top;
-      const adjustment = bottomOverflow > 0 ? bottomOverflow : (topOverflow > 0 ? -topOverflow : 0);
-
-      if (adjustment) {
-        window.scrollBy({ top: adjustment, behavior: 'smooth' });
-      }
-    });
+  if (!notesPage || page !== 'notes') {
+    document.body.classList.remove('notes-keyboard-open');
+    document.documentElement.style.setProperty('--notes-keyboard-inset', '0px');
+    document.documentElement.style.removeProperty('--notes-page-height');
+    return;
   }
+
+  const input = $('#chatInput');
+  const focused = document.activeElement === input;
+  const viewport = window.visualViewport;
+  const mobile = isTouchNotesViewport();
+  const visualHeight = viewport?.height || window.innerHeight;
+  const visualTop = viewport?.offsetTop || 0;
+  const keyboardInset = viewport
+    ? Math.max(0, Math.round(window.innerHeight - visualTop - visualHeight))
+    : 0;
+  const viewportHeightDrop = viewport ? Math.max(0, window.innerHeight - visualHeight) : 0;
+  const wasOpen = document.body.classList.contains('notes-keyboard-open');
+  const viewportSuggestsKeyboard = viewport
+    ? (
+      keyboardInset > 100 ||
+      viewportHeightDrop > 100 ||
+      visualHeight < window.screen.height * 0.72
+    )
+    : window.innerHeight < window.screen.height * 0.72;
+  const keyboardOpen = mobile && (viewportSuggestsKeyboard || (focused && !wasOpen));
+  const nav = $('#nav');
+  const composer = $('#chatComposer');
+
+  notesPage.classList.toggle('notes-keyboard-open', keyboardOpen);
+  document.body.classList.toggle('notes-keyboard-open', keyboardOpen);
+  document.documentElement.style.setProperty(
+    '--notes-keyboard-inset',
+    keyboardOpen ? keyboardInset + 'px' : '0px'
+  );
+
+  // Measure the remaining visible space, so the message thread ends just above the composer.
+  const pageTop = Math.max(0, notesPage.getBoundingClientRect().top - visualTop);
+  const composerHeight = composer?.getBoundingClientRect().height || 62;
+  const navHeight = keyboardOpen ? 0 : (nav?.getBoundingClientRect().height || 68);
+  document.documentElement.style.setProperty('--notes-nav-height', navHeight + 'px');
+  const lowerGap = keyboardOpen ? 12 : navHeight + 12;
+  const availableHeight = Math.max(150, Math.floor(visualHeight - pageTop - composerHeight - lowerGap));
+  notesPage.style.setProperty('--notes-page-height', availableHeight + 'px');
 }
 
 document.addEventListener('focusin', event => {
-  if (event.target.id !== 'chatInput') return;
-  requestAnimationFrame(syncNotesKeyboardLayout);
+  if (event.target.id === 'chatInput') requestAnimationFrame(syncNotesKeyboardLayout);
 });
 document.addEventListener('focusout', event => {
-  if (event.target.id !== 'chatInput') return;
-  requestAnimationFrame(syncNotesKeyboardLayout);
+  if (event.target.id === 'chatInput') requestAnimationFrame(syncNotesKeyboardLayout);
 });
 window.addEventListener('resize', syncNotesKeyboardLayout);
+window.addEventListener('orientationchange', syncNotesKeyboardLayout);
 window.visualViewport?.addEventListener('resize', syncNotesKeyboardLayout);
 window.visualViewport?.addEventListener('scroll', syncNotesKeyboardLayout);
 
@@ -1872,11 +1924,23 @@ document.addEventListener('submit', event => {
 });
 
 document.addEventListener('keydown', event => {
-  if (event.target.id === 'chatInput' && event.key === 'Enter' && !event.shiftKey) {
+  if (
+    event.target.id === 'chatInput' &&
+    event.key === 'Enter' &&
+    !event.shiftKey &&
+    !event.isComposing &&
+    event.keyCode !== 229 &&
+    !isTouchNotesViewport()
+  ) {
     event.preventDefault();
     void sendChatMessage();
+    return;
   }
   if (event.key === 'Escape') {
+    if (event.target.id === 'chatInput') {
+      event.target.blur();
+      return;
+    }
     closeAllGates();
   }
 });
