@@ -1437,7 +1437,10 @@ function memoryCard(m, options = {}) {
   if (m.kind === 'photo') {
     body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
   } else if (m.kind === 'song') {
-    body = `<div class="tile song-card${liked}">${heartButton}<button class="album-art play-song" data-play-song="${esc(m.id)}" aria-label="Play ${esc(m.fileName || 'song')}" aria-pressed="false" ${m.isPending ? "disabled" : ""}><span class="song-glyph" aria-hidden="true">🎼</span><span class="song-note" aria-hidden="true">♫</span></button><span class="memory-title song-title-label" title="${esc(m.fileName || m.text || 'A little song')}">${esc(m.fileName || m.text || 'A little song')}</span>${m.isPending ? "" : `<button class="song-download card-song-save" type="button" data-memory-download="${esc(m.id)}" aria-label="Save song">Save</button>`}</div>`;
+    const songAction = m.isPending ? '' : mine
+      ? `<button class="song-download card-song-save card-song-delete" type="button" data-memory-delete="${esc(m.id)}" aria-label="Delete song">Delete</button>`
+      : `<button class="song-download card-song-save" type="button" data-memory-download="${esc(m.id)}" aria-label="Save song">Save</button>`;
+    body = `<div class="tile song-card${liked}">${heartButton}<button class="album-art play-song" data-play-song="${esc(m.id)}" aria-label="Play ${esc(m.fileName || 'song')}" aria-pressed="false" ${m.isPending ? "disabled" : ""}><span class="song-glyph" aria-hidden="true">🎼</span><span class="song-note" aria-hidden="true">♫</span></button><span class="memory-title song-title-label" title="${esc(m.fileName || m.text || 'A little song')}">${esc(m.fileName || m.text || 'A little song')}</span>${songAction}</div>`;
   } else {
     const isContinuation = m.kind === 'note' && !!options.isContinuation;
     body = chatMessageMarkup(m, !isContinuation, isContinuation);
@@ -1898,7 +1901,7 @@ function showMessageActions(id, bubbleElement) {
   popup.setAttribute('aria-label', 'Message options');
   popup.innerHTML = `
     <button type="button" class="chat-action-btn" data-chat-copy="${esc(id)}">Copy</button>
-    <button type="button" class="chat-action-btn delete-btn" ${ownsMessage ? 'data-chat-delete' : 'data-chat-hide'}="${esc(id)}">${ownsMessage ? 'Delete' : 'Remove for me'}</button>
+    <button type="button" class="chat-action-btn delete-btn" ${ownsMessage ? 'data-chat-delete' : 'data-chat-hide'}="${esc(id)}">Delete</button>
   `;
   popup.style.position = 'fixed';
   popup.style.zIndex = '1000';
@@ -2835,6 +2838,13 @@ document.addEventListener('click', async e => {
     void playSong(playBtn.dataset.playSong);
     return;
   }
+  const cardDeleteBtn = e.target.closest('[data-memory-delete]');
+  if (cardDeleteBtn) {
+    const id = cardDeleteBtn.dataset.memoryDelete;
+    void deleteSafely(id);
+    return;
+  }
+
   const downloadBtn = e.target.closest('[data-memory-download]');
   if (downloadBtn) {
     void downloadMemoryById(downloadBtn.dataset.memoryDownload, downloadBtn);
