@@ -7626,3 +7626,71 @@ body[data-mode="dark"] .streak-garden-page .sg-week-day:focus-visible .sg-week-f
     max-width:50px!important;
   }
 }
+
+
+/* Streak Garden: make every part of each weekday an easy tap target.
+   Remove the selected/today tile and flower rings in both color modes. */
+.streak-garden-page .sg-week-row .sg-week-day,
+.streak-garden-page .sg-week-row .sg-week-day:hover,
+.streak-garden-page .sg-week-row .sg-week-day:active,
+.streak-garden-page .sg-week-row .sg-week-day:focus,
+.streak-garden-page .sg-week-row .sg-week-day:focus-visible,
+.streak-garden-page .sg-week-row .sg-week-day.is-selected,
+.streak-garden-page .sg-week-row .sg-week-day.is-today,
+.streak-garden-page .sg-week-row .sg-week-day.is-visited {
+  display:flex!important;
+  width:100%!important;
+  min-width:0!important;
+  border:0!important;
+  outline:0!important;
+  outline-offset:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.streak-garden-page .sg-week-row .sg-week-day > .sg-week-name,
+.streak-garden-page .sg-week-row .sg-week-day > .sg-week-flower,
+.streak-garden-page .sg-week-row .sg-week-day > .sg-week-date {
+  pointer-events:none!important;
+}
+.streak-garden-page .sg-week-row .sg-week-day .sg-week-flower,
+.streak-garden-page .sg-week-row .sg-week-day.is-selected .sg-week-flower,
+.streak-garden-page .sg-week-row .sg-week-day.is-visited .sg-week-flower,
+.streak-garden-page .sg-week-row .sg-week-day.is-selected.is-visited .sg-week-flower,
+.streak-garden-page .sg-week-row .sg-week-day:focus-visible .sg-week-flower,
+.streak-garden-page .sg-week-row .sg-week-day .sg-week-flower.is-clicked {
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+body[data-mode] .streak-garden-page .sg-week-row .sg-week-day.is-selected .sg-week-flower,
+body[data-mode] .streak-garden-page .sg-week-row .sg-week-day.is-visited .sg-week-flower,
+body[data-mode] .streak-garden-page .sg-week-row .sg-week-day.is-selected.is-visited .sg-week-flower,
+body[data-mode] .streak-garden-page .sg-week-row .sg-week-day:focus-visible .sg-week-flower {
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+/* Make the Petal Pairs cards slightly taller without widening the board. */
+.streak-garden-page .sg-game-compact .sg-petal-card {
+  height:62px!important;
+  min-height:62px!important;
+  aspect-ratio:auto!important;
+  border-radius:12px!important;
+}
+@media(max-width:620px) {
+  .streak-garden-page .sg-game-compact .sg-petal-card {
+    height:59px!important;
+    min-height:59px!important;
+  }
+}
+@media(max-width:380px) {
+  .streak-garden-page .sg-game-compact .sg-petal-card {
+    height:56px!important;
+    min-height:56px!important;
+  }
+}
