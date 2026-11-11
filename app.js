@@ -1630,7 +1630,7 @@ document.addEventListener('pointerdown', e => {
     messagePressState.longPressed = true;
     messagePressState.suppressClick = true;
     showMessageActions(id, messagePressState.bubble);
-  }, 240);
+  }, 120);
 });
 
 function cancelNotesMessagePress(e) {
