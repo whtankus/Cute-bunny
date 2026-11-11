@@ -4257,39 +4257,273 @@ body[data-mode="dark"] .streak-garden-page .sg-growth-track{background:#ffffff2a
 }
 
 
-/* v101 — give the garden illustration its full landscape frame on mobile. */
+/* v102 — one cohesive, cozy Streak Garden hero with an uncut focal illustration. */
+.streak-garden-page .sg-hero-paper{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,.96fr) minmax(0,1.04fr);
+  align-items:stretch;
+  gap:0;
+  min-height:270px;
+  overflow:hidden;
+  border:1px solid #ead4df;
+  border-radius:30px;
+  background:linear-gradient(112deg,#f8dce5 0%,#f0e3f5 53%,#fff0d8 100%);
+  box-shadow:0 8px 22px #765b6b12;
+}
+.streak-garden-page .sg-hero-paper:before{display:none}
+.streak-garden-page .sg-hero-copy{
+  position:relative;
+  z-index:2;
+  min-width:0;
+  justify-content:center;
+  padding:22px 13px 22px 27px;
+}
+.streak-garden-page .sg-eyebrow{
+  color:#95677f;
+  font-size:10px;
+  letter-spacing:1.35px;
+}
+.streak-garden-page .sg-count-line{
+  align-items:center;
+  gap:11px;
+  margin:6px 0 4px;
+}
+.streak-garden-page .sg-count-line>strong{
+  color:#604761;
+  font:800 clamp(3.8rem,7.5vw,4.6rem)/.94 Quicksand,sans-serif;
+  letter-spacing:-2.8px;
+  text-shadow:0 2px 0 #fff8;
+}
+.streak-garden-page .sg-count-line b{
+  color:#725572;
+  font:700 1rem Quicksand,sans-serif;
+}
+.streak-garden-page .sg-count-line small{
+  color:#886f86;
+  font-size:.7rem;
+}
+.streak-garden-page .sg-garden-stage{
+  margin:7px 0 4px;
+  color:#604761!important;
+  font:700 1.08rem/1.28 Quicksand,sans-serif!important;
+}
+.streak-garden-page .sg-today-status{
+  max-width:100%;
+  width:max-content;
+  gap:8px;
+  margin:7px 0 8px;
+  padding:6px 11px;
+  border:1px solid #e8d1dc;
+  border-radius:999px;
+  background:#fff8f2c9;
+}
+.streak-garden-page .sg-today-status>span:first-child{
+  width:25px;
+  height:25px;
+}
+.streak-garden-page .sg-today-status b{
+  color:#694f68;
+  font-size:11px;
+}
+.streak-garden-page .sg-today-status.is-complete{
+  border-color:#cbdcc2;
+  background:#f1f7eb;
+}
+.streak-garden-page .sg-today-status.is-complete b{color:#55734f}
+.streak-garden-page .sg-today-status.is-pending{
+  border-color:#e8c6d4;
+  background:#fff5f7;
+}
+.streak-garden-page .sg-progress-head{
+  gap:8px;
+  margin:10px 0 8px;
+  color:#896d84;
+  font-size:10px;
+  letter-spacing:.7px;
+}
+.streak-garden-page .sg-progress-head b{
+  color:#9b5d7c;
+  font-size:11px;
+  font-weight:900;
+}
+.streak-garden-page .sg-growth-track{
+  height:11px;
+  overflow:visible;
+  border:0;
+  border-radius:99px;
+  background:#e5d9e9;
+  box-shadow:inset 0 1px 2px #70556b16;
+}
+.streak-garden-page .sg-growth-track>span{
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#d982a4 0%,#d39ab8 54%,#a99bd0 100%);
+}
+.streak-garden-page .sg-growth-track>i{
+  z-index:2;
+  width:22px;
+  height:22px;
+  margin-top:-11px;
+  border:2px solid #fffaf3;
+  background:#fff8ed;
+  color:#a45f81;
+  box-shadow:0 2px 6px #6b526b30;
+}
+.streak-garden-page .sg-next-milestone{
+  display:block;
+  margin-top:9px;
+  color:#725f78;
+  font-size:11px;
+  line-height:1.35;
+}
+.streak-garden-page .sg-hero-scene{
+  position:relative;
+  display:grid;
+  place-items:center;
+  min-width:0;
+  min-height:270px;
+  padding:7px 12px 16px 0;
+  overflow:visible;
+}
+.streak-garden-page .sg-hero-scene:before{display:none}
+.streak-garden-page .sg-garden-art{
+  position:relative;
+  isolation:isolate;
+  width:100%;
+  max-width:470px;
+  height:auto;
+  min-height:0;
+  aspect-ratio:680/460;
+  margin:0;
+  overflow:visible;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.streak-garden-page .sg-garden-svg{
+  position:relative;
+  z-index:1;
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  overflow:visible;
+  object-fit:contain;
+  filter:none;
+}
+.streak-garden-page .sg-garden-hit-layer{
+  position:absolute;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
+}
+.streak-garden-page .sg-garden-flower-hit{
+  width:46px;
+  height:46px;
+  pointer-events:auto;
+}
+.streak-garden-page .sg-garden-flower-hit:before{
+  width:29px;
+  height:29px;
+}
+.streak-garden-page .sg-garden-bloom-count{
+  position:absolute;
+  z-index:4;
+  left:50%;
+  bottom:5px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:0;
+  max-width:calc(100% - 24px);
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#654f69;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.15px;
+  text-align:center;
+  box-shadow:none;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  pointer-events:none;
+}
+.streak-garden-page .sg-garden-bloom-count.is-complete{
+  border:0;
+  background:transparent;
+  color:#55734f;
+}
+.streak-garden-page .sg-hero-corner{display:none}
+body[data-mode="dark"] .streak-garden-page .sg-hero-paper{
+  border-color:#655064;
+  background:linear-gradient(112deg,#493844 0%,#45394e 53%,#51443e 100%);
+  box-shadow:0 8px 22px #0003;
+}
+body[data-mode="dark"] .streak-garden-page .sg-eyebrow{color:#e0b5c9}
+body[data-mode="dark"] .streak-garden-page .sg-count-line>strong,
+body[data-mode="dark"] .streak-garden-page .sg-count-line b,
+body[data-mode="dark"] .streak-garden-page .sg-garden-stage{color:#f7e7ef!important}
+body[data-mode="dark"] .streak-garden-page .sg-count-line small{color:#d3bdd0}
+body[data-mode="dark"] .streak-garden-page .sg-today-status{
+  border-color:#725669;
+  background:#3c303d;
+}
+body[data-mode="dark"] .streak-garden-page .sg-today-status b{color:#f3dfeb}
+body[data-mode="dark"] .streak-garden-page .sg-today-status.is-complete{
+  border-color:#60765d;
+  background:#344334;
+}
+body[data-mode="dark"] .streak-garden-page .sg-today-status.is-complete b{color:#c8e0bb}
+body[data-mode="dark"] .streak-garden-page .sg-today-status.is-pending{
+  border-color:#795566;
+  background:#47343f;
+}
+body[data-mode="dark"] .streak-garden-page .sg-progress-head{color:#ddc4d5}
+body[data-mode="dark"] .streak-garden-page .sg-progress-head b{color:#f0bdd2}
+body[data-mode="dark"] .streak-garden-page .sg-growth-track{background:#66556d}
+body[data-mode="dark"] .streak-garden-page .sg-next-milestone{color:#e0cbdc}
+body[data-mode="dark"] .streak-garden-page .sg-garden-bloom-count{color:#f2e1eb}
+body[data-mode="dark"] .streak-garden-page .sg-garden-bloom-count.is-complete{color:#c6ddb8}
 @media(max-width:620px){
   .streak-garden-page .sg-hero-paper{
     grid-template-columns:minmax(0,1fr);
-    grid-template-rows:auto auto;
+    grid-template-rows:auto 205px;
     min-height:0;
+    border-radius:26px;
   }
   .streak-garden-page .sg-hero-copy{
-    padding:18px 18px 8px;
+    padding:17px 19px 5px;
   }
+  .streak-garden-page .sg-count-line>strong{font-size:48px}
+  .streak-garden-page .sg-garden-stage{font-size:16px!important}
+  .streak-garden-page .sg-today-status{margin:6px 0 7px;padding:5px 9px}
+  .streak-garden-page .sg-progress-head{margin:8px 0 7px}
+  .streak-garden-page .sg-next-milestone{margin-top:8px;font-size:10px}
   .streak-garden-page .sg-hero-scene{
-    height:auto;
     min-height:0;
-    padding:0 10px 13px;
+    height:205px;
+    padding:0 14px 17px;
   }
   .streak-garden-page .sg-garden-art{
-    width:100%;
-    max-width:none;
+    width:min(100%,430px);
+    max-width:430px;
     height:auto;
-    min-height:0;
-    aspect-ratio:880/520;
-    border-radius:20px;
+    aspect-ratio:680/460;
   }
-  .streak-garden-page .sg-garden-svg{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-  }
-  .streak-garden-page .sg-garden-bloom-count{
-    left:14px;
-    bottom:19px;
-  }
+  .streak-garden-page .sg-garden-svg{width:100%;height:100%;object-fit:contain}
+  .streak-garden-page .sg-garden-bloom-count{bottom:5px;font-size:9px}
 }
-@media(max-width:380px){
-  .streak-garden-page .sg-hero-copy{padding-right:14px;padding-left:14px}
+@media(max-width:390px){
+  .streak-garden-page .sg-hero-paper{grid-template-rows:auto 188px}
+  .streak-garden-page .sg-hero-copy{padding:16px 15px 4px}
+  .streak-garden-page .sg-count-line>strong{font-size:45px}
+  .streak-garden-page .sg-count-line{gap:8px}
+  .streak-garden-page .sg-garden-stage{font-size:15px!important}
+  .streak-garden-page .sg-hero-scene{height:188px;padding:0 8px 15px}
+  .streak-garden-page .sg-garden-flower-hit{width:42px;height:42px}
 }
