@@ -784,7 +784,7 @@ function renderNotesPage() {
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
-        <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>➤</button>
+        <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>💌</button>
       </form>
     </section>
   `;
