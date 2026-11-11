@@ -667,7 +667,11 @@ function renderNotesPage() {
     </section>
   `;
 
-  requestAnimationFrame(syncNotesKeyboardLayout);
+  requestAnimationFrame(() => {
+    const thread = $('#chatThread');
+    if (thread) thread.scrollTop = thread.scrollHeight;
+    syncNotesKeyboardLayout();
+  });
 }
 
 function render() {
@@ -1842,6 +1846,7 @@ document.addEventListener('input', event => {
   field.style.height = 'auto';
   field.style.height = Math.min(field.scrollHeight, 116) + 'px';
   syncChatComposerState(field);
+  syncNotesKeyboardLayout();
 });
 
 // Keep the Notes composer attached to the visible viewport as the mobile keyboard changes size.
