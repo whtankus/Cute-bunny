@@ -7985,3 +7985,56 @@ body[data-mode="dark"] .streak-garden-page .sg-game-compact .sg-petal-board {
   background:linear-gradient(145deg,#4b3d50,#403645)!important;
   box-shadow:0 5px 15px #0002,inset 0 0 0 3px #ffffff08!important;
 }
+
+
+/* Compact the music Delete control so it fits neatly within narrow song cards. */
+.card-song-delete {
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 46px!important;
+  width:46px!important;
+  min-width:46px!important;
+  max-width:100%!important;
+  height:24px!important;
+  min-height:24px!important;
+  padding:2px 4px!important;
+  box-sizing:border-box!important;
+  font-size:.58rem!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+}
+
+/* Reduce the maximum chat/Notes bubble width by 15%, keeping text size intact. */
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap {
+  max-width:min(34ch,calc(85% - 3.4rem))!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(34ch,calc(85% - 3.0175rem))!important;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(34ch,calc(85% - 2.618rem))!important;
+  }
+}
+
+/* Notes page has its own tighter cap; reduce that cap by the same 15%. */
+body.notes-page-active #content .chat-bubble-wrap {
+  max-width:min(28.05ch,calc(76.5% - 3.06rem))!important;
+}
+@media(max-width:720px) {
+  body.notes-page-active #content .chat-bubble-wrap {
+    max-width:min(28.05ch,calc(76.5% - 2.71575rem))!important;
+  }
+}
+@media(max-width:480px) {
+  body.notes-page-active #content .chat-bubble-wrap {
+    max-width:min(28.05ch,calc(76.5% - 2.3562rem))!important;
+  }
+}
