@@ -7113,3 +7113,37 @@ body.notes-page-active.notes-keyboard-open #nav {
     will-change:auto;
   }
 }
+
+
+/* v90 Notes details restored: 30ch messages, clear scroll edges and smooth header-space release. */
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap {
+  max-width:min(30ch,calc(72.9% - 2.916rem))!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(30ch,calc(72.9% - 2.5515rem))!important;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(30ch,calc(72.9% - 2.2599rem))!important;
+  }
+}
+body.notes-page-active #content .chat-page .chat-thread {
+  padding-top:36px!important;
+  padding-bottom:12px!important;
+  scroll-padding-top:36px!important;
+  scroll-padding-bottom:12px!important;
+}
+body.notes-page-active .app>header {
+  transition:
+    transform .24s cubic-bezier(.2,.75,.25,1),
+    opacity .18s ease,
+    margin-bottom .24s cubic-bezier(.2,.75,.25,1)!important;
+}
+body.notes-page-active.notes-header-hidden .app>header {
+  margin-bottom:calc(0px - var(--notes-header-collapse-size,64px))!important;
+}
