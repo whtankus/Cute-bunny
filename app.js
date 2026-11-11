@@ -719,7 +719,7 @@ function renderStreakPage() {
       '<div class="sg-count-line"><strong>' + count + '</strong><span><b>' + (count === 1 ? 'day in a row' : 'days in a row') + '</b><small>of showing up for yourself</small></span></div>' +
       '<h3>' + stage + '</h3><p>' + (count ? 'Another little day has found its place among the flowers. Keep growing at your own pace. ♡' : 'Your first little bloom is waiting. Come by today and plant it. ♡') + '</p>' +
       '<div class="sg-progress-head"><span>NEXT LITTLE BLOOM</span><b>' + (left ? left + ' ' + (left === 1 ? 'day' : 'days') + ' to go' : 'A lovely milestone!') + '</b></div>' +
-      '<div class="sg-growth-track" role="img" aria-label="' + Math.round(progress) + '% progress toward the next milestone"><span style="width:' + progress + '%"></span><i>✿</i></div>' +
+      '<div class="sg-growth-track" style="--progress:' + progress + '%" role="img" aria-label="' + Math.round(progress) + '% progress toward the next milestone"><span style="width:' + progress + '%"></span><i>✿</i></div>' +
       '<small class="sg-next-milestone">' + next.days + '-day milestone <span>·</span> ' + next.name + '</small></div>' +
       '<div class="sg-hero-scene">' + gardenScene + '<span class="sg-scene-caption">a little garden, just for you</span></div>' +
       '<span class="sg-hero-corner sg-corner-one" aria-hidden="true">❧</span><span class="sg-hero-corner sg-corner-two" aria-hidden="true">✧</span></div></section>',
