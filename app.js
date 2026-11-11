@@ -802,6 +802,7 @@ function renderStreakPage() {
   const selectedWeekFuture = streakSelectedWeekDate > todayKey;
   const selectedWeekChecks = readStreakGoalChecks(streakSelectedWeekDate);
   const selectedWeekGoals = Object.values(selectedWeekChecks).filter(value => value === true).length;
+  const selectedWeekVisited = history.has(streakSelectedWeekDate);
   let selectedWeekMessage = selectedWeekVisited
     ? 'Your garden visit is saved.'
     : selectedWeekFuture
