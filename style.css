@@ -3222,3 +3222,27 @@ body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboa
     max-width:min(30ch,calc(72.9% - 2.2599rem))!important;
   }
 }
+
+
+/* v90 — let Notes use the space released by the hidden masthead. */
+body.notes-page-active {
+  --notes-header-collapse:64px;
+}
+@media(max-width:520px) {
+  body.notes-page-active {
+    --notes-header-collapse:60px;
+  }
+}
+body.notes-page-active .app>header {
+  margin-bottom:0!important;
+  transition:transform .24s cubic-bezier(.2,.75,.25,1), opacity .18s ease, margin-bottom .24s cubic-bezier(.2,.75,.25,1)!important;
+}
+body.notes-page-active.notes-header-hidden .app>header {
+  margin-bottom:calc(-1 * var(--notes-header-collapse))!important;
+}
+body.notes-page-active #content .chat-page:not(.notes-keyboard-open) {
+  transition:height .24s cubic-bezier(.2,.75,.25,1)!important;
+}
+body.notes-page-active.notes-header-hidden #content .chat-page:not(.notes-keyboard-open) {
+  height:calc(var(--notes-page-height,calc(100dvh - 180px)) + var(--notes-header-collapse))!important;
+}
