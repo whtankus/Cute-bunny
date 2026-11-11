@@ -557,7 +557,7 @@ function go(p, options = {}) {
     requestAnimationFrame(() => {
       if (page !== 'notes') return;
       const thread = $('#chatThread');
-      if (thread) thread.scrollTop = thread.scrollHeight;
+      scrollNotesThreadToLatest(thread);
       syncNotesKeyboardLayout();
     });
   }
@@ -714,6 +714,46 @@ function memoryCard(m) {
   return `<article class="feed-item ${tone}${pending}${uploading}${m.kind === 'note' ? ' home-note-memory' : ''}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
 }
 
+/* Keep the latest conversation at the bottom without leaving a message cut across the top edge. */
+function scrollNotesThreadToLatest(thread = $('#chatThread'), resetEndClearance = false) {
+  if (!thread) return;
+  if (resetEndClearance) thread.style.setProperty('--notes-end-clearance', '28px');
+  thread.scrollTop = thread.scrollHeight;
+
+  requestAnimationFrame(() => {
+    if (!thread.isConnected || thread.scrollTop <= 0) return;
+
+    const threadRect = thread.getBoundingClientRect();
+    const clipTop = threadRect.top + thread.clientTop;
+    const clipBottom = clipTop + thread.clientHeight;
+    const firstVisible = [...thread.querySelectorAll('.chat-message')].find(message => {
+      const messageRect = message.getBoundingClientRect();
+      const heartRect = message.querySelector('.memory-heart-toggle')?.getBoundingClientRect();
+      const visualTop = Math.min(messageRect.top, heartRect?.top ?? messageRect.top);
+      const visualBottom = Math.max(messageRect.bottom, heartRect?.bottom ?? messageRect.bottom);
+      return visualBottom > clipTop && visualTop < clipBottom;
+    });
+
+    if (!firstVisible) return;
+    const messageRect = firstVisible.getBoundingClientRect();
+    const heartRect = firstVisible.querySelector('.memory-heart-toggle')?.getBoundingClientRect();
+    const visualTop = Math.min(messageRect.top, heartRect?.top ?? messageRect.top);
+    const visualBottom = Math.max(messageRect.bottom, heartRect?.bottom ?? messageRect.bottom);
+
+    // If the oldest visible item is already sliced by the scrollport, move that
+    // whole item above the top edge. A matching end spacer provides the exact
+    // extra scroll range, so the newest messages stay anchored without a jump.
+    if (visualTop < clipTop - 1 && visualBottom > clipTop) {
+      const extraClearance = Math.ceil(visualBottom - clipTop + 2);
+      const currentClearance = Number.parseFloat(
+        getComputedStyle(thread).getPropertyValue('--notes-end-clearance')
+      ) || 28;
+      thread.style.setProperty('--notes-end-clearance', (currentClearance + extraClearance) + 'px');
+      thread.scrollTop = thread.scrollHeight;
+    }
+  });
+}
+
 /* Clean Notes conversation; message markup is shared with Home → Memory History. */
 function renderNotesPage() {
   const content = $('#content');
@@ -751,7 +791,7 @@ function renderNotesPage() {
 
   requestAnimationFrame(() => {
     const thread = $('#chatThread');
-    if (thread) thread.scrollTop = thread.scrollHeight;
+    scrollNotesThreadToLatest(thread, true);
     syncNotesKeyboardLayout();
   });
 }
@@ -1962,17 +2002,18 @@ function syncNotesKeyboardLayout() {
   const visibleViewportBottom = visualTop + visualHeight;
   const keyboardInset = Math.max(0, Math.round(window.innerHeight - visibleViewportBottom));
   const viewportHeightDrop = Math.max(0, window.innerHeight - visualHeight);
-  // Wait for a real viewport reduction before moving the composer. Focus alone
-  // happens before the mobile keyboard finishes opening and caused a visible jump.
+  const wasOpen = document.body.classList.contains('notes-keyboard-open');
+  // Use separate open/close thresholds to prevent the composer flickering while
+  // the virtual keyboard animates and the visual viewport reports small changes.
   const viewportSuggestsKeyboard = viewport
     ? (
-      keyboardInset > 80 ||
-      (focused && keyboardInset > 0) ||
-      viewportHeightDrop > 120 ||
+      keyboardInset > (wasOpen ? 48 : 100) ||
+      viewportHeightDrop > (wasOpen ? 70 : 130) ||
       visualHeight < window.screen.height * 0.72
     )
     : window.innerHeight < window.screen.height * 0.72;
-  const keyboardOpen = mobile && viewportSuggestsKeyboard;
+  // Focus opens the keyboard; after blur, keep the layout until the viewport returns.
+  const keyboardOpen = mobile && viewportSuggestsKeyboard && (focused || wasOpen);
   const nav = $('#nav');
   const composer = $('#chatComposer');
 
@@ -2003,21 +2044,30 @@ function syncNotesKeyboardLayout() {
 
   if (thread && threadWasNearBottom) {
     requestAnimationFrame(() => {
-      if (thread.isConnected) thread.scrollTop = thread.scrollHeight;
+      if (thread.isConnected) scrollNotesThreadToLatest(thread);
     });
   }
 }
 
+let notesKeyboardSyncFrame = 0;
+function scheduleNotesKeyboardLayout() {
+  if (notesKeyboardSyncFrame) return;
+  notesKeyboardSyncFrame = requestAnimationFrame(() => {
+    notesKeyboardSyncFrame = 0;
+    syncNotesKeyboardLayout();
+  });
+}
+
 document.addEventListener('focusin', event => {
-  if (event.target.id === 'chatInput') requestAnimationFrame(syncNotesKeyboardLayout);
+  if (event.target.id === 'chatInput') scheduleNotesKeyboardLayout();
 });
 document.addEventListener('focusout', event => {
-  if (event.target.id === 'chatInput') requestAnimationFrame(syncNotesKeyboardLayout);
+  if (event.target.id === 'chatInput') scheduleNotesKeyboardLayout();
 });
-window.addEventListener('resize', syncNotesKeyboardLayout);
-window.addEventListener('orientationchange', syncNotesKeyboardLayout);
-window.visualViewport?.addEventListener('resize', syncNotesKeyboardLayout);
-window.visualViewport?.addEventListener('scroll', syncNotesKeyboardLayout);
+window.addEventListener('resize', scheduleNotesKeyboardLayout);
+window.addEventListener('orientationchange', scheduleNotesKeyboardLayout);
+window.visualViewport?.addEventListener('resize', scheduleNotesKeyboardLayout);
+window.visualViewport?.addEventListener('scroll', scheduleNotesKeyboardLayout);
 
 // Chat form submission
 document.addEventListener('submit', event => {
