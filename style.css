@@ -7129,3 +7129,13 @@ body.notes-page-active #content .chat-page .chat-thread {
     will-change:auto;
   }
 }
+
+
+/* v124 — keep the fixed composer outside ancestor clipping and use broadly supported calc syntax. */
+body.notes-page-active.notes-header-hidden .app>header,
+body.notes-page-active.notes-keyboard-open .app>header {
+  margin-bottom:calc(0px - var(--notes-header-collapse-size,0px))!important;
+}
+body.notes-page-active #content .chat-page {
+  overflow:visible!important;
+}
