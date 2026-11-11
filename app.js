@@ -579,7 +579,7 @@ function streakCalendarMarkup(todayKey, history) {
       (visited ? ' is-visited' : '') + (isToday ? ' is-today' : '') + (isSelected ? ' is-selected' : '') +
       '" data-streak-date="' + key + '" aria-pressed="' + isSelected + '"' + (isFuture ? ' disabled' : '') + '>' +
       '<span class="sg-calendar-number">' + day + '</span><i class="sg-calendar-flower" aria-hidden="true">' +
-      (visited ? '<svg viewBox="0 0 24 24"><g fill="#d989a8"><ellipse cx="12" cy="5" rx="3.1" ry="5"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(120 12 12)"/></g><circle cx="12" cy="12" r="3.2" fill="#efc978"/></svg>' : '') +
+      (visited ? '<svg viewBox="0 0 24 24"><g fill="#d989a8"><ellipse cx="12" cy="5" rx="3.1" ry="5"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(120 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(180 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(240 12 12)"/><ellipse cx="12" cy="5" rx="3.1" ry="5" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.2" fill="#efc978"/></svg>' : '') +
       '</i></button>'
     );
   }
@@ -620,13 +620,13 @@ function renderStreakPage() {
   });
 
   const milestones = [
-    {days:3, icon:'🌱', name:'First sprout'},
-    {days:7, icon:'🌼', name:'Week in bloom'},
-    {days:14, icon:'🌷', name:'Little gardener'},
-    {days:30, icon:'🌸', name:'Love-garden legend'},
+    {days:3, icon:'🌱', name:'Tiny sprout'},
+    {days:7, icon:'🌼', name:'First flower'},
+    {days:14, icon:'🌷', name:'Little garden'},
+    {days:30, icon:'🌸', name:'Growing plant'},
     {days:50, icon:'💐', name:'Golden bouquet'},
-    {days:100, icon:'🌟', name:'Shining garden'},
-    {days:180, icon:'🏵️', name:'Evergreen heart'},
+    {days:100, icon:'🌟', name:'Blooming garden'},
+    {days:180, icon:'🏵️', name:'Magical garden'},
     {days:365, icon:'💮', name:'Eternal garden'}
   ];
   const earned = readStreakMilestones();
