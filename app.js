@@ -1035,12 +1035,9 @@ function renderStreakPage() {
 
     '<div class="sg-page-group sg-garden-group" id="sgGardenGroup">',
     '<section class="sg-hero" aria-label="Your current streak garden"><div class="sg-hero-paper">' +
-      '<div class="sg-hero-copy"><span class="sg-eyebrow">CURRENT STREAK</span>' +
-      '<div class="sg-count-line"><strong>' + count + '</strong><span><b>' + (count === 1 ? 'day' : 'days') + '</b><small>in a row</small></span></div>' +
-      '<h3 class="sg-garden-stage">' + gardenStage + '</h3>' +
-      '<div class="sg-progress-head"><span>NEXT BLOOM</span><b>' + (next ? (left ? left + ' ' + (left === 1 ? 'day' : 'days') + ' to go' : 'Ready to bloom!') : 'All blooms unlocked') + '</b></div>' +
-      '<div class="sg-growth-track" style="--progress:' + progress + '%" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(progress) + '" aria-label="' + Math.round(progress) + '% progress toward next bloom"><span style="width:' + progress + '%"></span><i>✿</i></div>' +
-      '<small class="sg-next-milestone">' + (next ? 'Next: ' + next.days + ' days · ' + next.name : 'Every milestone reached') + '</small></div>' +
+      '<div class="sg-hero-copy"><div class="sg-hero-topline"><span class="sg-eyebrow">CURRENT STREAK</span>' +
+      '<div class="sg-count-line"><strong>' + count + '</strong><span><b>' + (count === 1 ? 'day' : 'days') + '</b><small>in a row</small></span></div></div>' +
+      '<h3 class="sg-garden-stage">' + gardenStage + '</h3></div>' +
       '<div class="sg-hero-scene"><div class="sg-garden-art" id="sgGardenArt">' + gardenSceneMarkup +
         '<div class="sg-garden-hit-layer">' + gardenFlowerMarkup + '</div></div>' +
         '<span class="sg-garden-bloom-count' + (gardenBlooms.size === 7 ? ' is-complete' : '') + '" id="sgGardenBloomCount">' +
