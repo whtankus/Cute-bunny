@@ -1041,6 +1041,25 @@ function go(p, options = {}) {
   }
 }
 
+function openStreakGarden() {
+  const content = $('#content');
+  try {
+    if (page !== 'streak') go('streak');
+    else renderStreakPage();
+    if (!content?.querySelector('.streak-garden-page')) renderStreakPage();
+    if (!content?.querySelector('.streak-garden-page')) {
+      throw new Error('The Streak Garden page did not finish rendering.');
+    }
+  } catch (error) {
+    console.error('Streak Garden failed to open:', error);
+    if (content) {
+      const message = error && error.message ? error.message : 'An unexpected page error occurred.';
+      content.innerHTML = '<section class="sg-load-error"><span aria-hidden="true">🌱</span><h2>Your garden needs a moment</h2><p>The Streak Garden could not finish opening.</p><small>' +
+        esc(message) + '</small><button type="button" class="primary" data-streak-retry>Try opening again</button></section>';
+    }
+  }
+}
+
 
 
 /* Keep Android/browser Back inside the app until Home is reached. */
@@ -1350,14 +1369,6 @@ function render() {
         }).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
       </div>
     `;
-    const openStreakButton = c.querySelector('[data-open-streak]');
-    if (openStreakButton) {
-      openStreakButton.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        go('streak');
-      });
-    }
   } else if (page === 'gallery') {
     c.innerHTML = `
       <div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div>
@@ -2203,6 +2214,18 @@ function finishNotesMessagePress(e) {
 
 document.addEventListener('pointerup', finishNotesMessagePress);
 document.addEventListener('pointercancel', cancelNotesMessagePress);
+
+// Streak entry uses capture phase so card clicks cannot be swallowed by another page handler.
+document.addEventListener('click', event => {
+  let target = event.target;
+  if (target && target.nodeType !== 1) target = target.parentElement;
+  const retryButton = target?.closest('[data-streak-retry]');
+  const streakButton = target?.closest('[data-open-streak]');
+  if (!retryButton && !streakButton) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  openStreakGarden();
+}, true);
 
 // Main delegation
 document.addEventListener('click', async e => {
