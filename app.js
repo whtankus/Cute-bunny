@@ -742,7 +742,7 @@ function streakFriendsMarkup(todayKey) {
       '<span class="sg-friend-avatar">' + esc(friend.mascot || '🐰') + '</span>' +
       '<span class="sg-friend-identity"><b>' + esc(name) + '</b><small>@' + esc(friend.username || 'friend') + '</small>' +
       '<em' + (snapshot.state === 'due' ? ' data-streak-friend-countdown' : '') + '>' + esc(snapshot.label) + '</em>' +
-      '<span class="sg-friend-action">View profile <i aria-hidden="true">→</i></span></span>' +
+      '<span class="sg-friend-action">View garden <i aria-hidden="true">→</i></span></span>' +
       '<span class="sg-friend-streak"><strong>' + (snapshot.count === null ? '✿' : '🔥 ' + countLabel) +
       '</strong><small>' + (snapshot.count === null ? 'streak' : 'day streak') + '</small></span></button>';
   }).join('');
