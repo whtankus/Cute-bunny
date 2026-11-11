@@ -809,7 +809,7 @@ function renderStreakPage() {
       ? '<svg viewBox="0 0 40 40"><g fill="#d989a8"><ellipse cx="20" cy="8" rx="5.2" ry="8"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(60 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(120 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(180 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(240 20 20)"/><ellipse cx="20" cy="8" rx="5.2" ry="8" transform="rotate(300 20 20)"/></g><circle cx="20" cy="20" r="5" fill="#efc978"/><path d="M20 26v10" stroke="#789775" stroke-width="2" stroke-linecap="round"/></svg>'
       : isFuture
         ? '<svg viewBox="0 0 40 40"><path d="M20 35V20" stroke="#91a98b" stroke-width="2" stroke-linecap="round"/><path d="M20 27c-8-9-14-4-12 1 4 5 9 3 12-1Z" fill="#dce8d4"/><path d="M20 20c-7-7-5-15 0-17 7 5 7 12 0 17Z" fill="#f4dfe8" stroke="#cfadc1" stroke-width="1.5"/></svg>'
-        : '<svg viewBox="0 0 40 40"><circle cx="20" cy="18" r="8" fill="none" stroke="#cfc2c8" stroke-width="2"/><path d="M20 27v8" stroke="#cfc2c8" stroke-width="2" stroke-linecap="round"/></svg>';
+        : '<span class="sg-week-missed-mark" aria-hidden="true">–</span>';
     week.push('<button type="button" class="sg-week-day' + stateClass + (selected ? ' is-selected' : '') +
       '" data-streak-week-date="' + key + '" aria-pressed="' + selected + '" aria-label="' + fullDate + ': ' +
       (visited ? 'visit recorded' : isFuture ? 'upcoming day' : isToday ? 'today, not yet recorded' : 'no visit recorded') + '">' +
