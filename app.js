@@ -557,7 +557,7 @@ function go(p, options = {}) {
     requestAnimationFrame(() => {
       if (page !== 'notes') return;
       const thread = $('#chatThread');
-      scrollNotesThreadToLatest(thread);
+      if (thread) thread.scrollTop = thread.scrollHeight;
       syncNotesKeyboardLayout();
     });
   }
@@ -714,46 +714,6 @@ function memoryCard(m) {
   return `<article class="feed-item ${tone}${pending}${uploading}${m.kind === 'note' ? ' home-note-memory' : ''}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
 }
 
-/* Keep the latest conversation at the bottom without leaving a message cut across the top edge. */
-function scrollNotesThreadToLatest(thread = $('#chatThread'), resetEndClearance = false) {
-  if (!thread) return;
-  if (resetEndClearance) thread.style.setProperty('--notes-end-clearance', '28px');
-  thread.scrollTop = thread.scrollHeight;
-
-  requestAnimationFrame(() => {
-    if (!thread.isConnected || thread.scrollTop <= 0) return;
-
-    const threadRect = thread.getBoundingClientRect();
-    const clipTop = threadRect.top + thread.clientTop;
-    const clipBottom = clipTop + thread.clientHeight;
-    const firstVisible = [...thread.querySelectorAll('.chat-message')].find(message => {
-      const messageRect = message.getBoundingClientRect();
-      const heartRect = message.querySelector('.memory-heart-toggle')?.getBoundingClientRect();
-      const visualTop = Math.min(messageRect.top, heartRect?.top ?? messageRect.top);
-      const visualBottom = Math.max(messageRect.bottom, heartRect?.bottom ?? messageRect.bottom);
-      return visualBottom > clipTop && visualTop < clipBottom;
-    });
-
-    if (!firstVisible) return;
-    const messageRect = firstVisible.getBoundingClientRect();
-    const heartRect = firstVisible.querySelector('.memory-heart-toggle')?.getBoundingClientRect();
-    const visualTop = Math.min(messageRect.top, heartRect?.top ?? messageRect.top);
-    const visualBottom = Math.max(messageRect.bottom, heartRect?.bottom ?? messageRect.bottom);
-
-    // If the oldest visible item is already sliced by the scrollport, move that
-    // whole item above the top edge. A matching end spacer provides the exact
-    // extra scroll range, so the newest messages stay anchored without a jump.
-    if (visualTop < clipTop - 1 && visualBottom > clipTop) {
-      const extraClearance = Math.ceil(visualBottom - clipTop + 2);
-      const currentClearance = Number.parseFloat(
-        getComputedStyle(thread).getPropertyValue('--notes-end-clearance')
-      ) || 28;
-      thread.style.setProperty('--notes-end-clearance', (currentClearance + extraClearance) + 'px');
-      thread.scrollTop = thread.scrollHeight;
-    }
-  });
-}
-
 /* Clean Notes conversation; message markup is shared with Home → Memory History. */
 function renderNotesPage() {
   const content = $('#content');
@@ -791,7 +751,7 @@ function renderNotesPage() {
 
   requestAnimationFrame(() => {
     const thread = $('#chatThread');
-    scrollNotesThreadToLatest(thread, true);
+    if (thread) thread.scrollTop = thread.scrollHeight;
     syncNotesKeyboardLayout();
   });
 }
@@ -2044,7 +2004,7 @@ function syncNotesKeyboardLayout() {
 
   if (thread && threadWasNearBottom) {
     requestAnimationFrame(() => {
-      if (thread.isConnected) scrollNotesThreadToLatest(thread);
+      if (thread.isConnected) thread.scrollTop = thread.scrollHeight;
     });
   }
 }
