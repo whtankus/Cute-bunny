@@ -1894,14 +1894,28 @@ function syncNotesKeyboardLayout() {
     keyboardOpen ? keyboardInset + 'px' : '0px'
   );
 
-  // Measure the remaining visible space, so the message thread ends just above the composer.
-  const pageTop = Math.max(0, notesPage.getBoundingClientRect().top - visualTop);
+  // Keep the latest message anchored while the visible viewport changes.
+  const thread = $('#chatThread');
+  const threadWasNearBottom = thread
+    ? thread.scrollHeight - thread.scrollTop - thread.clientHeight < 72
+    : false;
+
+  // Preserve a negative top offset when the mobile browser has scrolled the page
+  // upward to keep the focused field visible. Clamping it to zero shortens the
+  // chat area and leaves an artificial gap above the fixed composer.
+  const pageTop = notesPage.getBoundingClientRect().top - visualTop;
   const composerHeight = composer?.getBoundingClientRect().height || 62;
   const navHeight = keyboardOpen ? 0 : (nav?.getBoundingClientRect().height || 68);
   document.documentElement.style.setProperty('--notes-nav-height', navHeight + 'px');
-  const lowerGap = keyboardOpen ? 12 : navHeight + 12;
+  const lowerGap = keyboardOpen ? 8 : navHeight + 8;
   const availableHeight = Math.max(150, Math.floor(visualHeight - pageTop - composerHeight - lowerGap));
   notesPage.style.setProperty('--notes-page-height', availableHeight + 'px');
+
+  if (thread && threadWasNearBottom) {
+    requestAnimationFrame(() => {
+      if (thread.isConnected) thread.scrollTop = thread.scrollHeight;
+    });
+  }
 }
 
 document.addEventListener('focusin', event => {
