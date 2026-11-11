@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=89">
+  <link rel="stylesheet" href="style.css?v=88">
 </head>
 <body class="is-restoring">
   <div id="sessionRestore" class="session-restore" role="status">
@@ -257,7 +257,7 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=89"></script>
+  <script src="app.js?v=88"></script>
   <script>
     if ("serviceWorker" in navigator) {
       let reloadingForWorkerUpdate = false;
@@ -270,7 +270,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=89", {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=88", {
             scope: "./",
             updateViaCache: "none"
           });
