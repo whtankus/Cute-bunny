@@ -14,7 +14,7 @@ let notificationRows = [], notificationLoaded = false, notificationLoading = fal
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
 let streakSelectedWeekDate = '';
-let streakGardenActiveTab = 'milestones';
+let streakGardenActiveTab = 'promises';
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
 let streakCountdownInterval = null, streakCountdownDayKey = '';
 let notesHeaderLastScrollTop = null;
@@ -744,9 +744,11 @@ function streakFriendsMarkup(todayKey) {
   const rows = orderedFriends.map(friend => {
     const snapshot = streakFriendSnapshot(friend,todayKey);
     const flowerCount = snapshot.count === null ? '—' : String(snapshot.count);
-    return '<div class="sg-friend-card" aria-label="Friend garden">' +
-      '<span class="sg-friend-avatar" aria-hidden="true">' + esc(friend.mascot || '🐰') + '</span>' +
-      '<span class="sg-friend-flower-count"><i aria-hidden="true">✿</i><strong>' + flowerCount + '</strong></span></div>';
+    const displayName = String(friend.display_name || friend.username || 'Friend').trim() || 'Friend';
+    return '<div class="sg-friend-card" aria-label="' + esc(displayName) + ' garden">' +
+      '<span class="sg-friend-person"><span class="sg-friend-avatar" aria-hidden="true">' + esc(friend.mascot || '🐰') + '</span>' +
+      '<strong class="sg-friend-name">' + esc(displayName) + '</strong></span>' +
+      '<span class="sg-friend-flower-count" aria-label="' + flowerCount + ' flowers"><i aria-hidden="true">✿</i><strong>' + flowerCount + '</strong></span></div>';
   }).join('');
   return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>';
 }
@@ -1047,25 +1049,27 @@ function renderStreakPage() {
       '<div class="sg-week-legend"><span><i class="is-bloomed">✿</i>Visited</span><span><i class="is-today">●</i>Today</span><span><i class="is-future">○</i>Future</span><span><i class="is-missed">–</i>Missed</span></div></section>',
     '</div>',
 
-    '<section class="sg-game-section sg-game-compact"><div class="sg-compact-section-heading"><h3>Petal Pairs</h3><b id="streakGamePairsLeft">6 pairs left</b></div>' +
-      '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div>' +
-      '<button type="button" class="sg-game-reset sg-game-reset-compact" id="streakGameReset">Shuffle ↻</button></section>',
+    '<section class="sg-game-section sg-game-compact"><div class="sg-petal-banner-copy">' +
+      '<div class="sg-compact-section-heading"><h3>Petal Pairs</h3><b id="streakGamePairsLeft">6 pairs left</b></div>' +
+      '<p class="sg-petal-banner-note">Find all six little pairs</p>' +
+      '<button type="button" class="sg-game-reset sg-game-reset-compact" id="streakGameReset">Shuffle ↻</button></div>' +
+      '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div></section>',
     '<section class="sg-friends-section sg-friends-compact"><div class="sg-friends-heading"><h3>Friends in Bloom</h3></div>' +
       streakFriendsMarkup(todayKey) + '</section>',
     '<div class="sg-bottom-tabs-wrap">',
     '<div class="sg-bottom-tabs" role="tablist" aria-label="Garden details">' +
-      '<button type="button" class="sg-bottom-tab' + (streakGardenActiveTab === 'milestones' ? ' is-active' : '') + '" id="sgMilestonesTab" role="tab" aria-controls="sgMilestonesPanel" aria-selected="' + (streakGardenActiveTab === 'milestones') + '" data-streak-garden-tab="milestones">Your Garden Milestones</button>' +
-      '<button type="button" class="sg-bottom-tab' + (streakGardenActiveTab === 'promises' ? ' is-active' : '') + '" id="sgPromisesTab" role="tab" aria-controls="sgPromisesPanel" aria-selected="' + (streakGardenActiveTab === 'promises') + '" data-streak-garden-tab="promises">Your Little Promises</button></div>',
-    '<section class="sg-tab-panel' + (streakGardenActiveTab === 'milestones' ? ' is-active' : '') + '" id="sgMilestonesPanel" role="tabpanel" aria-labelledby="sgMilestonesTab"' + (streakGardenActiveTab === 'milestones' ? '' : ' hidden') + '>' +
-      '<section class="sg-milestones-section"><div class="sg-section-heading"><div><h3>8 garden milestones</h3><p>' + earned.size + ' of ' + milestones.length + ' blooms unlocked</p></div></div>' +
-      '<div class="sg-milestone-route">' + badges + '</div></section></section>',
+      '<button type="button" class="sg-bottom-tab' + (streakGardenActiveTab === 'promises' ? ' is-active' : '') + '" id="sgPromisesTab" role="tab" aria-controls="sgPromisesPanel" aria-selected="' + (streakGardenActiveTab === 'promises') + '" data-streak-garden-tab="promises"><span class="sg-tab-icon" aria-hidden="true">♡</span><span class="sg-tab-label">Your Little Promises</span></button>' +
+      '<button type="button" class="sg-bottom-tab' + (streakGardenActiveTab === 'milestones' ? ' is-active' : '') + '" id="sgMilestonesTab" role="tab" aria-controls="sgMilestonesPanel" aria-selected="' + (streakGardenActiveTab === 'milestones') + '" data-streak-garden-tab="milestones"><span class="sg-tab-icon" aria-hidden="true">✿</span><span class="sg-tab-label">Your Garden Milestones</span></button></div>',
     '<section class="sg-tab-panel' + (streakGardenActiveTab === 'promises' ? ' is-active' : '') + '" id="sgPromisesPanel" role="tabpanel" aria-labelledby="sgPromisesTab"' + (streakGardenActiveTab === 'promises' ? '' : ' hidden') + '>' +
-      '<section class="sg-goals-section"><div class="sg-section-heading"><div><h3>Your little promises</h3><p>Optional goals for today</p></div><span class="sg-goal-count" id="streakGoalProgress">' + completed + ' / ' + goals.length + '</span></div>' +
+      '<section class="sg-goals-section"><div class="sg-section-heading"><div><h3>Your Little Promises</h3><p>Optional goals for today</p></div><span class="sg-goal-count" id="streakGoalProgress">' + completed + ' / ' + goals.length + '</span></div>' +
       '<div class="sg-goal-progress"><span id="streakGoalProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + (goals.length ? Math.round(completed / goals.length * 100) : 0) + '" style="width:' + (goals.length ? completed / goals.length * 100 : 0) + '%"></span></div>' +
       '<div class="sg-goal-list" id="streakGoalsList">' + goalMarkup + '</div>' +
       '<p class="sg-alltime-goals" id="sgAllTimeGoalCount"' + (allTimeGoalCompletions ? '' : ' hidden') + '>' + allTimeGoalCompletions + ' goals completed</p>' +
       '<button type="button" class="sg-add-goal" id="streakAddGoal"><span>＋</span> Add a goal</button>' +
       '<form class="sg-add-form hidden" id="streakGoalForm"><input class="input" id="streakGoalInput" maxlength="56" placeholder="Add a little goal…" required><button type="submit" class="primary">Plant goal</button></form></section></section>',
+    '<section class="sg-tab-panel' + (streakGardenActiveTab === 'milestones' ? ' is-active' : '') + '" id="sgMilestonesPanel" role="tabpanel" aria-labelledby="sgMilestonesTab"' + (streakGardenActiveTab === 'milestones' ? '' : ' hidden') + '>' +
+      '<section class="sg-milestones-section"><div class="sg-section-heading"><div><h3>Your Garden Milestones</h3><p>' + earned.size + ' of ' + milestones.length + ' blooms unlocked</p></div></div>' +
+      '<div class="sg-milestone-route">' + badges + '</div></section></section>',
     '</div>',
     '</div>',
   ].join('');
@@ -2524,7 +2528,31 @@ document.addEventListener('click', async e => {
   }
 
   const streakWeekDate = e.target.closest('[data-streak-week-date]');
-  if (streakWeekDate) { streakSelectedWeekDate = streakWeekDate.dataset.streakWeekDate; renderStreakPage(); return; }
+  if (streakWeekDate) {
+    const dateKey = streakWeekDate.dataset.streakWeekDate;
+    streakSelectedWeekDate = dateKey;
+    const date = new Date(dateKey + 'T00:00:00Z');
+    const label = new Intl.DateTimeFormat(undefined, {weekday:'long', month:'long', day:'numeric', timeZone:'UTC'}).format(date);
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const visited = readStreakHistory().has(dateKey);
+    const future = dateKey > todayKey;
+    const goalCount = Object.values(readStreakGoalChecks(dateKey)).filter(value => value === true).length;
+    let message = visited ? 'Visit saved' : future ? 'Coming up' : dateKey === todayKey ? 'Not visited yet' : 'No visit recorded';
+    if (goalCount) message += ' · ' + goalCount + ' goals';
+    document.querySelectorAll('.streak-garden-page [data-streak-week-date]').forEach(day => {
+      const selected = day.dataset.streakWeekDate === dateKey;
+      day.classList.toggle('is-selected', selected);
+      day.setAttribute('aria-pressed', String(selected));
+    });
+    const detail = $('#sgWeekDetail');
+    if (detail) {
+      const title = detail.querySelector('b');
+      const copy = detail.querySelector('span');
+      if (title) title.textContent = label;
+      if (copy) copy.textContent = message;
+    }
+    return;
+  }
   if (e.target.closest('#streakAddGoal')) { const form = $('#streakGoalForm'); form?.classList.toggle('hidden'); if (form && !form.classList.contains('hidden')) $('#streakGoalInput')?.focus(); return; }
   const removeStreakGoal = e.target.closest('[data-streak-remove-goal]');
   if (removeStreakGoal) { writeStreakGoals(readStreakGoals().filter(goal => goal.id !== removeStreakGoal.dataset.streakRemoveGoal)); renderStreakPage(); return; }
