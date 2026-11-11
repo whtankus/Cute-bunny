@@ -3026,3 +3026,40 @@ body.notes-page-active .app>header {
   padding:4px 7px;
   font-size:.68rem;
 }
+
+
+/* v76 — make Notes bubbles 10% narrower again and gently tighten sender spacing. */
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap {
+  max-width:min(35.64ch,calc(90% - 3.6rem))!important;
+  margin-top:8px!important;
+}
+.chat-page .chat-bubble-wrap>.chat-bubble,
+.home-note-memory .chat-bubble-wrap>.chat-bubble {
+  padding-left:17.82px!important;
+  padding-right:17.82px!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(35.64ch,calc(90% - 3.15rem))!important;
+    margin-top:7px!important;
+  }
+  .chat-page .chat-bubble-wrap>.chat-bubble {
+    min-width:129.6px!important;
+    padding-left:16.2px!important;
+    padding-right:16.2px!important;
+  }
+}
+@media(max-width:480px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap {
+    max-width:min(35.64ch,calc(90% - 2.79rem))!important;
+    margin-top:6px!important;
+  }
+  .chat-page .chat-bubble-wrap>.chat-bubble {
+    min-width:117px!important;
+    padding-left:14.58px!important;
+    padding-right:14.58px!important;
+  }
+}
