@@ -13,7 +13,7 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
-let streakCalendarOffset = 0, streakSelectedDate = '', streakSelectedWeekDate = '', streakCalendarExpanded = false;
+let streakSelectedWeekDate = '';
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false };
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
@@ -492,6 +492,32 @@ function shiftStreakDate(key, amount) {
   date.setUTCDate(date.getUTCDate() + amount);
   return streakDateKey(date);
 }
+function streakDateDistance(from, to) {
+  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(from || '') || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(to || '')) return null;
+  const fromTime = Date.parse(from + 'T00:00:00.000Z');
+  const toTime = Date.parse(to + 'T00:00:00.000Z');
+  return Number.isFinite(fromTime) && Number.isFinite(toTime) ? Math.round((toTime - fromTime) / 86400000) : null;
+}
+function streakUtcTimeRemaining() {
+  const now = new Date();
+  const nextDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  const minutes = Math.max(0, Math.ceil((nextDay - now.getTime()) / 60000));
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return hours ? hours + 'h ' + String(rest).padStart(2, '0') + 'm' : rest + 'm';
+}
+function readStreakPetalBest() {
+  try {
+    const value = Number(localStorage.getItem(streakStorageKey('petal-pairs-best')));
+    return Number.isInteger(value) && value > 0 ? value : 0;
+  } catch { return 0; }
+}
+function saveStreakPetalBest(moves) {
+  const current = readStreakPetalBest();
+  if (!Number.isInteger(moves) || moves < 1 || (current && current <= moves)) return current;
+  try { localStorage.setItem(streakStorageKey('petal-pairs-best'), String(moves)); } catch {}
+  return moves;
+}
 function readStreakHistory() {
   try {
     const saved = JSON.parse(localStorage.getItem(streakStorageKey('history')) || '[]');
@@ -646,7 +672,7 @@ function streakCalendarMarkup(todayKey, history) {
 }
 
 function resetStreakPetalGame() {
-  const symbols = ['🌷','🌼','🌸','🍀'];
+  const symbols = ['🌷','🌼','🌸','🌻','🌺','🍀'];
   const cards = [...symbols, ...symbols].map((symbol, index) => ({ id: String(index), symbol }));
   for (let index = cards.length - 1; index > 0; index--) {
     const swap = Math.floor(Math.random() * (index + 1));
@@ -673,9 +699,13 @@ function renderStreakPetalGame() {
   const status = $('#streakGameStatus');
   const moves = $('#streakGameMoves');
   if (status) status.textContent = state.completed
-    ? 'Garden complete ✿'
-    : state.locked ? 'Remember those two…' : 'Match the flowers';
-  if (moves) moves.textContent = state.moves + ' moves · ' + pairs + ' / 4';
+    ? (state.moves === readStreakPetalBest() ? 'New personal best! ✿' : 'All six pairs found!')
+    : state.locked ? 'Remember the flowers…' : 'Find all six pairs';
+  if (moves) moves.textContent = state.moves + ' moves · ' + pairs + ' / 6';
+  const best = $('#streakGameBest');
+  if (best) best.textContent = readStreakPetalBest() ? 'Best ' + readStreakPetalBest() : 'No best yet';
+  const reset = $('#streakGameReset');
+  if (reset) reset.textContent = state.completed ? 'Play again ↻' : 'Shuffle ↻';
 }
 function flipStreakPetalCard(cardId) {
   const state = streakPetalGame;
@@ -690,6 +720,7 @@ function flipStreakPetalCard(cardId) {
       state.matched.push(firstId,secondId);
       state.flipped = [];
       state.completed = state.matched.length === state.cards.length;
+      if (state.completed) saveStreakPetalBest(state.moves);
       renderStreakPetalGame();
       return;
     }
