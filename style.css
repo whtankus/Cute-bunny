@@ -3855,3 +3855,286 @@ body[data-mode="dark"] .sg-find-friends{background:#493744;border-color:#765c70;
   .sg-heading-doodle{animation:none!important}
   .sg-petal-card,.sg-friend-card{transition:none!important}
 }
+
+
+/* Streak Garden v98 — a cohesive botanical journal, not a stack of matching cards. */
+.streak-garden-page{gap:25px;padding-bottom:20px}
+.sg-page-heading{margin:0 2px 0}
+.sg-page-heading h2{font-size:clamp(26px,3.3vw,30px);line-height:1.12;color:#513b56}
+.sg-heading-doodle{font-size:2.55rem;animation:sg-heading-flower-spin 13s linear infinite}
+.sg-page-group{gap:16px}
+.sg-group-heading{display:none}
+
+/* Hero: one strong message at left, a full-height inline illustration at right. */
+.sg-hero-paper{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);min-height:340px;border:1px solid #ead7d9;border-radius:30px;background:linear-gradient(112deg,#fff9f1 0%,#fff4ef 42%,#f2e7f1 100%);box-shadow:0 8px 22px #765b6b0b}
+.sg-hero-paper:before{opacity:.12;background-size:21px 21px}
+.sg-hero-copy{padding:27px 18px 26px 30px}
+.sg-eyebrow{font-size:11px;letter-spacing:1px;color:#96647e}
+.sg-count-line{gap:12px;margin:8px 0 2px}
+.sg-count-line>strong{font-size:clamp(46px,5.2vw,56px);line-height:.98;letter-spacing:-2px;text-shadow:none;color:#563d60}
+.sg-count-line>span{gap:1px;padding-top:5px}
+.sg-count-line b{font-size:17px;color:#624968}
+.sg-count-line small{font-size:12px;color:#89768c}
+.sg-garden-stage{margin:8px 0 2px!important;color:#634a69!important;font:700 19px/1.25 Quicksand,sans-serif!important}
+.sg-today-status{gap:8px;max-width:none;margin:10px 0 5px;padding:6px 10px;border:0;border-radius:999px;background:#f8eaf0}
+.sg-today-status>span:first-child{width:25px;height:25px}
+.sg-today-status b{font-size:12px}
+.sg-today-status i{font-style:normal;font-variant-numeric:tabular-nums}
+.sg-today-status.is-complete{background:#eef5e9}
+.sg-today-status.is-pending{background:#fff3e9}
+.sg-progress-head{margin:15px 0 7px;font-size:11px;letter-spacing:.5px}
+.sg-progress-head b{font-size:12px}
+.sg-growth-track{height:9px;border:0;background:#ebdfe5;box-shadow:none}
+.sg-growth-track>span{background:linear-gradient(90deg,#d987a9,#b99ad1)}
+.sg-growth-track>i{width:19px;height:19px;margin-top:-9.5px;border:2px solid #fff;background:#fff9ed;box-shadow:0 1px 4px #69516c24}
+.sg-next-milestone{margin-top:7px;font-size:12px;color:#77647d}
+.sg-hero-scene{align-items:stretch;justify-content:stretch;min-height:100%;padding:0;overflow:hidden}
+.sg-hero-scene:before{inset:0;border-radius:0;background:linear-gradient(90deg,#f8e8ec22,transparent 23%);transform:none}
+.sg-garden-art{width:100%;height:100%;max-width:none;aspect-ratio:auto;margin:0;border-radius:0;overflow:hidden;box-shadow:none}
+.sg-garden-svg{position:relative;z-index:1;display:block;width:100%;height:100%;max-width:none;max-height:none;overflow:hidden;filter:none;object-fit:cover}
+.sg-garden-bloom-count{left:12px;bottom:12px;min-height:26px;padding:5px 10px;font-size:11px;background:#fffaf0ed;box-shadow:0 2px 8px #55425b1c}
+.sg-hero-corner{display:none}
+
+/* Stats are a quiet strip rather than a fourth card. */
+.sg-stats-ribbon{grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:11px 0 13px;border:0;border-bottom:1px solid #eadde1;border-radius:0;background:transparent;box-shadow:none}
+.sg-stat{justify-content:center;gap:10px;padding:0 12px}
+.sg-stat+.sg-stat{border-left:1px solid #eadde1}
+.sg-stat-illustration{width:auto;height:auto;border-radius:0;background:transparent!important;font-size:20px}
+.sg-stat>div{display:flex;flex-direction:column;align-items:flex-start;gap:1px}
+.sg-stat small{font-size:10px;letter-spacing:.55px;color:#8a7188}
+.sg-stat strong{font-size:27px;line-height:1.05;color:#563f60}
+.sg-stat em{font-size:12px;color:#8f7b91}
+
+/* Weekly activity: clear day states on an open surface. */
+.sg-week-section{padding:0 2px 8px;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible}
+.sg-week-section:after{display:none}
+.sg-section-heading{align-items:center;margin-bottom:14px}
+.sg-section-heading h3{margin:0;color:#583e61;font-size:21px;line-height:1.2}
+.sg-section-heading p{margin:4px 0 0;color:#816f86;font-size:13px;line-height:1.4}
+.sg-section-note{font-size:12px;color:#896581}
+.sg-week-row{gap:6px}
+.sg-week-day{gap:6px;padding:7px 3px 8px;border:1px solid transparent;border-radius:16px;background:transparent;box-shadow:none}
+.sg-week-day .sg-week-name{font-size:12px;letter-spacing:.1px;text-transform:none;color:#77637d}
+.sg-week-flower{width:45px;height:45px;border:1px solid transparent;border-radius:50%;background:#f3edf1}
+.sg-week-flower svg{width:34px;height:34px}
+.sg-week-day .sg-week-date{font-size:14px;color:#67546f}
+.sg-week-day.is-visited .sg-week-flower{background:#f9e3eb;border-color:#edcbd8;box-shadow:none}
+.sg-week-day.is-visited .sg-week-date{color:#a75e7f}
+.sg-week-day.is-future .sg-week-flower{border:1px dashed #c6d2bd;background:#f7f8f1}
+.sg-week-day.is-future .sg-week-name,.sg-week-day.is-future .sg-week-date{color:#9e9aa2}
+.sg-week-day.is-missed .sg-week-flower{border:1px solid #e5dedc;background:#f3f0ee;color:#a89ba1}
+.sg-week-missed-mark{display:grid;place-items:center;width:100%;height:100%;color:#9b8e98;font:500 25px/1 Quicksand,sans-serif}
+.sg-week-day.is-pending .sg-week-flower{border:2px solid #c97e9f;background:#fff8f6;box-shadow:none}
+.sg-week-day.is-today{border:1px solid #d9a4b9;background:#fff4f6;box-shadow:none;outline:none}
+.sg-week-day.is-today .sg-week-name,.sg-week-day.is-today .sg-week-date{color:#995878}
+.sg-week-day.is-selected{outline:none;border-color:#ad6e8d;background:#f8e8ee;box-shadow:none}
+.sg-week-day:focus-visible{outline:2px solid #a76686;outline-offset:2px}
+.sg-week-detail{margin:10px 0 0;padding:8px 11px;border-left:2px solid #d58eaa;border-radius:0 10px 10px 0;background:#faf3f3}
+.sg-week-detail b{font-size:13px}
+.sg-week-detail span{font-size:12px}
+.sg-week-legend{justify-content:flex-start;gap:9px 17px;margin-top:12px;font-size:12px;color:#6f6077}
+.sg-week-legend i{width:19px;height:19px;font-size:13px}
+.sg-week-legend .is-bloomed{background:#f8e2e9;color:#ad6382}
+.sg-week-legend .is-today{background:#f8e2e9;color:#995878}
+.sg-week-legend .is-future{border:1px dashed #aabd9d;color:#819678}
+.sg-week-legend .is-missed{background:#f0ece9;color:#827983}
+
+/* Promises: optional, tactile, and visually tied to the garden. */
+.sg-goals-section{padding:17px 0 15px;border:0;border-top:1px solid #dce5d6;border-bottom:1px solid #dce5d6;border-radius:0;background:linear-gradient(90deg,#f6f8f0a6,#fffaf3a6);box-shadow:none;overflow:visible}
+.sg-goals-section:after{display:none}
+.sg-goals-section .sg-section-heading{margin-bottom:12px}
+.sg-goal-count{padding:6px 11px;border:0;border-radius:999px;background:#e8f0e1;color:#5e795a;font-size:13px}
+.sg-goal-progress{height:8px;margin:0 0 9px;background:#e4eadf}
+.sg-goal-progress span{background:linear-gradient(90deg,#96b58c,#d19ab5)}
+.sg-goal-list{gap:3px}
+.sg-goal-row{min-height:56px;padding:7px 8px;border:0;border-bottom:1px solid #e9e9df;border-radius:0;background:transparent;box-shadow:none}
+.sg-goal-row:hover{border-color:#d9dfcf;background:#ffffff55;transform:none}
+.sg-goal-main{gap:12px}
+.sg-goal-flower{width:42px;height:42px;border:1px solid #ebd9e0;background:#fff9f3}
+.sg-goal-flower svg{width:28px;height:28px}
+.sg-goal-row.is-done .sg-goal-flower{animation:sg-goal-bloom .52s cubic-bezier(.16,.8,.24,1)}
+@keyframes sg-goal-bloom{0%{transform:scale(.65) rotate(-18deg)}65%{transform:scale(1.17) rotate(8deg)}100%{transform:scale(1.05) rotate(12deg)}}
+.sg-goal-text{font-size:14px;line-height:1.35;color:#5d4b64}
+.sg-goal-row.is-done .sg-goal-text{color:#86917d;text-decoration-color:#9eae92}
+.sg-goal-remove{width:30px;height:30px;border:0;background:transparent;color:#b7a3ad;opacity:.35}
+.sg-goal-remove:hover,.sg-goal-remove:focus-visible{background:#f5e5eb;color:#9a5f7b;opacity:1}
+.sg-alltime-goals{margin:9px 0;color:#688164;font-size:12px}
+.sg-add-goal{min-height:40px;margin-top:11px;padding:9px 16px;border:1px solid #b7caaa;border-radius:999px;background:#edf4e8;color:#58764f;font-size:13px}
+.sg-add-form{gap:9px}
+.sg-add-form .input{min-height:44px;border-radius:14px}
+.sg-add-form .primary{border-radius:999px}
+.sg-goal-note{margin:8px 0 0;color:#837987;font-size:12px}
+
+/* Games and people: distinct surfaces, one shared palette. */
+.sg-growth-extras{grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:22px;align-items:start}
+.sg-growth-extras>.sg-section{height:auto;padding:17px 17px 15px}
+.sg-game-section{border:0;border-radius:26px;background:linear-gradient(145deg,#fff5f7,#f4edf9 100%);box-shadow:none}
+.sg-game-section:after,.sg-friends-section:after{display:none}
+.sg-game-section .sg-section-heading{margin-bottom:11px}
+.sg-game-section .sg-section-heading p{font-size:13px}
+.sg-game-stamp{padding:6px 10px;background:#fbe5ed;border:0;border-radius:999px;color:#955b78;font-size:12px}
+.sg-game-score{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px 10px;margin-bottom:8px;font-size:13px;color:#68556e}
+.sg-game-score>span{font-size:13px;font-weight:800}
+.sg-game-score>b{font-size:12px;color:#865d7a}
+.sg-game-score>small{grid-column:1/-1;font-size:12px;color:#8d7890}
+.sg-game-progress{height:7px;margin:2px 0 13px;overflow:hidden;border-radius:999px;background:#e9dfe9}
+.sg-game-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#d98eac,#ab91c5);transition:width .25s ease}
+.sg-petal-board{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.sg-petal-card{aspect-ratio:1;min-height:62px;border:1px solid #e5d4e0;border-radius:17px;background:linear-gradient(145deg,#fffdf9,#f1e9f6);box-shadow:0 2px 0 #dfd1df;transition:transform .16s,border-color .16s,background .16s}
+.sg-petal-card:not(:disabled):hover{transform:translateY(-2px);border-color:#d29bb7;box-shadow:0 3px 0 #dfd1df}
+.sg-petal-back{font-size:23px;color:#bb7897}
+.sg-petal-face{font-size:28px}
+.sg-petal-card.is-matched{border-color:#a9c39a;background:linear-gradient(145deg,#eef7e8,#fff9ed);box-shadow:0 2px 0 #d0dfc6;animation:sg-pair-match .35s ease-out}
+@keyframes sg-pair-match{0%{transform:scale(.9)}70%{transform:scale(1.07)}100%{transform:scale(1)}}
+.sg-game-reset{min-height:38px;margin-top:13px;padding:8px 15px;border:1px solid #ddc3d2;border-radius:999px;background:#fffaf8;color:#895a78;font-size:13px}
+.sg-game-reset:hover{background:#f8e7ef}
+.sg-friends-section{padding:17px 0 12px;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible}
+.sg-friends-section .sg-section-heading{padding-bottom:9px;border-bottom:1px solid #ebdfe2}
+.sg-friends-section .sg-section-heading h3{font-size:20px}
+.sg-friends-section .sg-section-heading p{font-size:13px}
+.sg-friends-count{padding:6px 10px;border:0;border-radius:999px;background:#f4e8f1;color:#936c94;font-size:12px}
+.sg-friend-list{grid-template-columns:1fr;gap:0}
+.sg-friend-card{grid-template-columns:44px minmax(0,1fr) auto;gap:10px;padding:10px 3px;border:0;border-bottom:1px solid #eee4e5;border-radius:0;background:transparent;box-shadow:none}
+.sg-friend-card:hover{transform:none;border-color:#e3ced8;background:#fff9fa}
+.sg-friend-avatar{width:42px;height:42px;border:1px solid #ead6e1;border-radius:50%;background:#f7eaf0;box-shadow:none;font-size:22px}
+.sg-friend-identity{gap:2px}
+.sg-friend-identity b{font-size:14px;color:#55415c}
+.sg-friend-identity small{font-size:12px;color:#847588}
+.sg-friend-identity em{font-size:12px;color:#82738a}
+.sg-friend-action{display:inline-flex;align-items:center;gap:4px;margin-top:3px;color:#9b6482;font-size:12px;font-weight:800}
+.sg-friend-action i{font-style:normal}
+.sg-friend-streak{max-width:none;min-width:68px;align-items:center;gap:2px;padding:6px 9px;border:0;border-radius:14px;background:#fbf0f2}
+.sg-friend-streak strong{font-size:15px;color:#9a5e7f}
+.sg-friend-streak small{font-size:11px;color:#927c91;text-align:center}
+.sg-friend-card.is-active .sg-friend-streak{background:#edf5e8}
+.sg-friend-card.is-active .sg-friend-streak strong{color:#5e7f58}
+.sg-friend-card.is-due .sg-friend-streak{background:#fff1e2}
+.sg-friend-card.is-paused{opacity:.82}
+.sg-friend-card.is-paused .sg-friend-streak{background:#efedeb}
+.sg-friends-empty{padding:18px 10px;border:1px dashed #dfcbd7;border-radius:19px;background:#fffaf7}
+.sg-friends-empty p{font-size:13px}
+.sg-find-friends{padding:9px 14px;border:1px solid #e4ccd8;border-radius:999px;background:#fff;color:#925d7b;font-size:13px}
+
+/* A visible path of eight achievements, not a tiny collapsed control. */
+.sg-milestones-section{padding:14px 0 4px;border:0;border-top:1px solid #eadde2;border-radius:0;background:transparent;box-shadow:none;overflow:visible}
+.sg-milestones-section:after{display:none}
+.sg-milestones-section .sg-section-heading{align-items:center;margin-bottom:13px}
+.sg-milestones-section .sg-section-heading p{font-size:13px}
+.sg-milestone-route{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:0}
+.sg-milestone-route:before,.sg-milestone:after{display:none}
+.sg-milestone{display:grid;grid-template-columns:1fr;justify-items:center;align-content:start;gap:6px;min-height:0;padding:12px 8px 10px;border:1px solid #ebdfe4;border-radius:19px;background:#fffaf7;box-shadow:none;text-align:center}
+.sg-milestone-art{grid-row:auto;width:48px;height:48px;border:0;border-radius:50%;background:#f5e8ee;box-shadow:none}
+.sg-milestone-art svg{width:43px;height:39px}
+.sg-milestone.is-earned .sg-milestone-art{background:#f7e2ea;box-shadow:none}
+.sg-milestone.is-locked .sg-milestone-art svg{filter:grayscale(.15) saturate(.75);opacity:.85}
+.sg-milestone-copy{align-items:center;gap:3px}
+.sg-milestone-day{font-size:10px;letter-spacing:.35px}
+.sg-milestone-copy b{font-size:13px;line-height:1.25}
+.sg-milestone-copy em{font-size:12px}
+.sg-milestone-progress{width:100%;grid-column:auto;height:5px;margin-top:1px;background:#e8e1e4}
+.sg-milestone-progress-copy{grid-column:auto;width:100%;font-size:11px;text-align:center;color:#796a7c}
+.sg-milestone.is-earned{border-color:#d9e4d2;background:#f7faf3}
+.sg-milestone.is-earned .sg-milestone-status{color:#5e8158}
+.sg-milestone.is-locked .sg-milestone-status{color:#89798b}
+.sg-milestone.is-locked .sg-milestone-progress i{background:#c1a6c6}
+
+/* Fewer decorative rings, shadows and micro-labels. */
+.sg-section:after{display:none}
+.sg-page-kicker,.sg-section-kicker{font-size:11px;letter-spacing:.6px}
+body[data-mode="dark"] .sg-page-heading h2,
+body[data-mode="dark"] .sg-garden-stage,
+body[data-mode="dark"] .sg-section-heading h3{color:#f3e2ed!important}
+body[data-mode="dark"] .sg-hero-paper{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);border-color:#574757;background:linear-gradient(112deg,#3c303f 0%,#40333f 42%,#383347 100%);box-shadow:0 6px 18px #0002}
+body[data-mode="dark"] .sg-hero-paper:before{opacity:.05}
+body[data-mode="dark"] .sg-count-line>strong{color:#f5e4ef}
+body[data-mode="dark"] .sg-count-line b{color:#f0dce9}
+body[data-mode="dark"] .sg-count-line small,body[data-mode="dark"] .sg-next-milestone{color:#c7b4c6}
+body[data-mode="dark"] .sg-today-status{background:#493846}
+body[data-mode="dark"] .sg-today-status.is-complete{background:#354437}
+body[data-mode="dark"] .sg-today-status.is-pending{background:#4a3b3d}
+body[data-mode="dark"] .sg-stats-ribbon{border-bottom-color:#574958;background:transparent}
+body[data-mode="dark"] .sg-stat+.sg-stat{border-color:#574958}
+body[data-mode="dark"] .sg-stat small,body[data-mode="dark"] .sg-stat em{color:#cbb7c9}
+body[data-mode="dark"] .sg-stat strong{color:#f3e2ed}
+body[data-mode="dark"] .sg-week-day .sg-week-name,body[data-mode="dark"] .sg-week-day .sg-week-date{color:#ddc9db}
+body[data-mode="dark"] .sg-week-day.is-visited .sg-week-flower{background:#57404f;border-color:#805b70}
+body[data-mode="dark"] .sg-week-day.is-today{border-color:#bc86a1;background:#4d3948}
+body[data-mode="dark"] .sg-week-day.is-future .sg-week-flower{background:#3c403a;border-color:#75856c}
+body[data-mode="dark"] .sg-week-day.is-missed .sg-week-flower{background:#403b40;border-color:#625a62}
+body[data-mode="dark"] .sg-week-missed-mark{color:#c2b5c1}
+body[data-mode="dark"] .sg-week-detail{background:#453640}
+body[data-mode="dark"] .sg-week-detail b{color:#f1dfeb}
+body[data-mode="dark"] .sg-week-detail span,body[data-mode="dark"] .sg-week-legend{color:#d2c0d0}
+body[data-mode="dark"] .sg-goals-section{background:linear-gradient(90deg,#333d35aa,#3c3440aa);border-color:#586b54}
+body[data-mode="dark"] .sg-goal-row{border-bottom-color:#57544e}
+body[data-mode="dark"] .sg-goal-text{color:#f0e3ef}
+body[data-mode="dark"] .sg-goal-note{color:#c4b5c6}
+body[data-mode="dark"] .sg-goal-count{background:#3d4b3b;color:#dcebd3}
+body[data-mode="dark"] .sg-game-section{background:linear-gradient(145deg,#443542,#393344)}
+body[data-mode="dark"] .sg-game-stamp{background:#5a4052;color:#f0d8e7}
+body[data-mode="dark"] .sg-game-progress{background:#5a4c5c}
+body[data-mode="dark"] .sg-game-progress span{background:linear-gradient(90deg,#d18ead,#b6a0d2)}
+body[data-mode="dark"] .sg-friends-section .sg-section-heading{border-color:#594b5b}
+body[data-mode="dark"] .sg-friend-card{border-color:#584a5b}
+body[data-mode="dark"] .sg-friend-identity b{color:#f2e3ef}
+body[data-mode="dark"] .sg-friend-identity small,body[data-mode="dark"] .sg-friend-identity em{color:#c7b5c7}
+body[data-mode="dark"] .sg-friend-action{color:#e0aac3}
+body[data-mode="dark"] .sg-friend-streak{background:#4c3946}
+body[data-mode="dark"] .sg-friend-card.is-active .sg-friend-streak{background:#384639}
+body[data-mode="dark"] .sg-friend-card.is-due .sg-friend-streak{background:#4d3e34}
+body[data-mode="dark"] .sg-milestones-section{border-top-color:#574958}
+body[data-mode="dark"] .sg-milestone{background:#3d3541;border-color:#5b4c5d}
+body[data-mode="dark"] .sg-milestone.is-earned{background:#354236;border-color:#596e51}
+body[data-mode="dark"] .sg-milestone-art{background:#544151}
+body[data-mode="dark"] .sg-milestone.is-earned .sg-milestone-art{background:#496047}
+body[data-mode="dark"] .sg-milestone-copy b{color:#f0deeb}
+body[data-mode="dark"] .sg-milestone-progress{background:#615463}
+body[data-mode="dark"] .sg-milestone-progress-copy{color:#d3c1d2}
+@media(max-width:760px){
+  .sg-growth-extras{grid-template-columns:1fr;gap:14px}
+  .sg-milestones-section .sg-milestone-route{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:620px){
+  .streak-garden-page{gap:19px}
+  .sg-hero-paper{grid-template-columns:1fr;min-height:0;border-radius:25px}
+  .sg-hero-copy{padding:21px 21px 14px}
+  .sg-count-line>strong{font-size:49px}
+  .sg-garden-stage{font-size:18px!important}
+  .sg-hero-scene{min-height:0;height:220px;padding:0}
+  .sg-garden-art{height:100%;width:100%;aspect-ratio:auto;border-radius:0 0 24px 24px}
+  .sg-garden-svg{width:100%;height:100%;object-fit:cover}
+  .sg-garden-bloom-count{left:10px;bottom:9px}
+  .sg-stats-ribbon{padding:10px 0;border-radius:0}
+  .sg-stat{gap:4px;padding:0 5px}
+  .sg-stat-illustration{font-size:17px}
+  .sg-stat>div{align-items:center}
+  .sg-stat small{font-size:10px;letter-spacing:.2px}
+  .sg-stat strong{font-size:24px}
+  .sg-stat em{font-size:11px}
+  .sg-week-row{gap:3px}
+  .sg-week-day{padding:6px 1px;border-radius:13px}
+  .sg-week-day .sg-week-name{font-size:11px}
+  .sg-week-flower{width:36px;height:36px}
+  .sg-week-flower svg{width:29px;height:29px}
+  .sg-week-day .sg-week-date{font-size:13px}
+  .sg-week-legend{gap:8px 12px;font-size:11px}
+  .sg-week-legend i{width:17px;height:17px}
+  .sg-goals-section{padding:13px 0}
+  .sg-goal-row{min-height:53px}
+  .sg-goal-flower{width:39px;height:39px}
+  .sg-goal-flower svg{width:26px;height:26px}
+  .sg-growth-extras{grid-template-columns:1fr}
+  .sg-game-section{padding:16px 14px!important}
+  .sg-petal-board{gap:8px}
+  .sg-petal-card{min-height:0;border-radius:15px}
+  .sg-friend-card{grid-template-columns:42px minmax(0,1fr) auto;padding:10px 2px}
+  .sg-friend-action{font-size:11px}
+  .sg-milestone-route{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .sg-milestone{padding:10px 5px;border-radius:16px}
+  .sg-milestone-art{width:43px;height:43px}
+  .sg-milestone-art svg{width:39px;height:35px}
+  .sg-milestone-copy b{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .sg-goal-row.is-done .sg-goal-flower,.sg-petal-card.is-matched{animation:none!important}
+}
