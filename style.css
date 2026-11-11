@@ -5887,3 +5887,224 @@ body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-flower
   .streak-garden-page .sg-friends-compact .sg-friend-list{gap:11px 7px!important}
   .streak-garden-page .sg-friends-compact .sg-friend-avatar{width:36px!important;height:36px!important;font-size:19px!important}
 }
+
+
+/* v110 — clean weekly flower selection, shuffle below board, compact friend details. */
+/* Weekly blooms: no selected square, only a pink flower with a quick spin. */
+.streak-garden-page .sg-week-day.is-selected,
+.streak-garden-page .sg-week-day.is-selected.is-today{
+  border-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  outline:none!important;
+}
+.streak-garden-page .sg-week-day .sg-week-flower.is-clicked{
+  border-color:#e4a5bd!important;
+  background:#f9dfe9!important;
+  box-shadow:0 0 0 3px #f9eaf0!important;
+}
+.streak-garden-page .sg-week-day .sg-week-flower.is-clicked svg{
+  display:block;
+  transform-origin:50% 50%;
+  animation:sg-week-flower-spin .68s cubic-bezier(.2,.72,.24,1) both!important;
+}
+@keyframes sg-week-flower-spin{
+  0%{transform:rotate(0) scale(.88)}
+  72%{transform:rotate(330deg) scale(1.12)}
+  100%{transform:rotate(360deg) scale(1)}
+}
+
+/* Remove the small next-milestone caption from the garden banner. */
+.streak-garden-page .sg-hero-copy .sg-next-milestone{
+  display:none!important;
+}
+
+/* Put Shuffle directly under the game board. */
+.streak-garden-page .sg-game-compact{
+  grid-template-columns:minmax(88px,.72fr) minmax(0,1.28fr)!important;
+  grid-template-areas:"copy board" "copy shuffle"!important;
+  align-items:center!important;
+}
+.streak-garden-page .sg-petal-banner-copy{grid-area:copy}
+.streak-garden-page .sg-game-compact .sg-petal-board{grid-area:board}
+.streak-garden-page .sg-game-compact .sg-game-reset-compact{
+  grid-area:shuffle;
+  justify-self:center;
+  align-self:start;
+  min-height:28px!important;
+  margin:0!important;
+  padding:5px 13px!important;
+  border:1px solid #e5cedb!important;
+  border-radius:999px!important;
+  background:linear-gradient(135deg,#fffdfb,#fff3f7)!important;
+  color:#98617f!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:.1px;
+  box-shadow:0 2px 0 #efdde7!important;
+}
+.streak-garden-page .sg-game-compact .sg-game-reset-compact:hover{
+  background:#f8eaf0!important;
+  transform:translateY(-1px);
+}
+
+/* Friends: avatar first, name and tiny activity line beside it, close together. */
+.streak-garden-page .sg-friends-compact .sg-friend-list{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:center!important;
+  gap:8px 12px!important;
+  padding:0!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-card{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  min-height:0!important;
+  padding:2px 0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-card:hover{
+  transform:none!important;
+  border:0!important;
+  background:transparent!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-avatar{
+  flex:none!important;
+  width:35px!important;
+  height:35px!important;
+  border:1px solid #ead5e1!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,#fceaf0,#eee9f7)!important;
+  box-shadow:0 1px 4px #80657b10!important;
+  font-size:19px!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-details{
+  display:flex!important;
+  flex:1 1 auto!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  gap:3px!important;
+  min-width:0!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-name{
+  display:block;
+  max-width:100%;
+  overflow:hidden;
+  color:#6d5672!important;
+  font:800 11px/1.1 Quicksand,sans-serif!important;
+  text-align:left!important;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-meta{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  gap:7px!important;
+  min-width:0;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-presence{
+  display:inline-flex!important;
+  align-items:center;
+  gap:4px;
+  color:#a69aa5;
+  font-size:9px!important;
+  font-weight:800;
+  line-height:1;
+  white-space:nowrap;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-presence:before{
+  content:"";
+  width:6px;
+  height:6px;
+  flex:none;
+  border-radius:50%;
+  background:#b8adb7;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-card.is-online .sg-friend-presence{color:#548b60}
+.streak-garden-page .sg-friends-compact .sg-friend-card.is-online .sg-friend-presence:before{
+  background:#65b879;
+  box-shadow:0 0 0 2px #65b87922;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-card.is-offline .sg-friend-presence{color:#a69aa5}
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count{
+  display:inline-flex!important;
+  flex:none!important;
+  align-items:center;
+  justify-content:center;
+  gap:2px!important;
+  min-width:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#a66d8b!important;
+  font:800 10px/1 Quicksand,sans-serif!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count strong{
+  color:#9b6783!important;
+  font:800 10px/1 Quicksand,sans-serif!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count i{
+  color:#d58eaa!important;
+  font-size:13px!important;
+  font-style:normal;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-selected,
+body[data-mode="dark"] .streak-garden-page .sg-week-day.is-selected.is-today{
+  border-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-week-day .sg-week-flower.is-clicked{
+  border-color:#c88aa7!important;
+  background:#634354!important;
+  box-shadow:0 0 0 3px #513b4a!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-game-compact .sg-game-reset-compact{
+  border-color:#70566a!important;
+  background:linear-gradient(135deg,#493846,#443546)!important;
+  color:#f0d6e5!important;
+  box-shadow:0 2px 0 #342a37!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-name{color:#f0deeb!important}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-card.is-online .sg-friend-presence{color:#91d39f}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-card.is-offline .sg-friend-presence{color:#c2b3c4}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-flower-count,
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-flower-count strong{color:#f0dbe9!important}
+@media(max-width:620px){
+  .streak-garden-page .sg-game-compact{
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-areas:"copy" "board" "shuffle"!important;
+    gap:8px!important;
+    padding-bottom:10px!important;
+  }
+  .streak-garden-page .sg-game-compact .sg-game-reset-compact{
+    justify-self:center;
+    margin-top:0!important;
+  }
+  .streak-garden-page .sg-friends-compact .sg-friend-list{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px 9px!important;
+  }
+  .streak-garden-page .sg-friends-compact .sg-friend-card{gap:7px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-avatar{
+    width:32px!important;
+    height:32px!important;
+    font-size:17px!important;
+  }
+  .streak-garden-page .sg-friends-compact .sg-friend-details{gap:2px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-name{font-size:10px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-meta{gap:5px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-presence{font-size:8px!important}
+}
+@media(max-width:360px){
+  .streak-garden-page .sg-friends-compact .sg-friend-list{gap:6px 7px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-avatar{width:29px!important;height:29px!important;font-size:16px!important}
+}
