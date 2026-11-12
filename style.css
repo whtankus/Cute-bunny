@@ -9045,3 +9045,30 @@ body[data-mode="dark"] #app .now-playing-panel .island-controls button:not(.isla
   backdrop-filter:blur(26px) saturate(1.65)!important;
   box-shadow:0 4px 12px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.64)!important;
 }
+
+
+/* Deep frosted-glass player: diffuse the wallpaper heavily instead of showing it sharply. */
+#app .now-playing-panel {
+  background:rgba(255,249,253,.025)!important;
+  border-color:rgba(255,255,255,.34)!important;
+  -webkit-backdrop-filter:blur(72px) saturate(1.75)!important;
+  backdrop-filter:blur(72px) saturate(1.75)!important;
+  box-shadow:0 14px 38px rgba(107,75,111,.09),inset 0 1px 0 rgba(255,255,255,.38)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel {
+  background:rgba(255,246,252,.018)!important;
+  border-color:rgba(255,255,255,.18)!important;
+  -webkit-backdrop-filter:blur(76px) saturate(1.65)!important;
+  backdrop-filter:blur(76px) saturate(1.65)!important;
+  box-shadow:0 14px 38px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.16)!important;
+}
+
+/* Remove perceived dock delay: immediate touch response and a short page swap. */
+.app #nav button[data-page] {
+  transition:transform .06s ease,background-color .06s ease,color .06s ease,box-shadow .06s ease!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.app #nav button[data-page]:active { transform:scale(.94)!important;transition-duration:.03s!important; }
+.app #nav button i { transition:transform .06s ease!important; }
+#content { animation:appear .12s ease-out!important; }
