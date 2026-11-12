@@ -7,14 +7,15 @@ const sb = window.supabase && cfg.supabaseUrl && !cfg.supabaseUrl.startsWith('PA
 
 let token = localStorage.getItem('cuteBunnyToken') || '', me = null, page = 'home', feed = [], friends = [], friendResults = [], friendQuery = '';
 let appPageStack = ['home'], appBackGuardInstalled = false, appBackExitArmedUntil = 0, appBackExitPending = false;
-let mediaObjectUrls = [], mediaUrlCache = new Map(), pendingMediaUrls = new Map(), reactedMemories = new Set();
+let mediaUrlCache = new Map(), mediaUrlLoads = new Map(), mediaObserver = null, reactedMemories = new Set();
 let pendingDeleteTimers = new Map(), authMode = 'register';
-let playlist = [], playlistIndex = -1, audioObjectUrl = '';
+let playlist = [], playlistIndex = -1, playbackRequestId = 0;
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
 let hiddenNoteIds = new Set();
 let homeNavRefreshInFlight = false;
+let feedLoaded = false, feedLoadError = '', feedLoadRequestId = 0;
 let notesHeaderLastScrollTop = null;
 let notesKeyboardDismissed = false;
 let streakSelectedWeekDate = '';
@@ -76,6 +77,8 @@ function rollKindness() {
 
 function setMode(mode) {
   document.body.dataset.mode = mode;
+  const themeColor=$('meta[name="theme-color"]');
+  if(themeColor)themeColor.setAttribute('content',mode==='dark'?'#30283a':'#fff7f3');
   const b = $('#surprise');
   if (b) {
     b.textContent = mode === 'dark' ? '☀' : '☾';
@@ -387,6 +390,7 @@ function setUser(u) {
     notificationRows = [];
     notificationLoaded = false;
     notificationLoading = false;
+    mediaUrlCache.clear(); mediaUrlLoads.clear();
   }
   me = u;
   try {
@@ -415,36 +419,66 @@ function setUser(u) {
 }
 
 async function refresh() {
+  const requestId = ++feedLoadRequestId;
   const results = await Promise.all([api('/me'), api('/feed'), api('/following')]);
-  me = results[0];
-  feed = results[1];
-  friends = results[2];
-  render();
-  syncStreakWidget();
-  syncPresenceUI();
+  if (requestId !== feedLoadRequestId) return;
+  me = results[0]; feed = results[1]; friends = results[2];
+  feedLoaded = true; feedLoadError = '';
+  render(); syncStreakWidget(); syncPresenceUI(); syncPlayer();
   if (!$('#friendProfileGate').classList.contains('hidden')) {
     const profile = [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
     if (profile) showFriendProfile(profile);
   }
 }
+async function loadFeedInBackground(profileId) {
+  const requestId = ++feedLoadRequestId;
+  try {
+    const rows = await api('/feed');
+    if (requestId !== feedLoadRequestId || String(me?.id || '') !== String(profileId || '')) return;
+    feed = rows; feedLoaded = true; feedLoadError = '';
+    render(); syncStreakWidget(); syncPresenceUI(); syncPlayer();
+  } catch (error) {
+    if (requestId !== feedLoadRequestId || String(me?.id || '') !== String(profileId || '')) return;
+    feedLoaded = true;
+    feedLoadError = 'Your memories could not be loaded. Check your connection and refresh ♡';
+    render(); toast(error?.message || 'Your memories could not be loaded. Please retry ♡');
+  }
+}
+async function enterAppQuickly() {
+  const [profile, following] = await Promise.all([api('/me'), api('/following')]);
+  feedLoadRequestId += 1; feed = []; feedLoaded = false; feedLoadError = '';
+  friends = following; setUser(profile);
+  void loadFeedInBackground(profile.id);
+  void recordLoginStreak();
+}
 
 const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
 
+const dateFormatterCache = new Map();
+function cachedDateFormatter(options) {
+  const key = JSON.stringify(options);
+  let formatter = dateFormatterCache.get(key);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(undefined, options);
+    dateFormatterCache.set(key, formatter);
+    if (dateFormatterCache.size > 24) dateFormatterCache.delete(dateFormatterCache.keys().next().value);
+  }
+  return formatter;
+}
 function formatMessageTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone, now = new Date(), yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  const day = date.toDateString() === now.toDateString() ? 'Today' : date.toDateString() === yesterday.toDateString() ? 'Yesterday' : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone }).format(date);
-  const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone }).format(date);
+  const day = date.toDateString() === now.toDateString() ? 'Today' : date.toDateString() === yesterday.toDateString() ? 'Yesterday' : cachedDateFormatter({month:'short',day:'numeric',timeZone}).format(date);
+  const time = cachedDateFormatter({hour:'numeric',minute:'2-digit',timeZone}).format(date);
   return day + ' · ' + time;
 }
-
 function formatNoteClock(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone }).format(date);
+  return cachedDateFormatter({hour:'numeric',minute:'2-digit',timeZone}).format(date);
 }
 
 function noteDayLabel(value) {
@@ -478,9 +512,6 @@ function friendRow(user) {
 }
 
 
-function streakBadge(count) {
-  return count >= 30 ? '🌟 Love-garden legend' : count >= 7 ? '🌼 Week in bloom' : count >= 3 ? '🌱 Growing steadily' : count > 0 ? '🌷 First blossoms' : '✨ Fresh start';
-}
 function streakWidget() {
   const count = Math.max(0, Number(me?.login_streak) || 0);
   const subtitle = count ? count + (count === 1 ? ' day in a row' : ' days in a row') : 'Start your streak today ♡';
@@ -1316,19 +1347,16 @@ function popLoveHeart(card, e) {
 
   }
   card.classList.remove('heart-tap');
-  void card.offsetWidth;
-  card.classList.add('heart-tap');
+  requestAnimationFrame(()=>{if(card.isConnected)card.classList.add('heart-tap');});
   clearTimeout(card.heartTimer);
-  card.heartTimer = setTimeout(() => card.classList.remove('heart-tap'), 1050);
-  const rect = card.getBoundingClientRect();
-  const x = e?.clientX || (rect.left + rect.width / 2);
-  const y = e?.clientY || (rect.top + rect.height / 2);
+  card.heartTimer=setTimeout(()=>card.classList.remove('heart-tap'),420);
 
 }
 
 function go(p, options = {}) {
   const validPages = ['home', 'gallery', 'music', 'notes', 'friends', 'streak'];
   if (!validPages.includes(p)) return;
+  const previousPage = page;
   if (options.resetStack) appPageStack = [p];
   else if (!options.fromBack && p !== page && appBackGuardInstalled) appPageStack.push(p);
   if (page === 'notes' && p !== 'notes') {
@@ -1369,6 +1397,15 @@ function go(p, options = {}) {
   window.scrollTo({ top: 0, behavior: 'auto' });
   render();
   syncPresenceUI();
+  if (previousPage !== p && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    const content = $('#content');
+    if (content && typeof content.animate === 'function') {
+      content.animate(
+        [{ opacity: .86, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }],
+        { duration: 185, easing: 'cubic-bezier(.2,.75,.25,1)' }
+      );
+    }
+  }
 
   if (p === 'notes') {
     requestAnimationFrame(() => {
@@ -1547,7 +1584,7 @@ function memoryCard(m, options = {}) {
 
   let body = '';
   if (m.kind === 'photo') {
-    body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
+    body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" loading="lazy" decoding="async" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
   } else if (m.kind === 'song') {
     const songAction = m.isPending ? '' : mine
       ? `<button class="song-download card-song-save card-song-delete" type="button" data-memory-delete="${esc(m.id)}" aria-label="Delete song">Delete</button>`
@@ -1694,21 +1731,21 @@ function render() {
       </div>
       <div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div>
       <div class="grid happy-things-grid">
-        <article class="tile"><div class="tile-art photo-art">🌸</div><h3>Photo garden</h3><p>${pics.length} shared photos</p><button class="primary" data-go="gallery">Open photos →</button></article>
-        <article class="tile"><div class="tile-art music-art">🎧<span>♫</span></div><h3>Cozy playlist</h3><p>${songs.length} shared songs</p><button class="primary" data-go="music">Open music →</button></article>
-        <article class="tile"><div class="tile-art note-art">💌</div><h3>Little love notes</h3><p>${notes.length} saved notes</p><button class="primary" data-go="notes">Open notes →</button></article>
+        <article class="tile"><div class="tile-art photo-art" data-go="gallery" role="link" tabindex="0" aria-label="Open Photo garden">🌸</div><h3>Photo garden</h3><p>${feedLoaded ? pics.length + ' shared photos' : 'Loading photos…'}</p><button class="primary" data-go="gallery">Open photos →</button></article>
+        <article class="tile"><div class="tile-art music-art" data-go="music" role="link" tabindex="0" aria-label="Open Cozy playlist">🎧<span>♫</span></div><h3>Cozy playlist</h3><p>${feedLoaded ? songs.length + ' shared songs' : 'Loading songs…'}</p><button class="primary" data-go="music">Open music →</button></article>
+        <article class="tile"><div class="tile-art note-art" data-go="notes" role="link" tabindex="0" aria-label="Open Little love notes">💌</div><h3>Little love notes</h3><p>${feedLoaded ? notes.length + ' saved notes' : 'Loading notes…'}</p><button class="primary" data-go="notes">Open notes →</button></article>
         ${streakWidget()}
       </div>
       <div class="feed-list">
         <h3>Your memory history</h3>
-        ${visibleFeed.map((m, index) => {
+        ${!feedLoaded ? '<div class="empty memory-loading" role="status">Gathering your little memories…</div>' : visibleFeed.map((m, index) => {
           const previous = visibleFeed[index - 1];
           const ownerId = String(m.author?.id || m.owner_id || '');
           const previousOwnerId = String(previous?.author?.id || previous?.owner_id || '');
           const sameDay = previous && noteDayLabel(m.createdAt || m.created_at) === noteDayLabel(previous.createdAt || previous.created_at);
           const isContinuation = m.kind === 'note' && previous?.kind === 'note' && !!ownerId && ownerId === previousOwnerId && sameDay;
           return memoryCard(m, { isContinuation });
-        }).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
+        }).join('') || '<div class="empty">' + esc(feedLoadError || 'Your shared scrapbook starts with one little note ♡') + '</div>'}
       </div>
     `;
   } else if (page === 'gallery') {
@@ -1827,83 +1864,59 @@ function formatClock(value) {
 }
 
 function shortIslandTitle(track) {
-  const name = String(track?.fileName || track?.text || 'Song').replace(/\.[^.]{1,8}$/, '').trim();
-  return Array.from(name || 'Song').slice(0, 5).join('');
+  const name=String(track?.fileName||track?.text||'Song').replace(/\.[^.]{1,8}$/,'').trim(), chars=Array.from(name||'Song');
+  return chars.length>12?chars.slice(0,11).join('')+'…':chars.join('');
 }
-
 function toggleMusicIsland(force) {
-  const panel = $('#nowPlayingPanel'), pill = $('#nowPlayingPill'), track = playlist[playlistIndex];
-  if (!panel) return;
-  if (!track && force !== false) return;
-  const open = typeof force === 'boolean' ? force : panel.classList.contains('hidden');
-  panel.classList.toggle('hidden', !open);
-  pill?.setAttribute('aria-expanded', String(open));
+  const panel=$('#nowPlayingPanel'),pill=$('#nowPlayingPill'),track=playlist[playlistIndex];
+  if(!panel)return;if(!track&&force!==false)return;
+  const open=typeof force==='boolean'?force:panel.classList.contains('hidden');
+  panel.classList.toggle('hidden',!open);pill?.setAttribute('aria-expanded',String(open));
 }
-
+function syncPlayerProgress() {
+  const audio=$('#globalAudio');if(!audio)return;
+  const seek=$('#islandSeek'),current=$('#islandCurrentTime'),duration=$('#islandDuration');
+  if(seek&&!seek.matches(':active'))seek.value=audio.duration?String(Math.round(audio.currentTime/audio.duration*1000)):'0';
+  if(current)current.textContent=formatClock(audio.currentTime);
+  if(duration)duration.textContent=formatClock(audio.duration);
+}
 function syncPlayer() {
-  const audio = $('#globalAudio');
-  if (!audio) return;
-  document.querySelectorAll('[data-play-song]').forEach(button => {
-    const active = String(playlist[playlistIndex]?.id) === String(button.dataset.playSong) && !audio.paused && !audio.ended;
-    button.classList.toggle('is-playing', active);
-    button.setAttribute('aria-pressed', String(active));
-    button.setAttribute('aria-label', active ? 'Pause song' : 'Play song');
+  const audio=$('#globalAudio');if(!audio)return;
+  const track=playlist[playlistIndex],hasTrack=!!track&&!!audio.src&&audio.dataset.trackId===String(track.id);
+  const playing=hasTrack&&!audio.paused&&!audio.ended;
+  document.querySelectorAll('[data-play-song]').forEach(button=>{
+    const active=hasTrack&&String(button.dataset.playSong)===audio.dataset.trackId&&playing;
+    button.classList.toggle('is-playing',active);button.setAttribute('aria-pressed',String(active));button.setAttribute('aria-label',active?'Pause song':'Play song');
   });
-  const track = playlist[playlistIndex], hasTrack = !!track && !!audio.src, playing = hasTrack && !audio.paused && !audio.ended;
-  const island = $('#nowPlayingIsland'), pill = $('#nowPlayingPill'), shortTitle = $('#islandShortTitle'), fullTitle = $('#islandFullTitle');
-  const status = $('#islandStatusText'), toggle = $('#nowPlayingToggle'), seek = $('#islandSeek'), current = $('#islandCurrentTime'), duration = $('#islandDuration');
-  if (island) {
-    island.classList.toggle('hidden', !hasTrack);
-    island.classList.toggle('is-playing', playing);
+  const island=$('#nowPlayingIsland'),pill=$('#nowPlayingPill'),shortTitle=$('#islandShortTitle'),fullTitle=$('#islandFullTitle'),status=$('#islandStatusText'),toggle=$('#nowPlayingToggle');
+  if(island){island.classList.toggle('hidden',!hasTrack);island.classList.toggle('is-playing',playing);}
+  $('#app')?.classList.toggle('has-now-playing',hasTrack);
+  if(!hasTrack)toggleMusicIsland(false);
+  if(track&&hasTrack){
+    const title=track.fileName||track.text||'A little song',currentStatus=playing?'Playing now ♡':'Paused · tap to resume';
+    if(shortTitle)shortTitle.textContent=shortIslandTitle(track);if(fullTitle)fullTitle.textContent=title;if(status)status.textContent=currentStatus;
+    if(pill){pill.title=title+' · '+currentStatus;pill.setAttribute('aria-label','Music: '+title+'. '+currentStatus+'. Open player');}
   }
-  $('#app').classList.toggle('has-now-playing', hasTrack);
-  if (!hasTrack) toggleMusicIsland(false);
-  if (track) {
-    const title = track.fileName || track.text || 'A little song', currentStatus = String(me?.bio || 'Listening together').trim() || 'Listening together';
-    if (shortTitle) shortTitle.textContent = shortIslandTitle(track);
-    if (fullTitle) fullTitle.textContent = title;
-    if (status) status.textContent = currentStatus;
-    if (pill) {
-      pill.title = title + ' · ' + currentStatus;
-      pill.setAttribute('aria-label', 'Music: ' + title + '. Status: ' + currentStatus + '. Open player');
-    }
-  }
-  if (toggle) {
-    toggle.textContent = audio.paused ? '▶' : 'Ⅱ';
-    toggle.setAttribute('aria-label', audio.paused ? 'Play song' : 'Pause song');
-  }
-  if (seek) seek.value = audio.duration ? String(Math.round(audio.currentTime / audio.duration * 1000)) : 0;
-  if (current) current.textContent = formatClock(audio.currentTime);
-  if (duration) duration.textContent = formatClock(audio.duration);
+  if(toggle){toggle.textContent=playing?'Ⅱ':'▶';toggle.setAttribute('aria-label',playing?'Pause song':'Play song');}
+  syncPlayerProgress();
 }
-
 async function playSong(id) {
-  const songs = feed.filter(x => x.kind === 'song'), index = songs.findIndex(x => String(x.id) === String(id)), audio = $('#globalAudio');
-  if (index < 0) return toast('This song is no longer in your garden ♡');
-  if (String(playlist[playlistIndex]?.id) === String(id) && audio.src) {
-    if (audio.paused) await audio.play().catch(() => {});
-    else audio.pause();
-    syncPlayer();
-    return;
+  const songs=feed.filter(item=>item.kind==='song'),index=songs.findIndex(item=>String(item.id)===String(id)),audio=$('#globalAudio');
+  if(index<0||!audio)return toast('This song is no longer in your garden ♡');
+  const track=songs[index],trackId=String(track.id);
+  if(audio.dataset.trackId===trackId&&audio.src){
+    try{if(audio.paused)await audio.play();else audio.pause();}catch(error){toast(error?.message||'Playback could not resume. Tap play again ♡');}
+    syncPlayer();return;
   }
-  playlist = songs;
-  playlistIndex = index;
-  const track = songs[index];
-  audio.pause();
-  audio.removeAttribute('src');
-  audio.load();
-  if (audioObjectUrl) URL.revokeObjectURL(audioObjectUrl);
-  syncPlayer();
-  try {
-    const { data, error } = await sb.storage.from('memories').download(track.storagePath);
-    if (error) throw error;
-    audioObjectUrl = URL.createObjectURL(data);
-    audio.src = audioObjectUrl;
-    await audio.play();
-    syncPlayer();
-  } catch (e) {
-    toast(e.message || 'Could not play this song right now ♡');
-  }
+  playlist=songs;playlistIndex=index;
+  const requestId=++playbackRequestId;
+  audio.pause();audio.removeAttribute('src');delete audio.dataset.trackId;audio.load();syncPlayer();
+  try{
+    const {data,error}=await sb.storage.from('memories').createSignedUrl(track.storagePath,3600);
+    if(error)throw error;if(requestId!==playbackRequestId||!data?.signedUrl)return;
+    audio.preload='auto';audio.src=data.signedUrl;audio.dataset.trackId=trackId;audio.load();await audio.play();
+    if(requestId===playbackRequestId)syncPlayer();
+  }catch(error){if(requestId===playbackRequestId){syncPlayer();toast(error?.message||'Could not play this song right now ♡');}}
 }
 
 function stepSong(step) {
@@ -1915,7 +1928,6 @@ function stepSong(step) {
 /* Modals & Dialogs */
 function closeAllGates() {
   closePhotoLightbox();
-  closeMemoryActions();
   hideMessageActions();
   document.querySelectorAll('.auth-gate').forEach(gate => gate.classList.add('hidden'));
 }
@@ -1946,57 +1958,6 @@ function closePhotoLightbox() {
   $('#photoLightboxDelete').classList.add('hidden');
   confirmGate.classList.add('hidden');
   confirmGate.dataset.memoryId = '';
-}
-
-function openMemoryActions(id) {
-  const item = feed.find(memory => String(memory.id) === String(id));
-  if (!item) return;
-  const gate = $('#memoryActionGate'), image = $('#memoryActionImage'), emoji = $('#memoryActionEmoji');
-  const actionCard = gate.querySelector('.memory-action-card'), isPhoto = item.kind === 'photo', isNote = item.kind === 'note';
-  gate.dataset.memoryId = String(item.id);
-  actionCard.classList.toggle('is-song', item.kind === 'song');
-  actionCard.classList.toggle('is-note', isNote);
-  actionCard.classList.toggle('is-photo', isPhoto);
-
-  const isOwnItem = String(item.author?.id || item.owner_id || '') === String(me?.id || '');
-  const canDelete = isOwnItem && !item.isPending;
-  $('#memoryDelete').classList.toggle('hidden', !canDelete);
-  // Uploaded songs belong to their owner: offer Delete, not a redundant Save action.
-  $('#memoryDownload').classList.toggle('hidden', isNote || (item.kind === 'song' && isOwnItem));
-  // Clean delete text without dustbin box / emoji
-  $('#memoryDelete').textContent = isNote ? 'Delete note' : item.kind === 'song' ? 'Delete song' : 'Delete photo';
-  $('#memoryCopy').classList.toggle('hidden', !isNote);
-  $('#memoryActionKicker').textContent = isPhoto ? 'A LITTLE PHOTO' : isNote ? 'A LITTLE NOTE' : 'A SONG TO KEEP';
-  $('#memoryActionTitle').textContent = isPhoto ? 'A lovely moment' : isNote ? 'A note to keep' : (item.fileName || 'A little song');
-  $('#memoryActionText').textContent = isPhoto ? 'Keep this sweet moment on your device?' : isNote ? 'Copy this message or delete it softly?' : isOwnItem ? 'You added this song to your garden.' : 'Save this song file for later?';
-  $('#memoryDownload').textContent = isPhoto ? 'Save photo' : item.kind === 'song' ? 'Save song' : 'Save';
-
-  const art = $('#memoryActionArt');
-  art.classList.toggle('is-photo', isPhoto);
-  image.classList.toggle('hidden', !isPhoto);
-  emoji.classList.toggle('hidden', isPhoto);
-  emoji.textContent = isPhoto ? '🌷' : isNote ? '💌' : '🎵';
-  image.alt = 'A shared photo';
-  image.removeAttribute('src');
-  gate.classList.remove('hidden');
-
-  if (isPhoto) {
-    const thumbnail = [...document.querySelectorAll('.feed-item[data-memory]')].find(node => node.dataset.memory === String(item.id))?.querySelector('.feed-photo');
-    const loadedSource = thumbnail?.getAttribute('src');
-    if (loadedSource) image.src = loadedSource;
-    else if (thumbnail) {
-      void hydrateOneMedia(thumbnail).then(() => {
-        const nextSource = thumbnail.getAttribute('src');
-        if (gate.dataset.memoryId === String(item.id) && nextSource) image.src = nextSource;
-      });
-    }
-  }
-}
-
-function closeMemoryActions() {
-  const gate = $('#memoryActionGate');
-  gate.classList.add('hidden');
-  $('#memoryActionImage').removeAttribute('src');
 }
 
 /* Two-button floating popup above pressed message: Copy and Delete */
@@ -2464,40 +2425,56 @@ async function searchFriends() {
 }
 
 async function hydrateOneMedia(node) {
+  const key = String(node?.dataset?.media || '');
+  let pending = null;
   try {
-    const m = feed.find(x => String(x.id) === node.dataset.media);
-    if (!m?.storagePath || m.isPending) return;
-    const key = String(m.id), cached = mediaUrlCache.get(key);
-    if (cached) {
-      node.src = cached;
+    if (!key || !node.isConnected) return;
+    const item = feed.find(memory => String(memory.id) === key);
+    if (!item?.storagePath || item.isPending) return;
+    if (item.previewUrl) {
+      if (node.getAttribute('src') !== item.previewUrl) node.src = item.previewUrl;
       return;
     }
-    const { data, error } = await sb.storage.from('memories').download(m.storagePath);
-    if (!error && data) {
-      const url = URL.createObjectURL(data);
-      mediaUrlCache.set(key, url);
-      if (mediaUrlCache.size > 40) {
-        const oldest = mediaUrlCache.keys().next().value, expired = mediaUrlCache.get(oldest);
-        mediaUrlCache.delete(oldest);
-        URL.revokeObjectURL(expired);
-      }
-      node.src = url;
-    }
-  } catch {}
-}
 
+    const cached = mediaUrlCache.get(key);
+    if (cached && cached.expiresAt > Date.now() + 30000) {
+      if (node.getAttribute('src') !== cached.url) node.src = cached.url;
+      return;
+    }
+
+    pending = mediaUrlLoads.get(key);
+    if (!pending) {
+      pending = (async () => {
+        const { data, error } = await sb.storage.from('memories').createSignedUrl(item.storagePath, 3600);
+        if (error) throw error;
+        if (!data?.signedUrl) throw new Error('A media link could not be prepared.');
+        const entry = { url: data.signedUrl, expiresAt: Date.now() + 55 * 60 * 1000 };
+        mediaUrlCache.set(key, entry);
+        while (mediaUrlCache.size > 80) mediaUrlCache.delete(mediaUrlCache.keys().next().value);
+        return entry.url;
+      })();
+      mediaUrlLoads.set(key, pending);
+    }
+
+    const url = await pending;
+    if (node.isConnected && node.dataset.media === key) node.src = url;
+  } catch {
+    if (node?.isConnected) node.dataset.mediaError = 'true';
+  } finally {
+    // An older request must never delete a newer retry for the same memory.
+    if (pending && mediaUrlLoads.get(key) === pending) mediaUrlLoads.delete(key);
+  }
+}
 function hydrateMedia() {
-  if (!sb) return;
-  const nodes = [...document.querySelectorAll('[data-media]')];
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        observer.unobserve(entry.target);
-        void hydrateOneMedia(entry.target);
-      }
-    }), { rootMargin: '320px 0px' });
-    nodes.forEach(node => observer.observe(node));
-  } else nodes.forEach(node => void hydrateOneMedia(node));
+  mediaObserver?.disconnect(); mediaObserver=null;
+  if(!sb)return;
+  const nodes=[...document.querySelectorAll('[data-media]')];
+  if('IntersectionObserver' in window){
+    mediaObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
+      if(entry.isIntersecting){mediaObserver?.unobserve(entry.target);void hydrateOneMedia(entry.target);}
+    }),{rootMargin:'480px 0px'});
+    nodes.forEach(node=>mediaObserver.observe(node));
+  }else nodes.forEach(node=>void hydrateOneMedia(node));
 }
 
 function formatProfileDate(value) {
@@ -2509,20 +2486,13 @@ function formatProfileDate(value) {
 
 /* Event listeners */
 
-// Tapping effect on pointerdown
-document.addEventListener('pointerdown', e => {
-  const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
-  if (!interactive || e.target.closest('input, textarea, select')) return;
-  interactive.classList.remove('cute-tap');
-  void interactive.offsetWidth;
-  interactive.classList.add('cute-tap');
-  setTimeout(() => interactive.classList.remove('cute-tap'), 360);
-
-  const rect = interactive.getBoundingClientRect();
-  const x = e.clientX || (rect.left + rect.width / 2);
-  const y = e.clientY || (rect.top + rect.height / 2);
-
-}, { passive: true });
+// Compositor-based touch feedback; no forced style/layout recalculation.
+document.addEventListener('pointerdown', event => {
+  const interactive=event.target.closest('button,.primary,.round,.tile,.ig-note-item,.feed-photo,.bunny-button,.daily,[data-go],#nav button');
+  if(!interactive||event.target.closest('input,textarea,select'))return;
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||typeof interactive.animate!=='function')return;
+  interactive.animate([{transform:'scale(1)'},{transform:'scale(.975)'},{transform:'scale(1)'}],{duration:145,easing:'cubic-bezier(.2,.75,.25,1)'});
+},{passive:true});
 
 document.addEventListener('submit', e => {
   if (e.target.id !== 'streakGoalForm') return;
@@ -2561,7 +2531,6 @@ document.addEventListener('click', e => {
   if (e.target.classList.contains('auth-gate')) {
     e.target.classList.add('hidden');
     if (e.target.id === 'photoLightbox') closePhotoLightbox();
-    if (e.target.id === 'memoryActionGate') closeMemoryActions();
     return;
   }
 
@@ -2656,12 +2625,12 @@ document.addEventListener('click', event => {
   openStreakGarden();
 }, true);
 
-document.addEventListener('keydown', event => {
-  const thumbnail = event.target?.closest?.('.streak-art-trigger[data-open-streak]');
-  if (!thumbnail || (event.key !== 'Enter' && event.key !== ' ')) return;
-  event.preventDefault();
-  openStreakGarden();
-}, true);
+document.addEventListener('keydown',event=>{
+  const streak=event.target?.closest?.('.streak-art-trigger[data-open-streak]');
+  if(streak&&(event.key==='Enter'||event.key===' ')){event.preventDefault();openStreakGarden();return;}
+  const tile=event.target?.closest?.('.happy-things-grid .tile-art[data-go]');
+  if(tile&&(event.key==='Enter'||event.key===' ')){event.preventDefault();go(tile.dataset.go);}
+},true);
 
 // Keep the tappable kindness card accessible to keyboard users.
 document.addEventListener('keydown', event => {
@@ -3062,24 +3031,6 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // Memory Actions (from song options)
-  if (e.target.closest('#memoryDownload')) {
-    void downloadMemoryById($('#memoryActionGate').dataset.memoryId, $('#memoryDownload'));
-    return;
-  }
-  if (e.target.closest('#memoryCopy')) {
-    const id = $('#memoryActionGate').dataset.memoryId;
-    closeMemoryActions();
-    void copyMemoryText(id);
-    return;
-  }
-  if (e.target.closest('#memoryDelete')) {
-    const id = $('#memoryActionGate').dataset.memoryId;
-    closeMemoryActions();
-    void deleteSafely(id);
-    return;
-  }
-
   // Notifications
   if (e.target.closest('#notificationsReadAll')) {
     try {
@@ -3354,9 +3305,7 @@ document.addEventListener('submit', async e => {
     }
     token = result.token;
     localStorage.setItem('cuteBunnyToken', token);
-    await refresh();
-    setUser(me);
-    void recordLoginStreak();
+    await enterAppQuickly();
   } catch (error) {
     err.textContent = error.message.includes('Failed to fetch') ? 'Check your Supabase URL/key and internet connection, then try again.' : error.message;
   } finally {
@@ -3394,7 +3343,6 @@ document.addEventListener('change', async e => {
     previewUrl,
     author: { id: me.id, username: me.username, displayName: me.displayName, mascot: me.mascot }
   };
-  if (previewUrl) pendingMediaUrls.set(tempId, previewUrl);
   feed = [optimistic, ...feed];
   render();
 
@@ -3410,10 +3358,10 @@ document.addEventListener('change', async e => {
       fileName: saved.file_name || file.name,
       contentType: saved.content_type || file.type,
       storagePath: saved.storage_path,
-      author: optimistic.author,
-      previewUrl
+      author: optimistic.author
     };
     feed = feed.map(m => String(m.id) === tempId ? item : m);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     render();
     toast('Added to your shared scrapbook ♡');
   } catch (err) {
@@ -3427,15 +3375,15 @@ document.addEventListener('change', async e => {
 // Setup audio event listeners
 const musicAudio = $('#globalAudio');
 if (musicAudio) {
-  ['play', 'pause', 'loadedmetadata', 'durationchange', 'timeupdate', 'seeked'].forEach(type => {
-    musicAudio.addEventListener(type, syncPlayer);
-  });
-  musicAudio.addEventListener('ended', () => stepSong(1));
+  ['play','pause','loadedmetadata','durationchange','emptied'].forEach(type=>musicAudio.addEventListener(type,syncPlayer));
+  ['timeupdate','seeked'].forEach(type=>musicAudio.addEventListener(type,syncPlayerProgress));
+  musicAudio.addEventListener('ended',()=>stepSong(1));
 }
 $('#islandSeek')?.addEventListener('input', event => {
   const audio = $('#globalAudio');
   if (Number.isFinite(audio.duration) && audio.duration > 0) {
     audio.currentTime = Number(event.target.value) / 1000 * audio.duration;
+    syncPlayerProgress();
   }
 });
 
@@ -3446,9 +3394,7 @@ async function restoreSession() {
       const { data: { session } } = await sb.auth.getSession();
       if (session) {
         token = session.access_token;
-        await refresh();
-        setUser(me);
-        void recordLoginStreak();
+        await enterAppQuickly();
       }
     }
   } catch (e) {
