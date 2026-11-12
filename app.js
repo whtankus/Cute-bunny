@@ -21,6 +21,7 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let notificationSeenObserver = null, notificationDismissals = new Set();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
+let notificationViewedIds = new Set();
 let navRefreshInFlight = false, appExitStep = 0;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
@@ -2569,43 +2570,33 @@ function renderNotifications() {
 function observeNotificationListRows() {
   notificationListSeenObserver?.disconnect();
   notificationListSeenObserver = null;
-  notificationRowViewTimers.forEach(timer => clearTimeout(timer));
-  notificationRowViewTimers.clear();
-
   const gate = $('#notificationGate'), list = $('#notificationList');
   if (!gate || gate.classList.contains('hidden') || !list || !notificationRows.length) return;
   if (!('IntersectionObserver' in window)) return;
 
+  // Seeing a notification only marks it for dismissal when the user leaves
+  // the notification panel. Never remove it while the panel is still open.
   notificationListSeenObserver = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-      const row = entry.target;
-      const id = String(row?.dataset?.notificationRow || '');
-      if (!id) return;
-
-      if (entry.isIntersecting && entry.intersectionRatio >= 0.8) {
-        if (notificationRowViewTimers.has(id)) return;
-        const timer = window.setTimeout(() => {
-          notificationRowViewTimers.delete(id);
-          if (!row.isConnected || gate.classList.contains('hidden')) return;
-          const rowRect = row.getBoundingClientRect();
-          const listRect = list.getBoundingClientRect();
-          const visibleHeight = Math.max(0, Math.min(rowRect.bottom, listRect.bottom) - Math.max(rowRect.top, listRect.top));
-          if (rowRect.height && visibleHeight / rowRect.height >= 0.8) {
-            void dismissNotification(id, { silent: true }).catch(() => {});
-          }
-        }, 850);
-        notificationRowViewTimers.set(id, timer);
-      } else {
-        const timer = notificationRowViewTimers.get(id);
-        if (timer) clearTimeout(timer);
-        notificationRowViewTimers.delete(id);
-      }
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.8) return;
+      const id = String(entry.target?.dataset?.notificationRow || '');
+      if (id) notificationViewedIds.add(id);
     });
   }, { root: list, threshold: [0, 0.8] });
 
   list.querySelectorAll('.notification-row[data-notification-row]').forEach(row => {
     notificationListSeenObserver.observe(row);
   });
+}
+
+async function dismissViewedNotifications() {
+  notificationListSeenObserver?.disconnect();
+  notificationListSeenObserver = null;
+  const ids = [...notificationViewedIds];
+  notificationViewedIds.clear();
+  for (const id of ids) {
+    try { await dismissNotification(id, { silent: true }); } catch {}
+  }
 }
 
 async function dismissNotification(id, options = {}) {
@@ -2638,39 +2629,9 @@ async function dismissNotification(id, options = {}) {
 }
 
 function observeNotificationMemoryViews() {
+  // Notifications are no longer auto-dismissed when their linked memory is viewed.
   notificationSeenObserver?.disconnect();
   notificationSeenObserver = null;
-  if (!('IntersectionObserver' in window) || !notificationRows.length) return;
-
-  const trackedMemoryIds = new Set(
-    notificationRows.map(row => String(row.memory_id || '')).filter(Boolean)
-  );
-  if (!trackedMemoryIds.size) return;
-
-  notificationSeenObserver = new IntersectionObserver(entries => {
-    const seenIds = new Set();
-    entries.forEach(entry => {
-      if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
-      const id = String(entry.target?.dataset?.memory || '');
-      if (!id) return;
-      notificationSeenObserver?.unobserve(entry.target);
-      seenIds.add(id);
-    });
-    seenIds.forEach(async id => {
-      const matching = notificationRows
-        .filter(row => String(row.memory_id || '') === id)
-        .map(row => row.id);
-      for (const notificationId of matching) {
-        try { await dismissNotification(notificationId, { silent: true }); } catch {}
-      }
-    });
-  }, { threshold: [0, 0.5, 0.75] });
-
-  document.querySelectorAll('#content [data-memory]').forEach(node => {
-    if (trackedMemoryIds.has(String(node.dataset.memory || ''))) {
-      notificationSeenObserver.observe(node);
-    }
-  });
 }
 
 async function searchFriends() {
@@ -2831,6 +2792,7 @@ document.addEventListener('click', e => {
   // If clicking on any auth-gate backdrop
   if (e.target.classList.contains('auth-gate')) {
     e.target.classList.add('hidden');
+    if (e.target.id === 'notificationGate') void dismissViewedNotifications();
     if (e.target.id === 'photoLightbox') closePhotoLightbox();
     if (e.target.id === 'memoryActionGate') closeMemoryActions();
     if (e.target.id === 'appExitGate') {
@@ -3395,6 +3357,7 @@ document.addEventListener('click', async e => {
     try {
       if (notification) await dismissNotification(notification.id);
       $('#notificationGate').classList.add('hidden');
+      await dismissViewedNotifications();
       if (notification?.memory_id) {
         const pageForKind = ({ photo: 'gallery', song: 'music', note: 'notes' })[notification.kind] || 'home';
         go(pageForKind);
