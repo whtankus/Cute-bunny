@@ -28,21 +28,26 @@ const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, s
 
 
 const kindLines = [
-  'You make ordinary days feel special ☀',
-  'A little reminder: you are loved just as you are ♡',
-  'Hope something makes you smile today 🌷',
-  'You deserve a soft, cozy moment ☁',
-  'You make the world kinder by being in it ✨',
-  'Sending a pocket-sized hug your way 🐻',
-  'I hope today brings you a tiny surprise 🌼',
-  'You are someone’s favorite hello 💌',
-  'Take your time. You are doing just fine 🍃',
-  'May your day have snacks, sunshine, and zero worries 🍓',
-  'You make people feel at home 🏡',
-  'Remember to be as kind to yourself as you are to others 🌸',
-  'You are allowed to rest and begin again ☁',
-  'A little sparkle follows you wherever you go ✨',
-  'You are wonderful in all your small, everyday ways ♡'
+  "Your kindness makes ordinary days brighter.",
+  "You make this little world feel warmer.",
+  "May today bring you one lovely surprise.",
+  "Your smile is a small kind of sunshine.",
+  "You deserve the same kindness you give away.",
+  "Let yourself enjoy the little things today.",
+  "Someone is glad you are part of their world.",
+  "You are growing at your own lovely pace.",
+  "May your heart feel light and your tea stay warm.",
+  "Rest is part of becoming who you want to be.",
+  "Your presence makes someone's day softer.",
+  "Keep a little room for joy today.",
+  "You are worthy of patience and gentle words.",
+  "May something beautiful find you today.",
+  "You make even quiet moments feel special.",
+  "You can begin again as many times as needed.",
+  "There is no rush; your pace is enough.",
+  "You bring a little brightness wherever you go.",
+  "A gentle day can still be a meaningful one.",
+  "You deserve moments that feel peaceful and easy."
 ];
 
 let currentKindnessIndex = new Date().getDate() % kindLines.length;
@@ -50,7 +55,7 @@ function getKindness() {
   return kindLines[currentKindnessIndex % kindLines.length];
 }
 
-function rollKindness(e) {
+function rollKindness() {
   let next;
   do {
     next = Math.floor(Math.random() * kindLines.length);
@@ -62,10 +67,6 @@ function rollKindness(e) {
     p.classList.remove('kindness-pop');
     void p.offsetWidth;
     p.classList.add('kindness-pop');
-  }
-  if (e) {
-    const rect = (e.currentTarget || e.target).getBoundingClientRect();
-
   }
   playBoing();
   toast('A little drop of kindness for you ♡');
@@ -1593,13 +1594,12 @@ function render() {
           <i>✦</i>
         </button>
       </div>
-      <div class="daily" id="dailyCard" role="button" tabindex="0" aria-label="A little kindness for today. Tap for a fresh reminder">
+      <div class="daily" id="dailyCard" role="button" tabindex="0" aria-label="A little kindness for today. Tap for another reminder">
         <span class="daily-icon">🌼</span>
         <div>
           <small>A LITTLE KINDNESS FOR TODAY</small>
           <p id="compliment">${esc(getKindness())}</p>
         </div>
-        <button class="round" id="newCompliment" aria-label="New kindness reminder">↻</button>
       </div>
       <div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div>
       <div class="grid happy-things-grid">
@@ -2512,11 +2512,19 @@ document.addEventListener('keydown', event => {
   openStreakGarden();
 }, true);
 
+// Keep the tappable kindness card accessible to keyboard users.
+document.addEventListener('keydown', event => {
+  const card = event.target?.closest?.('#dailyCard');
+  if (!card || (event.key !== 'Enter' && event.key !== ' ')) return;
+  event.preventDefault();
+  rollKindness();
+}, true);
+
 // Main delegation
 document.addEventListener('click', async e => {
-  // Kindness card & button
-  if (e.target.closest('#dailyCard') || e.target.closest('#newCompliment')) {
-    rollKindness(e);
+  // Kindness card
+  if (e.target.closest('#dailyCard')) {
+    rollKindness();
     return;
   }
 
