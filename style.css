@@ -8826,3 +8826,109 @@ body[data-mode="dark"] #app .now-playing-panel {
   backdrop-filter:blur(64px) saturate(1.5)!important;
   box-shadow:0 18px 46px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.13)!important;
 }
+
+
+/* Light, translucent glass Music Island — no dark opaque player surface. */
+#app .now-playing-panel {
+  color:#765b73!important;
+  background:rgba(255,249,253,.34)!important;
+  border:1px solid rgba(255,255,255,.68)!important;
+  -webkit-backdrop-filter:blur(36px) saturate(1.55)!important;
+  backdrop-filter:blur(36px) saturate(1.55)!important;
+  box-shadow:0 14px 38px rgba(107,75,111,.14),inset 0 1px 0 rgba(255,255,255,.72)!important;
+}
+#app .now-playing-panel .island-track-info,
+#app .now-playing-panel .island-track-info strong,
+#app .now-playing-panel .island-status-line,
+#app .now-playing-panel .island-timeline {
+  color:#765b73!important;
+}
+#app .now-playing-panel .island-track-info small,
+#app .now-playing-panel .island-timeline {
+  color:#a17f9b!important;
+}
+#app .now-playing-panel .island-album-icon {
+  border:1px solid rgba(255,255,255,.72)!important;
+  background:linear-gradient(145deg,rgba(255,231,242,.72),rgba(232,226,250,.68))!important;
+  box-shadow:0 4px 12px rgba(125,91,126,.10),inset 0 1px 0 rgba(255,255,255,.8)!important;
+}
+#app .now-playing-panel .island-close {
+  background:rgba(255,255,255,.42)!important;
+  border:1px solid rgba(255,255,255,.62)!important;
+  color:#9b718e!important;
+  -webkit-backdrop-filter:blur(12px)!important;
+  backdrop-filter:blur(12px)!important;
+}
+
+/* Clear, tactile transport controls with a distinct play/pause focal point. */
+#app .now-playing-panel .island-controls {
+  gap:25px!important;
+  margin-top:5px!important;
+}
+#app .now-playing-panel .island-controls button {
+  display:grid!important;
+  place-items:center!important;
+  width:36px!important;
+  height:36px!important;
+  padding:0 0 1px!important;
+  border:1px solid rgba(255,255,255,.62)!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.28)!important;
+  color:#986b8b!important;
+  font-size:1.55rem!important;
+  line-height:1!important;
+  box-shadow:0 3px 10px rgba(105,75,112,.09),inset 0 1px 0 rgba(255,255,255,.72)!important;
+  transition:transform .12s ease,background .12s ease,box-shadow .12s ease!important;
+  -webkit-tap-highlight-color:transparent;
+}
+#app .now-playing-panel .island-controls button:hover {
+  background:rgba(255,255,255,.52)!important;
+  box-shadow:0 4px 13px rgba(105,75,112,.13),inset 0 1px 0 rgba(255,255,255,.82)!important;
+}
+#app .now-playing-panel .island-controls button:active {
+  transform:scale(.90)!important;
+}
+#app .now-playing-panel .island-controls .island-play {
+  width:46px!important;
+  height:46px!important;
+  padding-left:2px!important;
+  border:1px solid rgba(255,255,255,.78)!important;
+  background:linear-gradient(145deg,rgba(255,220,237,.94),rgba(220,205,241,.94))!important;
+  color:#805d82!important;
+  font-size:1.05rem!important;
+  box-shadow:0 5px 14px rgba(145,101,145,.20),inset 0 1px 0 rgba(255,255,255,.9)!important;
+}
+#app .now-playing-panel .island-controls .island-play:active {
+  transform:scale(.93)!important;
+  box-shadow:0 2px 7px rgba(145,101,145,.16),inset 0 1px 0 rgba(255,255,255,.82)!important;
+}
+#app .now-playing-panel .island-timeline input {
+  accent-color:#c783a8!important;
+}
+#app .now-playing-panel .island-timeline input::-webkit-slider-thumb {
+  box-shadow:0 1px 5px rgba(112,75,111,.22)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel {
+  color:#f5eaf3!important;
+  background:rgba(255,246,252,.13)!important;
+  border-color:rgba(255,255,255,.34)!important;
+  -webkit-backdrop-filter:blur(38px) saturate(1.45)!important;
+  backdrop-filter:blur(38px) saturate(1.45)!important;
+  box-shadow:0 14px 38px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.30)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel .island-track-info,
+body[data-mode="dark"] #app .now-playing-panel .island-track-info strong,
+body[data-mode="dark"] #app .now-playing-panel .island-status-line,
+body[data-mode="dark"] #app .now-playing-panel .island-timeline,
+body[data-mode="dark"] #app .now-playing-panel .island-track-info small {
+  color:#fff0fa!important;
+}
+body[data-mode="dark"] #app .now-playing-panel .island-controls button {
+  color:#fff0fa!important;
+  background:rgba(255,255,255,.12)!important;
+  border-color:rgba(255,255,255,.26)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel .island-controls .island-play {
+  color:#654968!important;
+  background:linear-gradient(145deg,rgba(255,225,241,.96),rgba(224,211,246,.96))!important;
+}
