@@ -1356,6 +1356,7 @@ function popLoveHeart(card, e) {
 function go(p, options = {}) {
   const validPages = ['home', 'gallery', 'music', 'notes', 'friends', 'streak'];
   if (!validPages.includes(p)) return;
+  const previousPage = page;
   if (options.resetStack) appPageStack = [p];
   else if (!options.fromBack && p !== page && appBackGuardInstalled) appPageStack.push(p);
   if (page === 'notes' && p !== 'notes') {
@@ -1396,6 +1397,15 @@ function go(p, options = {}) {
   window.scrollTo({ top: 0, behavior: 'auto' });
   render();
   syncPresenceUI();
+  if (previousPage !== p && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    const content = $('#content');
+    if (content && typeof content.animate === 'function') {
+      content.animate(
+        [{ opacity: .86, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }],
+        { duration: 185, easing: 'cubic-bezier(.2,.75,.25,1)' }
+      );
+    }
+  }
 
   if (p === 'notes') {
     requestAnimationFrame(() => {
