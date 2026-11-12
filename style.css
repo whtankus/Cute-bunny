@@ -9017,3 +9017,31 @@ body[data-mode="dark"] #app .now-playing-panel {
   -webkit-backdrop-filter:blur(38px) saturate(1.5)!important;backdrop-filter:blur(38px) saturate(1.5)!important;
   box-shadow:0 12px 34px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.18)!important;
 }
+
+
+/* Wet-glass transport buttons: same pastel palette as Play/Pause,
+   with translucent surfaces and strong background diffusion. */
+#app .now-playing-panel .island-controls button:not(.island-play) {
+  color:#805d82!important;
+  background:linear-gradient(145deg,rgba(255,220,237,.43),rgba(220,205,241,.43))!important;
+  border:1px solid rgba(255,255,255,.62)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(1.7)!important;
+  backdrop-filter:blur(24px) saturate(1.7)!important;
+  box-shadow:0 4px 12px rgba(145,101,145,.12),inset 0 1px 0 rgba(255,255,255,.72),inset 0 -1px 2px rgba(145,101,145,.08)!important;
+}
+#app .now-playing-panel .island-controls button:not(.island-play):hover {
+  background:linear-gradient(145deg,rgba(255,220,237,.58),rgba(220,205,241,.58))!important;
+  box-shadow:0 5px 14px rgba(145,101,145,.16),inset 0 1px 0 rgba(255,255,255,.82)!important;
+}
+#app .now-playing-panel .island-controls button:not(.island-play):active {
+  background:linear-gradient(145deg,rgba(255,220,237,.66),rgba(220,205,241,.66))!important;
+  transform:scale(.92)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel .island-controls button:not(.island-play) {
+  color:#805d82!important;
+  background:linear-gradient(145deg,rgba(255,220,237,.36),rgba(220,205,241,.36))!important;
+  border-color:rgba(255,255,255,.48)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(1.65)!important;
+  backdrop-filter:blur(26px) saturate(1.65)!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.64)!important;
+}
