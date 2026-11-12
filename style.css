@@ -9049,18 +9049,18 @@ body[data-mode="dark"] #app .now-playing-panel .island-controls button:not(.isla
 
 /* Deep frosted-glass player: diffuse the wallpaper heavily instead of showing it sharply. */
 #app .now-playing-panel {
-  background:rgba(255,249,253,.025)!important;
-  border-color:rgba(255,255,255,.34)!important;
-  -webkit-backdrop-filter:blur(72px) saturate(1.75)!important;
-  backdrop-filter:blur(72px) saturate(1.75)!important;
-  box-shadow:0 14px 38px rgba(107,75,111,.09),inset 0 1px 0 rgba(255,255,255,.38)!important;
+  background:rgba(255,249,253,.07)!important;
+  border-color:rgba(255,255,255,.42)!important;
+  -webkit-backdrop-filter:blur(137px) saturate(1.9)!important;
+  backdrop-filter:blur(137px) saturate(1.9)!important;
+  box-shadow:0 16px 42px rgba(107,75,111,.11),inset 0 1px 0 rgba(255,255,255,.46)!important;
 }
 body[data-mode="dark"] #app .now-playing-panel {
-  background:rgba(255,246,252,.018)!important;
-  border-color:rgba(255,255,255,.18)!important;
-  -webkit-backdrop-filter:blur(76px) saturate(1.65)!important;
-  backdrop-filter:blur(76px) saturate(1.65)!important;
-  box-shadow:0 14px 38px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.16)!important;
+  background:rgba(255,246,252,.045)!important;
+  border-color:rgba(255,255,255,.24)!important;
+  -webkit-backdrop-filter:blur(144px) saturate(1.8)!important;
+  backdrop-filter:blur(144px) saturate(1.8)!important;
+  box-shadow:0 16px 42px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.22)!important;
 }
 
 /* Remove perceived dock delay: immediate touch response and a short page swap. */
