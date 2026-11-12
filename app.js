@@ -420,6 +420,7 @@ async function refresh() {
   feed = results[1];
   friends = results[2];
   render();
+  syncPresenceUI();
   if (!$('#friendProfileGate').classList.contains('hidden')) {
     const profile = [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
     if (profile) showFriendProfile(profile);
@@ -1360,6 +1361,7 @@ function go(p, options = {}) {
   // page's document scroll position.
   window.scrollTo({ top: 0, behavior: 'auto' });
   render();
+  syncPresenceUI();
 
   if (p === 'notes') {
     requestAnimationFrame(() => {
