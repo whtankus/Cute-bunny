@@ -9072,3 +9072,71 @@ body[data-mode="dark"] #app .now-playing-panel {
 .app #nav button[data-page]:active { transform:scale(.94)!important;transition-duration:.03s!important; }
 .app #nav button i { transition:transform .06s ease!important; }
 #content { animation:appear .12s ease-out!important; }
+
+
+/* Softer glass tint and a petite, rounded music progress control. */
+#app .now-playing-panel {
+  background:rgba(255,249,253,.056)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel {
+  background:rgba(255,246,252,.036)!important;
+}
+#app .now-playing-panel .island-timeline {
+  grid-template-columns:25px minmax(0,1fr) 25px!important;
+  gap:5px!important;
+  margin:5px 0 3px!important;
+  font-size:.52rem!important;
+}
+#app .now-playing-panel .island-timeline input {
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  width:100%!important;
+  height:12px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  cursor:pointer!important;
+  accent-color:transparent!important;
+}
+#app .now-playing-panel .island-timeline input::-webkit-slider-runnable-track {
+  height:3px!important;
+  border-radius:999px!important;
+  background:linear-gradient(90deg,#d99bb9,#c4a9dc)!important;
+  box-shadow:0 1px 2px rgba(105,75,111,.12)!important;
+}
+#app .now-playing-panel .island-timeline input::-moz-range-track {
+  height:3px!important;
+  border-radius:999px!important;
+  background:linear-gradient(90deg,#d99bb9,#c4a9dc)!important;
+  box-shadow:0 1px 2px rgba(105,75,111,.12)!important;
+}
+#app .now-playing-panel .island-timeline input::-webkit-slider-thumb {
+  -webkit-appearance:none!important;
+  width:8px!important;
+  height:8px!important;
+  margin-top:-2.5px!important;
+  border:1.5px solid rgba(255,255,255,.96)!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,#f4c6dc,#c7b4e8)!important;
+  box-shadow:0 1px 4px rgba(112,75,111,.24)!important;
+}
+#app .now-playing-panel .island-timeline input::-moz-range-thumb {
+  width:8px!important;
+  height:8px!important;
+  border:1.5px solid rgba(255,255,255,.96)!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,#f4c6dc,#c7b4e8)!important;
+  box-shadow:0 1px 4px rgba(112,75,111,.24)!important;
+}
+#app .now-playing-panel .island-timeline input:focus-visible {
+  outline:2px solid rgba(205,151,190,.5)!important;
+  outline-offset:2px!important;
+}
+body[data-mode="dark"] #app .now-playing-panel .island-timeline input::-webkit-slider-runnable-track {
+  background:linear-gradient(90deg,#d9a9c9,#a995d0)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel .island-timeline input::-moz-range-track {
+  background:linear-gradient(90deg,#d9a9c9,#a995d0)!important;
+}
