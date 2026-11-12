@@ -9171,3 +9171,86 @@ body[data-mode="dark"] #app .now-playing-panel {
   bottom:5px!important;
   font-size:1rem!important;
 }
+
+
+/* Fast, tactile navigation and clearer photo-upload affordance. */
+.app #nav button[data-page]{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .08s ease,filter .1s ease,background-color .1s ease;
+}
+.app #nav button[data-page]:active,
+.app #nav button[data-page].is-navigating{
+  transform:scale(.94) translateY(1px);
+  filter:saturate(1.12);
+}
+.app #nav button.is-navigating i{transform:scale(1.12)}
+.app .upload-label{
+  min-height:48px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:12px 20px;
+  border-radius:16px;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .08s ease,filter .12s ease,box-shadow .12s ease;
+}
+.app .upload-label:active{
+  transform:scale(.97);
+  filter:brightness(.98) saturate(1.08);
+}
+.app .upload-label input{pointer-events:none}
+.app .feed-photo{
+  background:linear-gradient(110deg,#f8e6ed 20%,#fff8fa 38%,#f8e6ed 56%);
+  background-size:220% 100%;
+  animation:photo-placeholder-shimmer 1.2s linear infinite;
+}
+.app .feed-photo[src]{animation:none;background:#f8e6ed}
+@keyframes photo-placeholder-shimmer{
+  to{background-position-x:-220%}
+}
+.photo-lightbox-card #photoLightboxImage.is-loading{
+  min-height:180px;
+  background:linear-gradient(110deg,#f8e6ed 20%,#fff8fa 38%,#f8e6ed 56%);
+  background-size:220% 100%;
+  animation:photo-placeholder-shimmer 1.2s linear infinite;
+}
+.photo-lightbox-card #photoLightboxImage.is-load-error{
+  opacity:.35;
+}
+@media(prefers-reduced-motion:reduce){
+  .app #nav button[data-page],.app .upload-label,.app .feed-photo,.photo-lightbox-card #photoLightboxImage{animation:none!important;transition:none!important}
+}
+
+
+/* Navigation responsiveness: avoid layout-triggering tap effects on the dock. */
+.app #nav button[data-page]{
+  transform:translateZ(0);
+  backface-visibility:hidden;
+  transition:transform .11s cubic-bezier(.2,.8,.2,1),
+             background-color .14s ease,
+             box-shadow .14s ease,
+             filter .14s ease!important;
+  will-change:transform;
+}
+.app #nav button[data-page]:active,
+.app #nav button[data-page].nav-pressed{
+  transform:translateY(1px) scale(.965)!important;
+  filter:brightness(.985) saturate(1.06);
+}
+.app #nav button[data-page].is-navigating{
+  transform:translateY(-1px) scale(.98)!important;
+}
+.app #nav button[data-page] i{
+  transition:transform .11s cubic-bezier(.2,.8,.2,1)!important;
+}
+.app #nav button[data-page]:active i,
+.app #nav button[data-page].nav-pressed i{
+  transform:scale(1.08);
+}
+@media(prefers-reduced-motion:reduce){
+  .app #nav button[data-page]{will-change:auto;transition:none!important}
+}

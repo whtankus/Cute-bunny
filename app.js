@@ -22,7 +22,7 @@ let notificationRows = [], notificationLoaded = false, notificationLoading = fal
 let notificationSeenObserver = null, notificationDismissals = new Set();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
-let navRefreshInFlight = false, appExitStep = 0;
+let navRefreshInFlight = false, navRenderToken = 0, appExitStep = 0;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
 let hiddenNoteIds = new Set();
@@ -1402,8 +1402,20 @@ function go(p, options = {}) {
   // Start Notes at the app's top-level header rather than inheriting another
   // page's document scroll position.
   window.scrollTo({ top: 0, behavior: 'auto' });
-  render({ followLatest: p === 'notes' && previousPage === 'notes' });
-  syncPresenceUI();
+  const renderOptions = { followLatest: p === 'notes' && previousPage === 'notes' };
+  if (options.deferRender) {
+    // Paint the selected tab immediately, then render only the latest requested
+    // destination. Rapid tab taps are coalesced instead of queued or blocked.
+    const renderToken = ++navRenderToken;
+    requestAnimationFrame(() => {
+      if (renderToken !== navRenderToken || page !== p) return;
+      render(renderOptions);
+      syncPresenceUI();
+    });
+  } else {
+    render(renderOptions);
+    syncPresenceUI();
+  }
 
   if (p === 'notes') {
     requestAnimationFrame(() => {
@@ -2022,12 +2034,32 @@ async function openPhotoLightbox(id) {
   gate.dataset.memoryId = String(id);
   deleteButton.classList.toggle('hidden', !canDelete);
   deleteButton.setAttribute('aria-hidden', String(!canDelete));
+  image.onload = () => { if (gate.dataset.memoryId === String(id)) image.classList.remove('is-loading','is-load-error'); };
+  image.onerror = () => { if (gate.dataset.memoryId === String(id)) image.classList.remove('is-loading'), image.classList.add('is-load-error'); };
   image.removeAttribute('src');
+  image.classList.add('is-loading');
   gate.classList.remove('hidden');
-  if (thumb?.getAttribute('src')) image.src = thumb.getAttribute('src');
-  else if (thumb) {
-    await hydrateOneMedia(thumb);
-    if (gate.dataset.memoryId === String(id) && thumb.getAttribute('src')) image.src = thumb.getAttribute('src');
+
+  // Reuse an already visible thumbnail immediately; otherwise fetch a signed
+  // URL in parallel with opening the lightbox so the panel never waits blank.
+  const visibleSource = thumb?.getAttribute('src') || item.previewUrl;
+  if (visibleSource) {
+    image.src = visibleSource;
+    return;
+  }
+  if (!item.storagePath || item.isPending) {
+    image.classList.remove('is-loading');
+    return;
+  }
+  try {
+    const url = await resolveMediaSource(item);
+    if (gate.dataset.memoryId === String(id)) image.src = url;
+  } catch (error) {
+    if (gate.dataset.memoryId === String(id)) {
+      image.classList.remove('is-loading');
+      image.classList.add('is-load-error');
+    }
+    console.warn('Photo preview could not be opened:', error?.message || error);
   }
 }
 
@@ -2670,7 +2702,6 @@ async function resolveMediaSource(memory) {
       ? { url: cached, expiresAt: Number.MAX_SAFE_INTEGER }
       : cached;
     if (entry.url && entry.expiresAt > Date.now() + 30000) return entry.url;
-    if (entry.url?.startsWith('blob:')) URL.revokeObjectURL(entry.url);
     mediaUrlCache.delete(key);
   }
 
@@ -2678,15 +2709,13 @@ async function resolveMediaSource(memory) {
   if (pending) return pending;
 
   const request = (async () => {
-    // Download once into a retained Blob URL. Re-rendering Gallery or moving
-    // between pages then reuses the same in-memory image instead of requesting
-    // a fresh signed URL and downloading the same photo again.
-    const { data, error } = await sb.storage.from('memories').download(memory.storagePath);
-    if (error || !data) throw error || new Error('The photo could not be loaded.');
-    const url = URL.createObjectURL(data);
-    const entry = { url, expiresAt: Number.MAX_SAFE_INTEGER };
+    // Ask Storage for a short-lived URL and let the browser stream/decode the
+    // image directly. This avoids downloading the full file into a Blob first.
+    const { data, error } = await sb.storage.from('memories').createSignedUrl(memory.storagePath, 3600);
+    if (error || !data?.signedUrl) throw error || new Error('The photo could not be loaded.');
+    const entry = { url: data.signedUrl, expiresAt: Date.now() + 55 * 60 * 1000 };
     cacheMediaSource(key, entry);
-    return url;
+    return data.signedUrl;
   })();
 
   mediaHydrationInFlight.set(key, request);
@@ -2741,20 +2770,28 @@ function formatProfileDate(value) {
 
 /* Event listeners */
 
-// Tapping effect on pointerdown
+// Lightweight pointer feedback. Dock buttons avoid the old forced reflow
+// used by the decorative tap animation, keeping navigation responsive.
 document.addEventListener('pointerdown', e => {
-  const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
+  const navButton = e.target.closest('#nav button[data-page]');
+  if (navButton) {
+    navButton.classList.add('nav-pressed');
+    return;
+  }
+  const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go]');
   if (!interactive || e.target.closest('input, textarea, select')) return;
   interactive.classList.remove('cute-tap');
   void interactive.offsetWidth;
   interactive.classList.add('cute-tap');
   setTimeout(() => interactive.classList.remove('cute-tap'), 360);
-
-  const rect = interactive.getBoundingClientRect();
-  const x = e.clientX || (rect.left + rect.width / 2);
-  const y = e.clientY || (rect.top + rect.height / 2);
-
 }, { passive: true });
+
+function clearNavPressedState() {
+  document.querySelectorAll('#nav button.nav-pressed').forEach(button => button.classList.remove('nav-pressed'));
+}
+document.addEventListener('pointerup', clearNavPressedState, { passive: true });
+document.addEventListener('pointercancel', clearNavPressedState, { passive: true });
+document.addEventListener('pointerleave', clearNavPressedState, { passive: true });
 
 document.addEventListener('submit', e => {
   if (e.target.id !== 'streakGoalForm') return;
@@ -3001,27 +3038,25 @@ document.addEventListener('click', async e => {
   if (nav) {
     e.preventDefault();
     if (nav.dataset.page !== page) {
-      go(nav.dataset.page);
+      // Navigate in the same click task: the pointerdown state is already
+      // painted by CSS, so an extra animation-frame wait only adds latency.
+      // Never serialize tab taps behind a lock. go() updates the selected
+      // state immediately and coalesces expensive page rendering to the
+      // latest destination on the next paint.
+      nav.classList.add('is-navigating');
+      go(nav.dataset.page, { deferRender: true });
+      requestAnimationFrame(() => {
+        nav.classList.remove('is-navigating', 'nav-pressed');
+        nav.removeAttribute('aria-busy');
+      });
       return;
     }
 
     const scrollRoot = document.scrollingElement || document.documentElement;
     const currentScrollTop = Math.max(window.scrollY || 0, scrollRoot.scrollTop || 0);
-    if (currentScrollTop > 8) {
-      window.scrollTo({ top: 0, behavior: 'auto' });
-      return;
-    }
-
-    if (navRefreshInFlight) return;
-    navRefreshInFlight = true;
-    try {
-      await refresh();
-      window.scrollTo({ top: 0, behavior: 'auto' });
-    } catch (error) {
-      toast(error?.message || 'This section could not be refreshed. Please try again.');
-    } finally {
-      navRefreshInFlight = false;
-    }
+    if (currentScrollTop > 8) window.scrollTo({ top: 0, behavior: 'auto' });
+    // Re-tapping the active section is intentionally a no-op at the top.
+    // Avoid a full Supabase refresh that made navigation feel delayed.
     return;
   }
   const happyThingArt = e.target.closest('[data-happy-go]');
