@@ -8472,3 +8472,63 @@ body[data-mode="dark"] #app .now-playing-panel{
   backdrop-filter:blur(24px) saturate(1.35)!important;
   box-shadow:0 14px 38px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.12)!important;
 }
+
+
+/* Unified music-island finish for the bell and moon header controls. */
+.app .header-actions .round{
+  width:40px!important;height:40px!important;min-width:40px!important;
+  border:1px solid rgba(255,255,255,.24)!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,#58435d,#332c43)!important;
+  color:#fff1f7!important;
+  box-shadow:0 5px 16px rgba(69,49,74,.24),inset 0 1px 0 rgba(255,255,255,.16)!important;
+  font-size:1rem!important;line-height:1!important;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .08s ease,filter .08s ease!important;
+}
+.app .header-actions .round:active{transform:scale(.93)!important;filter:brightness(1.12)}
+.app .notification-bell-icon{width:17px!important;height:17px!important;stroke:currentColor!important;stroke-width:1.8!important;fill:none!important}
+.app .notification-badge{border-color:#45364d!important}
+body[data-mode="dark"] .app .header-actions .round{
+  background:linear-gradient(145deg,#624660,#332b42)!important;
+  border-color:rgba(255,255,255,.2)!important;
+  color:#ffeaf3!important;
+}
+
+/* Wider, shorter, genuinely translucent glass player panel. */
+#app .now-playing-panel{
+  width:min(348px,calc(100vw - 24px))!important;
+  padding:9px 13px 8px!important;
+  border:1px solid rgba(255,255,255,.62)!important;
+  border-radius:21px!important;
+  background:rgba(255,250,247,.54)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(1.55)!important;
+  backdrop-filter:blur(30px) saturate(1.55)!important;
+  box-shadow:0 12px 34px rgba(64,43,67,.19),inset 0 1px 0 rgba(255,255,255,.66)!important;
+}
+#app .island-track-info{grid-template-columns:36px minmax(0,1fr) 26px!important;gap:8px!important}
+#app .island-album-icon{width:36px!important;height:36px!important;border-radius:12px!important;font-size:1.05rem!important}
+#app .island-track-info strong{font-size:.76rem!important;line-height:1.15!important}
+#app .island-track-info small{font-size:.59rem!important;line-height:1.15!important}
+#app .island-status-line{font-size:.58rem!important;line-height:1.15!important}
+#app .island-timeline{margin:6px 0 3px!important;gap:6px!important;font-size:.56rem!important}
+#app .island-timeline input{height:13px!important}
+#app .island-controls{gap:18px!important}
+#app .island-controls button{width:27px!important;height:27px!important;font-size:1.05rem!important}
+#app .island-controls .island-play{width:33px!important;height:33px!important}
+body[data-mode="dark"] #app .now-playing-panel{
+  background:rgba(48,39,58,.62)!important;
+  border-color:rgba(255,255,255,.2)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(1.45)!important;
+  backdrop-filter:blur(30px) saturate(1.45)!important;
+  box-shadow:0 14px 38px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+
+/* Keep compact status text readable without letting it dominate the player. */
+#app .crumb{font-size:.58rem!important;letter-spacing:.65px!important}
+#app .brand small{font-size:.61rem!important}
+@media(max-width:390px){
+  #app .now-playing-panel{width:calc(100vw - 20px)!important}
+  #app .island-track-info{grid-template-columns:34px minmax(0,1fr) 24px!important}
+  #app .island-album-icon{width:34px!important;height:34px!important}
+}
