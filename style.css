@@ -8580,3 +8580,84 @@ body[data-mode="dark"] #app .header-actions .round:focus-visible {
 body[data-mode="dark"] #app .header-actions .round:active {
   background:linear-gradient(145deg,#654b69,#4b3b54)!important;
 }
+
+
+/* One shared Music-Island pill for both header actions.
+   The icons sit directly inside the pastel capsule; no individual circles. */
+#app .header-actions {
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  padding:4px 9px!important;
+  min-height:40px!important;
+  border:1px solid rgba(255,255,255,.72)!important;
+  border-radius:999px!important;
+  background:linear-gradient(145deg,#f3dce8,#e9e1f2)!important;
+  color:#77566f!important;
+  box-shadow:0 2px 0 #dfcbdc,0 4px 10px #8b688014,inset 0 1px 0 rgba(255,255,255,.72)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(1.25)!important;
+  backdrop-filter:blur(12px) saturate(1.25)!important;
+}
+#app .header-actions .round,
+#app .header-actions .round:hover,
+#app .header-actions .round:focus-visible,
+body[data-mode="dark"] #app .header-actions .round,
+body[data-mode="dark"] #app .header-actions .round:hover,
+body[data-mode="dark"] #app .header-actions .round:focus-visible {
+  display:grid!important;
+  place-items:center!important;
+  width:28px!important;
+  height:30px!important;
+  min-width:28px!important;
+  min-height:30px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#77566f!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+#app .header-actions .round:active,
+body[data-mode="dark"] #app .header-actions .round:active {
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:scale(.9)!important;
+}
+#app .notification-bell-icon {
+  width:17px!important;
+  height:17px!important;
+  color:inherit!important;
+}
+#app .notification-badge {
+  border:2px solid #f0e2ed!important;
+}
+body[data-mode="dark"] #app .header-actions {
+  border-color:rgba(255,255,255,.2)!important;
+  background:linear-gradient(145deg,#59435e,#423449)!important;
+  color:#f5e5ef!important;
+  box-shadow:0 2px 0 #30233a,0 4px 10px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.14)!important;
+}
+body[data-mode="dark"] #app .header-actions .round,
+body[data-mode="dark"] #app .header-actions .round:hover,
+body[data-mode="dark"] #app .header-actions .round:focus-visible {
+  color:#f5e5ef!important;
+}
+body[data-mode="dark"] #app .notification-badge {
+  border-color:#59435e!important;
+}
+@media(max-width:520px) {
+  #app .header-actions {
+    gap:6px!important;
+    padding:3px 7px!important;
+    min-height:36px!important;
+  }
+  #app .header-actions .round {
+    width:26px!important;
+    height:28px!important;
+    min-width:26px!important;
+    min-height:28px!important;
+  }
+}
