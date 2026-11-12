@@ -9140,3 +9140,34 @@ body[data-mode="dark"] #app .now-playing-panel .island-timeline input::-webkit-s
 body[data-mode="dark"] #app .now-playing-panel .island-timeline input::-moz-range-track {
   background:linear-gradient(90deg,#d9a9c9,#a995d0)!important;
 }
+
+
+/* v153 — Music Island uses the same soft frosted header glass as Notes. */
+#app .now-playing-panel {
+  background:rgba(253,248,241,.82)!important;
+  border:1px solid rgba(240,227,231,.92)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.35)!important;
+  backdrop-filter:blur(14px) saturate(1.35)!important;
+  box-shadow:0 8px 26px rgba(105,78,99,.12),inset 0 1px 0 rgba(255,255,255,.72)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel {
+  background:rgba(43,35,51,.82)!important;
+  border-color:rgba(130,105,132,.58)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.3)!important;
+  backdrop-filter:blur(14px) saturate(1.3)!important;
+  box-shadow:0 8px 26px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+
+/* Slightly larger Love Note send button, still contained inside the composer. */
+#content .chat-page .chat-composer textarea {
+  padding-right:62px!important;
+}
+#content .chat-page .chat-composer .primary {
+  width:40px!important;
+  height:40px!important;
+  min-width:40px!important;
+  min-height:40px!important;
+  right:6px!important;
+  bottom:5px!important;
+  font-size:1rem!important;
+}
