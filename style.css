@@ -8218,3 +8218,46 @@ body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-flower
 .friend-row .friend-row-streak{line-height:1.25}
 body[data-mode="dark"] .friend-row.is-online .sg-friend-presence{color:#9fdaa8}
 body[data-mode="dark"] .friend-row.is-offline .sg-friend-presence{color:#c5b6c8}
+
+/* Friends in Bloom: keep the streak count directly beside the friend's name. */
+.streak-garden-page .sg-friends-compact .sg-friend-heading{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+  gap:6px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-heading .sg-friend-name{
+  flex:0 1 auto!important;
+  min-width:0!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-heading .sg-friend-flower-count{
+  flex:0 0 auto!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  margin:0!important;
+  padding:2px 5px!important;
+  border-radius:9px!important;
+  background:#fff0f5!important;
+  gap:2px!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-heading .sg-friend-flower-count em{
+  color:#a78398;font:700 8px/1 Quicksand,sans-serif;font-style:normal;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-streak-status:empty{display:none!important}
+.streak-garden-page .sg-friends-compact .sg-friend-meta:has(.sg-friend-streak-status:empty){
+  display:flex!important;align-items:center!important;gap:6px!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-heading .sg-friend-flower-count{
+  background:#493747!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-heading .sg-friend-flower-count em{
+  color:#d1b6ca!important;
+}
+@media(max-width:380px){
+  .streak-garden-page .sg-friends-compact .sg-friend-heading{gap:4px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-heading .sg-friend-name{font-size:10px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-heading .sg-friend-flower-count{padding:2px 4px!important}
+}
