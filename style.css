@@ -8661,3 +8661,53 @@ body[data-mode="dark"] #app .notification-badge {
     min-height:28px!important;
   }
 }
+
+
+/* Match the Music Island pill's actual geometry, not just its appearance. */
+#app .header-actions {
+  box-sizing:border-box!important;
+  height:32px!important;
+  min-height:32px!important;
+  padding:4px 9px!important;
+  gap:6px!important;
+  border:1px solid #ffffff45!important;
+  border-radius:999px!important;
+  box-shadow:0 2px 0 #dfcbdc,0 4px 10px #8b688014!important;
+}
+#app .header-actions .round,
+#app .header-actions .round:hover,
+#app .header-actions .round:focus-visible,
+body[data-mode="dark"] #app .header-actions .round,
+body[data-mode="dark"] #app .header-actions .round:hover,
+body[data-mode="dark"] #app .header-actions .round:focus-visible {
+  box-sizing:border-box!important;
+  width:20px!important;
+  height:22px!important;
+  min-width:20px!important;
+  min-height:22px!important;
+  flex:0 0 20px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#app .notification-bell-icon {width:17px!important;height:17px!important}
+@media(max-width:520px) {
+  #app .header-actions {
+    height:30px!important;
+    min-height:30px!important;
+    padding:4px 7px!important;
+    gap:4px!important;
+  }
+  #app .header-actions .round,
+  #app .header-actions .round:hover,
+  #app .header-actions .round:focus-visible {
+    width:18px!important;
+    height:20px!important;
+    min-width:18px!important;
+    min-height:20px!important;
+    flex-basis:18px!important;
+  }
+  #app .notification-bell-icon {width:15px!important;height:15px!important}
+}
