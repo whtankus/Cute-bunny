@@ -8726,3 +8726,17 @@ body[data-mode="dark"] #app .header-actions .round:focus-visible {
     min-width:62px!important;
   }
 }
+
+
+/* Increase the current bell/moon capsule width by a further 20%.
+   Preserve its height, icon dimensions, spacing, and interactions. */
+#app .header-actions {
+  width:88px!important;
+  min-width:88px!important;
+}
+@media(max-width:520px) {
+  #app .header-actions {
+    width:74px!important;
+    min-width:74px!important;
+  }
+}
