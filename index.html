@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=146">
+  <link rel="stylesheet" href="style.css?v=147">
 </head>
 <body class="is-restoring">
   <div id="sessionRestore" class="session-restore" role="status">
@@ -64,8 +64,8 @@
           <div>
             <strong id="islandFullTitle">A little song</strong>
             <small class="island-status-line">
-              <span aria-hidden="true">♡</span>
-              <span id="islandStatusText">Listening together</span>
+              <svg class="island-user-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 19c.5-3.1 2.8-5 6.5-5s6 1.9 6.5 5"></path></svg>
+              <span id="islandStatusText">Your name</span>
             </small>
           </div>
         </div>
@@ -300,7 +300,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=141", {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=142", {
             scope: "./",
             updateViaCache: "none"
           });
