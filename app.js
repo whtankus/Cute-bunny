@@ -420,6 +420,7 @@ async function refresh() {
   feed = results[1];
   friends = results[2];
   render();
+  syncStreakWidget();
   syncPresenceUI();
   if (!$('#friendProfileGate').classList.contains('hidden')) {
     const profile = [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
@@ -885,7 +886,7 @@ function streakFriendSnapshot(friend) {
   if (gap === null || gap < 0) return { count, label: 'Activity unavailable', state: 'unknown' };
   if (gap > 1) return { count: 0, label: 'Streak paused', state: 'paused' };
   if (gap === 1) return { count, label: 'Visit today · ' + streakTimeRemaining(timezone) + ' left', state: 'due' };
-  return { count, label: 'Active today', state: 'active' };
+  return { count, label: '', state: 'active' };
 }
 function streakFriendsMarkup() {
   if (!Array.isArray(friends) || !friends.length) {
@@ -915,12 +916,13 @@ function streakFriendsMarkup() {
     const initialPresence = presenceStatus === 'ready' ? 'Offline' : presenceStatus === 'error' ? 'Presence unavailable' : 'Connecting…';
     return '<div class="sg-friend-card" data-friend-id="' + esc(friend.id || '') + '" aria-label="' + esc(displayName) + ' garden">' +
       '<span class="sg-friend-avatar" aria-hidden="true">' + esc(friend.mascot || '🐰') + '</span>' +
-      '<span class="sg-friend-details"><strong class="sg-friend-name">' + esc(displayName) + '</strong>' +
+      '<span class="sg-friend-details">' +
+      '<span class="sg-friend-heading"><strong class="sg-friend-name">' + esc(displayName) + '</strong>' +
+      '<span class="sg-friend-flower-count" aria-label="' + esc(streakAria) + '">' +
+      '<strong data-streak-friend-count>' + streakDays + '</strong><i aria-hidden="true">🌸</i><em>streak</em></span></span>' +
       '<span class="sg-friend-meta"><small class="sg-friend-presence">' + initialPresence + '</small>' +
       '<small class="sg-friend-streak-status" data-streak-friend-status data-streak-timezone="' + esc(timezone) +
-      '" data-last-login-date="' + esc(lastDate) + '" data-streak-count="' + rawCount + '">' + esc(snapshot.label) + '</small>' +
-      '<span class="sg-friend-flower-count" aria-label="' + esc(streakAria) + '">' +
-      '<strong data-streak-friend-count>' + streakDays + '</strong><i aria-hidden="true">🌸</i><em>streak</em></span></span></span></div>';
+      '" data-last-login-date="' + esc(lastDate) + '" data-streak-count="' + rawCount + '">' + esc(snapshot.label) + '</small></span></span></div>';
   }).join('');
   return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>';
 }
@@ -1754,6 +1756,7 @@ function showFriendProfile(user) {
     ? 'Streak unavailable'
     : friendGarden.count + (friendGarden.count === 1 ? ' day' : ' days');
   $('#friendProfileStreakStatus').textContent = friendGarden.label;
+  $('#friendProfileStreakStatus').hidden = !friendGarden.label;
   $('#friendProfileStyle').dataset.themePreview = user.theme || 'rose';
   $('#friendProfileThemeName').textContent = themeNames[user.theme] || 'Rose garden';
   $('#friendProfileFollow').textContent = user.isFollowing ? 'Following ✓' : 'Follow ♡';
@@ -2324,7 +2327,18 @@ function startRealtime() {
     profileChannel = sb.channel('cute-bunny-profiles-' + me.id)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, payload => {
         const changedId = String(payload.new?.id || '');
-        if (changedId && changedId !== String(me?.id) && friends.some(friend => String(friend.id) === changedId)) {
+        if (!changedId) return;
+        if (changedId === String(me?.id)) {
+          const nextCount = Number(payload.new?.login_streak);
+          const nextDate = String(payload.new?.last_login_date || '').slice(0, 10);
+          if (Number.isInteger(nextCount) && nextCount >= 0) me.login_streak = nextCount;
+          if (/^\\d{4}-\\d{2}-\\d{2}$/.test(nextDate)) me.last_login_date = nextDate;
+          me.streak_timezone = normalizeStreakTimeZone(payload.new?.streak_timezone || me.streak_timezone);
+          syncStreakWidget();
+          if (page === 'streak') renderStreakPage();
+          return;
+        }
+        if (friends.some(friend => String(friend.id) === changedId)) {
           clearTimeout(window.cuteStreakProfileRefresh);
           window.cuteStreakProfileRefresh = setTimeout(() => {
             void refresh().catch(error => console.warn('Friend streak refresh failed:', error?.message || error));
