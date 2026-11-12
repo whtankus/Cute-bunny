@@ -8562,3 +8562,59 @@ body[data-mode="dark"] #app .header-actions .round{
   background:linear-gradient(145deg,#58435d,#332c43)!important;
 }
 #app .notification-badge{border-color:#45314a!important}
+
+
+/* Dynamic message sizing: let each bubble follow its rendered text, not
+   the row width. Keep the timestamp lane and existing visual treatment. */
+.chat-page .chat-message-line,
+.home-note-memory .chat-message-line {
+  min-width:0!important;
+}
+.chat-page .chat-bubble-wrap,
+.home-note-memory .chat-bubble-wrap,
+body.notes-page-active #content .chat-bubble-wrap {
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex:0 1 auto!important;
+  width:fit-content!important;
+  max-width:calc(100% - 4rem)!important;
+  min-width:0!important;
+}
+.chat-page .chat-bubble-wrap>.chat-bubble,
+.home-note-memory .chat-bubble-wrap>.chat-bubble,
+body.notes-page-active #content .chat-bubble-wrap>.chat-bubble {
+  box-sizing:border-box!important;
+  display:block!important;
+  width:fit-content!important;
+  max-width:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  height:auto!important;
+  padding-left:12px!important;
+  padding-right:12px!important;
+}
+.chat-page .chat-message-text,
+.home-note-memory .chat-message-text,
+body.notes-page-active #content .chat-message-text {
+  box-sizing:border-box!important;
+  display:block!important;
+  width:fit-content!important;
+  max-width:100%!important;
+  min-width:0!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+}
+@media(max-width:720px) {
+  .chat-page .chat-bubble-wrap,
+  .home-note-memory .chat-bubble-wrap,
+  body.notes-page-active #content .chat-bubble-wrap {
+    max-width:calc(100% - 3.65rem)!important;
+  }
+  .chat-page .chat-bubble-wrap>.chat-bubble,
+  .home-note-memory .chat-bubble-wrap>.chat-bubble,
+  body.notes-page-active #content .chat-bubble-wrap>.chat-bubble {
+    padding-left:10px!important;
+    padding-right:10px!important;
+  }
+}
