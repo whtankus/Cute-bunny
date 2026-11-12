@@ -2758,20 +2758,28 @@ function formatProfileDate(value) {
 
 /* Event listeners */
 
-// Tapping effect on pointerdown
+// Lightweight pointer feedback. Dock buttons avoid the old forced reflow
+// used by the decorative tap animation, keeping navigation responsive.
 document.addEventListener('pointerdown', e => {
-  const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
+  const navButton = e.target.closest('#nav button[data-page]');
+  if (navButton) {
+    navButton.classList.add('nav-pressed');
+    return;
+  }
+  const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go]');
   if (!interactive || e.target.closest('input, textarea, select')) return;
   interactive.classList.remove('cute-tap');
   void interactive.offsetWidth;
   interactive.classList.add('cute-tap');
   setTimeout(() => interactive.classList.remove('cute-tap'), 360);
-
-  const rect = interactive.getBoundingClientRect();
-  const x = e.clientX || (rect.left + rect.width / 2);
-  const y = e.clientY || (rect.top + rect.height / 2);
-
 }, { passive: true });
+
+function clearNavPressedState() {
+  document.querySelectorAll('#nav button.nav-pressed').forEach(button => button.classList.remove('nav-pressed'));
+}
+document.addEventListener('pointerup', clearNavPressedState, { passive: true });
+document.addEventListener('pointercancel', clearNavPressedState, { passive: true });
+document.addEventListener('pointerleave', clearNavPressedState, { passive: true });
 
 document.addEventListener('submit', e => {
   if (e.target.id !== 'streakGoalForm') return;
@@ -3018,19 +3026,21 @@ document.addEventListener('click', async e => {
   if (nav) {
     e.preventDefault();
     if (nav.dataset.page !== page) {
-      // Let the pressed state paint before rendering a page with many cards.
+      // Navigate in the same click task: the pointerdown state is already
+      // painted by CSS, so an extra animation-frame wait only adds latency.
       if (navRefreshInFlight) return;
       navRefreshInFlight = true;
       nav.classList.add('is-navigating');
       nav.setAttribute('aria-busy', 'true');
-      requestAnimationFrame(() => {
+      try {
         go(nav.dataset.page);
+      } finally {
         requestAnimationFrame(() => {
-          nav.classList.remove('is-navigating');
+          nav.classList.remove('is-navigating', 'nav-pressed');
           nav.removeAttribute('aria-busy');
           navRefreshInFlight = false;
         });
-      });
+      }
       return;
     }
 
