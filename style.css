@@ -8972,3 +8972,29 @@ body[data-mode="dark"] #app .now-playing-panel {
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
 }
+
+
+/* Increase glass transparency by 50%: halve the previous surface opacity. */
+#app .now-playing-panel {
+  background:rgba(255,249,253,.11)!important;
+  border-color:rgba(255,255,255,.48)!important;
+  -webkit-backdrop-filter:blur(38px) saturate(1.65)!important;
+  backdrop-filter:blur(38px) saturate(1.65)!important;
+  box-shadow:0 12px 34px rgba(107,75,111,.10),inset 0 1px 0 rgba(255,255,255,.48)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel {
+  background:rgba(255,246,252,.05)!important;
+  border-color:rgba(255,255,255,.22)!important;
+  -webkit-backdrop-filter:blur(40px) saturate(1.55)!important;
+  backdrop-filter:blur(40px) saturate(1.55)!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.18)!important;
+}
+#app .now-playing-panel .island-pet-icon {
+  display:inline-grid!important;
+  place-items:center!important;
+  flex:0 0 15px!important;
+  width:15px!important;
+  height:15px!important;
+  font-size:13px!important;
+  line-height:1!important;
+}
