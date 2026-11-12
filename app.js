@@ -2415,31 +2415,45 @@ async function searchFriends() {
 }
 
 async function hydrateOneMedia(node) {
+  const key = String(node?.dataset?.media || '');
+  let pending = null;
   try {
-    const key = String(node?.dataset?.media || '');
     if (!key || !node.isConnected) return;
     const item = feed.find(memory => String(memory.id) === key);
     if (!item?.storagePath || item.isPending) return;
-    if (item.previewUrl) { if (node.getAttribute('src') !== item.previewUrl) node.src = item.previewUrl; return; }
+    if (item.previewUrl) {
+      if (node.getAttribute('src') !== item.previewUrl) node.src = item.previewUrl;
+      return;
+    }
+
     const cached = mediaUrlCache.get(key);
-    if (cached && cached.expiresAt > Date.now() + 30000) { if (node.getAttribute('src') !== cached.url) node.src = cached.url; return; }
-    let pending = mediaUrlLoads.get(key);
+    if (cached && cached.expiresAt > Date.now() + 30000) {
+      if (node.getAttribute('src') !== cached.url) node.src = cached.url;
+      return;
+    }
+
+    pending = mediaUrlLoads.get(key);
     if (!pending) {
       pending = (async () => {
-        const {data,error}=await sb.storage.from('memories').createSignedUrl(item.storagePath,3600);
-        if(error)throw error;
-        if(!data?.signedUrl)throw new Error('A media link could not be prepared.');
-        const entry={url:data.signedUrl,expiresAt:Date.now()+55*60*1000};
-        mediaUrlCache.set(key,entry);
-        while(mediaUrlCache.size>80)mediaUrlCache.delete(mediaUrlCache.keys().next().value);
+        const { data, error } = await sb.storage.from('memories').createSignedUrl(item.storagePath, 3600);
+        if (error) throw error;
+        if (!data?.signedUrl) throw new Error('A media link could not be prepared.');
+        const entry = { url: data.signedUrl, expiresAt: Date.now() + 55 * 60 * 1000 };
+        mediaUrlCache.set(key, entry);
+        while (mediaUrlCache.size > 80) mediaUrlCache.delete(mediaUrlCache.keys().next().value);
         return entry.url;
       })();
-      mediaUrlLoads.set(key,pending);
+      mediaUrlLoads.set(key, pending);
     }
-    const url=await pending;
-    if(node.isConnected&&node.dataset.media===key)node.src=url;
-  } catch { if(node?.isConnected)node.dataset.mediaError='true'; }
-  finally { const key=String(node?.dataset?.media||'');if(key)mediaUrlLoads.delete(key); }
+
+    const url = await pending;
+    if (node.isConnected && node.dataset.media === key) node.src = url;
+  } catch {
+    if (node?.isConnected) node.dataset.mediaError = 'true';
+  } finally {
+    // An older request must never delete a newer retry for the same memory.
+    if (pending && mediaUrlLoads.get(key) === pending) mediaUrlLoads.delete(key);
+  }
 }
 function hydrateMedia() {
   mediaObserver?.disconnect(); mediaObserver=null;
