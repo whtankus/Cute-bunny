@@ -468,7 +468,12 @@ function formatJoinDate(value) {
 function friendRow(user) {
   const snapshot = streakFriendSnapshot(user);
   const streakLabel = snapshot.count === null ? 'Streak unavailable' : snapshot.count + (snapshot.count === 1 ? ' day streak' : ' days streak');
-  return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}</span><span class="friend-copy"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small><small class="friend-row-streak">🌸 ${esc(streakLabel)}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
+  let liveState = {};
+  try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
+  const online = isPresenceUserOnline(user.id, liveState);
+  const presenceLabel = presenceStatus === 'ready' ? (online ? 'Online now' : 'Offline') :
+    presenceStatus === 'error' ? 'Presence unavailable' : 'Connecting…';
+  return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}</span><span class="friend-copy"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small><small class="sg-friend-presence">${esc(presenceLabel)}</small><small class="friend-row-streak">🌸 ${esc(streakLabel)} · ${esc(snapshot.label)}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
 }
 
 
