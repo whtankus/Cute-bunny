@@ -888,7 +888,7 @@ function streakFriendsMarkup() {
   }
   let liveState = {};
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
-  const isOnline = id => !!liveState[String(id)]?.length;
+  const isOnline = id => isPresenceUserOnline(id, liveState);
   const stateRank = {active:0,due:1,paused:2,new:3,unknown:4};
   const orderedFriends = [...friends].sort((a,b) => {
     const onlineOrder = Number(isOnline(b.id)) - Number(isOnline(a.id));
@@ -2289,7 +2289,11 @@ function startRealtime() {
   closeRealtime();
   presenceStatus = 'connecting';
   try {
-    const presence = sb.channel('cute-bunny-presence', { config: { presence: { key: String(me.id) } } });
+    // Each browser tab/device gets its own key; the user_id payload lets peers
+    // aggregate all active sessions without key collisions.
+    const clientPresenceKey = 'cb-' + String(me.id) + '-' +
+      (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2));
+    const presence = sb.channel('cute-bunny-presence', { config: { presence: { key: clientPresenceKey } } });
     presenceChannel = presence;
     presence
       .on('presence', { event: 'sync' }, syncPresenceUI)
@@ -2354,19 +2358,26 @@ function closeRealtime() {
   }
 }
 
+function isPresenceUserOnline(userId, state) {
+  if (!userId || !state || typeof state !== 'object') return false;
+  return Object.values(state).some(sessions =>
+    Array.isArray(sessions) && sessions.some(session => String(session?.user_id || '') === String(userId))
+  );
+}
+
 function syncPresenceUI() {
-  if (!presenceChannel) return;
   let state = {};
-  try { state = presenceChannel.presenceState() || {}; } catch {}
+  try { state = presenceChannel?.presenceState?.() || {}; } catch {}
   document.querySelectorAll('.sg-friend-card[data-friend-id], .friend-row[data-friend-id]').forEach(node => {
-    const online = !!state[String(node.dataset.friendId)]?.length;
+    const online = isPresenceUserOnline(node.dataset.friendId, state);
     node.classList.toggle('is-online', online);
     node.classList.toggle('is-offline', !online);
     const presenceLabel = node.querySelector('.sg-friend-presence');
     if (presenceLabel) {
       presenceLabel.textContent = presenceStatus === 'ready'
         ? (online ? 'Online now' : 'Offline')
-        : presenceStatus === 'error' ? 'Presence unavailable' : 'Connecting…';
+        : presenceStatus === 'error' ? 'Presence unavailable'
+        : presenceStatus === 'closed' ? 'Offline' : 'Connecting…';
     }
   });
 }
