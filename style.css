@@ -8771,3 +8771,21 @@ body[data-mode="dark"] #app .header-actions .round:focus-visible {
     flex-basis:18px!important;
   }
 }
+
+
+/* Stronger frosted-glass music player: reduce see-through transparency
+   while increasing background diffusion in both appearance modes. */
+#app .now-playing-panel {
+  background:rgba(255,248,251,.88)!important;
+  border-color:rgba(255,255,255,.82)!important;
+  -webkit-backdrop-filter:blur(52px) saturate(1.65)!important;
+  backdrop-filter:blur(52px) saturate(1.65)!important;
+  box-shadow:0 16px 40px rgba(93,62,91,.22),inset 0 1px 0 rgba(255,255,255,.88)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel {
+  background:rgba(48,38,58,.88)!important;
+  border-color:rgba(255,255,255,.26)!important;
+  -webkit-backdrop-filter:blur(52px) saturate(1.55)!important;
+  backdrop-filter:blur(52px) saturate(1.55)!important;
+  box-shadow:0 16px 40px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.18)!important;
+}
