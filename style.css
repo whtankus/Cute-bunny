@@ -8711,3 +8711,45 @@ body[data-mode="dark"] #app .header-actions .round:focus-visible {
   }
   #app .notification-bell-icon {width:15px!important;height:15px!important}
 }
+
+
+/* Give the Music Island and the bell/moon capsule identical outer dimensions. */
+#app .now-playing-island,
+#app .header-actions {
+  box-sizing:border-box!important;
+  width:min(180px,34vw)!important;
+  max-width:min(180px,34vw)!important;
+  height:32px!important;
+  min-height:32px!important;
+}
+#app .now-playing-pill {
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:32px!important;
+  min-height:32px!important;
+  max-width:100%!important;
+}
+#app .header-actions {
+  justify-content:center!important;
+  padding:4px 9px!important;
+}
+@media(max-width:520px) {
+  #app .now-playing-island,
+  #app .header-actions {
+    width:clamp(70px,24vw,112px)!important;
+    max-width:clamp(70px,24vw,112px)!important;
+    height:30px!important;
+    min-height:30px!important;
+  }
+  #app .now-playing-pill {
+    height:30px!important;
+    min-height:30px!important;
+  }
+}
+@media(max-width:360px) {
+  #app .now-playing-island,
+  #app .header-actions {
+    width:72px!important;
+    max-width:72px!important;
+  }
+}
