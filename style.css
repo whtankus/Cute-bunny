@@ -8534,114 +8534,53 @@ body[data-mode="dark"] #app .now-playing-panel{
 }
 
 
-/* Final glass pass: strongly frosted surface, with only soft colour bleed. */
-#app .now-playing-panel{
-  background:linear-gradient(145deg,rgba(255,250,247,.91),rgba(238,226,241,.88))!important;
-  -webkit-backdrop-filter:blur(42px) saturate(1.35)!important;
-  backdrop-filter:blur(42px) saturate(1.35)!important;
-  isolation:isolate;
-  box-shadow:0 14px 38px rgba(64,43,67,.22),inset 0 1px 0 rgba(255,255,255,.78)!important;
+/* Glass header refinement: matching frosted-glass treatment for the music
+   island, notification bell, and theme control. Dimensions and behavior stay
+   unchanged; only surface rendering is adjusted. */
+#app .now-playing-panel {
+  background:rgba(255,248,251,.38)!important;
+  border:1px solid rgba(255,255,255,.58)!important;
+  -webkit-backdrop-filter:blur(42px) saturate(1.6)!important;
+  backdrop-filter:blur(42px) saturate(1.6)!important;
+  box-shadow:0 14px 38px rgba(93,62,91,.17),inset 0 1px 0 rgba(255,255,255,.72)!important;
 }
-body[data-mode="dark"] #app .now-playing-panel{
-  background:linear-gradient(145deg,rgba(55,43,62,.94),rgba(43,36,56,.93))!important;
-  -webkit-backdrop-filter:blur(42px) saturate(1.3)!important;
-  backdrop-filter:blur(42px) saturate(1.3)!important;
+body[data-mode="dark"] #app .now-playing-panel {
+  background:rgba(48,38,58,.48)!important;
+  border-color:rgba(255,255,255,.24)!important;
+  -webkit-backdrop-filter:blur(42px) saturate(1.5)!important;
+  backdrop-filter:blur(42px) saturate(1.5)!important;
+  box-shadow:0 14px 38px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.16)!important;
 }
-
-/* Match the header buttons to the music island's exact plum gradient. */
 #app .header-actions .round,
 #app .header-actions .round:hover,
 #app .header-actions .round:focus-visible,
-body[data-mode="dark"] #app .header-actions .round{
-  background:linear-gradient(145deg,#58435d,#332c43)!important;
-  border:1px solid #ffffff35!important;
-  color:#fff8fc!important;
-  box-shadow:0 5px 18px #45314a36!important;
+body[data-mode="dark"] #app .header-actions .round {
+  background:rgba(244,229,240,.34)!important;
+  border:1px solid rgba(255,255,255,.62)!important;
+  color:#76546f!important;
+  box-shadow:0 5px 16px rgba(93,62,91,.13),inset 0 1px 0 rgba(255,255,255,.76)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(1.55)!important;
+  backdrop-filter:blur(22px) saturate(1.55)!important;
 }
-#app .header-actions .round:active{
-  background:linear-gradient(145deg,#58435d,#332c43)!important;
+#app .header-actions .round:active {
+  background:rgba(244,229,240,.42)!important;
 }
-#app .notification-badge{border-color:#45314a!important}
-
-
-/* Corrective bubble sizing: prevent flex stretching and let text determine
-   both dimensions. Preserve the existing colors, border, shadow and heart. */
-.chat-page .chat-message-line,
-.home-note-memory .chat-message-line,
-body.notes-page-active #content .chat-message-line {
-  align-items:flex-start!important;
-  min-width:0!important;
-  height:auto!important;
-  min-height:0!important;
+body[data-mode="dark"] #app .header-actions .round,
+body[data-mode="dark"] #app .header-actions .round:hover,
+body[data-mode="dark"] #app .header-actions .round:focus-visible {
+  background:rgba(83,65,91,.46)!important;
+  border-color:rgba(255,255,255,.24)!important;
+  color:#fff0f7!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.18)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(1.45)!important;
+  backdrop-filter:blur(22px) saturate(1.45)!important;
 }
-.chat-page .chat-bubble-wrap,
-.home-note-memory .chat-bubble-wrap,
-body.notes-page-active #content .chat-bubble-wrap {
-  position:relative!important;
-  display:block!important;
-  flex:0 1 auto!important;
-  align-self:flex-start!important;
-  box-sizing:border-box!important;
-  width:fit-content!important;
-  height:auto!important;
-  min-width:0!important;
-  min-height:0!important;
-  max-height:none!important;
-  max-width:calc(100% - 4rem)!important;
-  margin-bottom:0!important;
+body[data-mode="dark"] #app .header-actions .round:active {
+  background:rgba(83,65,91,.56)!important;
 }
-.chat-page .chat-bubble-wrap>.chat-bubble,
-.home-note-memory .chat-bubble-wrap>.chat-bubble,
-body.notes-page-active #content .chat-bubble-wrap>.chat-bubble {
-  display:block!important;
-  flex:0 1 auto!important;
-  align-self:flex-start!important;
-  box-sizing:border-box!important;
-  width:fit-content!important;
-  height:auto!important;
-  min-width:0!important;
-  min-height:0!important;
-  max-height:none!important;
-  max-width:100%!important;
-  padding:18px 22px!important;
-  text-align:left!important;
-  vertical-align:top!important;
+#app .notification-badge {
+  border-color:rgba(255,255,255,.8)!important;
 }
-.chat-page .chat-bubble-wrap>.chat-bubble>.chat-message-text,
-.home-note-memory .chat-bubble-wrap>.chat-bubble>.chat-message-text,
-body.notes-page-active #content .chat-bubble-wrap>.chat-bubble>.chat-message-text {
-  display:block!important;
-  flex:none!important;
-  box-sizing:border-box!important;
-  width:fit-content!important;
-  height:auto!important;
-  min-width:0!important;
-  min-height:0!important;
-  max-width:100%!important;
-  margin:0!important;
-  padding:0!important;
-  text-align:left!important;
-  white-space:pre-wrap!important;
-  overflow-wrap:anywhere!important;
-  word-break:normal!important;
-  vertical-align:top!important;
-}
-@media(max-width:720px) {
-  .chat-page .chat-bubble-wrap,
-  .home-note-memory .chat-bubble-wrap,
-  body.notes-page-active #content .chat-bubble-wrap {
-    max-width:calc(100% - 3.65rem)!important;
-  }
-  .chat-page .chat-bubble-wrap>.chat-bubble,
-  .home-note-memory .chat-bubble-wrap>.chat-bubble,
-  body.notes-page-active #content .chat-bubble-wrap>.chat-bubble {
-    padding:18px 20px!important;
-  }
-}
-@media(max-width:480px) {
-  .chat-page .chat-bubble-wrap,
-  .home-note-memory .chat-bubble-wrap,
-  body.notes-page-active #content .chat-bubble-wrap {
-    max-width:calc(100% - 3.25rem)!important;
-  }
+body[data-mode="dark"] #app .notification-badge {
+  border-color:rgba(48,38,58,.9)!important;
 }
