@@ -130,32 +130,54 @@ async function api(path, options = {}) {
   if (!session) throw Error('Please sign in again.');
 
   if (path === '/me' && method === 'GET') {
-    const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+    const profileFields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date';
+    const [{ data, error }, { data: settings, error: settingsError }] = await Promise.all([
+      sb.from('profiles').select(profileFields).eq('id', session.user.id).single(),
+      sb.from('profile_private_settings').select('notification_preferences').eq('user_id', session.user.id).maybeSingle()
+    ]);
     fail(error);
-    return { ...data, displayName: data.display_name };
+    fail(settingsError);
+    return {
+      ...data,
+      notification_preferences: settings?.notification_preferences || { memories: true, buddy: true },
+      displayName: data.display_name
+    };
   }
 
   if (path === '/me' && method === 'PUT') {
     const username = String(body.username || me?.username || '').trim().toLowerCase();
     if (!/^[a-z0-9_]{3,24}$/.test(username)) throw Error('Usernames need 3–24 letters, numbers, or underscores.');
+    const profileFields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date';
+    const notificationPreferences = body.notificationPreferences || me?.notification_preferences || { memories: true, buddy: true };
     const update = {
       username,
       display_name: body.displayName,
       bio: body.bio,
       theme: body.theme,
-      mascot: body.mascot,
-      notification_preferences: body.notificationPreferences || me?.notification_preferences || { memories: true, buddy: true }
+      mascot: body.mascot
     };
-    let { data, error } = await sb.from('profiles').update(update).eq('id', session.user.id).select().single();
+    const { data, error } = await sb.from('profiles')
+      .update(update)
+      .eq('id', session.user.id)
+      .select(profileFields)
+      .single();
     if (error) {
-      if (username !== me?.username) throw Error('Run supabase/feature-upgrades.sql in Supabase before changing your username.');
-      const fallback = await sb.from('profiles').update({
-        display_name: body.displayName, bio: body.bio, theme: body.theme, mascot: body.mascot
-      }).eq('id', session.user.id).select().single();
-      fail(fallback.error);
-      data = { ...fallback.data, notification_preferences: me?.notification_preferences || { memories: true, buddy: true }, featureUpgradeNeeded: true };
+      if (username !== me?.username) throw Error('Run the latest Cute Bunny Supabase migrations before changing your username.');
+      fail(error);
     }
-    return { ...data, displayName: data.display_name };
+    const { data: settings, error: settingsError } = await sb.from('profile_private_settings')
+      .upsert({
+        user_id: session.user.id,
+        notification_preferences: notificationPreferences
+      }, { onConflict: 'user_id' })
+      .select('notification_preferences')
+      .single();
+    fail(settingsError);
+    return {
+      ...data,
+      notification_preferences: settings.notification_preferences,
+      displayName: data.display_name
+    };
   }
 
   if (path.startsWith('/username-available?')) {
