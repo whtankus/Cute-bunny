@@ -8167,3 +8167,6 @@ body[data-mode="dark"] .streak-garden-page .sg-game-compact {
   background:linear-gradient(145deg,#493744 0%,#403443 55%,#463743 100%)!important;
   background-image:linear-gradient(145deg,#493744 0%,#403443 55%,#463743 100%)!important;
 }
+
+/* Let the kindness message use the full card width now that its refresh button is removed. */
+.daily>div{flex:1;min-width:0}
