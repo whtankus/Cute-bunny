@@ -8551,36 +8551,3 @@ body[data-mode="dark"] #app .now-playing-panel {
   backdrop-filter:blur(42px) saturate(1.5)!important;
   box-shadow:0 14px 38px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.16)!important;
 }
-#app .header-actions .round,
-#app .header-actions .round:hover,
-#app .header-actions .round:focus-visible,
-body[data-mode="dark"] #app .header-actions .round {
-  background:rgba(244,229,240,.34)!important;
-  border:1px solid rgba(255,255,255,.62)!important;
-  color:#76546f!important;
-  box-shadow:0 5px 16px rgba(93,62,91,.13),inset 0 1px 0 rgba(255,255,255,.76)!important;
-  -webkit-backdrop-filter:blur(22px) saturate(1.55)!important;
-  backdrop-filter:blur(22px) saturate(1.55)!important;
-}
-#app .header-actions .round:active {
-  background:rgba(244,229,240,.42)!important;
-}
-body[data-mode="dark"] #app .header-actions .round,
-body[data-mode="dark"] #app .header-actions .round:hover,
-body[data-mode="dark"] #app .header-actions .round:focus-visible {
-  background:rgba(83,65,91,.46)!important;
-  border-color:rgba(255,255,255,.24)!important;
-  color:#fff0f7!important;
-  box-shadow:0 5px 16px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.18)!important;
-  -webkit-backdrop-filter:blur(22px) saturate(1.45)!important;
-  backdrop-filter:blur(22px) saturate(1.45)!important;
-}
-body[data-mode="dark"] #app .header-actions .round:active {
-  background:rgba(83,65,91,.56)!important;
-}
-#app .notification-badge {
-  border-color:rgba(255,255,255,.8)!important;
-}
-body[data-mode="dark"] #app .notification-badge {
-  border-color:rgba(48,38,58,.9)!important;
-}
