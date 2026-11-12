@@ -1912,7 +1912,7 @@ function syncPlayer() {
     const title = track.fileName || track.text || 'A little song';
     const songAuthor = track.author || {};
     const currentStatus = String(songAuthor.displayName || songAuthor.display_name || songAuthor.username || 'Unknown user').trim() || 'Unknown user';
-    const userPet = $('#islandUserPet');
+    const userPet = $('#islandPetIcon');
     if (userPet) userPet.textContent = String(songAuthor.mascot || '🐰');
     if (shortTitle) shortTitle.textContent = shortIslandTitle(track);
     if (fullTitle) fullTitle.textContent = title;
