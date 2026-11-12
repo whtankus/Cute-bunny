@@ -8202,3 +8202,19 @@ body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-flower
   .streak-garden-page .sg-friends-compact .sg-friend-streak-status{font-size:7px!important}
   .streak-garden-page .sg-friends-compact .sg-friend-meta{gap:2px 4px!important}
 }
+
+/* The regular Friends list shares the same live status and daily streak cues. */
+.friend-row .sg-friend-presence{
+  display:block;
+  width:max-content;
+  max-width:100%;
+  color:#a49aa4;
+  font-size:.68rem;
+  font-weight:800;
+  line-height:1.1;
+}
+.friend-row.is-online .sg-friend-presence{color:#568c63}
+.friend-row.is-offline .sg-friend-presence{color:#a49aa4}
+.friend-row .friend-row-streak{line-height:1.25}
+body[data-mode="dark"] .friend-row.is-online .sg-friend-presence{color:#9fdaa8}
+body[data-mode="dark"] .friend-row.is-offline .sg-friend-presence{color:#c5b6c8}
