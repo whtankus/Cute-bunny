@@ -1,4 +1,5 @@
--- Run once in Supabase SQL Editor to sync the daily login streak across devices.
+-- Compatibility script only. Prefer the ordered timestamped migrations in supabase/migrations/.
+-- This function is safe for authenticated users: it only updates auth.uid()'s own streak.
 alter table public.profiles
   add column if not exists login_streak integer not null default 0,
   add column if not exists last_login_date date;
@@ -18,13 +19,18 @@ begin
     raise exception 'Sign in is required.';
   end if;
 
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(current_user_id::text, 29)
+  );
+
   update public.profiles
-  set login_streak = case
-        when last_login_date = current_date then login_streak
-        when last_login_date = current_date - 1 then login_streak + 1
-        else 1
-      end,
-      last_login_date = current_date
+  set
+    login_streak = case
+      when last_login_date = current_date then greatest(login_streak, 1)
+      when last_login_date = current_date - 1 then login_streak + 1
+      else 1
+    end,
+    last_login_date = current_date
   where id = current_user_id
   returning login_streak, last_login_date into streak_count, streak_date;
 
@@ -39,5 +45,5 @@ begin
 end;
 $$;
 
-revoke all on function public.record_login_streak() from public;
+revoke all on function public.record_login_streak() from public, anon, authenticated;
 grant execute on function public.record_login_streak() to authenticated;
