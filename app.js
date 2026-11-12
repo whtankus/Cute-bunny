@@ -21,6 +21,8 @@ let streakSelectedWeekDate = '';
 let streakGardenActiveTab = 'promises';
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
 let streakCountdownInterval = null, streakCountdownDayKey = '';
+let presenceStatus = 'closed';
+let streakRecordInFlight = null, streakRecordInFlightKey = '';
 const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
   ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
   : null;
@@ -131,7 +133,7 @@ async function api(path, options = {}) {
   if (!session) throw Error('Please sign in again.');
 
   if (path === '/me' && method === 'GET') {
-    const profileFields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date';
+    const profileFields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone';
     const [{ data, error }, { data: settings, error: settingsError }] = await Promise.all([
       sb.from('profiles').select(profileFields).eq('id', session.user.id).single(),
       sb.from('profile_private_settings').select('notification_preferences').eq('user_id', session.user.id).maybeSingle()
@@ -148,7 +150,7 @@ async function api(path, options = {}) {
   if (path === '/me' && method === 'PUT') {
     const username = String(body.username || me?.username || '').trim().toLowerCase();
     if (!/^[a-z0-9_]{3,24}$/.test(username)) throw Error('Usernames need 3–24 letters, numbers, or underscores.');
-    const profileFields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date';
+    const profileFields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone';
     const notificationPreferences = body.notificationPreferences || me?.notification_preferences || { memories: true, buddy: true };
     const update = {
       username,
@@ -251,12 +253,12 @@ async function api(path, options = {}) {
 
   if (path.startsWith('/users?q=')) {
     const q = decodeURIComponent(path.slice('/users?q='.length)).trim();
-    const fields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date';
+    const fields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone';
     const basic = 'id,username,display_name,bio,theme,mascot,created_at';
     let query = sb.from('profiles').select(fields).neq('id', session.user.id).order('username').limit(30);
     if (q) query = query.ilike('username', '%' + q + '%');
     let { data, error } = await query;
-    if (error && /login_streak|last_login_date/i.test(error.message || '')) {
+    if (error && /login_streak|last_login_date|streak_timezone/i.test(error.message || '')) {
       query = sb.from('profiles').select(basic).neq('id', session.user.id).order('username').limit(30);
       if (q) query = query.ilike('username', '%' + q + '%');
       ({ data, error } = await query);
@@ -270,9 +272,9 @@ async function api(path, options = {}) {
 
   if (path === '/following') {
     const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at)';
-    const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date)';
+    const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone)';
     let { data, error } = await sb.from('follows').select(fields).eq('follower_id', session.user.id).order('created_at', { ascending: false });
-    if (error && /login_streak|last_login_date/i.test(error.message || '')) {
+    if (error && /login_streak|last_login_date|streak_timezone/i.test(error.message || '')) {
       ({ data, error } = await sb.from('follows').select(basic).eq('follower_id', session.user.id).order('created_at', { ascending: false }));
     }
     fail(error);
@@ -408,6 +410,7 @@ function setUser(u) {
   go('home', { resetStack: true });
   installAppBackNavigation();
   startRealtime();
+  startStreakCountdown();
   void loadNotifications();
 }
 
@@ -417,6 +420,7 @@ async function refresh() {
   feed = results[1];
   friends = results[2];
   render();
+  syncPresenceUI();
   if (!$('#friendProfileGate').classList.contains('hidden')) {
     const profile = [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
     if (profile) showFriendProfile(profile);
@@ -462,10 +466,14 @@ function formatJoinDate(value) {
 }
 
 function friendRow(user) {
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const snapshot = streakFriendSnapshot(user, todayKey);
+  const snapshot = streakFriendSnapshot(user);
   const streakLabel = snapshot.count === null ? 'Streak unavailable' : snapshot.count + (snapshot.count === 1 ? ' day streak' : ' days streak');
-  return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}</span><span class="friend-copy"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small><small class="friend-row-streak">🌸 ${esc(streakLabel)}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
+  let liveState = {};
+  try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
+  const online = isPresenceUserOnline(user.id, liveState);
+  const presenceLabel = presenceStatus === 'ready' ? (online ? 'Online now' : 'Offline') :
+    presenceStatus === 'error' ? 'Presence unavailable' : 'Connecting…';
+  return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}</span><span class="friend-copy"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small><small class="sg-friend-presence">${esc(presenceLabel)}</small><small class="friend-row-streak">🌸 ${esc(streakLabel)} · ${esc(snapshot.label)}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
 }
 
 
@@ -499,43 +507,60 @@ function syncStreakWidget() {
   if (thumbnail) thumbnail.setAttribute('aria-label', count ? 'Open your ' + count + '-day streak garden' : 'Open your streak garden');
 }
 
-function recordLoginStreak() {
-  if (!me) return;
-  const userId = me.id, key = 'cuteBunnyStreak:' + userId, today = new Date().toISOString().slice(0, 10);
-  const yesterdayDate = new Date(`${today}T00:00:00.000Z`);
-  yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
-  const yesterday = yesterdayDate.toISOString().slice(0, 10);
-  const serverDate = String(me.last_login_date || '').slice(0, 10);
-  const serverCount = Math.max(0, Number(me.login_streak) || 0);
+async function recordLoginStreak() {
+  if (!me || !sb) return;
+  const userId = me.id;
+  const timezone = normalizeStreakTimeZone(getBrowserStreakTimeZone());
+  const today = streakDateInTimeZone(timezone);
+  const cacheKey = 'cuteBunnyStreak:' + userId;
+  const attemptKey = userId + ':' + timezone + ':' + today;
+  if (streakRecordInFlight && streakRecordInFlightKey === attemptKey) return streakRecordInFlight;
+
   let saved = { count: 0, date: '' };
-  try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
-  let localCount;
-  if (serverDate === today) localCount = serverCount || 1;
-  else if (serverDate === yesterday) localCount = serverCount + 1;
-  else if (serverDate) localCount = 1;
-  else if (saved.date === today) localCount = Math.max(1, Number(saved.count) || 1);
-  else if (saved.date === yesterday) localCount = Math.max(1, Number(saved.count) || 0) + 1;
-  else localCount = 1;
-  me.login_streak = localCount;
-  me.last_login_date = today;
-  try { localStorage.setItem(key, JSON.stringify({ count: localCount, date: today })); } catch {}
-  saveStreakHistory(today, localCount);
-  saveStreakMilestones(localCount);
-  syncStreakWidget();
-  if (!sb) return;
-  void sb.rpc('record_login_streak').then(({ data, error }) => {
-    if (error) throw error;
-    if (me?.id !== userId) return;
-    const result = Array.isArray(data) ? data[0] : data;
-    const count = Math.max(1, Number(result?.login_streak) || localCount);
-    const date = String(result?.last_login_date || today).slice(0, 10);
-    me.login_streak = count;
-    me.last_login_date = date;
-    try { localStorage.setItem(key, JSON.stringify({ count, date })); } catch {}
-    saveStreakHistory(date, count);
-    saveStreakMilestones(count);
-    syncStreakWidget();
-  }).catch(() => {});
+  try { saved = JSON.parse(localStorage.getItem(cacheKey) || '{}'); } catch {}
+  const legacyCount = Math.max(0, Math.min(3650, Number(saved.count) || 0));
+  const legacyDate = /^\d{4}-\d{2}-\d{2}$/.test(String(saved.date || '')) ? saved.date : null;
+
+  const request = (async () => {
+    try {
+      const { data, error } = await sb.rpc('record_login_streak_for_timezone', {
+        p_timezone: timezone,
+        p_legacy_count: legacyCount,
+        p_legacy_date: legacyDate
+      });
+      if (error) throw error;
+      if (me?.id !== userId) return;
+      const result = Array.isArray(data) ? data[0] : data;
+      const count = Number(result?.login_streak);
+      const date = String(result?.last_login_date || '').slice(0, 10);
+      if (!Number.isInteger(count) || count < 1 || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        throw new Error('The streak service returned an invalid count.');
+      }
+      me.login_streak = count;
+      me.last_login_date = date;
+      me.streak_timezone = normalizeStreakTimeZone(result?.streak_timezone || timezone);
+      streakCountdownDayKey = streakDateInTimeZone(me.streak_timezone);
+      try { localStorage.setItem(cacheKey, JSON.stringify({ count, date })); } catch {}
+      saveStreakHistory(date, count);
+      saveStreakMilestones(count);
+      syncStreakWidget();
+      if (page === 'streak') renderStreakPage();
+    } catch (error) {
+      console.error('Could not sync login streak:', error);
+      if (me?.id === userId) toast('Your streak could not sync. Check your connection and reopen Cute Bunny.');
+    }
+  })();
+
+  streakRecordInFlightKey = attemptKey;
+  streakRecordInFlight = request;
+  try {
+    await request;
+  } finally {
+    if (streakRecordInFlight === request) {
+      streakRecordInFlight = null;
+      streakRecordInFlightKey = '';
+    }
+  }
 }
 
 
@@ -557,27 +582,79 @@ function streakDateDistance(from, to) {
   const toTime = Date.parse(to + 'T00:00:00.000Z');
   return Number.isFinite(fromTime) && Number.isFinite(toTime) ? Math.round((toTime - fromTime) / 86400000) : null;
 }
-function streakUtcTimeRemaining() {
-  const now = new Date();
-  const nextDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
-  const minutes = Math.max(0, Math.ceil((nextDay - now.getTime()) / 60000));
+function getBrowserStreakTimeZone() {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; }
+  catch { return 'UTC'; }
+}
+function normalizeStreakTimeZone(value) {
+  const candidate = String(value || 'UTC').trim() || 'UTC';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: candidate }).format(new Date());
+    return candidate;
+  } catch { return 'UTC'; }
+}
+function streakDateInTimeZone(timeZone = 'UTC') {
+  const zone = normalizeStreakTimeZone(timeZone);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(new Date());
+  const fields = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return fields.year + '-' + fields.month + '-' + fields.day;
+}
+function streakTimeRemaining(timeZone = 'UTC') {
+  const zone = normalizeStreakTimeZone(timeZone);
+  const today = streakDateInTimeZone(zone);
+  const [year, month, day] = shiftStreakDate(today, 1).split('-').map(Number);
+  const targetWallTime = Date.UTC(year, month - 1, day);
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+  });
+  let midnight = targetWallTime;
+  for (let pass = 0; pass < 4; pass++) {
+    const fields = Object.fromEntries(formatter.formatToParts(new Date(midnight)).map(part => [part.type, part.value]));
+    const wallTime = Date.UTC(
+      Number(fields.year), Number(fields.month) - 1, Number(fields.day),
+      Number(fields.hour), Number(fields.minute), Number(fields.second)
+    );
+    const correction = targetWallTime - wallTime;
+    midnight += correction;
+    if (correction === 0) break;
+  }
+  const minutes = Math.max(0, Math.ceil((midnight - Date.now()) / 60000));
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   return hours ? hours + 'h ' + String(rest).padStart(2, '0') + 'm' : rest + 'm';
 }
 function updateStreakCountdownLabels() {
-  const todayKey = new Date().toISOString().slice(0, 10);
-  if (streakCountdownDayKey && todayKey !== streakCountdownDayKey && page === 'streak') {
+  const timezone = normalizeStreakTimeZone(me?.streak_timezone || getBrowserStreakTimeZone());
+  const todayKey = streakDateInTimeZone(timezone);
+  if (streakCountdownDayKey && todayKey !== streakCountdownDayKey) {
     streakCountdownDayKey = todayKey;
-    renderStreakPage();
-    return;
+    void recordLoginStreak();
+    if (page === 'streak') renderStreakPage();
   }
-  const remaining = streakUtcTimeRemaining();
+  const remaining = streakTimeRemaining(timezone);
   document.querySelectorAll('[data-streak-self-countdown]').forEach(node => { node.textContent = remaining; });
   document.querySelectorAll('[data-streak-friend-countdown]').forEach(node => { node.textContent = 'Visit today · ' + remaining + ' left'; });
+
+  document.querySelectorAll('[data-streak-friend-status]').forEach(node => {
+    const friend = {
+      login_streak: Number(node.dataset.streakCount) || 0,
+      last_login_date: node.dataset.lastLoginDate || null,
+      streak_timezone: node.dataset.streakTimezone || 'UTC'
+    };
+    const snapshot = streakFriendSnapshot(friend);
+    node.textContent = snapshot.label;
+    const card = node.closest('.sg-friend-card');
+    const countNode = card?.querySelector('[data-streak-friend-count]');
+    if (countNode) countNode.textContent = snapshot.count === null ? '–' : String(snapshot.count);
+    const countWrap = countNode?.closest('.sg-friend-flower-count');
+    if (countWrap) countWrap.setAttribute('aria-label', snapshot.count === null ? 'Streak unavailable' : snapshot.count + (snapshot.count === 1 ? ' day streak' : ' days streak'));
+  });
 }
 function startStreakCountdown() {
-  streakCountdownDayKey = new Date().toISOString().slice(0, 10);
+  streakCountdownDayKey = streakDateInTimeZone(me?.streak_timezone || getBrowserStreakTimeZone());
   updateStreakCountdownLabels();
   if (!streakCountdownInterval) streakCountdownInterval = window.setInterval(updateStreakCountdownLabels, 60000);
 }
@@ -789,46 +866,61 @@ function flipStreakPetalCard(cardId) {
   }
   renderStreakPetalGame();
 }
-function streakFriendSnapshot(friend, todayKey) {
+function streakFriendSnapshot(friend) {
   if (!Object.prototype.hasOwnProperty.call(friend || {}, 'last_login_date')) {
-    const count = Math.max(0, Number(friend?.login_streak) || 0);
-    return { count: count || null, label: 'Activity unavailable', state: 'unknown' };
+    return { count: null, label: 'Streak unavailable', state: 'unknown' };
   }
-  const lastDate = String(friend.last_login_date || '').slice(0,10);
-  if (!lastDate) {
-    const count = Math.max(0, Number(friend.login_streak) || 0);
-    return { count: count || null, label: 'Activity unavailable', state: 'unknown' };
-  }
-  const gap = streakDateDistance(lastDate, todayKey);
-  if (gap === null || gap < 0) return { count: null, label: 'Activity unavailable', state: 'unknown' };
-  if (gap > 1) return { count: 0, label: 'Streak paused', state: 'paused' };
   const count = Math.max(0, Number(friend.login_streak) || 0);
-  if (gap === 1) return { count, label: 'Visit today · ' + streakUtcTimeRemaining() + ' left', state: 'due' };
+  const lastDate = String(friend.last_login_date || '').slice(0, 10);
+  if (!lastDate) {
+    return {
+      count,
+      label: count > 0 ? 'Streak date unavailable' : 'No streak yet',
+      state: count > 0 ? 'unknown' : 'new'
+    };
+  }
+  const timezone = normalizeStreakTimeZone(friend.streak_timezone || 'UTC');
+  const todayKey = streakDateInTimeZone(timezone);
+  const gap = streakDateDistance(lastDate, todayKey);
+  if (gap === null || gap < 0) return { count, label: 'Activity unavailable', state: 'unknown' };
+  if (gap > 1) return { count: 0, label: 'Streak paused', state: 'paused' };
+  if (gap === 1) return { count, label: 'Visit today · ' + streakTimeRemaining(timezone) + ' left', state: 'due' };
   return { count, label: 'Active today', state: 'active' };
 }
-function streakFriendsMarkup(todayKey) {
+function streakFriendsMarkup() {
   if (!Array.isArray(friends) || !friends.length) {
     return '<div class="sg-friends-empty"><p>No friends in bloom yet.</p><button type="button" class="sg-find-friends" data-go="friends">Find friends</button></div>';
   }
-  const stateRank = {active:0,due:1,paused:2,unknown:3};
+  let liveState = {};
+  try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
+  const isOnline = id => isPresenceUserOnline(id, liveState);
+  const stateRank = {active:0,due:1,paused:2,new:3,unknown:4};
   const orderedFriends = [...friends].sort((a,b) => {
-    const aSnapshot = streakFriendSnapshot(a,todayKey);
-    const bSnapshot = streakFriendSnapshot(b,todayKey);
-    return (stateRank[aSnapshot.state] ?? 3) - (stateRank[bSnapshot.state] ?? 3) ||
+    const onlineOrder = Number(isOnline(b.id)) - Number(isOnline(a.id));
+    if (onlineOrder) return onlineOrder;
+    const aSnapshot = streakFriendSnapshot(a);
+    const bSnapshot = streakFriendSnapshot(b);
+    return (stateRank[aSnapshot.state] ?? 4) - (stateRank[bSnapshot.state] ?? 4) ||
       (Number(b.login_streak) || 0) - (Number(a.login_streak) || 0) ||
       String(a.username || '').localeCompare(String(b.username || ''));
   });
   const rows = orderedFriends.map(friend => {
-    const snapshot = streakFriendSnapshot(friend,todayKey);
+    const snapshot = streakFriendSnapshot(friend);
     const streakDays = snapshot.count === null ? '–' : String(snapshot.count);
     const streakAria = snapshot.count === null ? 'Streak unavailable' : snapshot.count + (snapshot.count === 1 ? ' day streak' : ' days streak');
     const displayName = String(friend.display_name || friend.username || 'Friend').trim() || 'Friend';
+    const timezone = normalizeStreakTimeZone(friend.streak_timezone || 'UTC');
+    const lastDate = String(friend.last_login_date || '').slice(0, 10);
+    const rawCount = Math.max(0, Number(friend.login_streak) || 0);
+    const initialPresence = presenceStatus === 'ready' ? 'Offline' : presenceStatus === 'error' ? 'Presence unavailable' : 'Connecting…';
     return '<div class="sg-friend-card" data-friend-id="' + esc(friend.id || '') + '" aria-label="' + esc(displayName) + ' garden">' +
       '<span class="sg-friend-avatar" aria-hidden="true">' + esc(friend.mascot || '🐰') + '</span>' +
       '<span class="sg-friend-details"><strong class="sg-friend-name">' + esc(displayName) + '</strong>' +
-      '<span class="sg-friend-meta"><small class="sg-friend-presence">Offline</small>' +
+      '<span class="sg-friend-meta"><small class="sg-friend-presence">' + initialPresence + '</small>' +
+      '<small class="sg-friend-streak-status" data-streak-friend-status data-streak-timezone="' + esc(timezone) +
+      '" data-last-login-date="' + esc(lastDate) + '" data-streak-count="' + rawCount + '">' + esc(snapshot.label) + '</small>' +
       '<span class="sg-friend-flower-count" aria-label="' + esc(streakAria) + '">' +
-      '<strong>' + streakDays + '</strong><i aria-hidden="true">🌸</i></span></span></span></div>';
+      '<strong data-streak-friend-count>' + streakDays + '</strong><i aria-hidden="true">🌸</i><em>streak</em></span></span></span></div>';
   }).join('');
   return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>';
 }
@@ -836,9 +928,10 @@ function streakFriendsMarkup(todayKey) {
 function renderStreakPage() {
   const content = $('#content');
   if (!content || !me) return;
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const lastDate = String(me.last_login_date || todayKey).slice(0, 10);
-  const gap = streakDateDistance(lastDate, todayKey);
+  const timezone = normalizeStreakTimeZone(me.streak_timezone || getBrowserStreakTimeZone());
+  const todayKey = streakDateInTimeZone(timezone);
+  const lastDate = String(me.last_login_date || '').slice(0, 10);
+  const gap = lastDate ? streakDateDistance(lastDate, todayKey) : null;
   const count = gap !== null && gap >= 0 && gap <= 1 ? Math.max(0, Number(me.login_streak) || 0) : 0;
   if (count) {
     saveStreakHistory(lastDate, count);
@@ -1155,7 +1248,7 @@ function renderStreakPage() {
       '</div>' +
       '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div></section>',
     '<section class="sg-friends-section sg-friends-compact"><div class="sg-friends-heading"><h3>Friends in Bloom</h3></div>' +
-      streakFriendsMarkup(todayKey) + '</section>',
+      streakFriendsMarkup() + '</section>',
     '<div class="sg-bottom-tabs-wrap">',
     '<div class="sg-bottom-tabs" role="tablist" aria-label="Garden details">' +
       '<button type="button" class="sg-bottom-tab' + (streakGardenActiveTab === 'promises' ? ' is-active' : '') + '" id="sgPromisesTab" role="tab" aria-controls="sgPromisesPanel" aria-selected="' + (streakGardenActiveTab === 'promises') + '" data-streak-garden-tab="promises"><span class="sg-tab-icon" aria-hidden="true">♡</span><span class="sg-tab-label">Your Little Promises</span></button>' +
@@ -1236,11 +1329,6 @@ function go(p, options = {}) {
   if (!validPages.includes(p)) return;
   if (options.resetStack) appPageStack = [p];
   else if (!options.fromBack && p !== page && appBackGuardInstalled) appPageStack.push(p);
-  if (p !== 'streak' && streakCountdownInterval) {
-    window.clearInterval(streakCountdownInterval);
-    streakCountdownInterval = null;
-  }
-
   if (page === 'notes' && p !== 'notes') {
     $('#chatInput')?.blur();
     document.querySelector('.chat-page')?.classList.remove('notes-keyboard-open');
@@ -1278,6 +1366,7 @@ function go(p, options = {}) {
   // page's document scroll position.
   window.scrollTo({ top: 0, behavior: 'auto' });
   render();
+  syncPresenceUI();
 
   if (p === 'notes') {
     requestAnimationFrame(() => {
@@ -1660,7 +1749,7 @@ function showFriendProfile(user) {
   $('#friendProfileHandle').textContent = '@' + user.username;
   $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
   $('#friendProfileCreated').textContent = 'Joined ' + formatJoinDate(user.created_at);
-  const friendGarden = streakFriendSnapshot(user, new Date().toISOString().slice(0, 10));
+  const friendGarden = streakFriendSnapshot(user);
   $('#friendProfileStreakCount').textContent = friendGarden.count === null
     ? 'Streak unavailable'
     : friendGarden.count + (friendGarden.count === 1 ? ' day' : ' days');
@@ -2202,16 +2291,45 @@ async function clearIgNote() {
 /* Realtime */
 function startRealtime() {
   if (!sb || !me) return;
+  closeRealtime();
+  presenceStatus = 'connecting';
   try {
-    presenceChannel = sb.channel('cute-bunny-presence', { config: { presence: { key: me.id } } })
+    // Each browser tab/device gets its own key; the user_id payload lets peers
+    // aggregate all active sessions without key collisions.
+    const clientPresenceKey = 'cb-' + String(me.id) + '-' +
+      (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2));
+    const presence = sb.channel('cute-bunny-presence', { config: { presence: { key: clientPresenceKey } } });
+    presenceChannel = presence;
+    presence
       .on('presence', { event: 'sync' }, syncPresenceUI)
+      .on('presence', { event: 'join' }, syncPresenceUI)
+      .on('presence', { event: 'leave' }, syncPresenceUI)
       .subscribe(async status => {
-        if (status === 'SUBSCRIBED') await presenceChannel.track({ username: me.username, online_at: new Date().toISOString() });
+        if (status === 'SUBSCRIBED') {
+          presenceStatus = 'ready';
+          syncPresenceUI();
+          try {
+            await presence.track({ user_id: me.id, username: me.username, online_at: new Date().toISOString() });
+          } catch (error) {
+            presenceStatus = 'error';
+            console.warn('Presence tracking failed:', error?.message || error);
+            syncPresenceUI();
+          }
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          presenceStatus = 'error';
+          syncPresenceUI();
+        }
       });
 
     profileChannel = sb.channel('cute-bunny-profiles-' + me.id)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, payload => {
-        if (payload.new?.id !== me.id) void refresh();
+        const changedId = String(payload.new?.id || '');
+        if (changedId && changedId !== String(me?.id) && friends.some(friend => String(friend.id) === changedId)) {
+          clearTimeout(window.cuteStreakProfileRefresh);
+          window.cuteStreakProfileRefresh = setTimeout(() => {
+            void refresh().catch(error => console.warn('Friend streak refresh failed:', error?.message || error));
+          }, 350);
+        }
       }).subscribe();
 
     notificationChannel = sb.channel('cute-bunny-notifications-' + me.id)
@@ -2227,26 +2345,45 @@ function startRealtime() {
         window.cuteMemoryRefresh = setTimeout(() => void refresh(), 600);
       }).subscribe();
   } catch (error) {
+    presenceStatus = 'error';
     console.info('Realtime will start when supported.', error?.message || '');
+    syncPresenceUI();
   }
 }
 
 function closeRealtime() {
   [presenceChannel, notificationChannel, memoryChannel, profileChannel].forEach(channel => {
-    if (channel) sb.removeChannel(channel);
+    if (channel && sb) sb.removeChannel(channel);
   });
   presenceChannel = notificationChannel = memoryChannel = profileChannel = null;
+  presenceStatus = 'closed';
+  if (streakCountdownInterval) {
+    window.clearInterval(streakCountdownInterval);
+    streakCountdownInterval = null;
+  }
+}
+
+function isPresenceUserOnline(userId, state) {
+  if (!userId || !state || typeof state !== 'object') return false;
+  return Object.values(state).some(sessions =>
+    Array.isArray(sessions) && sessions.some(session => String(session?.user_id || '') === String(userId))
+  );
 }
 
 function syncPresenceUI() {
-  if (!presenceChannel) return;
-  const state = presenceChannel.presenceState();
-  document.querySelectorAll('[data-friend-id]').forEach(node => {
-    const online = !!state[node.dataset.friendId]?.length;
+  let state = {};
+  try { state = presenceChannel?.presenceState?.() || {}; } catch {}
+  document.querySelectorAll('.sg-friend-card[data-friend-id], .friend-row[data-friend-id]').forEach(node => {
+    const online = isPresenceUserOnline(node.dataset.friendId, state);
     node.classList.toggle('is-online', online);
     node.classList.toggle('is-offline', !online);
     const presenceLabel = node.querySelector('.sg-friend-presence');
-    if (presenceLabel) presenceLabel.textContent = online ? 'Online' : 'Offline';
+    if (presenceLabel) {
+      presenceLabel.textContent = presenceStatus === 'ready'
+        ? (online ? 'Online now' : 'Offline')
+        : presenceStatus === 'error' ? 'Presence unavailable'
+        : presenceStatus === 'closed' ? 'Offline' : 'Connecting…';
+    }
   });
 }
 

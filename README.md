@@ -62,3 +62,8 @@ The hosted site currently uses the Supabase JavaScript client. The Spring Boot/M
 - Right-swipe reveals deletion; completing the swipe starts a short Undo window before anything is removed.
 - Friends see live presence while the app is open. Buddy taps can send a rate-limited notification to a mutual friend.
 - Photos, songs, and notes create notification history entries for followers after the feature migration is installed.
+
+
+## Local streak calendar and live friend presence
+
+The streak system stores each member's IANA timezone and records streak days using that member's local calendar date. Friend streak labels are evaluated in each friend's timezone, while the shared Realtime Presence channel shows who is online now. The daily streak RPC is server-authoritative; a saved browser streak can be imported once only when a profile has never had a server streak date.
