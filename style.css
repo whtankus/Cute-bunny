@@ -8532,3 +8532,33 @@ body[data-mode="dark"] #app .now-playing-panel{
   #app .island-track-info{grid-template-columns:34px minmax(0,1fr) 24px!important}
   #app .island-album-icon{width:34px!important;height:34px!important}
 }
+
+
+/* Final glass pass: strongly frosted surface, with only soft colour bleed. */
+#app .now-playing-panel{
+  background:linear-gradient(145deg,rgba(255,250,247,.91),rgba(238,226,241,.88))!important;
+  -webkit-backdrop-filter:blur(42px) saturate(1.35)!important;
+  backdrop-filter:blur(42px) saturate(1.35)!important;
+  isolation:isolate;
+  box-shadow:0 14px 38px rgba(64,43,67,.22),inset 0 1px 0 rgba(255,255,255,.78)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel{
+  background:linear-gradient(145deg,rgba(55,43,62,.94),rgba(43,36,56,.93))!important;
+  -webkit-backdrop-filter:blur(42px) saturate(1.3)!important;
+  backdrop-filter:blur(42px) saturate(1.3)!important;
+}
+
+/* Match the header buttons to the music island's exact plum gradient. */
+#app .header-actions .round,
+#app .header-actions .round:hover,
+#app .header-actions .round:focus-visible,
+body[data-mode="dark"] #app .header-actions .round{
+  background:linear-gradient(145deg,#58435d,#332c43)!important;
+  border:1px solid #ffffff35!important;
+  color:#fff8fc!important;
+  box-shadow:0 5px 18px #45314a36!important;
+}
+#app .header-actions .round:active{
+  background:linear-gradient(145deg,#58435d,#332c43)!important;
+}
+#app .notification-badge{border-color:#45314a!important}
