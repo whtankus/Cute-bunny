@@ -7,11 +7,12 @@ const sb = window.supabase && cfg.supabaseUrl && !cfg.supabaseUrl.startsWith('PA
 
 let token = localStorage.getItem('cuteBunnyToken') || '', me = null, page = 'home', feed = [], friends = [], friendResults = [], friendQuery = '';
 let appPageStack = ['home'], appBackGuardInstalled = false, appBackExitArmedUntil = 0, appBackExitPending = false;
-let mediaObjectUrls = [], mediaUrlCache = new Map(), pendingMediaUrls = new Map(), reactedMemories = new Set();
+let mediaObjectUrls = [], mediaUrlCache = new Map(), mediaHydrationInFlight = new Map(), pendingMediaUrls = new Map(), reactedMemories = new Set();
 let pendingDeleteTimers = new Map(), authMode = 'register';
-let playlist = [], playlistIndex = -1, audioObjectUrl = '';
+let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0;
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let notificationSeenObserver = null, notificationDismissals = new Set();
+let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let navRefreshInFlight = false, appExitStep = 0;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
@@ -1593,7 +1594,7 @@ function memoryCard(m, options = {}) {
 
   let body = '';
   if (m.kind === 'photo') {
-    body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
+    body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" loading="lazy" decoding="async" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
   } else if (m.kind === 'song') {
     const songAction = m.isPending ? '' : mine
       ? `<button class="song-download card-song-save card-song-delete" type="button" data-memory-delete="${esc(m.id)}" aria-label="Delete song">Delete</button>`
@@ -1926,38 +1927,68 @@ function syncPlayer() {
 }
 
 async function playSong(id) {
-  const songs = feed.filter(x => x.kind === 'song'), index = songs.findIndex(x => String(x.id) === String(id)), audio = $('#globalAudio');
+  const songs = feed.filter(x => x.kind === 'song');
+  const index = songs.findIndex(x => String(x.id) === String(id));
+  const audio = $('#globalAudio');
+  const requestId = ++songLoadSequence;
   if (index < 0) return toast('This song is no longer in your garden ♡');
+
+  // Only toggle playback when the requested track is actually loaded in the
+  // shared audio element. A new selection always replaces the previous track.
   if (String(playlist[playlistIndex]?.id) === String(id) && audio.src) {
-    if (audio.paused) await audio.play().catch(() => {});
+    if (audio.paused) await audio.play().catch(error => toast(error.message));
     else audio.pause();
     syncPlayer();
     return;
   }
+
   playlist = songs;
   playlistIndex = index;
   const track = songs[index];
   audio.pause();
   audio.removeAttribute('src');
   audio.load();
-  if (audioObjectUrl) URL.revokeObjectURL(audioObjectUrl);
+  if (audioObjectUrl) {
+    URL.revokeObjectURL(audioObjectUrl);
+    audioObjectUrl = '';
+  }
   syncPlayer();
+
   try {
     const { data, error } = await sb.storage.from('memories').download(track.storagePath);
-    if (error) throw error;
-    audioObjectUrl = URL.createObjectURL(data);
-    audio.src = audioObjectUrl;
+    if (requestId !== songLoadSequence) return;
+    if (error || !data) throw error || new Error('The song file could not be loaded.');
+    const nextObjectUrl = URL.createObjectURL(data);
+    if (requestId !== songLoadSequence) {
+      URL.revokeObjectURL(nextObjectUrl);
+      return;
+    }
+    audioObjectUrl = nextObjectUrl;
+    audio.src = nextObjectUrl;
     await audio.play();
+    if (requestId !== songLoadSequence) return;
     syncPlayer();
-  } catch (e) {
-    toast(e.message || 'Could not play this song right now ♡');
+  } catch (error) {
+    if (requestId !== songLoadSequence) return;
+    syncPlayer();
+    toast(error?.message || 'Could not play this song right now ♡');
   }
 }
 
 function stepSong(step) {
-  if (!playlist.length) return;
-  playlistIndex = (playlistIndex + step + playlist.length) % playlist.length;
-  void playSong(playlist[playlistIndex].id);
+  const songs = feed.filter(x => x.kind === 'song');
+  if (!songs.length) {
+    playlist = [];
+    playlistIndex = -1;
+    return;
+  }
+  const currentId = playlist[playlistIndex]?.id;
+  const currentIndex = songs.findIndex(song => String(song.id) === String(currentId));
+  const baseIndex = currentIndex < 0 ? (step > 0 ? -1 : 0) : currentIndex;
+  const nextIndex = (baseIndex + step + songs.length) % songs.length;
+  // Do not change playlistIndex here. playSong uses it to distinguish a
+  // genuinely new track from the currently playing one.
+  void playSong(songs[nextIndex].id);
 }
 
 /* Modals & Dialogs */
@@ -2182,8 +2213,12 @@ async function deleteSafely(id) {
       feed = feed.filter(m => String(m.id) !== String(id));
       if (String(playlist[playlistIndex]?.id) === String(id)) {
         const audio = $('#globalAudio');
+        songLoadSequence++;
         audio.pause();
         audio.removeAttribute('src');
+        audio.load();
+        if (audioObjectUrl) URL.revokeObjectURL(audioObjectUrl);
+        audioObjectUrl = '';
         playlistIndex = -1;
         syncPlayer();
       }
@@ -2484,7 +2519,7 @@ function renderNotifications() {
   list.innerHTML = notificationRows.map(n => {
     const actor = Array.isArray(n.actor) ? n.actor[0] : (n.actor || {});
     const unread = !n.read_at;
-    return `<div class="notification-row${unread ? ' is-unread' : ''}">
+    return `<div class="notification-row${unread ? ' is-unread' : ''}" data-notification-row="${esc(n.id)}">
       <button type="button" class="notification-open" data-notification="${esc(n.id)}" aria-label="Open notification from ${esc(actor.display_name || actor.username || 'Friend')}">
         <span class="notification-avatar">${esc(actor.mascot || '🐰')}</span>
         <span class="notification-copy">
@@ -2494,11 +2529,53 @@ function renderNotifications() {
         </span>
         ${unread ? '<i class="notification-unread-dot" aria-label="Unread"></i>' : ''}
       </button>
-      <button type="button" class="notification-dismiss" data-notification-dismiss="${esc(n.id)}" aria-label="Remove notification" title="Remove">×</button>
     </div>`;
   }).join('') || (notificationLoading && !notificationLoaded
     ? '<div class="notification-loading" aria-label="Loading notifications"><span class="notification-loader" aria-hidden="true"></span></div>'
     : '<div class="notification-empty"><span aria-hidden="true">♡</span><b>You’re all caught up</b><small>New shared activity will appear here.</small></div>');
+  observeNotificationListRows();
+}
+
+function observeNotificationListRows() {
+  notificationListSeenObserver?.disconnect();
+  notificationListSeenObserver = null;
+  notificationRowViewTimers.forEach(timer => clearTimeout(timer));
+  notificationRowViewTimers.clear();
+
+  const gate = $('#notificationGate'), list = $('#notificationList');
+  if (!gate || gate.classList.contains('hidden') || !list || !notificationRows.length) return;
+  if (!('IntersectionObserver' in window)) return;
+
+  notificationListSeenObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const row = entry.target;
+      const id = String(row?.dataset?.notificationRow || '');
+      if (!id) return;
+
+      if (entry.isIntersecting && entry.intersectionRatio >= 0.8) {
+        if (notificationRowViewTimers.has(id)) return;
+        const timer = window.setTimeout(() => {
+          notificationRowViewTimers.delete(id);
+          if (!row.isConnected || gate.classList.contains('hidden')) return;
+          const rowRect = row.getBoundingClientRect();
+          const listRect = list.getBoundingClientRect();
+          const visibleHeight = Math.max(0, Math.min(rowRect.bottom, listRect.bottom) - Math.max(rowRect.top, listRect.top));
+          if (rowRect.height && visibleHeight / rowRect.height >= 0.8) {
+            void dismissNotification(id, { silent: true }).catch(() => {});
+          }
+        }, 850);
+        notificationRowViewTimers.set(id, timer);
+      } else {
+        const timer = notificationRowViewTimers.get(id);
+        if (timer) clearTimeout(timer);
+        notificationRowViewTimers.delete(id);
+      }
+    });
+  }, { root: list, threshold: [0, 0.8] });
+
+  list.querySelectorAll('.notification-row[data-notification-row]').forEach(row => {
+    notificationListSeenObserver.observe(row);
+  });
 }
 
 async function dismissNotification(id, options = {}) {
@@ -2583,39 +2660,94 @@ async function searchFriends() {
   }
 }
 
-async function hydrateOneMedia(node) {
+function cacheMediaSource(key, entry) {
+  mediaUrlCache.set(key, entry);
+  if (mediaUrlCache.size > 40) {
+    const oldestKey = mediaUrlCache.keys().next().value;
+    const oldestEntry = mediaUrlCache.get(oldestKey);
+    mediaUrlCache.delete(oldestKey);
+    const oldestUrl = typeof oldestEntry === 'string' ? oldestEntry : oldestEntry?.url;
+    if (oldestUrl?.startsWith('blob:')) URL.revokeObjectURL(oldestUrl);
+  }
+}
+
+async function resolveMediaSource(memory) {
+  const key = String(memory.id);
+  const cached = mediaUrlCache.get(key);
+  if (cached) {
+    const entry = typeof cached === 'string'
+      ? { url: cached, expiresAt: Number.MAX_SAFE_INTEGER }
+      : cached;
+    if (entry.url && entry.expiresAt > Date.now() + 30000) return entry.url;
+    if (entry.url?.startsWith('blob:')) URL.revokeObjectURL(entry.url);
+    mediaUrlCache.delete(key);
+  }
+
+  const pending = mediaHydrationInFlight.get(key);
+  if (pending) return pending;
+
+  const request = (async () => {
+    // A signed URL lets the browser stream and cache the image directly instead
+    // of waiting for JavaScript to download the whole file into a Blob first.
+    const { data: signedData, error: signedError } = await sb.storage
+      .from('memories')
+      .createSignedUrl(memory.storagePath, 3600);
+    if (!signedError && signedData?.signedUrl) {
+      const entry = {
+        url: signedData.signedUrl,
+        expiresAt: Date.now() + 55 * 60 * 1000
+      };
+      cacheMediaSource(key, entry);
+      return entry.url;
+    }
+
+    // Retain the existing authenticated download path as a compatibility fallback.
+    const { data, error } = await sb.storage.from('memories').download(memory.storagePath);
+    if (error || !data) throw error || new Error('The photo could not be loaded.');
+    const entry = { url: URL.createObjectURL(data), expiresAt: Number.MAX_SAFE_INTEGER };
+    cacheMediaSource(key, entry);
+    return entry.url;
+  })();
+
+  mediaHydrationInFlight.set(key, request);
   try {
-    const m = feed.find(x => String(x.id) === node.dataset.media);
-    if (!m?.storagePath || m.isPending) return;
-    const key = String(m.id), cached = mediaUrlCache.get(key);
-    if (cached) {
-      node.src = cached;
-      return;
-    }
-    const { data, error } = await sb.storage.from('memories').download(m.storagePath);
-    if (!error && data) {
-      const url = URL.createObjectURL(data);
-      mediaUrlCache.set(key, url);
-      if (mediaUrlCache.size > 40) {
-        const oldest = mediaUrlCache.keys().next().value, expired = mediaUrlCache.get(oldest);
-        mediaUrlCache.delete(oldest);
-        URL.revokeObjectURL(expired);
-      }
-      node.src = url;
-    }
-  } catch {}
+    return await request;
+  } finally {
+    if (mediaHydrationInFlight.get(key) === request) mediaHydrationInFlight.delete(key);
+  }
+}
+
+async function hydrateOneMedia(node) {
+  if (!node || node.getAttribute('src') || node.dataset.mediaLoading === 'true') return;
+  try {
+    const memory = feed.find(item => String(item.id) === String(node.dataset.media));
+    if (!memory?.storagePath || memory.isPending) return;
+    node.dataset.mediaLoading = 'true';
+    node.loading = 'lazy';
+    node.decoding = 'async';
+    const url = await resolveMediaSource(memory);
+    if (node.isConnected && !node.getAttribute('src')) node.src = url;
+  } catch (error) {
+    console.warn('Photo could not be loaded:', error?.message || error);
+  } finally {
+    delete node.dataset.mediaLoading;
+  }
 }
 
 function hydrateMedia() {
   if (!sb) return;
   const nodes = [...document.querySelectorAll('[data-media]')];
+  nodes.forEach(node => {
+    node.loading = 'lazy';
+    node.decoding = 'async';
+  });
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver(entries => entries.forEach(entry => {
       if (entry.isIntersecting) {
         observer.unobserve(entry.target);
         void hydrateOneMedia(entry.target);
       }
-    }), { rootMargin: '320px 0px' });
+    }), { rootMargin: '480px 0px' });
     nodes.forEach(node => observer.observe(node));
   } else nodes.forEach(node => void hydrateOneMedia(node));
 }
@@ -3236,13 +3368,6 @@ document.addEventListener('click', async e => {
     } catch (err) {
       toast(err.message);
     }
-    return;
-  }
-  const notificationDismissButton = e.target.closest('[data-notification-dismiss]');
-  if (notificationDismissButton) {
-    try {
-      await dismissNotification(notificationDismissButton.dataset.notificationDismiss);
-    } catch {}
     return;
   }
   const notifItem = e.target.closest('[data-notification]');
