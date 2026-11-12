@@ -533,6 +533,7 @@ async function recordLoginStreak() {
       me.login_streak = count;
       me.last_login_date = date;
       me.streak_timezone = normalizeStreakTimeZone(result?.streak_timezone || timezone);
+      streakCountdownDayKey = streakDateInTimeZone(me.streak_timezone);
       try { localStorage.setItem(cacheKey, JSON.stringify({ count, date })); } catch {}
       saveStreakHistory(date, count);
       saveStreakMilestones(count);
@@ -1241,7 +1242,7 @@ function renderStreakPage() {
       '</div>' +
       '<div class="sg-petal-board" id="streakGameBoard" aria-label="Petal pairs memory game with six pairs"></div></section>',
     '<section class="sg-friends-section sg-friends-compact"><div class="sg-friends-heading"><h3>Friends in Bloom</h3></div>' +
-      streakFriendsMarkup(todayKey) + '</section>',
+      streakFriendsMarkup() + '</section>',
     '<div class="sg-bottom-tabs-wrap">',
     '<div class="sg-bottom-tabs" role="tablist" aria-label="Garden details">' +
       '<button type="button" class="sg-bottom-tab' + (streakGardenActiveTab === 'promises' ? ' is-active' : '') + '" id="sgPromisesTab" role="tab" aria-controls="sgPromisesPanel" aria-selected="' + (streakGardenActiveTab === 'promises') + '" data-streak-garden-tab="promises"><span class="sg-tab-icon" aria-hidden="true">♡</span><span class="sg-tab-label">Your Little Promises</span></button>' +
