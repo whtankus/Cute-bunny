@@ -2450,10 +2450,27 @@ function startRealtime() {
       }).subscribe();
 
     memoryChannel = sb.channel('cute-bunny-memories-' + me.id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'memories' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'memories' }, payload => {
+        // Refresh only the shared memory feed; a full app refresh can rebuild
+        // the current page and interrupt the Notes conversation.
         clearTimeout(window.cuteMemoryRefresh);
-        window.cuteMemoryRefresh = setTimeout(() => void refresh(), 600);
-      }).subscribe();
+        window.cuteMemoryRefresh = setTimeout(async () => {
+          try {
+            const freshFeed = await api('/feed');
+            const pending = feed.filter(item => item.isPending);
+            const pendingIds = new Set(pending.map(item => String(item.id)));
+            feed = [...freshFeed.filter(item => !pendingIds.has(String(item.id))), ...pending];
+            if (page === 'notes') renderNotesPage();
+            else if (page === 'home') render();
+          } catch (error) {
+            console.warn('Live Notes update could not refresh the feed:', error?.message || error);
+          }
+        }, 120);
+      }).subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.warn('Live Notes channel status:', status);
+        }
+      });
   } catch (error) {
     presenceStatus = 'error';
     console.info('Realtime will start when supported.', error?.message || '');
