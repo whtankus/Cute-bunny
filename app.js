@@ -1909,7 +1909,11 @@ function syncPlayer() {
   $('#app').classList.toggle('has-now-playing', hasTrack);
   if (!hasTrack) toggleMusicIsland(false);
   if (track) {
-    const title = track.fileName || track.text || 'A little song', currentStatus = String(me?.displayName || me?.display_name || me?.username || 'You').trim() || 'You';
+    const title = track.fileName || track.text || 'A little song';
+    const songAuthor = track.author || {};
+    const currentStatus = String(songAuthor.displayName || songAuthor.display_name || songAuthor.username || 'Unknown user').trim() || 'Unknown user';
+    const userPet = $('#islandUserPet');
+    if (userPet) userPet.textContent = String(songAuthor.mascot || '🐰');
     if (shortTitle) shortTitle.textContent = shortIslandTitle(track);
     if (fullTitle) fullTitle.textContent = title;
     if (status) status.textContent = currentStatus;
