@@ -22,7 +22,7 @@ let notificationRows = [], notificationLoaded = false, notificationLoading = fal
 let notificationSeenObserver = null, notificationDismissals = new Set();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
-let navRefreshInFlight = false, appExitStep = 0;
+let navRefreshInFlight = false, navRenderToken = 0, appExitStep = 0;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
 let hiddenNoteIds = new Set();
@@ -1402,8 +1402,20 @@ function go(p, options = {}) {
   // Start Notes at the app's top-level header rather than inheriting another
   // page's document scroll position.
   window.scrollTo({ top: 0, behavior: 'auto' });
-  render({ followLatest: p === 'notes' && previousPage === 'notes' });
-  syncPresenceUI();
+  const renderOptions = { followLatest: p === 'notes' && previousPage === 'notes' };
+  if (options.deferRender) {
+    // Paint the selected tab immediately, then render only the latest requested
+    // destination. Rapid tab taps are coalesced instead of queued or blocked.
+    const renderToken = ++navRenderToken;
+    requestAnimationFrame(() => {
+      if (renderToken !== navRenderToken || page !== p) return;
+      render(renderOptions);
+      syncPresenceUI();
+    });
+  } else {
+    render(renderOptions);
+    syncPresenceUI();
+  }
 
   if (p === 'notes') {
     requestAnimationFrame(() => {
@@ -3028,19 +3040,15 @@ document.addEventListener('click', async e => {
     if (nav.dataset.page !== page) {
       // Navigate in the same click task: the pointerdown state is already
       // painted by CSS, so an extra animation-frame wait only adds latency.
-      if (navRefreshInFlight) return;
-      navRefreshInFlight = true;
+      // Never serialize tab taps behind a lock. go() updates the selected
+      // state immediately and coalesces expensive page rendering to the
+      // latest destination on the next paint.
       nav.classList.add('is-navigating');
-      nav.setAttribute('aria-busy', 'true');
-      try {
-        go(nav.dataset.page);
-      } finally {
-        requestAnimationFrame(() => {
-          nav.classList.remove('is-navigating', 'nav-pressed');
-          nav.removeAttribute('aria-busy');
-          navRefreshInFlight = false;
-        });
-      }
+      go(nav.dataset.page, { deferRender: true });
+      requestAnimationFrame(() => {
+        nav.classList.remove('is-navigating', 'nav-pressed');
+        nav.removeAttribute('aria-busy');
+      });
       return;
     }
 
