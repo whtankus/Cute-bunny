@@ -8932,3 +8932,43 @@ body[data-mode="dark"] #app .now-playing-panel .island-controls .island-play {
   color:#654968!important;
   background:linear-gradient(145deg,rgba(255,225,241,.96),rgba(224,211,246,.96))!important;
 }
+
+
+/* Translucent glass player surface: keep the wallpaper visibly flowing through. */
+#app .now-playing-panel {
+  background:rgba(255,249,253,.22)!important;
+  border-color:rgba(255,255,255,.52)!important;
+  -webkit-backdrop-filter:blur(32px) saturate(1.55)!important;
+  backdrop-filter:blur(32px) saturate(1.55)!important;
+  box-shadow:0 12px 34px rgba(107,75,111,.12),inset 0 1px 0 rgba(255,255,255,.58)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel {
+  background:rgba(255,246,252,.10)!important;
+  border-color:rgba(255,255,255,.25)!important;
+  -webkit-backdrop-filter:blur(34px) saturate(1.45)!important;
+  backdrop-filter:blur(34px) saturate(1.45)!important;
+  box-shadow:0 12px 34px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.22)!important;
+}
+#app .now-playing-panel .island-status-line {
+  display:flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  min-width:0!important;
+}
+#app .now-playing-panel .island-user-icon {
+  display:block!important;
+  flex:0 0 13px!important;
+  width:13px!important;
+  height:13px!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:1.8!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+  opacity:.88!important;
+}
+#app .now-playing-panel #islandStatusText {
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
