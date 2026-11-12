@@ -8711,3 +8711,18 @@ body[data-mode="dark"] #app .header-actions .round:focus-visible {
   }
   #app .notification-bell-icon {width:15px!important;height:15px!important}
 }
+
+
+/* Increase only the bell/moon capsule's horizontal length by 10%.
+   Keep icon dimensions, spacing, height, and button behaviour unchanged. */
+#app .header-actions {
+  box-sizing:border-box!important;
+  width:73px!important;
+  min-width:73px!important;
+}
+@media(max-width:520px) {
+  #app .header-actions {
+    width:62px!important;
+    min-width:62px!important;
+  }
+}
