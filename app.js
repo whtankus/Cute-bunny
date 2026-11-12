@@ -1352,6 +1352,7 @@ function popLoveHeart(card, e) {
 }
 
 function go(p, options = {}) {
+  const previousPage = page;
   const validPages = ['home', 'gallery', 'music', 'notes', 'friends', 'streak'];
   if (!validPages.includes(p)) return;
   if (options.resetStack) appPageStack = [p];
@@ -1392,7 +1393,7 @@ function go(p, options = {}) {
   // Start Notes at the app's top-level header rather than inheriting another
   // page's document scroll position.
   window.scrollTo({ top: 0, behavior: 'auto' });
-  render();
+  render({ followLatest: p === 'notes' && previousPage === 'notes' });
   syncPresenceUI();
 
   if (p === 'notes') {
@@ -1698,12 +1699,12 @@ function renderNotesPage(options = {}) {
     if (thread) thread.scrollTop = thread.scrollHeight;
   });
 }
-function render() {
+function render(options = {}) {
   const c = $('#content');
   if (!c) return;
 
   if (page === 'notes') {
-    renderNotesPage();
+    renderNotesPage({ followLatest: !!options.followLatest });
     requestAnimationFrame(observeNotificationMemoryViews);
     return;
   }
@@ -2687,26 +2688,15 @@ async function resolveMediaSource(memory) {
   if (pending) return pending;
 
   const request = (async () => {
-    // A signed URL lets the browser stream and cache the image directly instead
-    // of waiting for JavaScript to download the whole file into a Blob first.
-    const { data: signedData, error: signedError } = await sb.storage
-      .from('memories')
-      .createSignedUrl(memory.storagePath, 3600);
-    if (!signedError && signedData?.signedUrl) {
-      const entry = {
-        url: signedData.signedUrl,
-        expiresAt: Date.now() + 55 * 60 * 1000
-      };
-      cacheMediaSource(key, entry);
-      return entry.url;
-    }
-
-    // Retain the existing authenticated download path as a compatibility fallback.
+    // Download once into a retained Blob URL. Re-rendering Gallery or moving
+    // between pages then reuses the same in-memory image instead of requesting
+    // a fresh signed URL and downloading the same photo again.
     const { data, error } = await sb.storage.from('memories').download(memory.storagePath);
     if (error || !data) throw error || new Error('The photo could not be loaded.');
-    const entry = { url: URL.createObjectURL(data), expiresAt: Number.MAX_SAFE_INTEGER };
+    const url = URL.createObjectURL(data);
+    const entry = { url, expiresAt: Number.MAX_SAFE_INTEGER };
     cacheMediaSource(key, entry);
-    return entry.url;
+    return url;
   })();
 
   mediaHydrationInFlight.set(key, request);
