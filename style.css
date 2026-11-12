@@ -8261,3 +8261,139 @@ body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-headin
   .streak-garden-page .sg-friends-compact .sg-friend-heading .sg-friend-name{font-size:10px!important}
   .streak-garden-page .sg-friends-compact .sg-friend-heading .sg-friend-flower-count{padding:2px 4px!important}
 }
+
+
+/* Cute Bunny interaction pass: compact header controls and one shared top player. */
+.app header{gap:8px;min-width:0}
+.header-actions{
+  display:flex;align-items:center;justify-content:flex-end;gap:3px;flex:0 0 auto;
+  padding:3px;border:1px solid #efdfe7;border-radius:999px;
+  background:rgba(255,250,247,.82);box-shadow:0 2px 8px #8b68800c;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)
+}
+.header-actions .round{
+  display:grid;place-items:center;width:30px;height:30px;min-width:30px;min-height:30px;
+  padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none;
+  color:#9b6b87;font-size:1rem;line-height:1;transition:background .14s ease,transform .14s ease
+}
+.header-actions .round:hover{background:#faeaf1}
+.header-actions .round:active{transform:scale(.92);box-shadow:none}
+.notification-bell-icon{display:block;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.notification-bell{position:relative}
+.notification-badge{right:-2px;top:-2px;min-width:15px;height:15px;padding:0 3px;border:2px solid #fffaf6;font-size:.55rem}
+.header-actions .mode-button{font-size:1rem}
+body[data-mode="dark"] .header-actions{background:rgba(53,42,61,.92);border-color:#59475f;box-shadow:0 2px 8px #100b171c}
+body[data-mode="dark"] .header-actions .round{color:#f1d9e7}
+body[data-mode="dark"] .header-actions .round:hover{background:#5a435e}
+body[data-mode="dark"] .notification-badge{border-color:#352b3e}
+
+/* Player pill now lives in the header row, sharing its space instead of covering it. */
+#app .now-playing-island{
+  position:relative!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
+  transform:none!important;z-index:82!important;display:grid;justify-items:center;gap:0;
+  width:max-content;max-width:min(180px,34vw);margin:0 2px 0 auto;
+  flex:0 1 auto;align-self:center;pointer-events:none
+}
+#app .now-playing-island.hidden{display:none!important}
+#app .now-playing-island:not(.hidden){display:grid!important}
+#app .now-playing-pill{
+  min-width:0;min-height:32px;max-width:100%;gap:6px;padding:4px 9px;
+  border:1px solid #ffffff45;border-radius:999px;
+  background:linear-gradient(145deg,#f3dce8,#e9e1f2);color:#77566f;
+  box-shadow:0 2px 0 #dfcbdc,0 4px 10px #8b688014;pointer-events:auto
+}
+#app .island-note{font-size:.9rem;color:#b86f91}
+#app .island-short-title{max-width:8ch;overflow:hidden;text-overflow:ellipsis;font-size:.68rem;color:inherit}
+#app .island-wave{width:15px;height:16px}
+#app .island-wave i{background:#bc789b}
+#app .now-playing-panel{
+  position:absolute!important;top:calc(100% + 8px)!important;right:0!important;left:auto!important;
+  z-index:120!important;width:min(286px,calc(100vw - 24px));max-height:220px;
+  box-shadow:0 12px 35px #49344d30
+}
+#app.has-now-playing .crumb{visibility:hidden}
+body[data-mode="dark"] #app .now-playing-pill{background:linear-gradient(145deg,#59435e,#423449);border-color:#ffffff20;color:#f5e5ef;box-shadow:0 2px 0 #30233a}
+body[data-mode="dark"] #app .island-note,body[data-mode="dark"] #app .island-wave i{color:#f1b9d1;background-color:#f1b9d1}
+@media(max-width:520px){
+  .app header{gap:5px}
+  .header-actions{gap:2px;padding:2px}
+  .header-actions .round{width:28px;height:28px;min-width:28px;min-height:28px}
+  .notification-bell-icon{width:15px;height:15px}
+  #app .now-playing-island{max-width:clamp(70px,24vw,112px);margin-left:auto}
+  #app .now-playing-pill{min-height:30px;gap:4px;padding:4px 7px}
+  #app .island-short-title{max-width:6ch;font-size:.63rem}
+}
+@media(max-width:360px){
+  .header-actions .round{width:26px;height:26px;min-width:26px;min-height:26px}
+  #app .now-playing-island{max-width:72px}
+  #app .island-short-title{max-width:4ch}
+}
+
+/* Smaller notification sheet and rows, with an explicit one-tap dismiss control. */
+.notification-card{width:min(360px,calc(100vw - 28px));max-height:min(78dvh,620px);padding:18px 16px 14px;border-radius:24px}
+.notification-card h2{font-size:1.25rem;margin:1px 0 8px}
+.notification-tools{font-size:.7rem}
+.notification-tools .auth-switch{font-size:.7rem;padding:5px 8px}
+.notification-list{gap:6px;max-height:min(46dvh,330px);margin:8px 0 10px}
+.notification-row{
+  display:flex;align-items:center;gap:5px;min-width:0;padding:7px 7px 7px 8px;
+  border:1px solid #f0e3e9;border-radius:14px;background:#fffdfb;color:#705b70
+}
+.notification-open{
+  display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;width:100%;
+  padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer
+}
+.notification-avatar{flex:0 0 31px;width:31px;height:31px;border-radius:11px;font-size:1rem}
+.notification-copy{display:block;flex:1;min-width:0}
+.notification-open b,.notification-open small,.notification-open time{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notification-open b{font-size:.75rem;line-height:1.2}
+.notification-open small{margin:2px 0 0;color:#8d778b;font-size:.65rem;line-height:1.25}
+.notification-open time{margin-top:2px;color:#a08d9f;font-size:.6rem;font-variant-numeric:tabular-nums}
+.notification-unread-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#d17f9f;box-shadow:0 0 0 3px #f8e7ef}
+.notification-dismiss{
+  display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;min-height:25px;
+  padding:0;border:0;border-radius:50%;background:#f9edf2;color:#a77c91;
+  font:700 1rem/1 Nunito,sans-serif;cursor:pointer
+}
+.notification-dismiss:active{transform:scale(.9)}
+body[data-mode="dark"] .notification-row{background:#2f2737;border-color:#59465e;color:#f1e8ef}
+body[data-mode="dark"] .notification-open small,body[data-mode="dark"] .notification-open time{color:#c5b2c8}
+body[data-mode="dark"] .notification-dismiss{background:#49364c;color:#eed3e2}
+body[data-mode="dark"] .notification-unread-dot{box-shadow:0 0 0 3px #49364c}
+@media(max-width:520px){
+  .notification-card{padding:16px 13px 12px;border-radius:22px}
+  .notification-row{padding:6px}
+  .notification-avatar{width:29px;height:29px;flex-basis:29px}
+  .notification-open b{font-size:.72rem}
+  .notification-open small{font-size:.63rem}
+}
+
+/* Happy Things art plates are real buttons, with the same layout as their cards. */
+.happy-thing-art{
+  display:grid;place-items:center;width:100%;min-width:0;padding:0;
+  border:1px solid #fff;border-radius:inherit;color:inherit;font:inherit;
+  cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent
+}
+.happy-thing-art:focus-visible{outline:2px solid #c8799c;outline-offset:3px}
+.happy-thing-art:active{transform:scale(.975)}
+.tile:has(.happy-thing-art) .happy-thing-art{margin-bottom:0}
+
+/* Home exit is deliberately two-step; the second action is the little cat. */
+.app-exit-card{width:min(340px,100%);padding:23px 20px 20px;border:1px solid #efd8e2;border-style:solid;border-radius:26px;background:linear-gradient(150deg,#fffaf5,#fff0f6 64%,#f3efff);text-align:center}
+.app-exit-card h2{font-size:1.35rem}
+.app-exit-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
+.app-exit-actions button{min-height:41px;border-radius:999px;font:800 .78rem Nunito,sans-serif}
+.app-exit-actions .photo-delete-keep{border:1px solid #efd9e3;background:#fffafc;color:#865d79}
+.app-exit-actions .photo-delete-confirm-button{border:1px solid #d793ab;background:linear-gradient(145deg,#e4a3ba,#c7799a);color:#fff;box-shadow:0 4px 0 #a85f80}
+.app-exit-cat{
+  display:grid;place-items:center;width:112px;height:92px;margin:12px auto 0;
+  border:1px solid #f0dce6;border-radius:26px;background:linear-gradient(145deg,#ffe9f0,#f0e8fa);
+  box-shadow:0 5px 0 #e6d1df;font-size:3rem;cursor:pointer;animation:exit-cat-sigh 1.8s ease-in-out infinite
+}
+.app-exit-cat:active{transform:scale(.94)}
+@keyframes exit-cat-sigh{0%,100%{transform:translateY(0)}50%{transform:translateY(3px) rotate(-2deg)}}
+body[data-mode="dark"] .app-exit-card{background:linear-gradient(150deg,#352b3d,#423044 60%,#332d47);border-color:#69506a}
+body[data-mode="dark"] .app-exit-card h2{color:#f4ddea}
+body[data-mode="dark"] .app-exit-actions .photo-delete-keep{background:#443649;color:#f4ddea;border-color:#634f68}
+body[data-mode="dark"] .app-exit-cat{background:linear-gradient(145deg,#49364c,#42344e);border-color:#665168}
+@media(prefers-reduced-motion:reduce){.app-exit-cat{animation:none!important}.happy-thing-art{transition:none!important}}

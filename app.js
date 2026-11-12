@@ -11,6 +11,8 @@ let mediaObjectUrls = [], mediaUrlCache = new Map(), pendingMediaUrls = new Map(
 let pendingDeleteTimers = new Map(), authMode = 'register';
 let playlist = [], playlistIndex = -1, audioObjectUrl = '';
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
+let notificationSeenObserver = null, notificationDismissals = new Set();
+let navRefreshInFlight = false, appExitStep = 0;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let activeMessageActionsId = null;
 let hiddenNoteIds = new Set();
@@ -76,6 +78,7 @@ function rollKindness() {
 
 function setMode(mode) {
   document.body.dataset.mode = mode;
+  syncBrowserThemeColor();
   const b = $('#surprise');
   if (b) {
     b.textContent = mode === 'dark' ? '☀' : '☾';
@@ -196,6 +199,17 @@ async function api(path, options = {}) {
       .order('created_at', { ascending: false }).limit(60);
     fail(error);
     return data || [];
+  }
+
+  if (path.startsWith('/notifications/') && method === 'DELETE') {
+    const id = decodeURIComponent(path.slice('/notifications/'.length));
+    if (!id || id === 'read' || id === 'read-all') throw Error('Invalid notification.');
+    const { error } = await sb.from('notifications')
+      .delete()
+      .eq('id', id)
+      .eq('recipient_id', session.user.id);
+    fail(error);
+    return {};
   }
 
   if (path === '/notifications/read' && method === 'PUT') {
@@ -378,8 +392,18 @@ function openAuth(mode = 'register') {
   $('#authError').textContent = '';
 }
 
+function syncBrowserThemeColor() {
+  const meta = $('meta[name="theme-color"]');
+  if (!meta) return;
+  const palette = { rose: '#fdf1ea', lavender: '#f7f4fc', mint: '#f3faf4', sky: '#f3f9fc' };
+  meta.setAttribute('content', document.body.dataset.mode === 'dark'
+    ? '#241e2c'
+    : (palette[document.body.dataset.theme] || palette.rose));
+}
+
 function setTheme(theme) {
   document.body.dataset.theme = ['rose', 'lavender', 'mint', 'sky'].includes(theme) ? theme : 'rose';
+  syncBrowserThemeColor();
 }
 
 function setUser(u) {
@@ -1425,6 +1449,35 @@ function pushAppBackGuard() {
   }
 }
 
+function showAppExitDialog() {
+  const gate = $('#appExitGate');
+  if (!gate) {
+    toast('You are at Home. Use your browser controls to leave Cute Bunny.');
+    pushAppBackGuard();
+    return;
+  }
+  appExitStep = 0;
+  $('#appExitPrompt').hidden = false;
+  $('#appExitCatStep').hidden = true;
+  gate.classList.remove('hidden');
+  // Keep one guard above the app root while the confirmation is visible.
+  pushAppBackGuard();
+}
+
+function finishAppExit() {
+  appBackExitPending = true;
+  $('#appExitGate')?.classList.add('hidden');
+  // A normal browser tab cannot be force-closed by page JavaScript. Go back
+  // past the app's two in-page guard entries; on a direct-open tab, leave a
+  // blank page as the safe fallback rather than pretending the tab closed.
+  if (history.length > 2) {
+    history.go(-2);
+    return;
+  }
+  try { window.close(); } catch {}
+  window.location.replace('about:blank');
+}
+
 function handleAppBackNavigation() {
   if (!appBackGuardInstalled || appBackExitPending || !me || $('#app')?.classList.contains('hidden')) return;
 
@@ -1466,17 +1519,10 @@ function handleAppBackNavigation() {
     return;
   }
 
-  // At Home, show an exit hint. A second Back within 2.3 seconds leaves the app.
-  const now = Date.now();
-  if (now <= appBackExitArmedUntil) {
-    appBackExitArmedUntil = 0;
-    appBackExitPending = true;
-    history.back();
-    return;
-  }
-  appBackExitArmedUntil = now + 2300;
-  toast('You are at Home · Press back again to exit.');
-  pushAppBackGuard();
+  // At Home, ask before leaving. Exit requires a second deliberate tap on the
+  // little cat confirmation, so a stray Back press cannot close the scrapbook.
+  appBackExitArmedUntil = 0;
+  showAppExitDialog();
 }
 
 window.addEventListener('popstate', handleAppBackNavigation);
@@ -1657,6 +1703,7 @@ function render() {
 
   if (page === 'notes') {
     renderNotesPage();
+    requestAnimationFrame(observeNotificationMemoryViews);
     return;
   }
   if (page === 'streak') {
@@ -1694,9 +1741,9 @@ function render() {
       </div>
       <div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div>
       <div class="grid happy-things-grid">
-        <article class="tile"><div class="tile-art photo-art">🌸</div><h3>Photo garden</h3><p>${pics.length} shared photos</p><button class="primary" data-go="gallery">Open photos →</button></article>
-        <article class="tile"><div class="tile-art music-art">🎧<span>♫</span></div><h3>Cozy playlist</h3><p>${songs.length} shared songs</p><button class="primary" data-go="music">Open music →</button></article>
-        <article class="tile"><div class="tile-art note-art">💌</div><h3>Little love notes</h3><p>${notes.length} saved notes</p><button class="primary" data-go="notes">Open notes →</button></article>
+        <article class="tile"><button type="button" class="tile-art photo-art happy-thing-art" data-happy-go="gallery" aria-label="Open Photo garden">🌸</button><h3>Photo garden</h3><p>${pics.length} shared photos</p><button class="primary" data-go="gallery">Open photos →</button></article>
+        <article class="tile"><button type="button" class="tile-art music-art happy-thing-art" data-happy-go="music" aria-label="Open Cozy playlist">🎧<span>♫</span></button><h3>Cozy playlist</h3><p>${songs.length} shared songs</p><button class="primary" data-go="music">Open music →</button></article>
+        <article class="tile"><button type="button" class="tile-art note-art happy-thing-art" data-happy-go="notes" aria-label="Open Little love notes">💌</button><h3>Little love notes</h3><p>${notes.length} saved notes</p><button class="primary" data-go="notes">Open notes →</button></article>
         ${streakWidget()}
       </div>
       <div class="feed-list">
@@ -1739,6 +1786,7 @@ function render() {
     `;
   }
   hydrateMedia();
+  observeNotificationMemoryViews();
 }
 
 function showFriendProfile(user) {
@@ -2411,6 +2459,7 @@ async function loadNotifications() {
     notificationRows = rows;
     notificationLoaded = true;
     updateNotificationBadge();
+    observeNotificationMemoryViews();
   } catch {}
   finally {
     if (me?.id === req) {
@@ -2434,16 +2483,87 @@ function renderNotifications() {
   $('#notifyBuddy').checked = prefs.buddy !== false;
   list.innerHTML = notificationRows.map(n => {
     const actor = Array.isArray(n.actor) ? n.actor[0] : (n.actor || {});
-    return `<button class="notification-row${n.read_at ? '' : ' is-unread'}" data-notification="${esc(n.id)}" data-kind="${esc(n.kind)}" data-memory="${esc(n.memory_id || '')}"><span class="notification-avatar">${esc(actor.mascot || '🐰')}</span><span><b>${esc(actor.display_name || actor.username || 'Friend')}</b><small>@${esc(actor.username || 'friend')} · ${esc(n.message)}</small><time>${esc(formatMessageTime(n.created_at))}</time></span>${n.read_at ? '' : '<i>♡</i>'}</button>`;
-  }).join('') || (notificationLoading && !notificationLoaded ? '<div class="notification-loading" aria-label="Loading notifications"><span class="notification-loader" aria-hidden="true"></span></div>' : '<div class="notification-empty"><span aria-hidden="true">♡</span><b>You’re all caught up</b><small>New shared activity will appear here.</small></div>');
+    const unread = !n.read_at;
+    return `<div class="notification-row${unread ? ' is-unread' : ''}">
+      <button type="button" class="notification-open" data-notification="${esc(n.id)}" aria-label="Open notification from ${esc(actor.display_name || actor.username || 'Friend')}">
+        <span class="notification-avatar">${esc(actor.mascot || '🐰')}</span>
+        <span class="notification-copy">
+          <b>${esc(actor.display_name || actor.username || 'Friend')}</b>
+          <small>@${esc(actor.username || 'friend')} · ${esc(n.message)}</small>
+          <time>${esc(formatMessageTime(n.created_at))}</time>
+        </span>
+        ${unread ? '<i class="notification-unread-dot" aria-label="Unread"></i>' : ''}
+      </button>
+      <button type="button" class="notification-dismiss" data-notification-dismiss="${esc(n.id)}" aria-label="Remove notification" title="Remove">×</button>
+    </div>`;
+  }).join('') || (notificationLoading && !notificationLoaded
+    ? '<div class="notification-loading" aria-label="Loading notifications"><span class="notification-loader" aria-hidden="true"></span></div>'
+    : '<div class="notification-empty"><span aria-hidden="true">♡</span><b>You’re all caught up</b><small>New shared activity will appear here.</small></div>');
 }
 
-async function markNotificationRead(id) {
-  const row = notificationRows.find(n => String(n.id) === String(id));
-  if (!row || row.read_at) return;
-  await api('/notifications/read', { method: 'PUT', body: JSON.stringify({ ids: [id] }) });
-  row.read_at = new Date().toISOString();
+async function dismissNotification(id, options = {}) {
+  const key = String(id || '');
+  if (!key || notificationDismissals.has(key)) return false;
+  const index = notificationRows.findIndex(row => String(row.id) === key);
+  if (index < 0) return false;
+
+  const row = notificationRows[index];
+  const userId = me?.id;
+  notificationDismissals.add(key);
+  notificationRows.splice(index, 1);
   updateNotificationBadge();
+  if (!$('#notificationGate')?.classList.contains('hidden')) renderNotifications();
+
+  try {
+    await api('/notifications/' + encodeURIComponent(key), { method: 'DELETE' });
+    return true;
+  } catch (error) {
+    if (me?.id === userId && !notificationRows.some(item => String(item.id) === key)) {
+      notificationRows.splice(Math.min(index, notificationRows.length), 0, row);
+      updateNotificationBadge();
+      if (!$('#notificationGate')?.classList.contains('hidden')) renderNotifications();
+    }
+    if (!options.silent) toast(error?.message || 'This notification could not be removed yet.');
+    throw error;
+  } finally {
+    notificationDismissals.delete(key);
+  }
+}
+
+function observeNotificationMemoryViews() {
+  notificationSeenObserver?.disconnect();
+  notificationSeenObserver = null;
+  if (!('IntersectionObserver' in window) || !notificationRows.length) return;
+
+  const trackedMemoryIds = new Set(
+    notificationRows.map(row => String(row.memory_id || '')).filter(Boolean)
+  );
+  if (!trackedMemoryIds.size) return;
+
+  notificationSeenObserver = new IntersectionObserver(entries => {
+    const seenIds = new Set();
+    entries.forEach(entry => {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
+      const id = String(entry.target?.dataset?.memory || '');
+      if (!id) return;
+      notificationSeenObserver?.unobserve(entry.target);
+      seenIds.add(id);
+    });
+    seenIds.forEach(async id => {
+      const matching = notificationRows
+        .filter(row => String(row.memory_id || '') === id)
+        .map(row => row.id);
+      for (const notificationId of matching) {
+        try { await dismissNotification(notificationId, { silent: true }); } catch {}
+      }
+    });
+  }, { threshold: [0, 0.5, 0.75] });
+
+  document.querySelectorAll('#content [data-memory]').forEach(node => {
+    if (trackedMemoryIds.has(String(node.dataset.memory || ''))) {
+      notificationSeenObserver.observe(node);
+    }
+  });
 }
 
 async function searchFriends() {
@@ -2562,6 +2682,11 @@ document.addEventListener('click', e => {
     e.target.classList.add('hidden');
     if (e.target.id === 'photoLightbox') closePhotoLightbox();
     if (e.target.id === 'memoryActionGate') closeMemoryActions();
+    if (e.target.id === 'appExitGate') {
+      appExitStep = 0;
+      $('#appExitPrompt').hidden = false;
+      $('#appExitCatStep').hidden = true;
+    }
     return;
   }
 
@@ -2757,8 +2882,8 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // Navigation: route once; the active Home button scrolls to the top,
-  // then refreshes the Home data when it is already at the top.
+  // A section's active dock button returns it to the top. A second tap at
+  // the top refreshes the current section without adding another history entry.
   const nav = e.target.closest('#nav button[data-page]');
   if (nav) {
     e.preventDefault();
@@ -2767,24 +2892,28 @@ document.addEventListener('click', async e => {
       return;
     }
 
-    if (page === 'home') {
-      const scrollRoot = document.scrollingElement || document.documentElement;
-      const currentScrollTop = Math.max(window.scrollY || 0, scrollRoot.scrollTop || 0);
-      if (currentScrollTop > 8) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-
-      if (homeNavRefreshInFlight) return;
-      homeNavRefreshInFlight = true;
-      try {
-        await refresh();
-      } catch (error) {
-        toast(error?.message || 'Home could not be refreshed. Please try again.');
-      } finally {
-        homeNavRefreshInFlight = false;
-      }
+    const scrollRoot = document.scrollingElement || document.documentElement;
+    const currentScrollTop = Math.max(window.scrollY || 0, scrollRoot.scrollTop || 0);
+    if (currentScrollTop > 8) {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      return;
     }
+
+    if (navRefreshInFlight) return;
+    navRefreshInFlight = true;
+    try {
+      await refresh();
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    } catch (error) {
+      toast(error?.message || 'This section could not be refreshed. Please try again.');
+    } finally {
+      navRefreshInFlight = false;
+    }
+    return;
+  }
+  const happyThingArt = e.target.closest('[data-happy-go]');
+  if (happyThingArt) {
+    go(happyThingArt.dataset.happyGo);
     return;
   }
   const goBtn = e.target.closest('[data-go]');
@@ -2878,6 +3007,24 @@ document.addEventListener('click', async e => {
     void bunny.offsetWidth;
     bunny.classList.add('bunny-happy');
     toast(greetings[buddy] || 'Your buddy says hi! ♡');
+    return;
+  }
+
+  // Two-step Home exit: "No" returns to the scrapbook; Exit reveals the cat.
+  if (e.target.closest('#appExitStay')) {
+    $('#appExitGate').classList.add('hidden');
+    appExitStep = 0;
+    pushAppBackGuard();
+    return;
+  }
+  if (e.target.closest('#appExitContinue')) {
+    appExitStep = 1;
+    $('#appExitPrompt').hidden = true;
+    $('#appExitCatStep').hidden = false;
+    return;
+  }
+  if (e.target.closest('#appExitCat')) {
+    finishAppExit();
     return;
   }
 
@@ -3091,13 +3238,30 @@ document.addEventListener('click', async e => {
     }
     return;
   }
+  const notificationDismissButton = e.target.closest('[data-notification-dismiss]');
+  if (notificationDismissButton) {
+    try {
+      await dismissNotification(notificationDismissButton.dataset.notificationDismiss);
+    } catch {}
+    return;
+  }
   const notifItem = e.target.closest('[data-notification]');
   if (notifItem) {
+    const notification = notificationRows.find(row => String(row.id) === String(notifItem.dataset.notification));
     try {
-      await markNotificationRead(notifItem.dataset.notification);
-      renderNotifications();
+      if (notification) await dismissNotification(notification.id);
+      $('#notificationGate').classList.add('hidden');
+      if (notification?.memory_id) {
+        const pageForKind = ({ photo: 'gallery', song: 'music', note: 'notes' })[notification.kind] || 'home';
+        go(pageForKind);
+        requestAnimationFrame(() => {
+          const target = [...document.querySelectorAll('#content [data-memory]')]
+            .find(node => String(node.dataset.memory || '') === String(notification.memory_id));
+          target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
     } catch (err) {
-      toast(err.message);
+      toast(err?.message || 'This notification could not be opened.');
     }
     return;
   }

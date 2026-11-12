@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=132">
+  <link rel="stylesheet" href="style.css?v=133">
 </head>
 <body class="is-restoring">
   <div id="sessionRestore" class="session-restore" role="status">
@@ -52,20 +52,6 @@
         <b>Cute Bunny<small id="topName">little memory garden</small></b>
       </button>
       <span class="crumb">MY SCRAPBOOK <b>/ <span id="crumb">Home</span></b></span>
-      <div class="header-actions">
-        <button class="round notification-bell" id="notificationOpen" aria-label="Notifications" title="Little love notes from your friend">
-          ♡<i id="notificationBadge" class="notification-badge hidden">0</i>
-        </button>
-        <button class="round mode-button" id="surprise" title="Switch to moonlight mode" aria-label="Switch to moonlight mode">☾</button>
-      </div>
-    </header>
-
-    <main>
-      <section id="content"></section>
-    </main>
-
-    <audio id="globalAudio" preload="metadata" hidden></audio>
-
     <div id="nowPlayingIsland" class="now-playing-island hidden">
       <button type="button" id="nowPlayingPill" class="now-playing-pill" aria-expanded="false" aria-controls="nowPlayingPanel">
         <span class="island-note" aria-hidden="true">♫</span>
@@ -95,6 +81,25 @@
         </div>
       </section>
     </div>
+      <div class="header-actions">
+        <button class="round notification-bell" id="notificationOpen" aria-label="Notifications" title="Notifications">
+          <svg class="notification-bell-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+            <path d="M10 21h4"></path>
+          </svg>
+          <i id="notificationBadge" class="notification-badge hidden">0</i>
+        </button>
+        <button class="round mode-button" id="surprise" title="Switch to moonlight mode" aria-label="Switch to moonlight mode">☾</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="content"></section>
+    </main>
+
+    <audio id="globalAudio" preload="metadata" hidden></audio>
+
+
 
     <nav id="nav" aria-label="Main navigation">
       <button type="button" class="active" data-page="home" aria-current="page"><i aria-hidden="true">🏡</i><span>Home</span></button>
@@ -103,6 +108,27 @@
       <button type="button" data-page="notes"><i aria-hidden="true">💌</i><span>Notes</span></button>
       <button type="button" data-page="friends"><i aria-hidden="true">🐰</i><span>Friends</span></button>
     </nav>
+  </div>
+
+  <div id="appExitGate" class="auth-gate hidden">
+    <section class="auth-card app-exit-card" role="dialog" aria-modal="true" aria-labelledby="appExitTitle">
+      <div id="appExitPrompt">
+        <div class="auth-bunny" aria-hidden="true">🐰</div>
+        <p class="eyebrow">ONE LAST LITTLE MOMENT</p>
+        <h2 id="appExitTitle">Leaving our garden?</h2>
+        <p class="auth-hint">Would you like to stay a little longer?</p>
+        <div class="app-exit-actions">
+          <button type="button" class="photo-delete-keep" id="appExitStay">No, stay ♡</button>
+          <button type="button" class="photo-delete-confirm-button" id="appExitContinue">Exit</button>
+        </div>
+      </div>
+      <div id="appExitCatStep" hidden>
+        <p class="eyebrow">A LITTLE GOODBYE</p>
+        <h2>My heart will miss you…</h2>
+        <p class="auth-hint">Tap my paw one more time to leave.</p>
+        <button type="button" id="appExitCat" class="app-exit-cat" aria-label="Leave Cute Bunny">🥺🐱</button>
+      </div>
+    </section>
   </div>
 
   <div id="authGate" class="auth-gate hidden">
@@ -261,7 +287,7 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=124"></script>
+  <script src="app.js?v=125"></script>
   <script>
     if ("serviceWorker" in navigator) {
       let reloadingForWorkerUpdate = false;
@@ -274,7 +300,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=137", {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=138", {
             scope: "./",
             updateViaCache: "none"
           });
