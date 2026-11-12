@@ -1099,9 +1099,7 @@ function renderStreakPage() {
 </svg>`;
 
   const streakFlowerTotal = Math.max(count, bestRun);
-  const earnedGardenFlowers = streakFlowerTotal >= 2
-    ? Math.min(7, 2 + Math.floor(streakFlowerTotal / 7))
-    : 0;
+  const earnedGardenFlowers = Math.min(gardenFlowers.length, Math.max(0, streakFlowerTotal));
   const gardenFlowers = [
     {id:'pink', label:'pink flower', x:14.7, y:79.3, svgX:100, svgY:365, scale:1.72},
     {id:'lavender', label:'lavender flower', x:27.9, y:85.2, svgX:190, svgY:392, scale:1.60},
