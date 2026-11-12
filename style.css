@@ -8170,3 +8170,35 @@ body[data-mode="dark"] .streak-garden-page .sg-game-compact {
 
 /* Let the kindness message use the full card width now that its refresh button is removed. */
 .daily>div{flex:1;min-width:0}
+
+/* Friends in Bloom: show a clear streak state beside live presence. */
+.streak-garden-page .sg-friends-compact .sg-friend-meta{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:auto auto!important;
+  align-items:center!important;
+  gap:3px 6px!important;
+  width:100%!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-presence{
+  grid-column:1!important;grid-row:1!important;min-width:0!important;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-streak-status{
+  display:block!important;grid-column:1!important;grid-row:2!important;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:#9b8295;font-size:8px!important;font-weight:700;line-height:1.15;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count{
+  grid-column:2!important;grid-row:1 / span 2!important;align-self:center!important;
+  gap:3px!important;white-space:nowrap;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-flower-count em{
+  color:#a78398;font:700 8px/1 Quicksand,sans-serif;font-style:normal;
+}
+.streak-garden-page .sg-friends-compact .sg-friend-card.is-online .sg-friend-streak-status{color:#648c69}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-streak-status{color:#c3aec2}
+body[data-mode="dark"] .streak-garden-page .sg-friends-compact .sg-friend-flower-count em{color:#d1b6ca}
+@media(max-width:380px){
+  .streak-garden-page .sg-friends-compact .sg-friend-streak-status{font-size:7px!important}
+  .streak-garden-page .sg-friends-compact .sg-friend-meta{gap:2px 4px!important}
+}
