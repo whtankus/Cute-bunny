@@ -1,4 +1,12 @@
 const $ = s => document.querySelector(s), cfg = window.CUTE_BUNNY_CONFIG || {};
+
+// Keep the expanded player outside the sticky header's backdrop-filter stacking
+// context, so it can sample and blur the wallpaper behind the whole panel.
+const nowPlayingPanelElement = document.getElementById('nowPlayingPanel');
+const appRootElement = document.getElementById('app');
+if (nowPlayingPanelElement && appRootElement && nowPlayingPanelElement.parentElement !== appRootElement) {
+  appRootElement.appendChild(nowPlayingPanelElement);
+}
 const sb = window.supabase && cfg.supabaseUrl && !cfg.supabaseUrl.startsWith('PASTE_')
   ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
@@ -2824,7 +2832,7 @@ document.addEventListener('click', e => {
   // Dismiss now playing panel if clicking outside island
   const island = $('#nowPlayingIsland');
   if (island && !island.classList.contains('hidden') && !$('#nowPlayingPanel')?.classList.contains('hidden')) {
-    if (!e.target.closest('#nowPlayingIsland')) toggleMusicIsland(false);
+    if (!e.target.closest('#nowPlayingIsland, #nowPlayingPanel')) toggleMusicIsland(false);
   }
 });
 
