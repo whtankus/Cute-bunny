@@ -8551,3 +8551,32 @@ body[data-mode="dark"] #app .now-playing-panel {
   backdrop-filter:blur(42px) saturate(1.5)!important;
   box-shadow:0 14px 38px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.16)!important;
 }
+
+
+/* Match the bell and moon button surfaces to the Music Island pill.
+   Preserve their circular dimensions, icon sizing, spacing, and actions. */
+#app .header-actions .round,
+#app .header-actions .round:hover,
+#app .header-actions .round:focus-visible {
+  background:linear-gradient(145deg,#f3dce8,#e9e1f2)!important;
+  border:1px solid rgba(255,255,255,.72)!important;
+  color:#77566f!important;
+  box-shadow:0 2px 0 #dfcbdc,0 4px 10px #8b688014,inset 0 1px 0 rgba(255,255,255,.72)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(1.25)!important;
+  backdrop-filter:blur(12px) saturate(1.25)!important;
+}
+#app .header-actions .round:active {
+  background:linear-gradient(145deg,#efd5e4,#e4dced)!important;
+  transform:scale(.93)!important;
+}
+body[data-mode="dark"] #app .header-actions .round,
+body[data-mode="dark"] #app .header-actions .round:hover,
+body[data-mode="dark"] #app .header-actions .round:focus-visible {
+  background:linear-gradient(145deg,#59435e,#423449)!important;
+  border-color:rgba(255,255,255,.2)!important;
+  color:#f5e5ef!important;
+  box-shadow:0 2px 0 #30233a,0 4px 10px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.14)!important;
+}
+body[data-mode="dark"] #app .header-actions .round:active {
+  background:linear-gradient(145deg,#654b69,#4b3b54)!important;
+}
