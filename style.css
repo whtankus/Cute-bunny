@@ -8740,3 +8740,34 @@ body[data-mode="dark"] #app .header-actions .round:focus-visible {
     min-width:74px!important;
   }
 }
+
+
+/* Reduce the current capsule length by 10% and evenly align both icons. */
+#app .header-actions {
+  box-sizing:border-box!important;
+  width:79px!important;
+  min-width:79px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-evenly!important;
+  gap:0!important;
+  padding-left:5px!important;
+  padding-right:5px!important;
+}
+#app .header-actions .round,
+#app .header-actions .round:hover,
+#app .header-actions .round:focus-visible {
+  flex:0 0 20px!important;
+  margin:0!important;
+}
+@media(max-width:520px) {
+  #app .header-actions {
+    width:67px!important;
+    min-width:67px!important;
+  }
+  #app .header-actions .round,
+  #app .header-actions .round:hover,
+  #app .header-actions .round:focus-visible {
+    flex-basis:18px!important;
+  }
+}
