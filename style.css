@@ -8397,3 +8397,78 @@ body[data-mode="dark"] .app-exit-card h2{color:#f4ddea}
 body[data-mode="dark"] .app-exit-actions .photo-delete-keep{background:#443649;color:#f4ddea;border-color:#634f68}
 body[data-mode="dark"] .app-exit-cat{background:linear-gradient(145deg,#49364c,#42344e);border-color:#665168}
 @media(prefers-reduced-motion:reduce){.app-exit-cat{animation:none!important}.happy-thing-art{transition:none!important}}
+
+
+/* Fast, immediate press feedback for the dock and music play tiles. */
+.app #nav button[data-page]{
+  transition-duration:.07s!important;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.app #nav button[data-page]:active{transition-duration:.05s!important}
+.app #nav button i{transition-duration:.07s!important}
+.song-card .album-art.play-song{
+  transition:transform .07s ease,box-shadow .07s ease!important;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.song-card .album-art.play-song:active{
+  transform:scale(.94)!important;
+  box-shadow:0 1px 0 #e3cede!important;
+  transition-duration:.05s!important;
+}
+
+/* Keep four notification rows visible at once; scroll to older items. */
+.notification-list{
+  gap:6px!important;
+  max-height:266px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+.notification-row{
+  display:flex!important;
+  flex:0 0 62px;
+  height:62px;
+  min-height:62px;
+  max-height:62px;
+  align-items:center!important;
+  padding:6px 8px!important;
+  gap:8px!important;
+}
+.notification-row .notification-open{min-height:0;height:100%}
+.notification-dismiss{display:none!important}
+
+/* Center the expanded player with a slight rightward optical correction and glass. */
+#app .now-playing-panel{
+  position:fixed!important;
+  top:calc(env(safe-area-inset-top) + 66px)!important;
+  left:calc(50% + 8px)!important;
+  right:auto!important;
+  width:min(286px,calc(100vw - 24px))!important;
+  margin:0!important;
+  transform:translateX(-50%) translateY(0) scale(1)!important;
+  transform-origin:top center!important;
+  border:1px solid rgba(255,255,255,.72)!important;
+  background:rgba(255,250,247,.72)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(1.45)!important;
+  backdrop-filter:blur(24px) saturate(1.45)!important;
+  box-shadow:0 14px 38px rgba(64,43,67,.22),inset 0 1px 0 rgba(255,255,255,.68)!important;
+  animation:none!important;
+  transition:opacity .16s ease,transform .16s ease,max-height .16s ease,visibility 0s!important;
+}
+#app .now-playing-panel.hidden{
+  transform:translateX(-50%) translateY(-7px) scale(.98)!important;
+}
+#app .now-playing-panel:not(.hidden){
+  transform:translateX(-50%) translateY(0) scale(1)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel{
+  border-color:rgba(255,255,255,.2)!important;
+  background:rgba(48,39,58,.78)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(1.35)!important;
+  backdrop-filter:blur(24px) saturate(1.35)!important;
+  box-shadow:0 14px 38px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
