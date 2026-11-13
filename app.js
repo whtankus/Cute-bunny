@@ -3264,10 +3264,10 @@ function closeRealtime() {
   remoteTypingUsers.forEach(entry => clearTimeout(entry.timer));
   remoteTypingUsers.clear();
   syncNotesTypingIndicator();
-  [presenceChannel, notificationChannel, memoryChannel, profileChannel].forEach(channel => {
+  [presenceChannel, notesTypingChannel, notificationChannel, memoryChannel, profileChannel].forEach(channel => {
     if (channel && sb) sb.removeChannel(channel);
   });
-  presenceChannel = notificationChannel = memoryChannel = profileChannel = null;
+  presenceChannel = notesTypingChannel = notificationChannel = memoryChannel = profileChannel = null;
   presenceStatus = 'closed';
   if (streakCountdownInterval) {
     window.clearInterval(streakCountdownInterval);
