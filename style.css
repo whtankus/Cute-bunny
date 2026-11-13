@@ -12257,3 +12257,30 @@ body[data-mode="dark"] .friend-search-input-wrap input{color:#f4e8f0}
 }
 #photoLightbox #photoLightboxDelete,
 #photoLightbox #photoLightboxSave{margin-inline:auto!important}
+
+
+/* Keep photo viewer actions centered and slightly narrower. */
+#photoLightbox .photo-lightbox-actions{
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  width:100%!important;
+  margin-inline:auto!important;
+}
+#photoLightbox .photo-lightbox-action{
+  box-sizing:border-box!important;
+  flex:0 0 88px!important;
+  width:88px!important;
+  min-width:88px!important;
+  max-width:88px!important;
+  height:34px!important;
+  min-height:34px!important;
+  padding:6px 8px!important;
+  margin-inline:auto!important;
+  text-align:center!important;
+}
+#photoLightbox .photo-lightbox-action.hidden{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
