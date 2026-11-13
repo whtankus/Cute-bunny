@@ -2098,7 +2098,7 @@ function showFriendProfile(user) {
   $('#friendProfileCreated').textContent = 'Joined ' + formatJoinDate(user.created_at);
   const profileOnline = isPresenceUserOnline(user.id, (() => { try { return presenceChannel?.presenceState?.() || {}; } catch { return {}; } })());
   const presenceDot = $('#friendProfilePresenceDot');
-  $('#friendProfilePresence').textContent = profileOnline ? 'Online now' : formatLastActive(user.last_active_at);
+  $('#friendProfilePresence').textContent = profileOnline ? 'Online now' : 'Last active ' + formatLastActive(user.last_active_at);
   presenceDot?.classList.toggle('is-online', profileOnline);
   presenceDot?.classList.toggle('is-offline', !profileOnline);
   presenceDot?.setAttribute('aria-label', profileOnline ? 'Online' : 'Offline');
