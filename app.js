@@ -2109,6 +2109,12 @@ function showFriendProfile(user) {
   $('#friendProfileBuddy').textContent = user.mascot || '🐰';
   $('#friendProfileName').textContent = user.displayName || user.display_name || user.username;
   $('#friendProfileHandle').textContent = '@' + user.username;
+  const joinedAt = user.created_at || user.createdAt || user.followedAt;
+  const joinedDate = $('#friendProfileJoined');
+  if (joinedDate) {
+    joinedDate.textContent = formatJoinDate(joinedAt);
+    joinedDate.dateTime = joinedAt || '';
+  }
   $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
   const profileOnline = isPresenceUserOnline(user.id, (() => { try { return presenceChannel?.presenceState?.() || {}; } catch { return {}; } })());
   const presenceDot = $('#friendProfilePresenceDot');
