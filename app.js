@@ -208,7 +208,7 @@ async function api(path, options = {}) {
   if (!session) throw Error('Please sign in again.');
 
   if (path === '/me' && method === 'GET') {
-    const profileFields = 'id,username,display_name,bio,theme,mascot,profile_skin,created_at,login_streak,last_login_date,streak_timezone';
+    const profileFields = 'id,username,display_name,bio,theme,mascot,profile_wallpaper,created_at,login_streak,last_login_date,streak_timezone';
     const [{ data, error }, { data: settings, error: settingsError }] = await Promise.all([
       sb.from('profiles').select(profileFields).eq('id', session.user.id).single(),
       sb.from('profile_private_settings').select('notification_preferences').eq('user_id', session.user.id).maybeSingle()
@@ -225,15 +225,14 @@ async function api(path, options = {}) {
   if (path === '/me' && method === 'PUT') {
     const username = String(body.username || me?.username || '').trim().toLowerCase();
     if (!/^[a-z0-9_]{3,24}$/.test(username)) throw Error('Usernames need 3–24 letters, numbers, or underscores.');
-    const profileFields = 'id,username,display_name,bio,theme,mascot,profile_skin,created_at,login_streak,last_login_date,streak_timezone';
+    const profileFields = 'id,username,display_name,bio,theme,mascot,profile_wallpaper,created_at,login_streak,last_login_date,streak_timezone';
     const notificationPreferences = body.notificationPreferences || me?.notification_preferences || { memories: true, buddy: true };
     const update = {
       username,
       display_name: body.displayName,
       bio: body.bio,
       theme: body.theme,
-      mascot: body.mascot,
-      profile_skin: body.profileSkin || me?.profile_skin || 'cat'
+      mascot: body.mascot
     };
     const { data, error } = await sb.from('profiles')
       .update(update)
@@ -257,6 +256,16 @@ async function api(path, options = {}) {
       notification_preferences: settings.notification_preferences,
       displayName: data.display_name
     };
+  }
+
+  if (path === '/profile-wallpaper' && method === 'PUT') {
+    const allowed = ['normal', 'blossom', 'clouds', 'starlight', 'hearts'];
+    const wallpaper = String(body.wallpaper || 'normal');
+    if (!allowed.includes(wallpaper)) throw Error('Choose a valid profile wallpaper.');
+    const { data, error } = await sb.from('profiles').update({ profile_wallpaper: wallpaper })
+      .eq('id', session.user.id).select('profile_wallpaper').single();
+    fail(error);
+    return data;
   }
 
   if (path.startsWith('/username-available?')) {
@@ -361,8 +370,8 @@ async function api(path, options = {}) {
 
   if (path.startsWith('/users?q=')) {
     const q = decodeURIComponent(path.slice('/users?q='.length)).trim();
-    const fields = 'id,username,display_name,bio,theme,mascot,profile_skin,created_at,login_streak,last_login_date,streak_timezone,last_active_at';
-    const basic = 'id,username,display_name,bio,theme,mascot,profile_skin,created_at,last_active_at';
+    const fields = 'id,username,display_name,bio,theme,mascot,profile_wallpaper,created_at,login_streak,last_login_date,streak_timezone,last_active_at';
+    const basic = 'id,username,display_name,bio,theme,mascot,profile_wallpaper,created_at,last_active_at';
     let query = sb.from('profiles').select(fields).neq('id', session.user.id).order('username').limit(30);
     if (q) query = query.ilike('username', '%' + q + '%');
     let { data, error } = await query;
@@ -380,8 +389,8 @@ async function api(path, options = {}) {
   }
 
   if (path === '/following') {
-    const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,profile_skin,created_at,last_active_at)';
-    const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,profile_skin,created_at,login_streak,last_login_date,streak_timezone,last_active_at)';
+    const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,profile_wallpaper,created_at,last_active_at)';
+    const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,profile_wallpaper,created_at,login_streak,last_login_date,streak_timezone,last_active_at)';
     let { data, error } = await sb.from('follows').select(fields).eq('follower_id', session.user.id).order('created_at', { ascending: false });
     if (error && /login_streak|last_login_date|streak_timezone/i.test(error.message || '')) {
       ({ data, error } = await sb.from('follows').select(basic).eq('follower_id', session.user.id).order('created_at', { ascending: false }));
@@ -742,12 +751,12 @@ function friendRow(user, isOwnProfile = false) {
   let liveState = {};
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
   const online = isPresenceUserOnline(user.id, liveState);
-  const presenceLabel = online ? 'Online now' : formatLastActive(user.last_active_at);
-  const skin = ['cat', 'bird', 'vampire', 'fairy', 'galaxy'].includes(user.profile_skin) ? user.profile_skin : 'cat';
+  const presenceLabel = online ? '' : formatLastActive(user.last_active_at);
+  const wallpaper = ['normal', 'blossom', 'clouds', 'starlight', 'hearts'].includes(user.profile_wallpaper) ? user.profile_wallpaper : 'normal';
   const action = isOwnProfile
     ? '<button class="primary follow-btn own-profile-action" type="button" data-open-own-profile>View profile</button>'
     : '<button class="primary follow-btn" type="button" data-follow="' + esc(user.username) + '" data-following="' + !!user.isFollowing + '">' + (user.isFollowing ? 'Following' : 'Follow ♡') + '</button>';
-  return '<article class="friend-row ' + (online ? 'is-online' : 'is-offline') + (isOwnProfile ? ' own-profile-row' : '') + '" data-friend-id="' + esc(user.id) + '" data-profile="' + esc(user.username) + '" data-profile-skin="' + skin + '" data-own-profile="' + (isOwnProfile ? 'true' : 'false') + '"><div class="friend-main"><span class="friend-avatar">' + esc(user.mascot || '🐰') + '<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>' + esc(user.displayName || user.display_name || user.username) + '</b><small>@' + esc(user.username) + '</small></span><span class="friend-meta-line"><small class="sg-friend-presence">' + esc(presenceLabel) + '</small></span><span class="friend-stat-plates"><small class="friend-row-queen">👑 Queen</small><small class="friend-row-streak">' + esc(flowerLabel) + '</small><small class="friend-row-hearts">' + esc(heartLabel) + '</small></span></span></div>' + action + '</article>';
+  return '<article class="friend-row ' + (online ? 'is-online' : 'is-offline') + (isOwnProfile ? ' own-profile-row' : '') + '" data-friend-id="' + esc(user.id) + '" data-profile="' + esc(user.username) + '" data-wallpaper="' + wallpaper + '" data-own-profile="' + (isOwnProfile ? 'true' : 'false') + '"><div class="friend-main"><span class="friend-avatar">' + esc(user.mascot || '🐰') + '<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>' + esc(user.displayName || user.display_name || user.username) + '</b><small>@' + esc(user.username) + '</small></span><span class="friend-meta-line"><small class="sg-friend-presence">' + esc(presenceLabel) + '</small></span><span class="friend-stat-plates"><small class="friend-row-queen">👑 Queen</small><small class="friend-row-streak">' + esc(flowerLabel) + '</small><small class="friend-row-hearts">' + esc(heartLabel) + '</small></span></span></div>' + action + '</article>';
 }
 
 
@@ -2111,11 +2120,12 @@ function showFriendProfile(user) {
   gate.dataset.username = user.username;
   gate.dataset.following = String(!!user.isFollowing);
   gate.dataset.ownProfile = String(isOwnProfile);
-  gate.dataset.profileSkin = ['cat', 'bird', 'vampire', 'fairy', 'galaxy'].includes(user.profile_skin) ? user.profile_skin : 'cat';
+  const wallpaper = ['normal', 'blossom', 'clouds', 'starlight', 'hearts'].includes(user.profile_wallpaper) ? user.profile_wallpaper : 'normal';
+  gate.dataset.ownProfile = String(isOwnProfile);
   gate.classList.toggle('is-own-profile', isOwnProfile);
   const profileCard = gate.querySelector('.friend-profile-card');
   if (profileCard) {
-    profileCard.dataset.profileSkin = gate.dataset.profileSkin;
+    profileCard.dataset.wallpaper = wallpaper;
     profileCard.classList.toggle('is-own-profile', isOwnProfile);
   }
   $('#friendProfileBuddy').textContent = user.mascot || '🐰';
@@ -2130,7 +2140,7 @@ function showFriendProfile(user) {
   $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
   const profileOnline = isPresenceUserOnline(user.id, (() => { try { return presenceChannel?.presenceState?.() || {}; } catch { return {}; } })());
   const presenceDot = $('#friendProfilePresenceDot');
-  $('#friendProfilePresence').textContent = profileOnline ? 'Active now' : formatFriendProfileActivity(user.last_active_at);
+  $('#friendProfilePresence').textContent = profileOnline ? (isOwnProfile ? '' : 'Active now') : formatFriendProfileActivity(user.last_active_at);
   presenceDot?.classList.toggle('is-online', profileOnline);
   presenceDot?.classList.toggle('is-offline', !profileOnline);
   presenceDot?.setAttribute('aria-label', profileOnline ? 'Online' : 'Offline');
@@ -2141,11 +2151,37 @@ function showFriendProfile(user) {
   $('#friendProfileStreakCount').textContent = friendGarden.count === null
     ? '— flower'
     : Number(friendGarden.count).toLocaleString() + ' flower';
-  $('#friendProfileFollow').textContent = isOwnProfile ? 'Your profile' : (user.isFollowing ? 'Following' : 'Follow ♡');
-  $('#friendProfileFollow').disabled = isOwnProfile;
+  $('#friendProfileFollow').textContent = isOwnProfile ? 'Themes' : (user.isFollowing ? 'Following' : 'Follow ♡');
+  $('#friendProfileFollow').disabled = false;
+  $('#friendProfileFollow').dataset.themeAction = isOwnProfile ? 'true' : 'false';
   $('#friendProfileFollow').classList.toggle('is-following', !!user.isFollowing);
   $('#friendProfileFollow').classList.toggle('is-own-profile', isOwnProfile);
   gate.classList.remove('hidden');
+}
+
+const PROFILE_WALLPAPERS = ['normal', 'blossom', 'clouds', 'starlight', 'hearts'];
+const PROFILE_WALLPAPER_LABELS = { normal: 'Normal', blossom: 'Blossom Garden', clouds: 'Cloud Nook', starlight: 'Starlight', hearts: 'Heart Garden' };
+
+async function cycleProfileWallpaper() {
+  if (!me?.id) return;
+  const current = PROFILE_WALLPAPERS.includes(me.profile_wallpaper) ? me.profile_wallpaper : 'normal';
+  const next = PROFILE_WALLPAPERS[(PROFILE_WALLPAPERS.indexOf(current) + 1) % PROFILE_WALLPAPERS.length];
+  const button = $('#friendProfileFollow');
+  if (button) button.disabled = true;
+  try {
+    const saved = await api('/profile-wallpaper', { method: 'PUT', body: JSON.stringify({ wallpaper: next }) });
+    me = { ...me, profile_wallpaper: saved.profile_wallpaper || next };
+    const card = $('#friendProfileGate .friend-profile-card');
+    if (card) card.dataset.wallpaper = me.profile_wallpaper;
+    const ownRow = document.querySelector('#content .own-profile-row');
+    if (ownRow) ownRow.dataset.wallpaper = me.profile_wallpaper;
+    if (button) button.textContent = 'Themes';
+    toast('Wallpaper: ' + (PROFILE_WALLPAPER_LABELS[me.profile_wallpaper] || 'Normal') + ' ♡');
+  } catch (error) {
+    toast(error.message || 'Could not save wallpaper.');
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 async function toggleFriendFollow(username, isFollowing) {
@@ -2177,14 +2213,6 @@ async function toggleFriendFollow(username, isFollowing) {
     render();
     toast(error.message);
   }
-}
-
-function updateProfileSkinChoices(value = $('#profileSkin')?.value || 'cat') {
-  document.querySelectorAll('[data-profile-skin-choice]').forEach(button => {
-    const selected = button.dataset.profileSkinChoice === value;
-    button.classList.toggle('is-selected', selected);
-    button.setAttribute('aria-checked', String(selected));
-  });
 }
 
 function updateBuddyChoices(value = $('#profileMascot')?.value || '🐰') {
@@ -2904,7 +2932,7 @@ function syncPresenceUI() {
       const online = isPresenceUserOnline(profileUser.id, state);
       const status = $('#friendProfilePresence');
       const dot = $('#friendProfilePresenceDot');
-      if (status) status.textContent = online ? 'Active now' : formatFriendProfileActivity(profileUser.last_active_at);
+      if (status) status.textContent = online ? (profileGate.dataset.ownProfile === 'true' ? '' : 'Active now') : formatFriendProfileActivity(profileUser.last_active_at);
       dot?.classList.toggle('is-online', online);
       dot?.classList.toggle('is-offline', !online);
       dot?.setAttribute('aria-label', online ? 'Online' : 'Offline');
@@ -3778,10 +3806,8 @@ document.addEventListener('click', async e => {
     $('#profileUsername').value = me.username || '';
     $('#profileBio').value = me.bio || '';
     $('#profileTheme').value = me.theme || 'rose';
-    $('#profileSkin').value = me.profile_skin || 'cat';
     $('#profileMascot').value = me.mascot || '🐰';
     updateThemePreview(me.theme || 'rose');
-    updateProfileSkinChoices(me.profile_skin || 'cat');
     updateBuddyChoices(me.mascot || '🐰');
     $('#profileGate').classList.remove('hidden');
     return;
@@ -3799,7 +3825,6 @@ document.addEventListener('click', async e => {
           displayName: $('#profileDisplay').value.trim(),
           bio: $('#profileBio').value.trim(),
           theme: $('#profileTheme').value,
-          profileSkin: $('#profileSkin').value,
           mascot: $('#profileMascot').value
         })
       });
@@ -3854,6 +3879,10 @@ document.addEventListener('click', async e => {
     return;
   }
   const followBtn = e.target.closest('#friendProfileFollow, [data-follow]');
+  if (followBtn?.dataset.themeAction === 'true') {
+    void cycleProfileWallpaper();
+    return;
+  }
   if (followBtn) {
     const username = followBtn.dataset.follow || $('#friendProfileGate').dataset.username;
     const isFollowing = followBtn.dataset.following ? followBtn.dataset.following === 'true' : $('#friendProfileGate').dataset.following === 'true';
@@ -3866,12 +3895,6 @@ document.addEventListener('click', async e => {
   if (themeBtn) {
     $('#profileTheme').value = themeBtn.dataset.themeChoice;
     updateThemePreview(themeBtn.dataset.themeChoice);
-    return;
-  }
-  const profileSkinBtn = e.target.closest('[data-profile-skin-choice]');
-  if (profileSkinBtn) {
-    $('#profileSkin').value = profileSkinBtn.dataset.profileSkinChoice;
-    updateProfileSkinChoices(profileSkinBtn.dataset.profileSkinChoice);
     return;
   }
   const buddyBtn = e.target.closest('[data-buddy-choice]');
