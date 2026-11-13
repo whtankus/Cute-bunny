@@ -713,7 +713,7 @@ function noteDayLabel(value) {
 function formatJoinDate(value) {
   if (!value) return 'A little while ago';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'A little while ago' : new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(date);
+  return Number.isNaN(date.getTime()) ? 'A little while ago' : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 }
 
 function formatLastActive(value) {
@@ -741,7 +741,7 @@ function friendRow(user) {
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
   const online = isPresenceUserOnline(user.id, liveState);
   const presenceLabel = online ? 'Online now' : formatLastActive(user.last_active_at);
-  return `<article class="friend-row ${online ? 'is-online' : 'is-offline'}" data-friend-id="${esc(user.id)}" data-profile="${esc(user.username)}"><div class="friend-main"><span class="friend-avatar">${esc(user.mascot || '🐰')}<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)}</small></span><span class="friend-meta-line"><small class="sg-friend-presence">${esc(presenceLabel)}</small></span><span class="friend-stat-plates"><small class="friend-row-queen">👑 Queen</small><small class="friend-row-streak">${esc(flowerLabel)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></span></div><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
+  return `<article class="friend-row ${online ? 'is-online' : 'is-offline'}" data-friend-id="${esc(user.id)}" data-profile="${esc(user.username)}"><div class="friend-main"><span class="friend-avatar">${esc(user.mascot || '🐰')}<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)}</small></span><span class="friend-meta-line"><small class="sg-friend-presence">${esc(presenceLabel)}</small></span><span class="friend-stat-plates"><small class="friend-row-queen">👑 Queen</small><small class="friend-row-streak">${esc(flowerLabel)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></span></div><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following' : 'Follow ♡'}</button></article>`;
 }
 
 
@@ -2129,7 +2129,7 @@ function showFriendProfile(user) {
   $('#friendProfileStreakCount').textContent = friendGarden.count === null
     ? '— flower'
     : Number(friendGarden.count).toLocaleString() + ' flower';
-  $('#friendProfileFollow').textContent = user.isFollowing ? 'Following ✓' : 'Follow ♡';
+  $('#friendProfileFollow').textContent = user.isFollowing ? 'Following' : 'Follow ♡';
   $('#friendProfileFollow').classList.toggle('is-following', !!user.isFollowing);
   gate.classList.remove('hidden');
 }
@@ -2143,7 +2143,7 @@ async function toggleFriendFollow(username, isFollowing) {
   const gate = $('#friendProfileGate');
   if (gate.dataset.username === username) {
     gate.dataset.following = String(next);
-    $('#friendProfileFollow').textContent = next ? 'Following ✓' : 'Follow ♡';
+    $('#friendProfileFollow').textContent = next ? 'Following' : 'Follow ♡';
     $('#friendProfileFollow').classList.toggle('is-following', next);
   }
   render();
@@ -2156,7 +2156,7 @@ async function toggleFriendFollow(username, isFollowing) {
     friendResults = beforeResults;
     if (gate.dataset.username === username) {
       gate.dataset.following = String(isFollowing);
-      $('#friendProfileFollow').textContent = isFollowing ? 'Following ✓' : 'Follow ♡';
+      $('#friendProfileFollow').textContent = isFollowing ? 'Following' : 'Follow ♡';
       $('#friendProfileFollow').classList.toggle('is-following', isFollowing);
     }
     render();
