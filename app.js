@@ -3182,13 +3182,21 @@ async function searchFriends() {
 
 function cacheMediaSource(key, entry) {
   mediaUrlCache.set(key, entry);
-  if (mediaUrlCache.size > 40) {
+  // Keep recently viewed photos available when the user moves between tabs.
+  // The Cache API stores the image bytes; this in-memory map stores lightweight
+  // object URLs so rebuilding the gallery does not request the same image again.
+  if (mediaUrlCache.size > 80) {
     const oldestKey = mediaUrlCache.keys().next().value;
     const oldestEntry = mediaUrlCache.get(oldestKey);
     mediaUrlCache.delete(oldestKey);
     const oldestUrl = typeof oldestEntry === 'string' ? oldestEntry : oldestEntry?.url;
     if (oldestUrl?.startsWith('blob:')) URL.revokeObjectURL(oldestUrl);
   }
+}
+
+function photoCacheRequest(memory) {
+  const path = String(memory.storagePath || memory.id);
+  return new Request(new URL('/__cute-bunny-photo-cache__/' + encodeURIComponent(path), location.origin).href);
 }
 
 async function resolveMediaSource(memory) {
@@ -3207,23 +3215,61 @@ async function resolveMediaSource(memory) {
   if (pending) return pending;
 
   const request = (async () => {
-    // Serve a resized, compressed gallery rendition instead of downloading
-    // the original camera image. Keep GIFs untouched to preserve animation.
-    const storage = sb.storage.from('memories');
-    const isGif = /image\/gif/i.test(memory.contentType || memory.content_type || '');
-    let result = isGif
-      ? await storage.createSignedUrl(memory.storagePath, 3600)
-      : await storage.createSignedUrl(memory.storagePath, 3600, {
-          transform: { width: 720, quality: 72, resize: 'contain' }
-        });
-    // If image transformations are unavailable for this bucket/plan, fall back
-    // to the original signed URL so no photo becomes inaccessible.
-    if (result.error && !isGif) result = await storage.createSignedUrl(memory.storagePath, 3600);
-    if (result.error || !result.data?.signedUrl) throw result.error || new Error('The photo could not be loaded.');
-    const url = result.data.signedUrl;
-    const entry = { url, expiresAt: Date.now() + 3500000 };
-    cacheMediaSource(key, entry);
-    return url;
+    const cacheKey = photoCacheRequest(memory);
+    let response = null;
+    let photoCache = null;
+
+    // Cache the actual image bytes, not only the temporary signed URL. Signed
+    // URLs expire; the cached response remains usable when the gallery is reopened.
+    if ('caches' in window) {
+      try {
+        photoCache = await caches.open('cute-bunny-photo-cache-v1');
+        response = await photoCache.match(cacheKey);
+      } catch (error) {
+        console.warn('Persistent photo cache unavailable:', error?.message || error);
+      }
+    }
+
+    if (!response) {
+      // Use a compact gallery rendition while preserving each photo's aspect ratio.
+      // GIFs stay original so their animation is not lost.
+      const storage = sb.storage.from('memories');
+      const isGif = /image\/gif/i.test(memory.contentType || memory.content_type || '');
+      let result = isGif
+        ? await storage.createSignedUrl(memory.storagePath, 3600)
+        : await storage.createSignedUrl(memory.storagePath, 3600, {
+            transform: { width: 960, quality: 78, resize: 'contain' }
+          });
+      if (result.error && !isGif) result = await storage.createSignedUrl(memory.storagePath, 3600);
+      if (result.error || !result.data?.signedUrl) throw result.error || new Error('The photo could not be loaded.');
+
+      const signedUrl = result.data.signedUrl;
+      try {
+        const downloaded = await fetch(signedUrl, { mode: 'cors' });
+        if (downloaded.ok) {
+          response = downloaded.clone();
+          if (photoCache) {
+            try { await photoCache.put(cacheKey, downloaded.clone()); }
+            catch (error) { console.warn('Photo could not be saved to persistent cache:', error?.message || error); }
+          }
+        }
+      } catch (error) {
+        // Some storage configurations disallow cross-origin fetch; the signed
+        // URL remains a safe fallback and still benefits from browser HTTP caching.
+        console.warn('Using direct photo URL fallback:', error?.message || error);
+        cacheMediaSource(key, { url: signedUrl, expiresAt: Date.now() + 3500000 });
+        return signedUrl;
+      }
+      if (!response) {
+        cacheMediaSource(key, { url: signedUrl, expiresAt: Date.now() + 3500000 });
+        return signedUrl;
+      }
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    cacheMediaSource(key, { url: objectUrl, expiresAt: Number.MAX_SAFE_INTEGER });
+    return objectUrl;
   })();
 
   mediaHydrationInFlight.set(key, request);
