@@ -741,7 +741,7 @@ function friendRow(user) {
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
   const online = isPresenceUserOnline(user.id, liveState);
   const presenceLabel = online ? 'Online now' : formatLastActive(user.last_active_at);
-  return `<article class="friend-row ${online ? 'is-online' : 'is-offline'}" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)}</small></span><span class="friend-meta-line"><small class="sg-friend-presence">${esc(presenceLabel)}</small></span><span class="friend-stat-plates"><small class="friend-row-queen">👑 Queen</small><small class="friend-row-streak">${esc(flowerLabel)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
+  return `<article class="friend-row ${online ? 'is-online' : 'is-offline'}" data-friend-id="${esc(user.id)}" data-profile="${esc(user.username)}"><div class="friend-main"><span class="friend-avatar">${esc(user.mascot || '🐰')}<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)}</small></span><span class="friend-meta-line"><small class="sg-friend-presence">${esc(presenceLabel)}</small></span><span class="friend-stat-plates"><small class="friend-row-queen">👑 Queen</small><small class="friend-row-streak">${esc(flowerLabel)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></span></div><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
 }
 
 
@@ -3191,6 +3191,21 @@ document.addEventListener('change', e => {
   try { localStorage.setItem(streakStorageKey('checks:' + today), JSON.stringify(checks)); } catch {}
   updateStreakGoalProgress();
 });
+
+// Open friend profiles from the card surface (but never from its Follow button).
+document.addEventListener('click', event => {
+  const row = event.target.closest('.friend-row[data-profile]');
+  if (!row || event.target.closest('[data-follow]')) return;
+  const username = row.dataset.profile;
+  const friend = [...friends, ...friendResults].find(user =>
+    String(user.id) === String(row.dataset.friendId) ||
+    String(user.username || '').toLowerCase() === String(username || '').toLowerCase()
+  );
+  if (!friend) return;
+  event.preventDefault();
+  event.stopPropagation();
+  showFriendProfile(friend);
+}, true);
 
 // Touch free space to dismiss any modal / gate
 document.addEventListener('click', e => {
