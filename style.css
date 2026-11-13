@@ -11659,3 +11659,13 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
   box-shadow:none!important;
   outline:none!important;
 }
+
+
+/* The Friends page's "Your profile" row must never show the settings flower. */
+.own-profile-section .profile-settings-trigger,
+.own-profile-section #profileSettingsTrigger,
+.own-profile-row .profile-settings-trigger{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
