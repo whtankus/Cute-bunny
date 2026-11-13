@@ -9352,29 +9352,66 @@ body[data-mode="dark"] #app .now-playing-panel {
 }
 
 
-/* Wallpaper texture is clipped into the heart glyph without changing the control's original position or layout. */
-.memory-heart-toggle .heart-wallpaper-fill {display:none!important}
+/* Heart interior uses the app wallpaper pattern; the reaction control itself stays transparent. */
+.memory-heart-toggle {
+  display:inline-grid!important;
+  place-items:center!important;
+  isolation:isolate;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+.memory-heart-toggle .heart-wallpaper-fill,
 .memory-heart-toggle .heart-outline-glyph {
-  display:inline-block;
+  grid-area:1 / 1;
+  display:block!important;
+  line-height:1!important;
+  pointer-events:none;
+  transition:color .18s ease,opacity .18s ease,transform .18s ease;
+}
+.memory-heart-toggle .heart-wallpaper-fill {
+  position:relative;
+  z-index:0;
+  font-size:.72em!important;
   color:transparent!important;
-  background-color:#fcf7f2;
-  background-image:radial-gradient(#e7d4df 1px,transparent 1px);
-  background-size:24px 24px;
+  background-color:#fdf8f1;
+  background-image:radial-gradient(#e8d6df88 .8px,transparent .8px);
+  background-size:20px 20px;
   background-position:0 0;
   background-attachment:fixed;
   -webkit-background-clip:text;
   background-clip:text;
-  -webkit-text-fill-color:transparent;
-  -webkit-text-stroke:1px #c77999;
-  text-shadow:none!important;
+  -webkit-text-fill-color:transparent!important;
+  opacity:1;
 }
+.memory-heart-toggle .heart-outline-glyph {
+  position:relative;
+  z-index:1;
+  font-size:1em!important;
+  color:#c77999!important;
+  -webkit-text-fill-color:currentColor!important;
+  -webkit-text-stroke:0 transparent!important;
+  text-shadow:0 1px 2px #fff9!important;
+}
+.memory-heart-toggle[aria-pressed="true"] .heart-wallpaper-fill {opacity:0!important}
 .memory-heart-toggle[aria-pressed="true"] .heart-outline-glyph {
   color:#e75f91!important;
-  background:none!important;
-  -webkit-text-fill-color:#e75f91!important;
-  -webkit-text-stroke:0 transparent;
   text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
 }
+.memory-heart-toggle.heart-tap,
+.chat-page .chat-bubble.heart-tap .memory-heart-toggle,
+.home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {
+  animation:heart-button-pop .34s ease-out!important;
+}
+@keyframes heart-button-pop {
+  0%,100% {transform:scale(1)}
+  45% {transform:scale(1.28)}
+}
 @media(prefers-reduced-motion:reduce) {
+  .memory-heart-toggle .heart-wallpaper-fill,
   .memory-heart-toggle .heart-outline-glyph {transition:none!important}
+  .memory-heart-toggle.heart-tap,
+  .chat-page .chat-bubble.heart-tap .memory-heart-toggle,
+  .home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {animation:none!important}
 }
