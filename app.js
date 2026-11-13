@@ -2168,7 +2168,7 @@ function showFriendProfile(user) {
 
 
 function profileSettingsMarkup() {
-  return "<section class=\"profile-settings-panel hidden\" id=\"profileSettingsPanel\" aria-label=\"Profile settings\">\n      <div class=\"profile-settings-heading\"><div><p class=\"eyebrow\">YOUR LITTLE CORNER</p><h3>Settings</h3><p class=\"profile-settings-intro\">A few little ways to make your space feel like yours.</p></div></div>\n      <nav class=\"profile-settings-tabs\" aria-label=\"Settings sections\"><button type=\"button\" class=\"is-active\" data-settings-tab=\"profile\" aria-pressed=\"true\">Profile</button><button type=\"button\" data-settings-tab=\"chat\" aria-pressed=\"false\">Chat</button><button type=\"button\" data-settings-tab=\"other\" aria-pressed=\"false\">Others</button></nav>\n      <div class=\"profile-settings-section\" data-settings-section=\"profile\"><h4>Profile</h4><p>Choose the title shown with your profile.</p><div class=\"profile-gender-options\" role=\"group\" aria-label=\"Gender\"><button type=\"button\" data-profile-gender=\"male\">Male</button><button type=\"button\" data-profile-gender=\"female\">Female</button></div><p class=\"profile-settings-preview\" id=\"profileGenderPreview\">Choose an option to preview your profile tag.</p></div>\n      <div class=\"profile-settings-section hidden\" data-settings-section=\"chat\"><h4>Notifications</h4><p>Choose which friend updates you want to hear about.</p><label class=\"profile-setting-toggle\"><span><b>Memory notifications</b><small>Get notified when a friend shares a memory.</small></span><input type=\"checkbox\" id=\"profileSettingMemoryNotifications\"></label><label class=\"profile-setting-toggle\"><span><b>Friend activity notifications</b><small>Keep friend activity alerts enabled.</small></span><input type=\"checkbox\" id=\"profileSettingBuddyNotifications\"></label></div>\n      <div class=\"profile-settings-section hidden\" data-settings-section=\"other\"><h4>Appearance</h4><p>Change the decorative wallpaper on your profile without changing its layout.</p><button type=\"button\" class=\"profile-settings-wallpaper\" id=\"profileSettingsWallpaper\">Change profile theme</button><p class=\"profile-settings-note\">Your selected wallpaper is saved to your account.</p></div>\n      <div class=\"profile-settings-section hidden\" data-settings-section=\"accessibility\"><h4>Accessibility</h4><p>Make the interface calmer when you prefer less motion.</p><label class=\"profile-setting-toggle\"><span><b>Reduce animations</b><small>Limit decorative movement across the app.</small></span><input type=\"checkbox\" id=\"profileSettingReduceMotion\"></label></div>\n      <div class=\"profile-settings-section hidden\" data-settings-section=\"account\"><h4>Account</h4><p>Your current Cute Bunny profile details.</p><div class=\"profile-settings-account\"><span>Username</span><b id=\"profileSettingsUsername\">—</b></div><div class=\"profile-settings-account\"><span>Display name</span><b id=\"profileSettingsDisplayName\">—</b></div></div>\n      <button type=\"button\" class=\"primary profile-settings-save\" id=\"profileSettingsSave\">Save settings</button><p class=\"profile-settings-feedback\" id=\"profileSettingsFeedback\" role=\"status\"></p>\n    </section>";
+  return "<section class=\"profile-settings-panel hidden\" id=\"profileSettingsPanel\" aria-label=\"Profile settings\">\n      <div class=\"profile-settings-heading\"><div><p class=\"eyebrow\">YOUR LITTLE CORNER</p><h3>Settings</h3></div></div>\n      <nav class=\"profile-settings-tabs\" aria-label=\"Settings sections\"><button type=\"button\" class=\"is-active\" data-settings-tab=\"profile\" aria-pressed=\"true\">Profile</button><button type=\"button\" data-settings-tab=\"chat\" aria-pressed=\"false\">Chat</button><button type=\"button\" data-settings-tab=\"other\" aria-pressed=\"false\">Others</button></nav>\n      <div class=\"profile-settings-section\" data-settings-section=\"profile\"><h4>Profile settings</h4><p>Choose the title shown with your profile.</p><div class=\"profile-gender-options\" role=\"group\" aria-label=\"Gender\"><button type=\"button\" data-profile-gender=\"male\">Male</button><button type=\"button\" data-profile-gender=\"female\">Female</button></div><p class=\"profile-settings-preview\" id=\"profileGenderPreview\">Choose an option to preview your profile tag.</p></div>\n      <div class=\"profile-settings-section hidden\" data-settings-section=\"chat\"><h4>Chat settings</h4><label class=\"profile-setting-toggle\"><span><b>Memory notifications</b><small>Get notified when a friend shares a memory.</small></span><input type=\"checkbox\" id=\"profileSettingMemoryNotifications\"></label><label class=\"profile-setting-toggle\"><span><b>Friend activity notifications</b><small>Keep friend activity alerts enabled.</small></span><input type=\"checkbox\" id=\"profileSettingBuddyNotifications\"></label></div>\n      <div class=\"profile-settings-section hidden\" data-settings-section=\"other\"><h4>Other settings</h4><p>Change the decorative wallpaper on your profile without changing its layout.</p><button type=\"button\" class=\"profile-settings-wallpaper\" id=\"profileSettingsWallpaper\">Change profile theme</button><p class=\"profile-settings-note\">Your settings are saved to your account and follow you across devices.</p><div class=\"profile-settings-extra\"><h4>Accessibility</h4><label class=\"profile-setting-toggle\"><span><b>Reduce animations</b><small>Limit decorative movement across the app.</small></span><input type=\"checkbox\" id=\"profileSettingReduceMotion\"></label><h4>Account</h4><div class=\"profile-settings-account\"><span>Username</span><b id=\"profileSettingsUsername\">—</b></div><div class=\"profile-settings-account\"><span>Display name</span><b id=\"profileSettingsDisplayName\">—</b></div></div></div>\n      <button type=\"button\" class=\"primary profile-settings-save\" id=\"profileSettingsSave\">Save settings</button><p class=\"profile-settings-feedback\" id=\"profileSettingsFeedback\" role=\"status\"></p>\n    </section>";
 }
 
 function renderProfileSettings() {
@@ -3606,8 +3606,7 @@ document.addEventListener('dblclick', e => {
   void popLoveHeart(tile, e);
 });
 
-// Settings category tabs use capture-phase handling so profile/card handlers
-// cannot intercept taps before the selected section is switched.
+// Settings category tabs: capture clicks before other delegated handlers.
 document.addEventListener('click', event => {
   let target = event.target;
   if (target && target.nodeType !== 1) target = target.parentElement;
@@ -3615,19 +3614,16 @@ document.addEventListener('click', event => {
   if (!tab) return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  const selected = tab.dataset.settingsTab;
   const panel = document.querySelector('#profileSettingsPanel');
   if (!panel) return;
+  const selected = tab.dataset.settingsTab;
   panel.querySelectorAll('[data-settings-tab]').forEach(button => {
     const active = button === tab;
     button.classList.toggle('is-active', active);
     button.setAttribute('aria-pressed', String(active));
   });
   panel.querySelectorAll('[data-settings-section]').forEach(section => {
-    const key = section.dataset.settingsSection;
-    const visible = selected === 'other'
-      ? ['other', 'accessibility', 'account'].includes(key)
-      : key === selected;
+    const visible = section.dataset.settingsSection === selected;
     section.classList.toggle('hidden', !visible);
   });
 }, true);
