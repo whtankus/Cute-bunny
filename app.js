@@ -256,10 +256,30 @@ async function api(path, options = {}) {
       if (data.length < pageSize) break;
       start += pageSize;
     }
+    const memoryIds = rows.map(m => m.id).filter(id => id != null);
+    let likeRows = [];
+    if (memoryIds.length) {
+      const { data, error } = await sb.from('memory_likes')
+        .select('memory_id,user_id')
+        .in('memory_id', memoryIds);
+      fail(error);
+      likeRows = data || [];
+    }
+    const likesByMemory = new Map();
+    for (const like of likeRows) {
+      const key = String(like.memory_id);
+      const entry = likesByMemory.get(key) || { count: 0, likedByMe: false };
+      entry.count++;
+      if (String(like.user_id) === String(session.user.id)) entry.likedByMe = true;
+      likesByMemory.set(key, entry);
+    }
     return rows.map(m => {
       const author = Array.isArray(m.author) ? m.author[0] : (m.author || {});
+      const likeState = likesByMemory.get(String(m.id)) || { count: 0, likedByMe: false };
       return {
         ...m,
+        like_count: likeState.count,
+        liked_by_me: likeState.likedByMe,
         createdAt: m.created_at,
         fileName: m.file_name,
         contentType: m.content_type,
@@ -1328,38 +1348,44 @@ function playBoing() {
   } catch {}
 }
 
-function popLoveHeart(card, e) {
-  if (!card) return;
-  const id = card.closest('[data-memory]')?.dataset.memory;
-  if (id) {
-    const key = String(id);
-    reactedMemories.has(key) ? reactedMemories.delete(key) : reactedMemories.add(key);
-    try {
-      localStorage.setItem('cuteBunnyHearts:' + me?.username, JSON.stringify([...reactedMemories].slice(-2000)));
-    } catch {}
-    const likedNow = reactedMemories.has(key);
-    const message = card.closest('.chat-message');
-    card.classList.toggle('is-loved', likedNow);
-    message?.classList.toggle('is-loved', likedNow);
-    const control = card.closest('.feed-item')?.querySelector('[data-memory-heart]') || message?.querySelector('[data-memory-heart]');
-    if (control) {
-      control.textContent = likedNow ? '♥' : '♡';
-      control.setAttribute('aria-pressed', String(likedNow));
-      control.setAttribute('aria-label', likedNow ? (message ? 'Unlike message' : 'Unlike memory') : (message ? 'Like message' : 'Like memory'));
-    }
+async function popLoveHeart(card, e) {
+  if (!card || !me || !sb) return;
+  const item = feed.find(memory => String(memory.id) === String(card.closest('[data-memory]')?.dataset.memory));
+  if (!item) return;
+  const ownerId = String(item.owner_id || item.author?.id || '');
+  if (!ownerId || ownerId === String(me.id) || item.isPending) return;
 
+  const memoryId = item.id;
+  const nextLiked = !item.liked_by_me;
+  const { error } = nextLiked
+    ? await sb.from('memory_likes').insert({ memory_id: memoryId, user_id: me.id })
+    : await sb.from('memory_likes').delete().eq('memory_id', memoryId).eq('user_id', me.id);
+  if (error) {
+    console.warn('Memory reaction could not be saved:', error.message || error);
+    toast(error.message || 'Your like could not be saved. Please try again.');
+    return;
   }
-  card.classList.remove('heart-tap');
-  void card.offsetWidth;
-  card.classList.add('heart-tap');
-  clearTimeout(card.heartTimer);
-  card.heartTimer = setTimeout(() => card.classList.remove('heart-tap'), 1050);
-  const rect = card.getBoundingClientRect();
-  const x = e?.clientX || (rect.left + rect.width / 2);
-  const y = e?.clientY || (rect.top + rect.height / 2);
 
+  item.liked_by_me = nextLiked;
+  item.like_count = Math.max(0, Number(item.like_count || 0) + (nextLiked ? 1 : -1));
+  document.querySelectorAll('[data-memory="' + CSS.escape(String(memoryId)) + '"]').forEach(root => {
+    root.querySelectorAll('.chat-bubble, .tile').forEach(target => {
+      target.classList.toggle('is-loved', nextLiked);
+      target.classList.remove('heart-tap');
+      void target.offsetWidth;
+      target.classList.add('heart-tap');
+      clearTimeout(target.heartTimer);
+      target.heartTimer = setTimeout(() => target.classList.remove('heart-tap'), 1050);
+    });
+    root.classList.toggle('is-loved', nextLiked);
+    const control = root.querySelector('[data-memory-heart]');
+    if (control) {
+      control.textContent = nextLiked ? '♥' : '♡';
+      control.setAttribute('aria-pressed', String(nextLiked));
+      control.setAttribute('aria-label', nextLiked ? 'Unlike memory' : 'Like memory');
+    }
+  });
 }
-
 function go(p, options = {}) {
   const previousPage = page;
   const validPages = ['home', 'gallery', 'music', 'notes', 'friends', 'streak'];
@@ -1544,13 +1570,13 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
   const ownerId = owner.id || m.owner_id || '';
   const mine = String(ownerId) === String(me?.id || '');
   const id = String(m.id);
-  const liked = reactedMemories.has(id);
+  const liked = !!m.liked_by_me;
   const messageValue = String(m.text || '');
   const messageCharacterCount = noteGraphemeSegmenter
     ? [...noteGraphemeSegmenter.segment(messageValue)].length
     : Array.from(messageValue).length;
   const hasHeartReaction = messageCharacterCount >= 6;
-  const heartButton = hasHeartReaction
+  const heartButton = hasHeartReaction && !mine
     ? `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>`
     : '';
   const name = esc(owner.displayName || owner.display_name || owner.username || 'Friend');
@@ -1593,9 +1619,12 @@ function memoryCard(m, options = {}) {
   const name = esc(owner.displayName || owner.display_name || 'Friend');
   const handle = esc(owner.username || '');
   const pet = esc(owner.mascot || '🐰');
-  const liked = reactedMemories.has(String(m.id)) ? ' is-loved' : '';
-  const isLiked = reactedMemories.has(String(m.id));
-  const heartButton = `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}">${isLiked ? '♥' : '♡'}</button>`;
+  const isLiked = !!m.liked_by_me;
+  const liked = isLiked ? ' is-loved' : '';
+  const mine = String(owner.id || m.owner_id || '') === String(me?.id || '');
+  const heartButton = !mine
+    ? `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}">${isLiked ? '♥' : '♡'}</button>`
+    : '';
   const sorted = [me?.id, ...friends.map(f => f.id)].filter(Boolean).map(String).sort();
   const tone = sorted.indexOf(String(owner.id || m.owner_id || '')) % 2 ? 'tone-lavender' : 'tone-peach';
   const pending = pendingDeleteTimers.has(String(m.id)) ? ' is-pending-delete' : '';
@@ -2467,6 +2496,21 @@ function startRealtime() {
             console.warn('Live Notes update could not refresh the feed:', error?.message || error);
           }
         }, 120);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
+        clearTimeout(window.cuteLikeRefresh);
+        window.cuteLikeRefresh = setTimeout(async () => {
+          try {
+            const freshFeed = await api('/feed');
+            const pending = feed.filter(item => item.isPending);
+            const pendingIds = new Set(pending.map(item => String(item.id)));
+            feed = [...freshFeed.filter(item => !pendingIds.has(String(item.id))), ...pending];
+            if (page === 'notes') renderNotesPage();
+            else if (page === 'home' || page === 'gallery' || page === 'music') render();
+          } catch (error) {
+            console.warn('Live memory likes could not refresh:', error?.message || error);
+          }
+        }, 100);
       }).subscribe(status => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.warn('Live Notes channel status:', status);
@@ -2923,25 +2967,12 @@ document.addEventListener('click', async e => {
     e.preventDefault();
     e.stopPropagation();
     const card = heart.closest('.chat-message')?.querySelector('.chat-bubble') || heart.closest('.feed-item .tile');
-    if (card) popLoveHeart(card, e);
+    if (card) await popLoveHeart(card, e);
     return;
   }
 
-  // A short tap on a Notes bubble likes/unlikes it. Long-press is handled above.
-  const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
-  const selectedText = window.getSelection?.()?.toString().trim();
-  if (bubble && !e.target.closest('button') && !selectedText) {
-    if (messagePressState.suppressClick) {
-      messagePressState.suppressClick = false;
-      clearTimeout(messagePressState.suppressTimer);
-      messagePressState.suppressTimer = null;
-      messagePressState.longPressed = false;
-      return;
-    }
-    if (bubble.classList.contains('no-heart-reaction')) return;
-    popLoveHeart(bubble, e);
-    return;
-  }
+  // Message bubbles themselves are not reaction controls; only the explicit
+  // heart button on another user's memory can create or remove a like.
 
   // Chat action: Copy
   const copyBtn = e.target.closest('[data-chat-copy]');
