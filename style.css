@@ -11774,3 +11774,33 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
   .auth-card.profile-card .profile-settings-section{padding:8px}
   .auth-card.profile-card .profile-settings-section[data-settings-section="chat"]{column-gap:7px}
 }
+
+
+/* Added compact Account and Accessibility settings cards. */
+.auth-card.profile-card .profile-settings-section[data-settings-section="other"]{grid-column:auto}
+.auth-card.profile-card .profile-settings-section[data-settings-section="accessibility"],
+.auth-card.profile-card .profile-settings-section[data-settings-section="account"]{grid-column:auto}
+.auth-card.profile-card .profile-settings-account{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+  padding:5px 0;
+  border-bottom:1px solid #f0e2e9;
+}
+.auth-card.profile-card .profile-settings-account:last-child{border-bottom:0}
+.auth-card.profile-card .profile-settings-account span{color:#9a8792;font-size:10px}
+.auth-card.profile-card .profile-settings-account b{overflow-wrap:anywhere;color:#705366;font-size:11px}
+.reduce-app-motion *,
+.reduce-app-motion *::before,
+.reduce-app-motion *::after{
+  animation-duration:.01ms!important;
+  animation-iteration-count:1!important;
+  scroll-behavior:auto!important;
+  transition-duration:.01ms!important;
+}
+@media(max-width:390px){
+  .auth-card.profile-card .profile-settings-section[data-settings-section="other"],
+  .auth-card.profile-card .profile-settings-section[data-settings-section="accessibility"],
+  .auth-card.profile-card .profile-settings-section[data-settings-section="account"]{grid-column:1/-1}
+}
