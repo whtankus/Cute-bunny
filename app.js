@@ -1436,11 +1436,14 @@ async function popLoveHeart(card, event) {
 
     item.liked_by_me = nextLiked;
     item.like_count = Math.max(0, Number(item.like_count || 0) + (nextLiked ? 1 : -1));
+    const hasAnyLikes = item.like_count > 0;
 
     document.querySelectorAll('[data-memory="' + CSS.escape(memoryId) + '"]').forEach(root => {
-      root.classList.toggle('is-loved', nextLiked);
+      root.classList.toggle('is-loved', hasAnyLikes);
       root.querySelectorAll('.chat-bubble, .tile').forEach(target => {
-        target.classList.toggle('is-loved', nextLiked);
+        target.classList.toggle('is-loved', hasAnyLikes);
+        const indicator = target.querySelector('.reaction-heart-indicator .heart-outline-glyph');
+        if (indicator) indicator.textContent = hasAnyLikes ? '♥' : '♡';
         target.classList.remove('heart-tap');
         void target.offsetWidth;
         target.classList.add('heart-tap');
@@ -1448,7 +1451,7 @@ async function popLoveHeart(card, event) {
         target.heartTimer = setTimeout(() => target.classList.remove('heart-tap'), 850);
       });
       root.setAttribute('data-liked-by-me', String(nextLiked));
-      root.setAttribute('aria-label', nextLiked ? 'Liked' : 'Not liked');
+      root.setAttribute('data-like-count', String(item.like_count));
     });
     return true;
   } catch (error) {
@@ -1644,13 +1647,15 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
   const ownerId = owner.id || m.owner_id || '';
   const mine = String(ownerId) === String(me?.id || '');
   const id = String(m.id);
-  const liked = !!m.liked_by_me;
+  const liked = Number(m.like_count || 0) > 0;
   const messageValue = String(m.text || '');
   const messageCharacterCount = noteGraphemeSegmenter
     ? [...noteGraphemeSegmenter.segment(messageValue)].length
     : Array.from(messageValue).length;
   const hasHeartReaction = messageCharacterCount >= 6;
-  const heartButton = '';
+  const heartButton = hasHeartReaction
+    ? `<span class="memory-heart-toggle reaction-heart-indicator" aria-hidden="true"><span class="heart-wallpaper-fill">♥</span><span class="heart-outline-glyph">${liked ? '♥' : '♡'}</span></span>`
+    : '';
   const name = esc(owner.displayName || owner.display_name || owner.username || 'Friend');
   const handle = esc(owner.username || 'friend');
   const pet = esc(owner.mascot || '🐰');
@@ -1691,9 +1696,9 @@ function memoryCard(m, options = {}) {
   const name = esc(owner.displayName || owner.display_name || 'Friend');
   const handle = esc(owner.username || '');
   const pet = esc(owner.mascot || '🐰');
-  const isLiked = !!m.liked_by_me;
+  const isLiked = Number(m.like_count || 0) > 0;
   const liked = isLiked ? ' is-loved' : '';
-  const heartButton = '';
+  const heartButton = `<span class="memory-heart-toggle reaction-heart-indicator" aria-hidden="true"><span class="heart-wallpaper-fill">♥</span><span class="heart-outline-glyph">${isLiked ? '♥' : '♡'}</span></span>`;
   const sorted = [me?.id, ...friends.map(f => f.id)].filter(Boolean).map(String).sort();
   const tone = sorted.indexOf(String(owner.id || m.owner_id || '')) % 2 ? 'tone-lavender' : 'tone-peach';
   const pending = pendingDeleteTimers.has(String(m.id)) ? ' is-pending-delete' : '';
