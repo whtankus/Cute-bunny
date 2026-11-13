@@ -2901,21 +2901,52 @@ async function clearIgNote() {
   }
 }
 
-/* Ephemeral Notes typing events use Supabase Realtime Broadcast only; no database writes. */
+/* Ephemeral Notes typing uses its own Realtime Broadcast channel.
+   It is deliberately separate from online Presence so typing updates cannot
+   overwrite or interfere with a user's online-session metadata. */
+let notesTypingChannel = null;
+
 async function sendNotesTyping(isTyping) {
-  if (!presenceChannel || presenceStatus !== 'ready' || !me) return;
+  if (!notesTypingChannel || !me) return;
   try {
-    await presenceChannel.track({
-      user_id: me.id,
-      username: me.username || 'Friend',
-      display_name: me.displayName || me.display_name || me.username || 'Friend',
-      online_at: new Date().toISOString(),
-      is_typing: !!isTyping && page === 'notes' && !document.hidden,
-      typing_at: Date.now()
+    await notesTypingChannel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: {
+        user_id: String(me.id),
+        username: me.username || 'Friend',
+        display_name: me.displayName || me.display_name || me.username || 'Friend',
+        is_typing: !!isTyping && page === 'notes' && !document.hidden,
+        sent_at: Date.now()
+      }
     });
   } catch (error) {
-    console.warn('Notes typing presence could not be updated:', error?.message || error);
+    console.warn('Notes typing update could not be sent:', error?.message || error);
   }
+}
+
+function receiveNotesTyping(payload) {
+  const userId = String(payload?.user_id || '');
+  if (!userId || userId === String(me?.id || '')) return;
+  const friend = friends.find(item => String(item.id || item.user_id || '') === userId);
+  if (!friend) return;
+  const existing = remoteTypingUsers.get(userId);
+  if (existing?.timer) clearTimeout(existing.timer);
+  if (!payload.is_typing || page !== 'notes' || document.hidden) {
+    remoteTypingUsers.delete(userId);
+    syncNotesTypingIndicator();
+    return;
+  }
+  const entry = {
+    username: friend.username || payload.username || 'Friend',
+    displayName: friend.displayName || friend.display_name || payload.display_name || friend.username || 'Friend',
+    timer: setTimeout(() => {
+      remoteTypingUsers.delete(userId);
+      syncNotesTypingIndicator();
+    }, 4500)
+  };
+  remoteTypingUsers.set(userId, entry);
+  syncNotesTypingIndicator();
 }
 
 function startNotesTyping() {
@@ -2948,23 +2979,8 @@ function stopNotesTyping() {
   void sendNotesTyping(false);
 }
 
-function syncNotesTypingFromPresence(state) {
-  const next = new Map();
-  if (page === 'notes' && !document.hidden) {
-    Object.values(state || {}).flat().forEach(session => {
-      const userId = String(session?.user_id || '');
-      if (!userId || userId === String(me?.id || '') || !session?.is_typing) return;
-      const friend = friends.find(item => String(item.id) === userId);
-      if (!friend) return;
-      next.set(userId, {
-        username: friend.username || session.username || 'Friend',
-        displayName: friend.displayName || friend.display_name || session.display_name || friend.username || 'Friend'
-      });
-    });
-  }
-  remoteTypingUsers.clear();
-  next.forEach((entry, userId) => remoteTypingUsers.set(userId, entry));
-  syncNotesTypingIndicator();
+function syncNotesTypingFromPresence() {
+  // Typing is handled by the dedicated Broadcast channel, not Presence.
 }
 
 function syncNotesTypingIndicator() {
@@ -3100,6 +3116,13 @@ function startRealtime() {
       (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2));
     const presence = sb.channel('cute-bunny-presence', { config: { presence: { key: clientPresenceKey } } });
     presenceChannel = presence;
+    notesTypingChannel = sb.channel('cute-bunny-notes-typing')
+      .on('broadcast', { event: 'typing' }, ({ payload }) => receiveNotesTyping(payload))
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.warn('Notes typing channel status:', status);
+        }
+      });
     presence
       .on('presence', { event: 'sync' }, syncPresenceUI)
       .on('presence', { event: 'join' }, syncPresenceUI)
