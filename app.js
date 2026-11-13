@@ -3394,6 +3394,12 @@ document.addEventListener('pointerdown', e => {
   const item = tile.closest('.feed-item');
   const id = String(item?.dataset.memory || '');
   if (!id) return;
+  // Cancel the pending single-photo open as soon as the second tap begins.
+  if (lastTouchMemoryTap.id === id && performance.now() - lastTouchMemoryTap.time <= 300) {
+    clearTimeout(photoPressState.clickTimer);
+    photoPressState.clickTimer = null;
+    photoPressState.pendingPhotoId = null;
+  }
   tile.dataset.touchLikeStart = id;
 }, { passive: true });
 
