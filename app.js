@@ -105,6 +105,33 @@ const esc = s => String(s || '').replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
+async function optimizePhotoUpload(file) {
+  if (!file || file.type === 'image/gif' || !/^image\\/(jpeg|png|webp)$/i.test(file.type)) return file;
+  if (typeof createImageBitmap !== 'function') return file;
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1 && file.size <= 1200 * 1024) return file;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d', { alpha: false });
+    if (!context) return file;
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.82));
+    if (!blob || blob.size >= file.size) return file;
+    const baseName = file.name.replace(/\\.[^.]+$/, '');
+    return new File([blob], baseName + '.webp', { type: 'image/webp', lastModified: file.lastModified });
+  } catch (error) {
+    console.warn('Photo optimization skipped:', error?.message || error);
+    return file;
+  } finally {
+    bitmap?.close?.();
+  }
+}
+
 async function api(path, options = {}) {
   if (!sb) throw Error('Add your Supabase URL and publishable key in supabase-config.js first.');
   const method = options.method || 'GET';
@@ -337,12 +364,15 @@ async function api(path, options = {}) {
   }
 
   if (path === '/media' && method === 'POST') {
-    const form = body, file = form.get('file'), kind = form.get('kind'), caption = form.get('caption') || file.name;
+    const form = body;
+    let file = form.get('file');
+    const kind = form.get('kind'), caption = form.get('caption') || file.name;
     if (file.size > 8 * 1024 * 1024) throw Error('Choose a file under 8 MB.');
     const photoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], songTypes = ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/webm'];
     if (!(kind === 'photo' ? photoTypes.includes(file.type) : kind === 'song' ? songTypes.includes(file.type) : false)) {
       throw Error(kind === 'photo' ? 'Choose a JPG, PNG, WebP, or GIF image.' : 'Choose an MP3, MP4, OGG, WAV, or WebM audio file.');
     }
+    if (kind === 'photo') file = await optimizePhotoUpload(file);
     const key = session.user.id + '/' + crypto.randomUUID() + '/' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const { error: ue } = await sb.storage.from('memories').upload(key, file, { contentType: file.type, upsert: false });
     fail(ue);
