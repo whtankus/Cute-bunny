@@ -36,7 +36,9 @@ let noteSeenLastAck = new Map();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
 let navRefreshInFlight = false, appExitStep = 0;
-let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
+let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null, typingChannel = null;
+let typingHeartbeatTimer = null, typingStopTimer = null, typingActive = false, typingLastSentAt = 0;
+const remoteTypingUsers = new Map();
 let activeMessageActionsId = null;
 let hiddenNoteIds = new Set();
 let homeNavRefreshInFlight = false;
@@ -1714,6 +1716,7 @@ function go(p, options = {}) {
   if (page === 'notes' && p !== 'notes') {
     noteSeenObserver?.disconnect();
     noteSeenObserver = null;
+    stopNotesTyping();
     clearTimeout(noteSeenDebounceTimer);
     noteSeenPending.clear();
     $('#chatInput')?.blur();
@@ -1888,6 +1891,7 @@ function handleAppBackNavigation() {
 }
 
 window.addEventListener('popstate', handleAppBackNavigation);
+window.addEventListener('pagehide', stopNotesTyping);
 
 /* One reusable note message structure for the Notes conversation and Home history. */
 function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen = false) {
@@ -2053,6 +2057,7 @@ function renderNotesPage(options = {}) {
         ${olderControl}${messagesHtml || emptyMarkup}
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
+        <div id="chatTypingIndicator" class="chat-typing-indicator" aria-live="polite" aria-atomic="true" hidden></div>
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>💌</button>
       </form>
@@ -2823,6 +2828,7 @@ async function sendChatMessage() {
     author: { ...me, id: me?.id, displayName: me?.displayName || me?.username, mascot: me?.mascot || '🐰' }
   };
 
+  stopNotesTyping();
   field.value = '';
   field.style.height = '';
   field.style.overflowY = 'hidden';
@@ -2892,6 +2898,94 @@ async function clearIgNote() {
       toast(e.message);
     }
   }
+}
+
+/* Ephemeral Notes typing events use Supabase Realtime Broadcast only; no database writes. */
+async function sendNotesTyping(isTyping) {
+  if (!typingChannel || !me || page !== 'notes') return;
+  try {
+    await typingChannel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: {
+        user_id: me.id,
+        username: me.username || 'Friend',
+        display_name: me.displayName || me.display_name || me.username || 'Friend',
+        is_typing: !!isTyping,
+        sent_at: Date.now()
+      }
+    });
+  } catch (error) {
+    console.warn('Notes typing update could not be sent:', error?.message || error);
+  }
+}
+
+function startNotesTyping() {
+  if (!me || page !== 'notes' || document.hidden) return;
+  const now = Date.now();
+  if (!typingActive) {
+    typingActive = true;
+    typingLastSentAt = now;
+    void sendNotesTyping(true);
+    typingHeartbeatTimer = setInterval(() => {
+      if (!typingActive || page !== 'notes' || document.hidden) return;
+      typingLastSentAt = Date.now();
+      void sendNotesTyping(true);
+    }, 2400);
+  } else if (now - typingLastSentAt >= 2400) {
+    typingLastSentAt = now;
+    void sendNotesTyping(true);
+  }
+  clearTimeout(typingStopTimer);
+  typingStopTimer = setTimeout(stopNotesTyping, 1800);
+}
+
+function stopNotesTyping() {
+  clearTimeout(typingStopTimer);
+  typingStopTimer = null;
+  if (typingHeartbeatTimer) clearInterval(typingHeartbeatTimer);
+  typingHeartbeatTimer = null;
+  if (!typingActive) return;
+  typingActive = false;
+  void sendNotesTyping(false);
+}
+
+function receiveNotesTyping(payload) {
+  if (!payload || String(payload.user_id || '') === String(me?.id || '')) return;
+  const friend = friends.find(item => String(item.id) === String(payload.user_id));
+  if (!friend) return;
+  const userId = String(friend.id);
+  const previous = remoteTypingUsers.get(userId);
+  if (previous?.timer) clearTimeout(previous.timer);
+  if (!payload.is_typing || page !== 'notes' || document.hidden) {
+    remoteTypingUsers.delete(userId);
+    syncNotesTypingIndicator();
+    return;
+  }
+  const entry = {
+    username: friend.username || payload.username || 'Friend',
+    displayName: friend.displayName || friend.display_name || payload.display_name || friend.username || 'Friend',
+    timer: setTimeout(() => {
+      remoteTypingUsers.delete(userId);
+      syncNotesTypingIndicator();
+    }, 5000)
+  };
+  remoteTypingUsers.set(userId, entry);
+  syncNotesTypingIndicator();
+}
+
+function syncNotesTypingIndicator() {
+  const indicator = $('#chatTypingIndicator');
+  if (!indicator) return;
+  const names = [...remoteTypingUsers.values()].map(entry => entry.displayName);
+  let label = '';
+  if (names.length === 1) label = names[0] + ' is typing';
+  else if (names.length === 2) label = names[0] + ' and ' + names[1] + ' are typing';
+  else if (names.length >= 3) label = 'Several people are typing';
+  indicator.hidden = !label || page !== 'notes';
+  indicator.innerHTML = label
+    ? '<span class="chat-typing-label">' + esc(label) + '</span><span class="chat-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>'
+    : '';
 }
 
 /* Notes read receipts: mark only messages that remain substantially visible. */
@@ -2997,6 +3091,7 @@ document.addEventListener('visibilitychange', () => {
     void touchLastActive(true);
     if (page === 'notes') requestAnimationFrame(observeNoteSeenMessages);
   } else {
+    stopNotesTyping();
     clearTimeout(noteSeenDebounceTimer);
   }
 });
@@ -3077,6 +3172,12 @@ function startRealtime() {
         toast('A little hello from your friend ♡');
       }).subscribe();
 
+    typingChannel = sb.channel('cute-bunny-notes-typing', { config: { broadcast: { self: false } } })
+      .on('broadcast', { event: 'typing' }, ({ payload }) => receiveNotesTyping(payload))
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED' && typingActive) void sendNotesTyping(true);
+      });
+
     memoryChannel = sb.channel('cute-bunny-memories-' + me.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'memories' }, payload => {
         // Refresh only the shared memory feed; a full app refresh can rebuild
@@ -3142,10 +3243,14 @@ function startRealtime() {
 }
 
 function closeRealtime() {
-  [presenceChannel, notificationChannel, memoryChannel, profileChannel].forEach(channel => {
+  stopNotesTyping();
+  remoteTypingUsers.forEach(entry => clearTimeout(entry.timer));
+  remoteTypingUsers.clear();
+  syncNotesTypingIndicator();
+  [presenceChannel, notificationChannel, memoryChannel, profileChannel, typingChannel].forEach(channel => {
     if (channel && sb) sb.removeChannel(channel);
   });
-  presenceChannel = notificationChannel = memoryChannel = profileChannel = null;
+  presenceChannel = notificationChannel = memoryChannel = profileChannel = typingChannel = null;
   presenceStatus = 'closed';
   if (streakCountdownInterval) {
     window.clearInterval(streakCountdownInterval);
@@ -4438,6 +4543,8 @@ function isTouchNotesViewport() {
 document.addEventListener('input', event => {
   if (event.target.id !== 'chatInput') return;
   const field = event.target;
+  if (field.value.trim()) startNotesTyping();
+  else stopNotesTyping();
   field.style.height = 'auto';
   const nextHeight = Math.min(Math.max(field.scrollHeight, 50), 116);
   field.style.height = nextHeight + 'px';
@@ -4554,6 +4661,7 @@ document.addEventListener('focusin', event => {
 });
 document.addEventListener('focusout', event => {
   if (event.target.id === 'chatInput') {
+    stopNotesTyping();
     notesKeyboardDismissed = true;
     document.body.classList.remove('notes-header-hidden');
     notesHeaderLastScrollTop = $('#chatThread')?.scrollTop ?? null;
