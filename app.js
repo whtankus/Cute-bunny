@@ -482,6 +482,7 @@ function setUser(u) {
   } catch {
     hiddenNoteIds = new Set();
   }
+  try { localStorage.removeItem('cuteBunnyHearts:' + u.username); } catch {}
   setMode(localStorage.getItem('cuteBunnyMode:' + u.username) || 'light');
   setTheme(u.theme);
   $('#topMascot').textContent = u.mascot || '🐰';
@@ -3199,7 +3200,7 @@ document.addEventListener('click', async e => {
       if (target?.isConnected && !messagePressState.longPressed && !messagePressState.suppressClick) {
         void popLoveHeart(target, e);
       }
-    }, 280);
+    }, 450);
     return;
   }
 
