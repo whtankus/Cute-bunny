@@ -16,6 +16,9 @@ const sb = window.supabase && cfg.supabaseUrl && !cfg.supabaseUrl.startsWith('PA
 let token = localStorage.getItem('cuteBunnyToken') || '', me = null, page = 'home', feed = [], friends = [], friendResults = [], friendQuery = '';
 let appPageStack = ['home'], appBackGuardInstalled = false, appBackExitArmedUntil = 0, appBackExitPending = false;
 let mediaObjectUrls = [], mediaUrlCache = new Map(), mediaHydrationInFlight = new Map(), pendingMediaUrls = new Map(), reactedMemories = new Set();
+let feedHasMore = false, feedLoadingMore = false;
+const FEED_PAGE_SIZE = 40;
+let mediaObserver = null;
 let pendingDeleteTimers = new Map(), authMode = 'register';
 let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0;
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
@@ -243,20 +246,15 @@ async function api(path, options = {}) {
     return { sent: !!data };
   }
 
-  if (path === '/feed') {
-    const rows = [], pageSize = 500;
-    let start = 0;
-    while (true) {
-      const { data, error } = await sb.from('memories')
-        .select('*,author:profiles!memories_owner_id_fkey(id,username,display_name,mascot,theme)')
-        .order('created_at', { ascending: false }).order('id', { ascending: false })
-        .range(start, start + pageSize - 1);
-      fail(error);
-      rows.push(...data);
-      if (data.length < pageSize) break;
-      start += pageSize;
-    }
-    return rows.map(m => {
+  if (path.startsWith('/feed')) {
+    const offsetMatch = path.match(/[?&]offset=(\\d+)/);
+    const offset = Math.max(0, Number(offsetMatch?.[1]) || 0);
+    const { data: rows, error } = await sb.from('memories')
+      .select('*,author:profiles!memories_owner_id_fkey(id,username,display_name,mascot,theme)')
+      .order('created_at', { ascending: false }).order('id', { ascending: false })
+      .range(offset, offset + FEED_PAGE_SIZE - 1);
+    fail(error);
+    return (rows || []).map(m => {
       const author = Array.isArray(m.author) ? m.author[0] : (m.author || {});
       return {
         ...m,
@@ -452,6 +450,7 @@ async function refresh() {
   const results = await Promise.all([api('/me'), api('/feed'), api('/following')]);
   me = results[0];
   feed = results[1];
+  feedHasMore = feed.length === FEED_PAGE_SIZE;
   friends = results[2];
   render();
   syncStreakWidget();
@@ -460,6 +459,30 @@ async function refresh() {
     const profile = [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
     if (profile) showFriendProfile(profile);
   }
+}
+
+async function loadMoreFeed() {
+  if (feedLoadingMore || !feedHasMore || !me) return;
+  feedLoadingMore = true;
+  const previousLength = feed.length;
+  render();
+  try {
+    const older = await api('/feed?offset=' + previousLength);
+    const known = new Set(feed.map(item => String(item.id)));
+    const additions = older.filter(item => !known.has(String(item.id)));
+    feed.push(...additions);
+    feedHasMore = older.length === FEED_PAGE_SIZE;
+  } catch (error) {
+    toast(error?.message || 'Older memories could not be loaded.');
+  } finally {
+    feedLoadingMore = false;
+    render();
+  }
+}
+
+function olderMemoriesButton() {
+  if (!feedHasMore && !feedLoadingMore) return '';
+  return `<div class="older-memories-wrap"><button type="button" class="primary older-memories-button" data-load-older-feed ${feedLoadingMore ? 'disabled' : ''} ${feedLoadingMore ? 'disabled' : ''}>${feedLoadingMore ? 'Loading older memories…' : 'Load older memories ↓'}</button></div>`;
 }
 
 const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
@@ -1654,6 +1677,7 @@ function renderNotesPage(options = {}) {
     return divider + chatMessageMarkup(m, !isContinuation, isContinuation);
   }).join('');
   const emptyMarkup = '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>';
+  const olderControl = olderMemoriesButton();
   const existingThread = $('#chatThread');
 
   // Update the existing scrollport in place so realtime refreshes never rebuild
@@ -1671,7 +1695,7 @@ function renderNotesPage(options = {}) {
       : 0;
     const previousScrollTop = existingThread.scrollTop;
 
-    existingThread.innerHTML = messagesHtml || emptyMarkup;
+    existingThread.innerHTML = olderControl + (messagesHtml || emptyMarkup);
 
     requestAnimationFrame(() => {
       if (!existingThread.isConnected) return;
@@ -1703,7 +1727,7 @@ function renderNotesPage(options = {}) {
   content.innerHTML = `
     <section class="chat-page" aria-label="Notes conversation">
       <div class="chat-thread" id="chatThread" aria-live="polite">
-        ${messagesHtml || emptyMarkup}
+        ${olderControl}${messagesHtml || emptyMarkup}
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
@@ -1777,6 +1801,7 @@ function render(options = {}) {
           const isContinuation = m.kind === 'note' && previous?.kind === 'note' && !!ownerId && ownerId === previousOwnerId && sameDay;
           return memoryCard(m, { isContinuation });
         }).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
+        ${olderMemoriesButton()}
       </div>
     `;
   } else if (page === 'gallery') {
@@ -1784,6 +1809,7 @@ function render(options = {}) {
       <div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div>
       <label class="primary upload-label">＋ Add photo<input data-upload="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden></label>
       <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || '<div class="empty">Your garden is waiting for its first photo ♡</div>'}</section>
+      ${olderMemoriesButton()}
     `;
   } else if (page === 'music') {
     c.innerHTML = `
@@ -1791,6 +1817,7 @@ function render(options = {}) {
       <label class="primary upload-label">＋ Add a song<input data-upload="song" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" hidden></label>
       <h3 class="shared-songs-title">Your shared songs</h3>
       <div class="grid media-grid music-grid">${songs.map(memoryCard).join('') || '<div class="empty">Add a song file and listen together right here ♡</div>'}</div>
+      ${olderMemoriesButton()}
     `;
   } else if (page === 'friends') {
     c.innerHTML = `
@@ -2688,13 +2715,12 @@ async function resolveMediaSource(memory) {
   if (pending) return pending;
 
   const request = (async () => {
-    // Download once into a retained Blob URL. Re-rendering Gallery or moving
-    // between pages then reuses the same in-memory image instead of requesting
-    // a fresh signed URL and downloading the same photo again.
-    const { data, error } = await sb.storage.from('memories').download(memory.storagePath);
-    if (error || !data) throw error || new Error('The photo could not be loaded.');
-    const url = URL.createObjectURL(data);
-    const entry = { url, expiresAt: Number.MAX_SAFE_INTEGER };
+    // Resolve a short-lived URL instead of downloading the full image into a
+    // Blob. The browser can then lazy-load and cache image bytes natively.
+    const { data, error } = await sb.storage.from('memories').createSignedUrl(memory.storagePath, 3600);
+    if (error || !data?.signedUrl) throw error || new Error('The photo could not be loaded.');
+    const url = data.signedUrl;
+    const entry = { url, expiresAt: Date.now() + 3500000 };
     cacheMediaSource(key, entry);
     return url;
   })();
@@ -2725,6 +2751,8 @@ async function hydrateOneMedia(node) {
 }
 
 function hydrateMedia() {
+  mediaObserver?.disconnect();
+  mediaObserver = null;
   if (!sb) return;
   const nodes = [...document.querySelectorAll('[data-media]')];
   nodes.forEach(node => {
@@ -2732,13 +2760,13 @@ function hydrateMedia() {
     node.decoding = 'async';
   });
   if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+    mediaObserver = new IntersectionObserver(entries => entries.forEach(entry => {
       if (entry.isIntersecting) {
-        observer.unobserve(entry.target);
+        mediaObserver.unobserve(entry.target);
         void hydrateOneMedia(entry.target);
       }
-    }), { rootMargin: '480px 0px' });
-    nodes.forEach(node => observer.observe(node));
+    }), { rootMargin: '180px 0px' });
+    nodes.forEach(node => mediaObserver.observe(node));
   } else nodes.forEach(node => void hydrateOneMedia(node));
 }
 
@@ -2930,6 +2958,13 @@ document.addEventListener('pointerdown', e => {
 }, { capture: true, passive: false });
 
 document.addEventListener('click', async e => {
+  const olderFeedButton = e.target.closest('[data-load-older-feed]');
+  if (olderFeedButton) {
+    e.preventDefault();
+    void loadMoreFeed();
+    return;
+  }
+
   // Kindness card
   if (e.target.closest('#dailyCard')) {
     rollKindness();
