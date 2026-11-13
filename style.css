@@ -9429,3 +9429,16 @@ body[data-mode="dark"] #app .now-playing-panel {
   0%,100% {transform:translateY(0) scale(1)}
   42% {transform:translateY(-40%) rotate(10deg) scale(1.28)}
 }
+
+
+/* Compact the Save/Delete controls under the full-screen photo preview. */
+#photoLightbox .photo-lightbox-actions {
+  gap:8px!important;
+}
+#photoLightbox .photo-lightbox-action {
+  min-height:34px!important;
+  padding:7px 13px!important;
+  font-size:.76rem!important;
+  line-height:1!important;
+  border-radius:13px!important;
+}
