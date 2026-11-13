@@ -5,6 +5,7 @@ create table if not exists public.profiles (
   display_name text not null check (char_length(display_name) between 1 and 60),
   bio text not null default '' check (char_length(bio) <= 300),
   theme text not null default 'rose' check (theme in ('rose','lavender','mint','sky')),
+  profile_skin text not null default 'cat' check (profile_skin in ('cat','bird','vampire','fairy','galaxy')),
   mascot text not null default '🐰' check (mascot in ('🐰','🐱','🐻','🐸')),
   created_at timestamptz not null default now()
 );
@@ -70,7 +71,7 @@ drop policy if exists "Delete media in own folder" on storage.objects;
 create policy "Delete media in own folder" on storage.objects for delete to authenticated using (bucket_id='memories' and (storage.foldername(name))[1]=(select auth.uid())::text);
 -- Minimal Data API grants (RLS policies above still enforce row ownership).
 grant select on public.profiles to authenticated;
-grant update (display_name,bio,theme,mascot) on public.profiles to authenticated;
+grant update (display_name,bio,theme,mascot,profile_skin) on public.profiles to authenticated;
 grant select, insert, delete on public.follows to authenticated;
 grant select, insert, delete on public.memories to authenticated;
 grant usage, select on sequence public.memories_id_seq to authenticated;
