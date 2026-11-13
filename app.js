@@ -1412,11 +1412,13 @@ function popLoveHeart(card, e) {
       control.setAttribute('aria-pressed', String(likedNow));
       control.setAttribute('aria-label', likedNow ? (message ? 'Unlike message' : 'Unlike memory') : (message ? 'Like message' : 'Like memory'));
     }
-      control.classList.remove('heart-tap');
-      void control.offsetWidth;
-      control.classList.add('heart-tap');
-      clearTimeout(control.heartTimer);
-      control.heartTimer = setTimeout(() => control.classList.remove('heart-tap'), 520);
+      if (control) {
+        control.classList.remove('heart-tap');
+        void control.offsetWidth;
+        control.classList.add('heart-tap');
+        clearTimeout(control.heartTimer);
+        control.heartTimer = setTimeout(() => control.classList.remove('heart-tap'), 520);
+      }
 
   }
   card.classList.remove('heart-tap');
@@ -3028,7 +3030,12 @@ document.addEventListener('pointerdown', e => {
 // Double-click a photo or music memory card to like/unlike it.
 document.addEventListener('dblclick', e => {
   const tile = e.target.closest('.feed-item .tile');
-  if (!tile || e.target.closest('button, a, input, textarea, select')) return;
+  if (!tile) return;
+  // The album artwork is itself a play button; allow double-clicking it to
+  // like the song while keeping other action buttons excluded.
+  const action = e.target.closest('button, a, input, textarea, select');
+  if (action && !action.matches('.play-song, .album-art')) return;
+  if (action?.matches('.memory-heart-toggle, [data-memory-delete], [data-memory-download]')) return;
   const item = tile.closest('.feed-item');
   const kind = item?.dataset.kind || item?.dataset.memoryKind || '';
   const isPhotoOrMusic = /photo|music|song|audio/i.test(kind) ||
