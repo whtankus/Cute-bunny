@@ -2086,6 +2086,21 @@ function render(options = {}) {
   requestAnimationFrame(observeFeedHistory);
 }
 
+function formatFriendProfileActivity(value) {
+  if (!value) return 'Activity unavailable';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Activity unavailable';
+  const minutes = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60000));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return minutes + 'm ago';
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + 'h ago';
+  const days = Math.floor(hours / 24);
+  if (days < 7) return days + 'd ago';
+  const weeks = Math.floor(days / 7);
+  return weeks + 'w ago';
+}
+
 function showFriendProfile(user) {
   if (!user) return;
   const gate = $('#friendProfileGate');
@@ -2097,7 +2112,7 @@ function showFriendProfile(user) {
   $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
   const profileOnline = isPresenceUserOnline(user.id, (() => { try { return presenceChannel?.presenceState?.() || {}; } catch { return {}; } })());
   const presenceDot = $('#friendProfilePresenceDot');
-  $('#friendProfilePresence').textContent = profileOnline ? 'Online now' : 'Last active ' + formatLastActive(user.last_active_at);
+  $('#friendProfilePresence').textContent = profileOnline ? 'Active now' : formatFriendProfileActivity(user.last_active_at);
   presenceDot?.classList.toggle('is-online', profileOnline);
   presenceDot?.classList.toggle('is-offline', !profileOnline);
   presenceDot?.setAttribute('aria-label', profileOnline ? 'Online' : 'Offline');
@@ -2860,7 +2875,7 @@ function syncPresenceUI() {
       const online = isPresenceUserOnline(profileUser.id, state);
       const status = $('#friendProfilePresence');
       const dot = $('#friendProfilePresenceDot');
-      if (status) status.textContent = online ? 'Online now' : formatLastActive(profileUser.last_active_at);
+      if (status) status.textContent = online ? 'Active now' : formatFriendProfileActivity(profileUser.last_active_at);
       dot?.classList.toggle('is-online', online);
       dot?.classList.toggle('is-offline', !online);
       dot?.setAttribute('aria-label', online ? 'Online' : 'Offline');
