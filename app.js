@@ -569,6 +569,9 @@ async function refresh() {
   feedPageHasMore.song = (results[4] || []).length === 8;
   friends = results[2];
   render();
+  // Warm the first gallery photos in the background while the user is on Home.
+  // This means opening Photo Garden usually displays cached image bytes immediately.
+  void prewarmPhotoSources(feed.filter(item => item.kind === 'photo').slice(0, 16));
   if (page === 'gallery' && !mediaInitialLoaded.photo) void loadLatestMedia('photo');
   else if (page === 'music' && !mediaInitialLoaded.song) void loadLatestMedia('song');
   syncStreakWidget();
@@ -3280,6 +3283,20 @@ async function resolveMediaSource(memory) {
   }
 }
 
+async function prewarmPhotoSources(items, concurrency = 4) {
+  const queue = (items || []).filter(item => item?.kind === 'photo' && item.storagePath && !item.isPending);
+  if (!queue.length || !sb) return;
+  let next = 0;
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+    while (next < queue.length) {
+      const item = queue[next++];
+      try { await resolveMediaSource(item); }
+      catch (error) { console.warn('Photo preloading skipped:', error?.message || error); }
+    }
+  });
+  await Promise.all(workers);
+}
+
 async function hydrateOneMedia(node) {
   if (!node || node.getAttribute('src') || node.dataset.mediaLoading === 'true') return;
   try {
@@ -3303,12 +3320,12 @@ function hydrateMedia() {
   if (!sb) return;
   const nodes = [...document.querySelectorAll('[data-media]')];
   nodes.forEach((node, index) => {
-    // Only the first few visible gallery images get high priority. Everything
-    // else waits until it approaches the viewport.
-    const prioritize = page === 'gallery' && index < 6;
+    // Prioritize the whole first screen of the garden, not just a few images.
+    // Remaining photos begin loading well before they enter the viewport.
+    const prioritize = page === 'gallery' && index < 12;
     node.loading = prioritize ? 'eager' : 'lazy';
     node.decoding = 'async';
-    node.fetchPriority = prioritize && index < 2 ? 'high' : 'auto';
+    node.fetchPriority = prioritize && index < 4 ? 'high' : 'auto';
   });
   if ('IntersectionObserver' in window) {
     mediaObserver = new IntersectionObserver(entries => entries.forEach(entry => {
@@ -3316,9 +3333,9 @@ function hydrateMedia() {
         mediaObserver.unobserve(entry.target);
         void hydrateOneMedia(entry.target);
       }
-    }), { rootMargin: page === 'gallery' ? '700px 0px' : '320px 0px' });
-    nodes.slice(0, page === 'gallery' ? 6 : 0).forEach(node => void hydrateOneMedia(node));
-    nodes.slice(page === 'gallery' ? 6 : 0).forEach(node => mediaObserver.observe(node));
+    }), { rootMargin: page === 'gallery' ? '1400px 0px' : '500px 0px' });
+    nodes.slice(0, page === 'gallery' ? 12 : 0).forEach(node => void hydrateOneMedia(node));
+    nodes.slice(page === 'gallery' ? 12 : 0).forEach(node => mediaObserver.observe(node));
     if (page === 'music') warmSongSources(feed.filter(item => item.kind === 'song').slice(0, 8));
   } else nodes.forEach(node => void hydrateOneMedia(node));
 }
