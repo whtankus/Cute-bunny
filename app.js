@@ -597,6 +597,7 @@ async function loadLatestMedia(kind) {
     mediaVisibleCount[kind] = 8;
     mediaPageLoading[kind] = false;
     render();
+    $('#profileSettingsPanel')?.classList.add('hidden');
   } catch (error) {
     console.warn('Latest ' + kind + ' memories could not be loaded:', error?.message || error);
     toast('Some recent ' + (kind === 'photo' ? 'photos' : 'songs') + ' could not be loaded.');
@@ -2179,17 +2180,28 @@ function renderProfileSettings() {
   const memory = $('#profileSettingMemoryNotifications'), buddy = $('#profileSettingBuddyNotifications');
   if (memory) memory.checked = prefs.memories !== false;
   if (buddy) buddy.checked = prefs.buddy !== false;
+  const reduceMotion = $('#profileSettingReduceMotion');
+  let reduceMotionEnabled = false;
+  try { reduceMotionEnabled = localStorage.getItem('cuteBunnyReduceMotion') === 'true'; } catch {}
+  if (reduceMotion) reduceMotion.checked = reduceMotionEnabled;
+  document.documentElement.classList.toggle('reduce-app-motion', reduceMotionEnabled);
+  const username = $('#profileSettingsUsername'), displayName = $('#profileSettingsDisplayName');
+  if (username) username.textContent = me?.username ? '@' + me.username : '—';
+  if (displayName) displayName.textContent = me?.displayName || me?.display_name || '—';
 }
 async function saveProfileSettings() {
   if (!me?.id) return;
   const save = $('#profileSettingsSave'), feedback = $('#profileSettingsFeedback');
   const gender = document.querySelector('[data-profile-gender].is-selected')?.dataset.profileGender || null;
   const notificationPreferences = { ...(me.notification_preferences || {}), memories: $('#profileSettingMemoryNotifications')?.checked !== false, buddy: $('#profileSettingBuddyNotifications')?.checked !== false };
+  const reduceMotionEnabled = $('#profileSettingReduceMotion')?.checked === true;
   if (save) save.disabled = true;
   if (feedback) feedback.textContent = 'Saving your settings…';
   try {
     const saved = await api('/me', { method: 'PUT', body: JSON.stringify({ username: me.username, displayName: me.displayName || me.display_name, bio: me.bio || '', theme: me.theme || 'rose', mascot: me.mascot || '🐰', gender, notificationPreferences }) });
     me = { ...me, ...saved, gender, notification_preferences: saved.notification_preferences || notificationPreferences };
+    try { localStorage.setItem('cuteBunnyReduceMotion', String(reduceMotionEnabled)); } catch {}
+    document.documentElement.classList.toggle('reduce-app-motion', reduceMotionEnabled);
     const gate = $('#friendProfileGate');
     if (gate && !gate.classList.contains('hidden') && gate.dataset.ownProfile === 'true') showFriendProfile(me);
     renderProfileSettings();
