@@ -9603,3 +9603,5 @@ body[data-mode="dark"] #app .now-playing-panel{
 #photoLightbox .photo-lightbox-delete.hidden{
   display:block!important;visibility:hidden!important;pointer-events:none!important
 }
+
+.home-feature-card:focus-visible{outline:3px solid #d99bb9;outline-offset:3px}
