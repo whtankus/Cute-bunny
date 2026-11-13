@@ -216,8 +216,10 @@ async function api(path, options = {}) {
     ]);
     fail(error);
     fail(settingsError);
+    const heartCounts = await fetchFriendHeartCounts([session.user.id]);
     return {
       ...data,
+      heartCount: heartCounts?.get(String(session.user.id)) ?? null,
       notification_preferences: settings?.notification_preferences || { memories: true, buddy: true },
       displayName: data.display_name
     };
@@ -2966,10 +2968,31 @@ function startRealtime() {
         clearTimeout(window.cuteMemoryLikesRefresh);
         window.cuteMemoryLikesRefresh = setTimeout(() => {
           refreshMemoryLikeIndicators().catch(error => console.warn('Live like refresh failed:', error?.message || error));
-          api('/following').then(rows => {
-            friends = rows;
-            if (page === 'friends') render();
-          }).catch(error => console.warn('Friend heart totals could not refresh:', error?.message || error));
+          Promise.all([
+            fetchFriendHeartCounts([me.id]).then(counts => {
+              if (!counts) return;
+              me.heartCount = counts.get(String(me.id)) ?? 0;
+              const ownProfileOpen = $('#friendProfileGate') &&
+                !$('#friendProfileGate').classList.contains('hidden') &&
+                $('#friendProfileGate').dataset.ownProfile === 'true';
+              if (ownProfileOpen) {
+                const heartLabel = $('#friendProfileHearts');
+                if (heartLabel) heartLabel.textContent = Number(me.heartCount).toLocaleString() + ' heart';
+              }
+            }),
+            api('/following').then(rows => {
+              friends = rows;
+              if (page === 'friends') render();
+              const openProfile = $('#friendProfileGate');
+              if (openProfile && !openProfile.classList.contains('hidden') && openProfile.dataset.ownProfile !== 'true') {
+                const viewedFriend = friends.find(friend => friend.username === openProfile.dataset.username);
+                if (viewedFriend) {
+                  const heartLabel = $('#friendProfileHearts');
+                  if (heartLabel) heartLabel.textContent = viewedFriend.heartCount == null ? '— heart' : Number(viewedFriend.heartCount).toLocaleString() + ' heart';
+                }
+              }
+            })
+          ]).catch(error => console.warn('Friend heart totals could not refresh:', error?.message || error));
         }, 90);
       }).subscribe(status => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
