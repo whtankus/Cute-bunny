@@ -1443,7 +1443,10 @@ async function popLoveHeart(card, event) {
       root.querySelectorAll('.chat-bubble, .tile').forEach(target => {
         target.classList.toggle('is-loved', hasAnyLikes);
         const indicator = target.querySelector('.reaction-heart-indicator .heart-outline-glyph');
-        if (indicator) indicator.textContent = hasAnyLikes ? '♥' : '♡';
+        if (indicator) {
+          indicator.textContent = hasAnyLikes ? '♥' : '♡';
+          indicator.closest('.reaction-heart-indicator')?.classList.toggle('is-lit', hasAnyLikes);
+        }
         target.classList.remove('heart-tap');
         void target.offsetWidth;
         target.classList.add('heart-tap');
@@ -1654,7 +1657,7 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
     : Array.from(messageValue).length;
   const hasHeartReaction = messageCharacterCount >= 6;
   const heartButton = hasHeartReaction
-    ? `<span class="memory-heart-toggle reaction-heart-indicator" aria-hidden="true"><span class="heart-wallpaper-fill">♥</span><span class="heart-outline-glyph">${liked ? '♥' : '♡'}</span></span>`
+    ? `<span class="memory-heart-toggle reaction-heart-indicator${liked ? ' is-lit' : ''}" aria-hidden="true"><span class="heart-wallpaper-fill">♥</span><span class="heart-outline-glyph">${liked ? '♥' : '♡'}</span></span>`
     : '';
   const name = esc(owner.displayName || owner.display_name || owner.username || 'Friend');
   const handle = esc(owner.username || 'friend');
@@ -1698,7 +1701,7 @@ function memoryCard(m, options = {}) {
   const pet = esc(owner.mascot || '🐰');
   const isLiked = Number(m.like_count || 0) > 0;
   const liked = isLiked ? ' is-loved' : '';
-  const heartButton = `<span class="memory-heart-toggle reaction-heart-indicator" aria-hidden="true"><span class="heart-wallpaper-fill">♥</span><span class="heart-outline-glyph">${isLiked ? '♥' : '♡'}</span></span>`;
+  const heartButton = `<span class="memory-heart-toggle reaction-heart-indicator${isLiked ? ' is-lit' : ''}" aria-hidden="true"><span class="heart-wallpaper-fill">♥</span><span class="heart-outline-glyph">${isLiked ? '♥' : '♡'}</span></span>`;
   const sorted = [me?.id, ...friends.map(f => f.id)].filter(Boolean).map(String).sort();
   const tone = sorted.indexOf(String(owner.id || m.owner_id || '')) % 2 ? 'tone-lavender' : 'tone-peach';
   const pending = pendingDeleteTimers.has(String(m.id)) ? ' is-pending-delete' : '';
