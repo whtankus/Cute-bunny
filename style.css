@@ -179,7 +179,7 @@ body[data-mode="dark"] .photo-download{background:rgba(55,43,62,.95);border-colo
 @media(max-width:520px){.selection-toolbar{width:100%}.notification-card{padding:23px 17px}.notification-preferences label{font-size:.72rem}}
 .notification-preferences>#notificationsSave{width:100%;min-height:38px;margin:8px 0 2px;padding:8px}
 body[data-mode="dark"] .feed-item.tone-lavender>.tile{background:#40364f!important;color:#f3eaff;border-color:#655779}body[data-mode="dark"] .feed-item.tone-peach>.tile{background:#493638!important;color:#fff0e8;border-color:#76545a}body[data-mode="dark"] .notification-card{background:#342b3c;border-color:#59465e;color:#f1e8ef}body[data-mode="dark"] .notification-card h2{color:#f4ddea}body[data-mode="dark"] .notification-preferences{background:#403447;color:#f1e8ef}body[data-mode="dark"] .notification-row{background:#3c3043;border-color:#594a61;color:#f1e8ef}body[data-mode="dark"] .notification-row.is-unread{background:#49364c;border-color:#765878}body[data-mode="dark"] .notification-row small,body[data-mode="dark"] .notification-row time{color:#c5b2c8}body[data-mode="dark"] .memory-option{background:#443649;border-color:#634f68;color:#f4ddea}body[data-mode="dark"] .selection-toolbar{background:#342b3cf2;border-color:#59465e}body[data-mode="dark"] .selection-toolbar b{color:#f4ddea}body[data-mode="dark"] .selection-toolbar button{background:#49364c;color:#f4ddea}
-.friend-row.is-online .friend-copy:after{content:'Online now';display:block;margin-top:3px;color:#45a974;font-size:.68rem;font-weight:900}
+.friend-row.is-online .friend-copy:after{content:none!important;display:none!important}
 .feed-item{-webkit-touch-callout:none}.feed-item .note{-webkit-touch-callout:none}
 /* Notes behave like chat bubbles: short messages stay small; long ones wrap. */
 
@@ -11533,3 +11533,52 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
   background:#fff!important;color:#76536b!important;border-color:#e5d4df!important;
 }
 @media(prefers-reduced-motion:reduce){.auth-card.friend-profile-card::before,.auth-card.friend-profile-card::after{animation:none!important}}
+
+
+/* Profile presence: status text belongs on the opened profile, not the friends list. */
+#friendProfilePresence{display:inline-flex;align-items:center;gap:7px;font-weight:800;letter-spacing:.01em}
+#friendProfilePresenceDot{display:inline-block!important;flex:0 0 13px;width:13px!important;height:13px!important;min-width:13px;border-radius:50%;border:2px solid rgba(255,255,255,.95);background:#a9a9b2!important;box-shadow:0 0 0 2px rgba(130,125,140,.15)!important}
+#friendProfilePresenceDot.is-online{background:#35bd72!important;box-shadow:0 0 0 3px rgba(53,189,114,.2),0 0 11px rgba(53,189,114,.42)!important}
+#friendProfilePresenceDot.is-offline{background:#a5a5ae!important;box-shadow:0 0 0 3px rgba(130,130,145,.14)!important}
+.auth-card.friend-profile-card #friendProfilePresence{color:#398d5b}
+.auth-card.friend-profile-card #friendProfilePresence:has(+ #friendProfilePresenceDot.is-offline){color:#8d8792}
+
+/* More distinctive wallpaper scenes: layered scenery plus slow, gentle motion. */
+.auth-card.friend-profile-card[data-wallpaper="normal"]{
+  background:radial-gradient(ellipse at 12% 8%,rgba(255,225,231,.72),transparent 34%),radial-gradient(ellipse at 90% 92%,rgba(224,218,255,.65),transparent 38%),linear-gradient(145deg,#fffdf9,#fff5f2 56%,#f7f3ff)!important
+}
+.auth-card.friend-profile-card[data-wallpaper="blossom"]{
+  background:radial-gradient(ellipse at 18% 18%,rgba(255,196,215,.72),transparent 32%),radial-gradient(ellipse at 86% 78%,rgba(255,220,180,.62),transparent 34%),linear-gradient(135deg,#fff4f0 0%,#ffe3ed 48%,#f9e8f5 100%)!important
+}
+.auth-card.friend-profile-card[data-wallpaper="blossom"]::before,
+.auth-card.friend-profile-card[data-wallpaper="blossom"]::after{height:68px;font-size:31px;letter-spacing:18px;opacity:.62;color:#c96f98;text-shadow:0 3px 12px #f6b6cf;content:"🌸　✿　🌷　❀　🌸　✿　🌷"}
+.auth-card.friend-profile-card[data-wallpaper="clouds"]{
+  background:radial-gradient(ellipse at 18% 22%,rgba(255,255,255,.95),transparent 30%),radial-gradient(ellipse at 82% 72%,rgba(190,225,255,.82),transparent 36%),linear-gradient(145deg,#dff4ff 0%,#edf7ff 52%,#e9e3ff 100%)!important
+}
+.auth-card.friend-profile-card[data-wallpaper="clouds"]::before,
+.auth-card.friend-profile-card[data-wallpaper="clouds"]::after{height:72px;font-size:34px;letter-spacing:17px;opacity:.72;color:#75a9d2;text-shadow:0 4px 13px #b9dcf4;content:"☁️　🪽　☁️　୨୧　☁️　🪽"}
+.auth-card.friend-profile-card[data-wallpaper="starlight"]{
+  background:radial-gradient(ellipse at 50% 0%,rgba(183,167,255,.62),transparent 38%),radial-gradient(ellipse at 8% 85%,rgba(135,151,235,.42),transparent 38%),linear-gradient(145deg,#27264f 0%,#484477 52%,#302c5d 100%)!important
+}
+.auth-card.friend-profile-card[data-wallpaper="starlight"]::before,
+.auth-card.friend-profile-card[data-wallpaper="starlight"]::after{height:72px;font-size:30px;letter-spacing:19px;opacity:.9;color:#fff0b9;text-shadow:0 0 9px #fff,0 0 22px #b6a7ff;content:"✦　☾　⋆　✧　☆　✦　⋆　☾"}
+.auth-card.friend-profile-card[data-wallpaper="starlight"]{color:#fff!important}
+.auth-card.friend-profile-card[data-wallpaper="starlight"] h2,
+.auth-card.friend-profile-card[data-wallpaper="starlight"] p,
+.auth-card.friend-profile-card[data-wallpaper="starlight"] small,
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileHandle{color:#fff!important}
+.auth-card.friend-profile-card[data-wallpaper="hearts"]{
+  background:radial-gradient(ellipse at 14% 16%,rgba(255,173,199,.7),transparent 32%),radial-gradient(ellipse at 88% 82%,rgba(226,184,255,.66),transparent 36%),linear-gradient(145deg,#ffe8ef 0%,#ffdce9 48%,#f2e3ff 100%)!important
+}
+.auth-card.friend-profile-card[data-wallpaper="hearts"]::before,
+.auth-card.friend-profile-card[data-wallpaper="hearts"]::after{height:72px;font-size:32px;letter-spacing:18px;opacity:.72;color:#d46c9d;text-shadow:0 3px 12px #f7b4d0;content:"♡　💗　♥　୨୧　♡　💞　♥"}
+.auth-card.friend-profile-card::before{animation:profile-wallpaper-float 22s ease-in-out infinite alternate!important}
+.auth-card.friend-profile-card::after{animation:profile-wallpaper-float 28s ease-in-out infinite alternate-reverse!important}
+@keyframes profile-wallpaper-float{
+  0%{transform:translate3d(-3%,0,0) rotate(-2deg) scale(.98)}
+  50%{transform:translate3d(2%,9px,0) rotate(1.5deg) scale(1.02)}
+  100%{transform:translate3d(-1%,3px,0) rotate(-1deg) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  .auth-card.friend-profile-card::before,.auth-card.friend-profile-card::after{animation:none!important}
+}
