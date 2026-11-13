@@ -12404,3 +12404,39 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
 @media(prefers-reduced-motion:reduce) {
   .chat-typing-dots i { animation:none;opacity:.8; }
 }
+
+
+/* Notes status labels stay outside the message geometry: never overlap a bubble. */
+#content .chat-page .chat-message.is-mine>.chat-seen-receipt {
+  display:block!important;
+  position:static!important;
+  align-self:flex-end!important;
+  flex:0 0 auto!important;
+  width:max-content!important;
+  max-width:100%!important;
+  margin:5px 12px 2px 0!important;
+  padding:0 2px!important;
+  line-height:1.25!important;
+  clear:both;
+}
+#content .chat-page .chat-message.is-mine {
+  flex-wrap:wrap!important;
+}
+#content .chat-page .chat-message.is-mine>.chat-message-content {
+  flex:0 1 auto!important;
+  min-width:0!important;
+}
+#content .chat-page .chat-typing-indicator {
+  bottom:calc(100% + 12px)!important;
+  left:10px!important;
+  z-index:3!important;
+  width:max-content!important;
+  max-width:calc(100% - 20px)!important;
+  white-space:nowrap;
+  box-shadow:0 4px 14px rgba(105,72,101,.14)!important;
+}
+#content .chat-page .chat-typing-label {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
