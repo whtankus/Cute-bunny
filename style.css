@@ -1095,7 +1095,6 @@ body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{b
   -webkit-text-stroke:1.5px #70465f!important;
   font:900 2.7rem/1 Arial,sans-serif!important;
   cursor:pointer!important;
-  transform:none!important;
   transition:transform .16s ease,color .16s ease!important;
 }
 .chat-message.is-mine .chat-bubble .memory-heart-toggle {
@@ -9267,5 +9266,58 @@ body[data-mode="dark"] #app .now-playing-panel {
   .auth-gate button,
   #welcome button {
     transition: none !important;
+  }
+}
+
+
+/* Notes reactions now use the exact Photos/Music heart control and animation. */
+.chat-page .chat-bubble .memory-heart-toggle,
+.home-note-memory .chat-bubble .memory-heart-toggle {
+  position:absolute!important;
+  top:-12px!important;
+  right:8px!important;
+  left:auto!important;
+  bottom:auto!important;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#c77999!important;
+  -webkit-text-stroke:0 transparent!important;
+  font:700 1.3rem/1 Nunito,sans-serif!important;
+  text-shadow:0 1px 2px #fff9!important;
+  box-shadow:none!important;
+  transition:transform .18s,color .18s,text-shadow .18s!important;
+}
+.chat-page .chat-bubble .memory-heart-toggle:hover,
+.home-note-memory .chat-bubble .memory-heart-toggle:hover {
+  transform:scale(1.12)!important;
+}
+.chat-page .chat-bubble .memory-heart-toggle[aria-pressed="true"],
+.home-note-memory .chat-bubble .memory-heart-toggle[aria-pressed="true"] {
+  color:#e75f91!important;
+  text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
+}
+/* Keep the heart on the same right-hand corner for both sent and received notes. */
+.chat-page .chat-message.is-mine .chat-bubble .memory-heart-toggle,
+.home-note-memory .chat-message.is-mine .chat-bubble .memory-heart-toggle {
+  right:8px!important;
+  left:auto!important;
+}
+/* Use the shared Photos/Music pop instead of the Notes-only higher bounce. */
+.chat-page .chat-bubble.heart-tap .memory-heart-toggle,
+.home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {
+  animation:heart-button-pop .34s ease-out!important;
+}
+@media(prefers-reduced-motion:reduce) {
+  .chat-page .chat-bubble .memory-heart-toggle,
+  .home-note-memory .chat-bubble .memory-heart-toggle {
+    animation:none!important;
+    transition:none!important;
   }
 }
