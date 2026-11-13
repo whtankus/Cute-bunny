@@ -12284,3 +12284,44 @@ body[data-mode="dark"] .friend-search-input-wrap input{color:#f4e8f0}
   visibility:hidden!important;
   pointer-events:none!important;
 }
+
+
+/* Definitive photo viewer layout: center the single visible action and
+   give Save and Delete identical compact dimensions. */
+#photoLightbox .photo-lightbox-card > .photo-lightbox-actions{
+  position:static!important;
+  order:2!important;
+  display:flex!important;
+  flex-direction:row!important;
+  justify-content:center!important;
+  align-items:center!important;
+  align-self:stretch!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0 auto!important;
+  padding:0!important;
+  gap:0!important;
+}
+#photoLightbox #photoLightboxSave,
+#photoLightbox #photoLightboxDelete{
+  box-sizing:border-box!important;
+  display:block!important;
+  position:static!important;
+  flex:0 0 84px!important;
+  width:84px!important;
+  min-width:84px!important;
+  max-width:84px!important;
+  height:32px!important;
+  min-height:32px!important;
+  max-height:32px!important;
+  margin:0 auto!important;
+  padding:5px 6px!important;
+  line-height:20px!important;
+  text-align:center!important;
+}
+#photoLightbox #photoLightboxSave.hidden,
+#photoLightbox #photoLightboxDelete.hidden{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
