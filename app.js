@@ -106,7 +106,7 @@ const esc = s => String(s || '').replace(/[&<>"']/g, c => ({
 }[c]));
 
 async function optimizePhotoUpload(file) {
-  if (!file || file.type === 'image/gif' || !/^image\\/(jpeg|png|webp)$/i.test(file.type)) return file;
+  if (!file || file.type === 'image/gif' || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
   if (typeof createImageBitmap !== 'function') return file;
   let bitmap;
   try {
@@ -122,7 +122,7 @@ async function optimizePhotoUpload(file) {
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.82));
     if (!blob || blob.size >= file.size) return file;
-    const baseName = file.name.replace(/\\.[^.]+$/, '');
+    const baseName = file.name.replace(/\.[^.]+$/, '');
     return new File([blob], baseName + '.webp', { type: 'image/webp', lastModified: file.lastModified });
   } catch (error) {
     console.warn('Photo optimization skipped:', error?.message || error);
