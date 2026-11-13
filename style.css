@@ -9476,3 +9476,22 @@ body[data-mode="dark"] #app .now-playing-panel {
   transform:translateY(1px) scale(.98)!important;
   box-shadow:0 1px 0 #a85f80!important;
 }
+
+
+/* Photo viewer actions: restore height, shorten width, round corners, enlarge labels. */
+#photoLightbox .photo-lightbox-actions {
+  width:min(190px,calc(100% - 56px))!important;
+  gap:6px!important;
+}
+#photoLightbox .photo-lightbox-action {
+  min-height:34px!important;
+  padding:7px 7px!important;
+  font-size:.84rem!important;
+  line-height:1!important;
+  border-radius:999px!important;
+  box-shadow:0 3px 0 #a85f80!important;
+}
+#photoLightbox .photo-lightbox-action:active {
+  transform:translateY(2px) scale(.98)!important;
+  box-shadow:0 1px 0 #a85f80!important;
+}
