@@ -2103,12 +2103,12 @@ function showFriendProfile(user) {
   presenceDot?.classList.toggle('is-offline', !profileOnline);
   presenceDot?.setAttribute('aria-label', profileOnline ? 'Online' : 'Offline');
   $('#friendProfileHearts').textContent = user.heartCount === null || user.heartCount === undefined
-    ? '— hearts'
-    : Number(user.heartCount).toLocaleString() + ' hearts';
+    ? '— heart'
+    : Number(user.heartCount).toLocaleString() + ' heart';
   const friendGarden = streakFriendSnapshot(user);
   $('#friendProfileStreakCount').textContent = friendGarden.count === null
-    ? '— flowers'
-    : Number(friendGarden.count).toLocaleString() + (friendGarden.count === 1 ? ' flower' : ' flowers');
+    ? '— flower'
+    : Number(friendGarden.count).toLocaleString() + ' flower';
   $('#friendProfileStreakStatus').textContent = friendGarden.label;
   $('#friendProfileStreakStatus').hidden = !friendGarden.label;
   $('#friendProfileStyle').dataset.themePreview = user.theme || 'rose';
