@@ -2106,11 +2106,11 @@ function formatFriendProfileActivity(value) {
   if (minutes < 1) return 'Last active just now';
   if (minutes < 60) return 'Last active ' + minutes + 'm ago';
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return 'Last active ' + hours + 'h ago';
+  if (hours < 24) return 'Last active ' + hours + 'hr ago';
   const days = Math.floor(hours / 24);
-  if (days < 7) return 'Last active ' + days + 'd ago';
+  if (days < 7) return 'Last active ' + days + 'day ago';
   const weeks = Math.floor(days / 7);
-  return 'Last active ' + weeks + 'w ago';
+  return 'Last active ' + weeks + 'week ago';
 }
 
 function showFriendProfile(user) {
@@ -2946,7 +2946,7 @@ function syncPresenceUI() {
     if (presenceLabel) {
       if (node.classList.contains('friend-row')) {
         const friend = [...friends, ...friendResults, ...(me ? [me] : [])].find(user => String(user.id) === String(node.dataset.friendId));
-        presenceLabel.textContent = online ? '' : formatLastActive(friend?.last_active_at);
+        presenceLabel.textContent = '';
       } else {
         presenceLabel.textContent = '';
       }
