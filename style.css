@@ -11366,3 +11366,12 @@ body[data-mode="dark"] .friend-profile-joined>time{
 @media(max-width:340px){
   .auth-card.friend-profile-card .friend-profile-joined{transform:translateY(-3px)}
 }
+
+
+/* Add a little breathing room between the avatar icon and profile text. */
+.auth-card.friend-profile-card .friend-profile-main-row{
+  column-gap:10px!important;
+}
+@media(max-width:390px){
+  .auth-card.friend-profile-card .friend-profile-main-row{column-gap:7px!important}
+}
