@@ -9415,3 +9415,17 @@ body[data-mode="dark"] #app .now-playing-panel {
   .chat-page .chat-bubble.heart-tap .memory-heart-toggle,
   .home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {animation:none!important}
 }
+
+
+/* Restore the heart's upward bounce on every reaction path, including pointer-active clicks. */
+.memory-heart-toggle.heart-tap,
+.feed-item .tile.heart-tap .memory-heart-toggle,
+.chat-page .chat-bubble.heart-tap .memory-heart-toggle,
+.home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {
+  animation:heart-button-pop .42s cubic-bezier(.2,.8,.25,1)!important;
+  transform-origin:center;
+}
+@keyframes heart-button-pop {
+  0%,100% {transform:translateY(0) scale(1)}
+  42% {transform:translateY(-40%) rotate(10deg) scale(1.28)}
+}
