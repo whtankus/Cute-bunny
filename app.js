@@ -1406,7 +1406,9 @@ function popLoveHeart(card, e) {
     message?.classList.toggle('is-loved', likedNow);
     const control = card.closest('.feed-item')?.querySelector('[data-memory-heart]') || message?.querySelector('[data-memory-heart]');
     if (control) {
-      control.textContent = likedNow ? '♥' : '♡';
+      const outlineGlyph = control.querySelector('.heart-outline-glyph');
+      if (outlineGlyph) outlineGlyph.textContent = likedNow ? '♥' : '♡';
+      else control.textContent = likedNow ? '♥' : '♡';
       control.setAttribute('aria-pressed', String(likedNow));
       control.setAttribute('aria-label', likedNow ? (message ? 'Unlike message' : 'Unlike memory') : (message ? 'Like message' : 'Like memory'));
     }
