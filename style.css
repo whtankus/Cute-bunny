@@ -12325,3 +12325,22 @@ body[data-mode="dark"] .friend-search-input-wrap input{color:#f4e8f0}
   visibility:hidden!important;
   pointer-events:none!important;
 }
+
+
+/* Save must use the exact same compact dimensions as Delete. */
+#photoLightbox .photo-lightbox-actions > #photoLightboxSave,
+#photoLightbox .photo-lightbox-actions > #photoLightboxDelete{
+  box-sizing:border-box!important;
+  flex:0 0 76px!important;
+  width:76px!important;
+  min-width:76px!important;
+  max-width:76px!important;
+  height:30px!important;
+  min-height:30px!important;
+  max-height:30px!important;
+  padding:4px 4px!important;
+  margin:0 auto!important;
+}
+#photoLightbox .photo-lightbox-actions > #photoLightboxSave{
+  justify-self:center!important;
+}
