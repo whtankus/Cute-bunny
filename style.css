@@ -11577,3 +11577,7 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
 @media(prefers-reduced-motion:reduce){
   .auth-card.friend-profile-card::before,.auth-card.friend-profile-card::after{animation:none!important}
 }
+
+
+/* Remove the divider between the profile bio and activity/stat tags. */
+.auth-card.friend-profile-card .friend-profile-activity-line{border-top:0!important;padding-top:0!important;}
