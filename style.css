@@ -9527,3 +9527,61 @@ body[data-mode="dark"] #app .now-playing-panel {
 .memory-history-bunny{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#fff5f7;box-shadow:0 3px 12px #dca9bd33;font-size:23px;animation:memory-bunny-hop .72s ease-in-out infinite alternate}
 .memory-history-sentinel.top{order:-1}
 @keyframes memory-bunny-hop{from{transform:translateY(2px) rotate(-7deg)}to{transform:translateY(-6px) rotate(7deg)}}
+
+
+/* Main refresh: keep the familiar bunny-only restore animation, with no text. */
+.session-restore{gap:0!important}
+.session-restore span{font-size:3.1rem!important;animation:restore-hop .72s cubic-bezier(.35,.1,.25,1) infinite alternate!important}
+.session-restore p{display:none!important}
+
+/* Four distinct, lightweight homepage feature cards. */
+.home-feature-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:25px 2px 12px;color:#a17b91}
+.home-feature-heading>span{font:900 .68rem Nunito,sans-serif;letter-spacing:1.6px}
+.home-feature-heading>small{font:700 .72rem Quicksand,sans-serif}
+.home-feature-stack{display:grid;gap:13px;margin-bottom:28px}
+.home-feature-card{position:relative;display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:150px;padding:20px 21px;border:1px solid #f0dce5;border-radius:27px;overflow:hidden;isolation:isolate;cursor:pointer;box-shadow:0 8px 22px #77546d0b;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;touch-action:manipulation}
+.home-feature-card:hover{transform:translateY(-3px);box-shadow:0 13px 27px #77546d16}
+.home-feature-card:active{transform:scale(.985)}
+.feature-copy{position:relative;z-index:2;min-width:0;max-width:66%}
+.feature-kicker{display:block;margin-bottom:7px;font:900 .59rem Nunito,sans-serif;letter-spacing:1.25px;opacity:.72}
+.feature-copy h3{margin:0 0 5px;font:800 1.18rem Quicksand,sans-serif;letter-spacing:-.3px}
+.feature-copy p{margin:0;color:#8e7889;font-size:.78rem;line-height:1.45}
+.feature-link{display:inline-flex;align-items:center;gap:7px;margin-top:13px;font:800 .73rem Nunito,sans-serif}
+.feature-link b{font-size:1rem;transition:transform .2s ease}
+.home-feature-card:hover .feature-link b{transform:translate(3px,-2px)}
+.feature-number{position:absolute;right:15px;top:12px;color:#8e6b8466;font:800 .62rem Nunito,sans-serif;letter-spacing:1px}
+.streak-feature{background:linear-gradient(112deg,#fff4e8 0%,#fce8df 58%,#f6e6ef 100%);color:#845e6f}
+.streak-feature-art{position:relative;display:grid;place-items:center;flex:0 0 112px;height:112px;border-radius:50%;background:radial-gradient(circle,#fff9e8 0 38%,#f6dce4 39% 62%,#f4e5eb00 63%);font-size:2.7rem}
+.streak-feature-flower{z-index:1;filter:drop-shadow(0 5px 5px #b98a8a30);animation:feature-sway 3.4s ease-in-out infinite alternate}
+.streak-feature-leaf{position:absolute;right:8px;bottom:7px;font-size:1.45rem;transform:rotate(22deg)}
+.streak-orbit{position:absolute;color:#d99bb0;font-size:1.1rem;animation:feature-orbit 5s linear infinite}
+.orbit-one{top:3px;left:18px}.orbit-two{right:4px;top:24px;animation-direction:reverse}
+.notes-feature{flex-direction:row-reverse;background:linear-gradient(112deg,#f0eafb,#f7e9f2 62%,#fff1ed);color:#795e86}
+.notes-feature .feature-copy{max-width:66%}
+.notes-feature-art{position:relative;display:grid;place-items:center;flex:0 0 112px;height:112px;border-radius:28px;background:linear-gradient(145deg,#e7daf6,#f8dce9);transform:rotate(-5deg);box-shadow:inset 0 0 0 1px #ffffff9c}
+.note-envelope{font-size:3rem;filter:drop-shadow(0 5px 4px #9b7aa533);animation:feature-float 2.7s ease-in-out infinite}
+.note-spark{position:absolute;top:8px;right:15px;color:#bd8ab0;font-size:1.25rem}
+.note-heart{position:absolute;left:12px;bottom:10px;color:#d879a2;font-size:1.5rem;animation:feature-heart 1.8s ease-in-out infinite}
+.photos-feature{background:linear-gradient(112deg,#eaf4e9,#f2f1df 55%,#fce9e4);color:#657b68}
+.photos-feature-art{position:relative;flex:0 0 118px;height:112px}
+.photo-polaroid{position:absolute;display:grid;place-items:center;width:66px;height:82px;padding-bottom:12px;border:6px solid #fffdf8;border-bottom-width:17px;border-radius:5px;background:#f4d9e2;box-shadow:0 6px 13px #5d765022;font-size:1.8rem}
+.photo-back{right:2px;top:9px;transform:rotate(12deg);background:#e4e6f2}
+.photo-front{right:40px;top:18px;transform:rotate(-9deg)}
+.photo-sun{position:absolute;right:4px;top:-1px;color:#d8b96f;font-size:1.6rem}
+.photo-glint{position:absolute;left:4px;top:3px;color:#d39b8d;font-size:1.2rem}
+.music-feature{flex-direction:row-reverse;background:linear-gradient(112deg,#e8edf8,#e9e5f5 56%,#f5e8f1);color:#666b91}
+.music-feature-art{position:relative;display:grid;place-items:center;flex:0 0 112px;height:112px;border-radius:50%;background:radial-gradient(circle,#f9f3ff 0 48%,#d9d5ee 49% 100%);box-shadow:inset 0 0 0 1px #ffffffb5}
+.music-vinyl{display:grid;place-items:center;width:78px;height:78px;border-radius:50%;background:repeating-radial-gradient(circle,#5d5d83 0 2px,#8584aa 3px 5px);box-shadow:0 7px 13px #56557730;animation:vinyl-spin 9s linear infinite}
+.music-vinyl i{width:19px;height:19px;border:4px solid #f4c8d8;border-radius:50%;background:#fff2dc}
+.music-note{position:absolute;color:#a17aa9;font-size:1.4rem;animation:feature-float 2.2s ease-in-out infinite}
+.note-a{right:0;top:4px}.note-b{left:0;bottom:5px;animation-delay:-1s}
+@keyframes feature-sway{from{transform:rotate(-7deg) translateY(1px)}to{transform:rotate(7deg) translateY(-3px)}}
+@keyframes feature-orbit{to{transform:rotate(360deg)}}
+@keyframes feature-float{0%,100%{transform:translateY(2px)}50%{transform:translateY(-6px)}}
+@keyframes feature-heart{0%,100%{transform:scale(.9)}50%{transform:scale(1.16)}}
+@keyframes vinyl-spin{to{transform:rotate(360deg)}}
+@media(max-width:430px){.home-feature-card{min-height:139px;padding:17px 15px;border-radius:23px;gap:8px}.feature-copy{max-width:64%}.feature-copy h3{font-size:1.03rem}.feature-copy p{font-size:.72rem}.feature-link{margin-top:10px;font-size:.68rem}.streak-feature-art,.notes-feature-art,.music-feature-art{flex-basis:94px;width:94px;height:94px}.photos-feature-art{flex-basis:98px;width:98px;height:100px}.photo-polaroid{width:57px;height:72px;font-size:1.55rem}.photo-front{right:32px}.music-vinyl{width:68px;height:68px}}
+@media(prefers-reduced-motion:reduce){.home-feature-card,.streak-feature-flower,.streak-orbit,.note-envelope,.note-heart,.music-vinyl,.music-note{animation:none!important;transition:none!important}}
+/* The friend-photo Save action and own-photo Save/Delete actions share one exact button footprint. */
+#photoLightbox .photo-lightbox-actions{display:flex!important;align-items:center!important}
+#photoLightbox .photo-lightbox-action{flex:1 1 0!important;width:auto!important;min-width:0!important}
