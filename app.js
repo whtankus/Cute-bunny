@@ -3623,8 +3623,7 @@ document.addEventListener('click', event => {
     button.setAttribute('aria-pressed', String(active));
   });
   panel.querySelectorAll('[data-settings-section]').forEach(section => {
-    const visible = section.dataset.settingsSection === selected;
-    section.classList.toggle('hidden', !visible);
+    section.classList.toggle('hidden', section.dataset.settingsSection !== selected);
   });
 }, true);
 
