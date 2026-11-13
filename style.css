@@ -9329,3 +9329,24 @@ body[data-mode="dark"] #app .now-playing-panel {
   backdrop-filter:none!important;
   -webkit-backdrop-filter:none!important;
 }
+
+
+/* Unliked heart: keep the glyph clickable, but remove every visible button surface. */
+.memory-heart-toggle:not([aria-pressed="true"]),
+.memory-heart-toggle:not([aria-pressed="true"]):hover,
+.memory-heart-toggle:not([aria-pressed="true"]):active,
+.memory-heart-toggle:not([aria-pressed="true"]):focus,
+.memory-heart-toggle:not([aria-pressed="true"]):focus-visible {
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding:0!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
