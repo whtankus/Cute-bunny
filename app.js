@@ -1563,6 +1563,8 @@ function go(p, options = {}) {
   // page's document scroll position.
   window.scrollTo({ top: 0, behavior: 'auto' });
   render({ followLatest: p === 'notes' && previousPage === 'notes' });
+  if (p === 'gallery') void loadLatestMedia('photo');
+  else if (p === 'music') void loadLatestMedia('song');
   syncPresenceUI();
 
   if (p === 'notes') {
@@ -1804,7 +1806,7 @@ function renderNotesPage(options = {}) {
     return divider + chatMessageMarkup(m, !isContinuation, isContinuation);
   }).join('');
   const emptyMarkup = '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>';
-  const olderControl = olderMemoriesButton();
+  const olderControl = historySentinelMarkup('top');
   const existingThread = $('#chatThread');
 
   // Update the existing scrollport in place so realtime refreshes never rebuild
@@ -1884,8 +1886,10 @@ function render(options = {}) {
   }
 
   const visibleFeed = feed.filter(x => !pendingDeleteTimers.has(String(x.id)) && !(x.kind === 'note' && hiddenNoteIds.has(String(x.id))));
-  const pics = visibleFeed.filter(x => x.kind === 'photo');
-  const songs = visibleFeed.filter(x => x.kind === 'song');
+  const allPics = visibleFeed.filter(x => x.kind === 'photo');
+  const allSongs = visibleFeed.filter(x => x.kind === 'song');
+  const pics = page === 'gallery' ? allPics.slice(0, mediaVisibleCount.photo) : allPics;
+  const songs = page === 'music' ? allSongs.slice(0, mediaVisibleCount.song) : allSongs;
   const notes = visibleFeed.filter(x => x.kind === 'note');
 
   if (page === 'home') {
@@ -1928,23 +1932,23 @@ function render(options = {}) {
           const isContinuation = m.kind === 'note' && previous?.kind === 'note' && !!ownerId && ownerId === previousOwnerId && sameDay;
           return memoryCard(m, { isContinuation });
         }).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
-        ${olderMemoriesButton()}
+        ${historySentinelMarkup('bottom')}
       </div>
     `;
   } else if (page === 'gallery') {
     c.innerHTML = `
       <div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div>
       <label class="primary upload-label">＋ Add photo<input data-upload="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden></label>
-      <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || '<div class="empty">Your garden is waiting for its first photo ♡</div>'}</section>
-      ${olderMemoriesButton()}
+      <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || (mediaPageLoading.photo ? '<div class="empty">🐰 Gathering your latest photos…</div>' : '<div class="empty">Your garden is waiting for its first photo ♡')}</section>
+      ${historySentinelMarkup('bottom')}
     `;
   } else if (page === 'music') {
     c.innerHTML = `
       <div class="heading"><h2>Cozy music 🎵</h2><p>Your songs play right here in the garden.</p></div>
       <label class="primary upload-label">＋ Add a song<input data-upload="song" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" hidden></label>
       <h3 class="shared-songs-title">Your shared songs</h3>
-      <div class="grid media-grid music-grid">${songs.map(memoryCard).join('') || '<div class="empty">Add a song file and listen together right here ♡</div>'}</div>
-      ${olderMemoriesButton()}
+      <div class="grid media-grid music-grid">${songs.map(memoryCard).join('') || (mediaPageLoading.song ? '<div class="empty">🐰 Gathering your latest songs…</div>' : '<div class="empty">Add a song file and listen together right here ♡')}</div>
+      ${historySentinelMarkup('bottom')}
     `;
   } else if (page === 'friends') {
     c.innerHTML = `
@@ -1962,6 +1966,7 @@ function render(options = {}) {
   }
   hydrateMedia();
   observeNotificationMemoryViews();
+  requestAnimationFrame(observeFeedHistory);
 }
 
 function showFriendProfile(user) {
@@ -3217,13 +3222,6 @@ document.addEventListener('dblclick', e => {
 });
 
 document.addEventListener('click', async e => {
-  const olderFeedButton = e.target.closest('[data-load-older-feed]');
-  if (olderFeedButton) {
-    e.preventDefault();
-    void loadMoreFeed();
-    return;
-  }
-
   // Kindness card
   if (e.target.closest('#dailyCard')) {
     rollKindness();
