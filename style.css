@@ -11455,3 +11455,16 @@ body[data-mode="dark"] #content .friend-row .friend-stat-plates>.friend-row-hear
 .auth-card.profile-card .profile-name-row>label input{
   margin-top:4px!important;
 }
+
+
+/* Further compact the main profile editor field spacing. */
+.auth-card.profile-card>label{
+  margin:3px 0!important;
+}
+.auth-card.profile-card .profile-name-row>label{
+  margin:3px 0!important;
+}
+.auth-card.profile-card>label input,
+.auth-card.profile-card .profile-name-row>label input{
+  margin-top:2px!important;
+}
