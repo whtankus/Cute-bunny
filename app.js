@@ -2858,6 +2858,19 @@ function isPresenceUserOnline(userId, state) {
 function syncPresenceUI() {
   let state = {};
   try { state = presenceChannel?.presenceState?.() || {}; } catch {}
+  const profileGate = $('#friendProfileGate');
+  if (profileGate && !profileGate.classList.contains('hidden') && profileGate.dataset.username) {
+    const profileUser = [...friends, ...friendResults].find(user => user.username === profileGate.dataset.username);
+    if (profileUser) {
+      const online = isPresenceUserOnline(profileUser.id, state);
+      const status = $('#friendProfilePresence');
+      const dot = $('#friendProfilePresenceDot');
+      if (status) status.textContent = online ? 'Online now' : formatLastActive(profileUser.last_active_at);
+      dot?.classList.toggle('is-online', online);
+      dot?.classList.toggle('is-offline', !online);
+      dot?.setAttribute('aria-label', online ? 'Online' : 'Offline');
+    }
+  }
   document.querySelectorAll('.sg-friend-card[data-friend-id], .friend-row[data-friend-id]').forEach(node => {
     const online = isPresenceUserOnline(node.dataset.friendId, state);
     node.classList.toggle('is-online', online);
