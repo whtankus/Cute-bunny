@@ -4051,7 +4051,7 @@ document.addEventListener('click', async e => {
     }
     const id = photo.closest('.feed-item')?.dataset.memory;
     if (!id) return;
-    // Wait for a possible second click; a double-click is reserved for liking.
+    // Give the browser's full double-click window time to register a like before opening the lightbox.
     clearTimeout(photoPressState.clickTimer);
     photoPressState.pendingPhotoId = String(id);
     photoPressState.clickTimer = setTimeout(() => {
@@ -4059,7 +4059,7 @@ document.addEventListener('click', async e => {
       photoPressState.clickTimer = null;
       photoPressState.pendingPhotoId = null;
       if (pendingId) void openPhotoLightbox(pendingId);
-    }, 240);
+    }, 520);
     return;
   }
   if (e.target.closest('#photoLightboxSave')) {
