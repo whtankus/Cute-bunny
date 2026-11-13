@@ -1531,6 +1531,28 @@ async function popLoveHeart(card, event) {
     });
   };
   paint();
+  // Restore the original double-tap love animation without making the heart indicator clickable.
+  if (nextLiked) {
+    document.querySelectorAll('[data-memory="' + CSS.escape(memoryId) + '"]').forEach(root => {
+      root.querySelectorAll('.chat-bubble, .tile').forEach(target => {
+        target.classList.remove('heart-tap');
+        void target.offsetWidth;
+        target.classList.add('heart-tap');
+        clearTimeout(target.heartTimer);
+        target.heartTimer = setTimeout(() => target.classList.remove('heart-tap'), 1050);
+      });
+    });
+    const effectPoint = event?.changedTouches?.[0] || event?.touches?.[0] || event;
+    if (Number.isFinite(effectPoint?.clientX) && Number.isFinite(effectPoint?.clientY)) {
+      const floatHeart = document.createElement('span');
+      floatHeart.className = 'love-tap';
+      floatHeart.textContent = '♥';
+      floatHeart.style.left = effectPoint.clientX + 'px';
+      floatHeart.style.top = effectPoint.clientY + 'px';
+      document.body.append(floatHeart);
+      setTimeout(() => floatHeart.remove(), 950);
+    }
+  }
   memoryLikeInFlight.add(memoryId);
   try {
     const result = nextLiked
