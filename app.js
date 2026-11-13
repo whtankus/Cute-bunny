@@ -15,7 +15,8 @@ const sb = window.supabase && cfg.supabaseUrl && !cfg.supabaseUrl.startsWith('PA
 
 let token = localStorage.getItem('cuteBunnyToken') || '', me = null, page = 'home', feed = [], friends = [], friendResults = [], friendQuery = '';
 let appPageStack = ['home'], appBackGuardInstalled = false, appBackExitArmedUntil = 0, appBackExitPending = false;
-let mediaObjectUrls = [], mediaUrlCache = new Map(), mediaHydrationInFlight = new Map(), pendingMediaUrls = new Map(), reactedMemories = new Set();
+let mediaObjectUrls = [], mediaUrlCache = new Map(), mediaHydrationInFlight = new Map(), pendingMediaUrls = new Map();
+const memoryLikeInFlight = new Set();
 let feedHasMore = false, feedLoadingMore = false;
 const FEED_PAGE_SIZE = 40;
 let mediaObserver = null;
@@ -283,10 +284,32 @@ async function api(path, options = {}) {
       .order('created_at', { ascending: false }).order('id', { ascending: false })
       .range(offset, offset + FEED_PAGE_SIZE - 1);
     fail(error);
+
+    const memoryIds = (rows || []).map(memory => memory.id).filter(id => id != null);
+    let likeRows = [];
+    if (memoryIds.length) {
+      const { data, error: likesError } = await sb.from('memory_likes')
+        .select('memory_id,user_id')
+        .in('memory_id', memoryIds);
+      fail(likesError);
+      likeRows = data || [];
+    }
+    const likesByMemory = new Map();
+    for (const like of likeRows) {
+      const key = String(like.memory_id);
+      const state = likesByMemory.get(key) || { count: 0, likedByMe: false };
+      state.count += 1;
+      if (String(like.user_id) === String(session.user.id)) state.likedByMe = true;
+      likesByMemory.set(key, state);
+    }
+
     return (rows || []).map(m => {
+      const likeState = likesByMemory.get(String(m.id)) || { count: 0, likedByMe: false };
       const author = Array.isArray(m.author) ? m.author[0] : (m.author || {});
       return {
         ...m,
+        like_count: likeState.count,
+        liked_by_me: likeState.likedByMe,
         createdAt: m.created_at,
         fileName: m.file_name,
         contentType: m.content_type,
@@ -458,11 +481,6 @@ function setUser(u) {
     hiddenNoteIds = new Set(Array.isArray(savedHiddenNotes) ? savedHiddenNotes.map(String) : []);
   } catch {
     hiddenNoteIds = new Set();
-  }
-  try {
-    reactedMemories = new Set(JSON.parse(localStorage.getItem('cuteBunnyHearts:' + u.username) || '[]'));
-  } catch {
-    reactedMemories = new Set();
   }
   setMode(localStorage.getItem('cuteBunnyMode:' + u.username) || 'light');
   setTheme(u.theme);
@@ -1393,46 +1411,52 @@ function playBoing() {
   } catch {}
 }
 
-function popLoveHeart(card, e) {
-  if (!card) return;
-  const id = card.closest('[data-memory]')?.dataset.memory;
-  if (id) {
-    const key = String(id);
-    reactedMemories.has(key) ? reactedMemories.delete(key) : reactedMemories.add(key);
-    try {
-      localStorage.setItem('cuteBunnyHearts:' + me?.username, JSON.stringify([...reactedMemories].slice(-2000)));
-    } catch {}
-    const likedNow = reactedMemories.has(key);
-    const message = card.closest('.chat-message');
-    card.classList.toggle('is-loved', likedNow);
-    message?.classList.toggle('is-loved', likedNow);
-    const control = card.closest('.feed-item')?.querySelector('[data-memory-heart]') || message?.querySelector('[data-memory-heart]');
-    if (control) {
-      const outlineGlyph = control.querySelector('.heart-outline-glyph');
-      if (outlineGlyph) outlineGlyph.textContent = likedNow ? '♥' : '♡';
-      else control.textContent = likedNow ? '♥' : '♡';
-      control.setAttribute('aria-pressed', String(likedNow));
-      control.setAttribute('aria-label', likedNow ? (message ? 'Unlike message' : 'Unlike memory') : (message ? 'Like message' : 'Like memory'));
+async function popLoveHeart(card, event) {
+  if (!card || !me || !sb) return false;
+  const memoryRoot = card.closest('[data-memory]');
+  const memoryId = String(memoryRoot?.dataset.memory || '');
+  if (!memoryId || memoryLikeInFlight.has(memoryId)) return false;
+
+  const item = feed.find(memory => String(memory.id) === memoryId);
+  if (!item || item.isPending) return false;
+  const ownerId = String(item.owner_id || item.author?.id || memoryRoot?.dataset.owner || '');
+  if (!ownerId || ownerId === String(me.id)) return false;
+
+  const nextLiked = !item.liked_by_me;
+  memoryLikeInFlight.add(memoryId);
+  try {
+    const result = nextLiked
+      ? await sb.from('memory_likes').insert({ memory_id: item.id, user_id: me.id })
+      : await sb.from('memory_likes').delete().eq('memory_id', item.id).eq('user_id', me.id);
+    if (result.error) {
+      // A second device may have changed the reaction first. Refresh authoritative state.
+      if (result.error.code !== '23505') throw result.error;
     }
-      if (control) {
-        clearTimeout(control.heartTimer);
-        control.classList.remove('heart-tap');
-        void control.offsetWidth;
-        control.classList.add('heart-tap');
-        control.heartTimer = setTimeout(() => control.classList.remove('heart-tap'), 520);
 
-      }
+    item.liked_by_me = nextLiked;
+    item.like_count = Math.max(0, Number(item.like_count || 0) + (nextLiked ? 1 : -1));
 
+    document.querySelectorAll('[data-memory="' + CSS.escape(memoryId) + '"]').forEach(root => {
+      root.classList.toggle('is-loved', nextLiked);
+      root.querySelectorAll('.chat-bubble, .tile').forEach(target => {
+        target.classList.toggle('is-loved', nextLiked);
+        target.classList.remove('heart-tap');
+        void target.offsetWidth;
+        target.classList.add('heart-tap');
+        clearTimeout(target.heartTimer);
+        target.heartTimer = setTimeout(() => target.classList.remove('heart-tap'), 850);
+      });
+      root.setAttribute('data-liked-by-me', String(nextLiked));
+      root.setAttribute('aria-label', nextLiked ? 'Liked' : 'Not liked');
+    });
+    return true;
+  } catch (error) {
+    console.warn('Could not save memory reaction:', error?.message || error);
+    toast('Your like could not be saved. Please try again.');
+    return false;
+  } finally {
+    memoryLikeInFlight.delete(memoryId);
   }
-  card.classList.remove('heart-tap');
-  void card.offsetWidth;
-  card.classList.add('heart-tap');
-  clearTimeout(card.heartTimer);
-  card.heartTimer = setTimeout(() => card.classList.remove('heart-tap'), 1050);
-  const rect = card.getBoundingClientRect();
-  const x = e?.clientX || (rect.left + rect.width / 2);
-  const y = e?.clientY || (rect.top + rect.height / 2);
-
 }
 
 function go(p, options = {}) {
@@ -1619,15 +1643,13 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
   const ownerId = owner.id || m.owner_id || '';
   const mine = String(ownerId) === String(me?.id || '');
   const id = String(m.id);
-  const liked = reactedMemories.has(id);
+  const liked = !!m.liked_by_me;
   const messageValue = String(m.text || '');
   const messageCharacterCount = noteGraphemeSegmenter
     ? [...noteGraphemeSegmenter.segment(messageValue)].length
     : Array.from(messageValue).length;
   const hasHeartReaction = messageCharacterCount >= 6;
-  const heartButton = hasHeartReaction
-    ? `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}"><span class="heart-wallpaper-fill" aria-hidden="true">♥</span><span class="heart-outline-glyph" aria-hidden="true">${liked ? '♥' : '♡'}</span></button>`
-    : '';
+  const heartButton = '';
   const name = esc(owner.displayName || owner.display_name || owner.username || 'Friend');
   const handle = esc(owner.username || 'friend');
   const pet = esc(owner.mascot || '🐰');
@@ -1668,9 +1690,9 @@ function memoryCard(m, options = {}) {
   const name = esc(owner.displayName || owner.display_name || 'Friend');
   const handle = esc(owner.username || '');
   const pet = esc(owner.mascot || '🐰');
-  const liked = reactedMemories.has(String(m.id)) ? ' is-loved' : '';
-  const isLiked = reactedMemories.has(String(m.id));
-  const heartButton = `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}"><span class="heart-wallpaper-fill" aria-hidden="true">♥</span><span class="heart-outline-glyph" aria-hidden="true">${isLiked ? '♥' : '♡'}</span></button>`;
+  const isLiked = !!m.liked_by_me;
+  const liked = isLiked ? ' is-loved' : '';
+  const heartButton = '';
   const sorted = [me?.id, ...friends.map(f => f.id)].filter(Boolean).map(String).sort();
   const tone = sorted.indexOf(String(owner.id || m.owner_id || '')) % 2 ? 'tone-lavender' : 'tone-peach';
   const pending = pendingDeleteTimers.has(String(m.id)) ? ' is-pending-delete' : '';
@@ -2549,6 +2571,25 @@ function startRealtime() {
             console.warn('Live Notes update could not refresh the feed:', error?.message || error);
           }
         }, 120);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
+        clearTimeout(window.cuteMemoryLikesRefresh);
+        window.cuteMemoryLikesRefresh = setTimeout(async () => {
+          try {
+            const fresh = await api('/feed');
+            const freshById = new Map(fresh.map(memory => [String(memory.id), memory]));
+            feed = feed.map(memory => {
+              const latest = freshById.get(String(memory.id));
+              return latest
+                ? { ...memory, like_count: latest.like_count, liked_by_me: latest.liked_by_me }
+                : memory;
+            });
+            if (page === 'notes') renderNotesPage();
+            else if (page === 'home' || page === 'gallery' || page === 'music') render();
+          } catch (error) {
+            console.warn('Live like refresh failed:', error?.message || error);
+          }
+        }, 140);
       }).subscribe(status => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.warn('Live Notes channel status:', status);
@@ -3109,7 +3150,7 @@ document.addEventListener('dblclick', e => {
     Boolean(tile.querySelector('.feed-photo, audio, .audio-player, [data-audio], .music-art, .album-art'));
   if (!isPhotoOrMusic) return;
   e.preventDefault();
-  popLoveHeart(tile, e);
+  void popLoveHeart(tile, e);
 });
 
 document.addEventListener('click', async e => {
@@ -3123,16 +3164,6 @@ document.addEventListener('click', async e => {
   // Kindness card
   if (e.target.closest('#dailyCard')) {
     rollKindness();
-    return;
-  }
-
-  // Heart toggle
-  const heart = e.target.closest('[data-memory-heart]');
-  if (heart) {
-    e.preventDefault();
-    e.stopPropagation();
-    const card = heart.closest('.chat-message')?.querySelector('.chat-bubble') || heart.closest('.feed-item .tile');
-    if (card) popLoveHeart(card, e);
     return;
   }
 
@@ -3166,7 +3197,7 @@ document.addEventListener('click', async e => {
       bubbleTapState.timer = null;
       bubbleTapState.bubble = null;
       if (target?.isConnected && !messagePressState.longPressed && !messagePressState.suppressClick) {
-        popLoveHeart(target, e);
+        void popLoveHeart(target, e);
       }
     }, 280);
     return;
