@@ -735,8 +735,8 @@ function friendRow(user) {
   const snapshot = streakFriendSnapshot(user);
   const flowerLabel = snapshot.count === null ? '🌸 — flowers' : '🌸 ' + Number(snapshot.count).toLocaleString() + ' flowers';
   const heartLabel = user.heartCount === null || user.heartCount === undefined
-    ? '💕 — hearts'
-    : '💕 ' + Number(user.heartCount).toLocaleString() + ' hearts';
+    ? '💖 — hearts'
+    : '💖 ' + Number(user.heartCount).toLocaleString() + ' hearts';
   let liveState = {};
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
   const online = isPresenceUserOnline(user.id, liveState);
