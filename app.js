@@ -1378,9 +1378,9 @@ async function popLoveHeart(card, e) {
       target.heartTimer = setTimeout(() => target.classList.remove('heart-tap'), 1050);
     });
     root.classList.toggle('is-loved', nextLiked);
-    const control = root.querySelector('[data-memory-heart]');
+    const control = root.querySelector('[data-memory-like]');
     if (control) {
-      control.textContent = nextLiked ? '♥' : '♡';
+      control.textContent = nextLiked ? 'Liked' : 'Like';
       control.setAttribute('aria-pressed', String(nextLiked));
       control.setAttribute('aria-label', nextLiked ? 'Unlike memory' : 'Like memory');
     }
@@ -1577,7 +1577,7 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
     : Array.from(messageValue).length;
   const hasHeartReaction = messageCharacterCount >= 6;
   const heartButton = hasHeartReaction && !mine
-    ? `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>`
+    ? `<button type="button" class="memory-heart-toggle" data-memory-like="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? 'Liked' : 'Like'}</button>`
     : '';
   const name = esc(owner.displayName || owner.display_name || owner.username || 'Friend');
   const handle = esc(owner.username || 'friend');
@@ -1623,7 +1623,7 @@ function memoryCard(m, options = {}) {
   const liked = isLiked ? ' is-loved' : '';
   const mine = String(owner.id || m.owner_id || '') === String(me?.id || '');
   const heartButton = !mine
-    ? `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}">${isLiked ? '♥' : '♡'}</button>`
+    ? `<button type="button" class="memory-heart-toggle" data-memory-like="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}">${isLiked ? 'Liked' : 'Like'}</button>`
     : '';
   const sorted = [me?.id, ...friends.map(f => f.id)].filter(Boolean).map(String).sort();
   const tone = sorted.indexOf(String(owner.id || m.owner_id || '')) % 2 ? 'tone-lavender' : 'tone-peach';
@@ -2961,7 +2961,7 @@ document.addEventListener('click', async e => {
   }
 
   // Heart toggle
-  const heart = e.target.closest('[data-memory-heart]');
+  const heart = e.target.closest('[data-memory-like]');
   if (heart) {
     e.preventDefault();
     e.stopPropagation();
