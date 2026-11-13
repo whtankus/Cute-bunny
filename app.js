@@ -15,7 +15,11 @@ const sb = window.supabase && cfg.supabaseUrl && !cfg.supabaseUrl.startsWith('PA
 
 let token = localStorage.getItem('cuteBunnyToken') || '', me = null, page = 'home', feed = [], friends = [], friendResults = [], friendQuery = '';
 let appPageStack = ['home'], appBackGuardInstalled = false, appBackExitArmedUntil = 0, appBackExitPending = false;
-let mediaObjectUrls = [], mediaUrlCache = new Map(), mediaHydrationInFlight = new Map(), pendingMediaUrls = new Map(), reactedMemories = new Set();
+let mediaObjectUrls = [], mediaUrlCache = new Map(), mediaHydrationInFlight = new Map(), pendingMediaUrls = new Map();
+const memoryLikeInFlight = new Set();
+let feedHasMore = false, feedLoadingMore = false;
+const FEED_PAGE_SIZE = 40;
+let mediaObserver = null;
 let pendingDeleteTimers = new Map(), authMode = 'register';
 let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0;
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
@@ -39,6 +43,8 @@ const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
   ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
   : null;
 const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false, suppressTimer:null };
+const photoPressState = { timer:null, image:null, pointerId:null, startX:0, startY:0, suppressClick:false, suppressTimer:null, clickTimer:null, pendingPhotoId:null };
+const bubbleTapState = { timer:null, bubble:null };
 
 
 const kindLines = [
@@ -102,6 +108,33 @@ const esc = s => String(s || '').replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
+async function optimizePhotoUpload(file) {
+  if (!file || file.type === 'image/gif' || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
+  if (typeof createImageBitmap !== 'function') return file;
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1 && file.size <= 1200 * 1024) return file;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) return file;
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.82));
+    if (!blob || blob.size >= file.size) return file;
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+    return new File([blob], baseName + '.webp', { type: 'image/webp', lastModified: file.lastModified });
+  } catch (error) {
+    console.warn('Photo optimization skipped:', error?.message || error);
+    return file;
+  } finally {
+    bitmap?.close?.();
+  }
+}
+
 async function api(path, options = {}) {
   if (!sb) throw Error('Add your Supabase URL and publishable key in supabase-config.js first.');
   const method = options.method || 'GET';
@@ -113,7 +146,7 @@ async function api(path, options = {}) {
       email: body.email,
       password: body.password,
       options: {
-        emailRedirectTo: 'https://whtankus.github.io/Cute-bunny/',
+        emailRedirectTo: new URL('./', window.location.href).toString(),
         data: { username: body.username.toLowerCase(), display_name: body.displayName }
       }
     });
@@ -243,39 +276,36 @@ async function api(path, options = {}) {
     return { sent: !!data };
   }
 
-  if (path === '/feed') {
-    const rows = [], pageSize = 500;
-    let start = 0;
-    while (true) {
-      const { data, error } = await sb.from('memories')
-        .select('*,author:profiles!memories_owner_id_fkey(id,username,display_name,mascot,theme)')
-        .order('created_at', { ascending: false }).order('id', { ascending: false })
-        .range(start, start + pageSize - 1);
-      fail(error);
-      rows.push(...data);
-      if (data.length < pageSize) break;
-      start += pageSize;
-    }
-    const memoryIds = rows.map(m => m.id).filter(id => id != null);
+  if (path.startsWith('/feed')) {
+    const offsetMatch = path.match(/[?&]offset=(\d+)/);
+    const offset = Math.max(0, Number(offsetMatch?.[1]) || 0);
+    const { data: rows, error } = await sb.from('memories')
+      .select('*,author:profiles!memories_owner_id_fkey(id,username,display_name,mascot,theme)')
+      .order('created_at', { ascending: false }).order('id', { ascending: false })
+      .range(offset, offset + FEED_PAGE_SIZE - 1);
+    fail(error);
+
+    const memoryIds = (rows || []).map(memory => memory.id).filter(id => id != null);
     let likeRows = [];
     if (memoryIds.length) {
-      const { data, error } = await sb.from('memory_likes')
+      const { data, error: likesError } = await sb.from('memory_likes')
         .select('memory_id,user_id')
         .in('memory_id', memoryIds);
-      fail(error);
+      fail(likesError);
       likeRows = data || [];
     }
     const likesByMemory = new Map();
     for (const like of likeRows) {
       const key = String(like.memory_id);
-      const entry = likesByMemory.get(key) || { count: 0, likedByMe: false };
-      entry.count++;
-      if (String(like.user_id) === String(session.user.id)) entry.likedByMe = true;
-      likesByMemory.set(key, entry);
+      const state = likesByMemory.get(key) || { count: 0, likedByMe: false };
+      state.count += 1;
+      if (String(like.user_id) === String(session.user.id)) state.likedByMe = true;
+      likesByMemory.set(key, state);
     }
-    return rows.map(m => {
-      const author = Array.isArray(m.author) ? m.author[0] : (m.author || {});
+
+    return (rows || []).map(m => {
       const likeState = likesByMemory.get(String(m.id)) || { count: 0, likedByMe: false };
+      const author = Array.isArray(m.author) ? m.author[0] : (m.author || {});
       return {
         ...m,
         like_count: likeState.count,
@@ -359,12 +389,15 @@ async function api(path, options = {}) {
   }
 
   if (path === '/media' && method === 'POST') {
-    const form = body, file = form.get('file'), kind = form.get('kind'), caption = form.get('caption') || file.name;
+    const form = body;
+    let file = form.get('file');
+    const kind = form.get('kind'), caption = form.get('caption') || file.name;
     if (file.size > 8 * 1024 * 1024) throw Error('Choose a file under 8 MB.');
     const photoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], songTypes = ['audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/webm'];
     if (!(kind === 'photo' ? photoTypes.includes(file.type) : kind === 'song' ? songTypes.includes(file.type) : false)) {
       throw Error(kind === 'photo' ? 'Choose a JPG, PNG, WebP, or GIF image.' : 'Choose an MP3, MP4, OGG, WAV, or WebM audio file.');
     }
+    if (kind === 'photo') file = await optimizePhotoUpload(file);
     const key = session.user.id + '/' + crypto.randomUUID() + '/' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const { error: ue } = await sb.storage.from('memories').upload(key, file, { contentType: file.type, upsert: false });
     fail(ue);
@@ -449,11 +482,7 @@ function setUser(u) {
   } catch {
     hiddenNoteIds = new Set();
   }
-  try {
-    reactedMemories = new Set(JSON.parse(localStorage.getItem('cuteBunnyHearts:' + u.username) || '[]'));
-  } catch {
-    reactedMemories = new Set();
-  }
+  try { localStorage.removeItem('cuteBunnyHearts:' + u.username); } catch {}
   setMode(localStorage.getItem('cuteBunnyMode:' + u.username) || 'light');
   setTheme(u.theme);
   $('#topMascot').textContent = u.mascot || '🐰';
@@ -472,6 +501,7 @@ async function refresh() {
   const results = await Promise.all([api('/me'), api('/feed'), api('/following')]);
   me = results[0];
   feed = results[1];
+  feedHasMore = feed.length === FEED_PAGE_SIZE;
   friends = results[2];
   render();
   syncStreakWidget();
@@ -482,23 +512,57 @@ async function refresh() {
   }
 }
 
+async function loadMoreFeed() {
+  if (feedLoadingMore || !feedHasMore || !me) return;
+  feedLoadingMore = true;
+  const previousLength = feed.length;
+  render();
+  try {
+    const older = await api('/feed?offset=' + previousLength);
+    const known = new Set(feed.map(item => String(item.id)));
+    const additions = older.filter(item => !known.has(String(item.id)));
+    feed.push(...additions);
+    feedHasMore = older.length === FEED_PAGE_SIZE;
+  } catch (error) {
+    toast(error?.message || 'Older memories could not be loaded.');
+  } finally {
+    feedLoadingMore = false;
+    render();
+  }
+}
+
+function olderMemoriesButton() {
+  if (!feedHasMore && !feedLoadingMore) return '';
+  return `<div class="older-memories-wrap"><button type="button" class="primary older-memories-button" data-load-older-feed ${feedLoadingMore ? 'disabled' : ''}>${feedLoadingMore ? 'Loading older memories…' : 'Load older memories ↓'}</button></div>`;
+}
+
 const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
+
+// Let the browser's active locale and device clock preference choose 12-hour or
+// 24-hour time. Reuse one formatter instead of constructing it for every row.
+const deviceClockFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: '2-digit'
+});
+const deviceDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric'
+});
 
 function formatMessageTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone, now = new Date(), yesterday = new Date(now);
+  const now = new Date(), yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  const day = date.toDateString() === now.toDateString() ? 'Today' : date.toDateString() === yesterday.toDateString() ? 'Yesterday' : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone }).format(date);
-  const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone }).format(date);
-  return day + ' · ' + time;
+  const day = date.toDateString() === now.toDateString() ? 'Today' :
+    date.toDateString() === yesterday.toDateString() ? 'Yesterday' :
+    deviceDateFormatter.format(date);
+  return day + ' · ' + deviceClockFormatter.format(date);
 }
 
 function formatNoteClock(value) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone }).format(date);
+  return Number.isNaN(date.getTime()) ? '' : deviceClockFormatter.format(date);
 }
 
 function noteDayLabel(value) {
@@ -1348,44 +1412,60 @@ function playBoing() {
   } catch {}
 }
 
-async function popLoveHeart(card, e) {
-  if (!card || !me || !sb) return;
-  const item = feed.find(memory => String(memory.id) === String(card.closest('[data-memory]')?.dataset.memory));
-  if (!item) return;
-  const ownerId = String(item.owner_id || item.author?.id || '');
-  if (!ownerId || ownerId === String(me.id) || item.isPending) return;
+async function popLoveHeart(card, event) {
+  if (!card || !me || !sb) return false;
+  const memoryRoot = card.closest('[data-memory]');
+  const memoryId = String(memoryRoot?.dataset.memory || '');
+  if (!memoryId || memoryLikeInFlight.has(memoryId)) return false;
 
-  const memoryId = item.id;
+  const item = feed.find(memory => String(memory.id) === memoryId);
+  if (!item || item.isPending) return false;
+  const ownerId = String(item.owner_id || item.author?.id || memoryRoot?.dataset.owner || '');
+  if (!ownerId || ownerId === String(me.id)) return false;
+
   const nextLiked = !item.liked_by_me;
-  const { error } = nextLiked
-    ? await sb.from('memory_likes').insert({ memory_id: memoryId, user_id: me.id })
-    : await sb.from('memory_likes').delete().eq('memory_id', memoryId).eq('user_id', me.id);
-  if (error) {
-    console.warn('Memory reaction could not be saved:', error.message || error);
-    toast(error.message || 'Your like could not be saved. Please try again.');
-    return;
-  }
-
-  item.liked_by_me = nextLiked;
-  item.like_count = Math.max(0, Number(item.like_count || 0) + (nextLiked ? 1 : -1));
-  document.querySelectorAll('[data-memory="' + CSS.escape(String(memoryId)) + '"]').forEach(root => {
-    root.querySelectorAll('.chat-bubble, .tile').forEach(target => {
-      target.classList.toggle('is-loved', nextLiked);
-      target.classList.remove('heart-tap');
-      void target.offsetWidth;
-      target.classList.add('heart-tap');
-      clearTimeout(target.heartTimer);
-      target.heartTimer = setTimeout(() => target.classList.remove('heart-tap'), 1050);
-    });
-    root.classList.toggle('is-loved', nextLiked);
-    const control = root.querySelector('[data-memory-like]');
-    if (control) {
-      control.textContent = nextLiked ? 'Liked' : 'Like';
-      control.setAttribute('aria-pressed', String(nextLiked));
-      control.setAttribute('aria-label', nextLiked ? 'Unlike memory' : 'Like memory');
+  memoryLikeInFlight.add(memoryId);
+  try {
+    const result = nextLiked
+      ? await sb.from('memory_likes').insert({ memory_id: item.id, user_id: me.id })
+      : await sb.from('memory_likes').delete().eq('memory_id', item.id).eq('user_id', me.id);
+    if (result.error) {
+      // A second device may have changed the reaction first. Refresh authoritative state.
+      if (result.error.code !== '23505') throw result.error;
     }
-  });
+
+    item.liked_by_me = nextLiked;
+    item.like_count = Math.max(0, Number(item.like_count || 0) + (nextLiked ? 1 : -1));
+    const hasAnyLikes = item.like_count > 0;
+
+    document.querySelectorAll('[data-memory="' + CSS.escape(memoryId) + '"]').forEach(root => {
+      root.classList.toggle('is-loved', hasAnyLikes);
+      root.querySelectorAll('.chat-bubble, .tile').forEach(target => {
+        target.classList.toggle('is-loved', hasAnyLikes);
+        const indicator = target.querySelector('.reaction-heart-indicator .heart-outline-glyph');
+        if (indicator) {
+          indicator.textContent = hasAnyLikes ? '♥' : '♡';
+          indicator.closest('.reaction-heart-indicator')?.classList.toggle('is-lit', hasAnyLikes);
+        }
+        target.classList.remove('heart-tap');
+        void target.offsetWidth;
+        target.classList.add('heart-tap');
+        clearTimeout(target.heartTimer);
+        target.heartTimer = setTimeout(() => target.classList.remove('heart-tap'), 850);
+      });
+      root.setAttribute('data-liked-by-me', String(nextLiked));
+      root.setAttribute('data-like-count', String(item.like_count));
+    });
+    return true;
+  } catch (error) {
+    console.warn('Could not save memory reaction:', error?.message || error);
+    toast('Your like could not be saved. Please try again.');
+    return false;
+  } finally {
+    memoryLikeInFlight.delete(memoryId);
+  }
 }
+
 function go(p, options = {}) {
   const previousPage = page;
   const validPages = ['home', 'gallery', 'music', 'notes', 'friends', 'streak'];
@@ -1570,14 +1650,14 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
   const ownerId = owner.id || m.owner_id || '';
   const mine = String(ownerId) === String(me?.id || '');
   const id = String(m.id);
-  const liked = !!m.liked_by_me;
+  const liked = Number(m.like_count || 0) > 0;
   const messageValue = String(m.text || '');
   const messageCharacterCount = noteGraphemeSegmenter
     ? [...noteGraphemeSegmenter.segment(messageValue)].length
     : Array.from(messageValue).length;
   const hasHeartReaction = messageCharacterCount >= 6;
-  const heartButton = hasHeartReaction && !mine
-    ? `<button type="button" class="memory-heart-toggle" data-memory-like="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? 'Liked' : 'Like'}</button>`
+  const heartButton = hasHeartReaction
+    ? `<span class="memory-heart-toggle reaction-heart-indicator${liked ? ' is-lit' : ''}" aria-hidden="true"><span class="heart-wallpaper-fill">♥</span><span class="heart-outline-glyph">${liked ? '♥' : '♡'}</span></span>`
     : '';
   const name = esc(owner.displayName || owner.display_name || owner.username || 'Friend');
   const handle = esc(owner.username || 'friend');
@@ -1619,16 +1699,14 @@ function memoryCard(m, options = {}) {
   const name = esc(owner.displayName || owner.display_name || 'Friend');
   const handle = esc(owner.username || '');
   const pet = esc(owner.mascot || '🐰');
-  const isLiked = !!m.liked_by_me;
+  const isLiked = Number(m.like_count || 0) > 0;
   const liked = isLiked ? ' is-loved' : '';
-  const mine = String(owner.id || m.owner_id || '') === String(me?.id || '');
-  const heartButton = !mine
-    ? `<button type="button" class="memory-heart-toggle" data-memory-like="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}">${isLiked ? 'Liked' : 'Like'}</button>`
-    : '';
+  const heartButton = `<span class="memory-heart-toggle reaction-heart-indicator${isLiked ? ' is-lit' : ''}" aria-hidden="true"><span class="heart-wallpaper-fill">♥</span><span class="heart-outline-glyph">${isLiked ? '♥' : '♡'}</span></span>`;
   const sorted = [me?.id, ...friends.map(f => f.id)].filter(Boolean).map(String).sort();
   const tone = sorted.indexOf(String(owner.id || m.owner_id || '')) % 2 ? 'tone-lavender' : 'tone-peach';
   const pending = pendingDeleteTimers.has(String(m.id)) ? ' is-pending-delete' : '';
   const uploading = m.isPending ? ' is-uploading' : '';
+  const mine = String(owner.id || m.owner_id || '') === String(me?.id || '');
 
   let body = '';
   if (m.kind === 'photo') {
@@ -1672,6 +1750,7 @@ function renderNotesPage(options = {}) {
     return divider + chatMessageMarkup(m, !isContinuation, isContinuation);
   }).join('');
   const emptyMarkup = '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>';
+  const olderControl = olderMemoriesButton();
   const existingThread = $('#chatThread');
 
   // Update the existing scrollport in place so realtime refreshes never rebuild
@@ -1689,7 +1768,7 @@ function renderNotesPage(options = {}) {
       : 0;
     const previousScrollTop = existingThread.scrollTop;
 
-    existingThread.innerHTML = messagesHtml || emptyMarkup;
+    existingThread.innerHTML = olderControl + (messagesHtml || emptyMarkup);
 
     requestAnimationFrame(() => {
       if (!existingThread.isConnected) return;
@@ -1721,7 +1800,7 @@ function renderNotesPage(options = {}) {
   content.innerHTML = `
     <section class="chat-page" aria-label="Notes conversation">
       <div class="chat-thread" id="chatThread" aria-live="polite">
-        ${messagesHtml || emptyMarkup}
+        ${olderControl}${messagesHtml || emptyMarkup}
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
@@ -1795,6 +1874,7 @@ function render(options = {}) {
           const isContinuation = m.kind === 'note' && previous?.kind === 'note' && !!ownerId && ownerId === previousOwnerId && sameDay;
           return memoryCard(m, { isContinuation });
         }).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
+        ${olderMemoriesButton()}
       </div>
     `;
   } else if (page === 'gallery') {
@@ -1802,6 +1882,7 @@ function render(options = {}) {
       <div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div>
       <label class="primary upload-label">＋ Add photo<input data-upload="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden></label>
       <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || '<div class="empty">Your garden is waiting for its first photo ♡</div>'}</section>
+      ${olderMemoriesButton()}
     `;
   } else if (page === 'music') {
     c.innerHTML = `
@@ -1809,6 +1890,7 @@ function render(options = {}) {
       <label class="primary upload-label">＋ Add a song<input data-upload="song" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" hidden></label>
       <h3 class="shared-songs-title">Your shared songs</h3>
       <div class="grid media-grid music-grid">${songs.map(memoryCard).join('') || '<div class="empty">Add a song file and listen together right here ♡</div>'}</div>
+      ${olderMemoriesButton()}
     `;
   } else if (page === 'friends') {
     c.innerHTML = `
@@ -2472,9 +2554,12 @@ function startRealtime() {
       }).subscribe();
 
     notificationChannel = sb.channel('cute-bunny-notifications-' + me.id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'recipient_id=eq.' + me.id }, () => {
-        void loadNotifications();
-        if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'recipient_id=eq.' + me.id }, payload => {
+        void loadNotifications().then(() => {
+          const added = notificationRows.find(row => String(row.id) === String(payload?.new?.id)) || notificationRows[0];
+          if (added) void showPhoneNotification(added);
+          if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+        });
         toast('A little hello from your friend ♡');
       }).subscribe();
 
@@ -2497,19 +2582,23 @@ function startRealtime() {
         }, 120);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
-        clearTimeout(window.cuteLikeRefresh);
-        window.cuteLikeRefresh = setTimeout(async () => {
+        clearTimeout(window.cuteMemoryLikesRefresh);
+        window.cuteMemoryLikesRefresh = setTimeout(async () => {
           try {
-            const freshFeed = await api('/feed');
-            const pending = feed.filter(item => item.isPending);
-            const pendingIds = new Set(pending.map(item => String(item.id)));
-            feed = [...freshFeed.filter(item => !pendingIds.has(String(item.id))), ...pending];
+            const fresh = await api('/feed');
+            const freshById = new Map(fresh.map(memory => [String(memory.id), memory]));
+            feed = feed.map(memory => {
+              const latest = freshById.get(String(memory.id));
+              return latest
+                ? { ...memory, like_count: latest.like_count, liked_by_me: latest.liked_by_me }
+                : memory;
+            });
             if (page === 'notes') renderNotesPage();
             else if (page === 'home' || page === 'gallery' || page === 'music') render();
           } catch (error) {
-            console.warn('Live memory likes could not refresh:', error?.message || error);
+            console.warn('Live like refresh failed:', error?.message || error);
           }
-        }, 100);
+        }, 140);
       }).subscribe(status => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.warn('Live Notes channel status:', status);
@@ -2578,6 +2667,32 @@ async function loadNotifications() {
   }
 }
 
+async function showPhoneNotification(notification) {
+  if (!notification || !document.hidden || Notification.permission !== 'granted') return;
+  let enabled = false;
+  try { enabled = localStorage.getItem('cuteBunnyPhoneNotifications') === 'on'; } catch {}
+  if (!enabled || !('serviceWorker' in navigator)) return;
+  const prefs = me?.notification_preferences || {};
+  if (notification.kind && prefs.memories === false) return;
+  if (!notification.kind && prefs.buddy === false) return;
+  const actor = Array.isArray(notification.actor) ? notification.actor[0] : (notification.actor || {});
+  const title = actor.display_name || actor.username || 'A little hello from Cute Bunny';
+  const body = String(notification.message || 'Your friend shared something with you.').slice(0, 160);
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    await registration.showNotification(title, {
+      body,
+      icon: './bunny-app-icon-192.png',
+      badge: './bunny-app-icon-192.png',
+      tag: 'cute-bunny-' + String(notification.id),
+      renotify: false,
+      data: { url: './', notificationId: String(notification.id) }
+    });
+  } catch (error) {
+    console.warn('Phone notification could not be shown:', error?.message || error);
+  }
+}
+
 function updateNotificationBadge() {
   const badge = $('#notificationBadge'), count = notificationRows.filter(n => !n.read_at).length;
   badge.textContent = count > 9 ? '9+' : String(count);
@@ -2590,6 +2705,7 @@ function renderNotifications() {
   const prefs = me?.notification_preferences || {};
   $('#notifyMemories').checked = prefs.memories !== false;
   $('#notifyBuddy').checked = prefs.buddy !== false;
+  const previousScrollTop = list.scrollTop;
   list.innerHTML = notificationRows.map(n => {
     const actor = Array.isArray(n.actor) ? n.actor[0] : (n.actor || {});
     const unread = !n.read_at;
@@ -2607,6 +2723,7 @@ function renderNotifications() {
   }).join('') || (notificationLoading && !notificationLoaded
     ? '<div class="notification-loading" aria-label="Loading notifications"><span class="notification-loader" aria-hidden="true"></span></div>'
     : '<div class="notification-empty"><span aria-hidden="true">♡</span><b>You’re all caught up</b><small>New shared activity will appear here.</small></div>');
+  list.scrollTop = previousScrollTop;
   observeNotificationListRows();
 }
 
@@ -2721,13 +2838,12 @@ async function resolveMediaSource(memory) {
   if (pending) return pending;
 
   const request = (async () => {
-    // Download once into a retained Blob URL. Re-rendering Gallery or moving
-    // between pages then reuses the same in-memory image instead of requesting
-    // a fresh signed URL and downloading the same photo again.
-    const { data, error } = await sb.storage.from('memories').download(memory.storagePath);
-    if (error || !data) throw error || new Error('The photo could not be loaded.');
-    const url = URL.createObjectURL(data);
-    const entry = { url, expiresAt: Number.MAX_SAFE_INTEGER };
+    // Resolve a short-lived URL instead of downloading the full image into a
+    // Blob. The browser can then lazy-load and cache image bytes natively.
+    const { data, error } = await sb.storage.from('memories').createSignedUrl(memory.storagePath, 3600);
+    if (error || !data?.signedUrl) throw error || new Error('The photo could not be loaded.');
+    const url = data.signedUrl;
+    const entry = { url, expiresAt: Date.now() + 3500000 };
     cacheMediaSource(key, entry);
     return url;
   })();
@@ -2758,6 +2874,8 @@ async function hydrateOneMedia(node) {
 }
 
 function hydrateMedia() {
+  mediaObserver?.disconnect();
+  mediaObserver = null;
   if (!sb) return;
   const nodes = [...document.querySelectorAll('[data-media]')];
   nodes.forEach(node => {
@@ -2765,13 +2883,13 @@ function hydrateMedia() {
     node.decoding = 'async';
   });
   if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+    mediaObserver = new IntersectionObserver(entries => entries.forEach(entry => {
       if (entry.isIntersecting) {
-        observer.unobserve(entry.target);
+        mediaObserver.unobserve(entry.target);
         void hydrateOneMedia(entry.target);
       }
-    }), { rootMargin: '480px 0px' });
-    nodes.forEach(node => observer.observe(node));
+    }), { rootMargin: '180px 0px' });
+    nodes.forEach(node => mediaObserver.observe(node));
   } else nodes.forEach(node => void hydrateOneMedia(node));
 }
 
@@ -2785,7 +2903,7 @@ function formatProfileDate(value) {
 /* Event listeners */
 
 // Tapping effect on pointerdown
-document.addEventListener('pointerdown', e => {
+document.addEventListener('pointerup', e => {
   const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
   if (!interactive || e.target.closest('input, textarea, select')) return;
   interactive.classList.remove('cute-tap');
@@ -2857,6 +2975,62 @@ document.addEventListener('click', e => {
     if (!e.target.closest('#nowPlayingIsland, #nowPlayingPanel')) toggleMusicIsland(false);
   }
 });
+
+// Photo long-press mirrors a normal photo tap: open the same full-screen lightbox.
+document.addEventListener('pointerdown', e => {
+  const photo = e.target.closest('.feed-photo');
+  if (!photo || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  clearTimeout(photoPressState.timer);
+  clearTimeout(photoPressState.suppressTimer);
+  photoPressState.suppressClick = false;
+  photoPressState.image = photo;
+  photoPressState.pointerId = e.pointerId;
+  photoPressState.startX = e.clientX;
+  photoPressState.startY = e.clientY;
+  photoPressState.timer = setTimeout(() => {
+    if (!photoPressState.image?.isConnected || photoPressState.pointerId !== e.pointerId) return;
+    photoPressState.suppressClick = true;
+    const id = photoPressState.image.closest('.feed-item')?.dataset.memory;
+    if (id) void openPhotoLightbox(id);
+    clearTimeout(photoPressState.suppressTimer);
+    photoPressState.suppressTimer = setTimeout(() => {
+      photoPressState.suppressClick = false;
+    }, 900);
+  }, 420);
+});
+
+function cancelPhotoPress(e) {
+  if (photoPressState.pointerId !== e.pointerId) return;
+  clearTimeout(photoPressState.timer);
+  photoPressState.timer = null;
+  photoPressState.image = null;
+  photoPressState.pointerId = null;
+}
+
+document.addEventListener('pointermove', e => {
+  if (photoPressState.pointerId !== e.pointerId || !photoPressState.image) return;
+  if (Math.hypot(e.clientX - photoPressState.startX, e.clientY - photoPressState.startY) > 12) {
+    cancelPhotoPress(e);
+  }
+});
+document.addEventListener('pointerup', cancelPhotoPress);
+document.addEventListener('pointercancel', cancelPhotoPress);
+// Suppress the browser's native image callout/download menu on long press.
+document.addEventListener('contextmenu', e => {
+  if (e.target.closest('.feed-photo, .photo-frame')) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, true);
+document.addEventListener('dragstart', e => {
+  if (e.target.closest('.feed-photo, .photo-frame')) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, true);
+document.addEventListener('selectstart', e => {
+  if (e.target.closest('.feed-photo, .photo-frame')) e.preventDefault();
+}, true);
 
 // Notes message gestures: button press feedback, tap to like, hold for Copy/Delete.
 document.addEventListener('pointerdown', e => {
@@ -2953,25 +3127,90 @@ document.addEventListener('keydown', event => {
 }, true);
 
 // Main delegation
+// Switch sections on pointer release immediately; the delegated click handler
+// below skips its legacy refresh path for a tab already switched here.
+document.addEventListener('pointerdown', e => {
+  const nav = e.target.closest('#nav button[data-page]');
+  if (!nav || nav.dataset.page === page || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  nav.dataset.fastNavHandled = 'true';
+  go(nav.dataset.page);
+}, { capture: true, passive: false });
+
+// Double-click a photo or music memory card to like/unlike it.
+document.addEventListener('dblclick', e => {
+  const tile = e.target.closest('.feed-item .tile');
+  if (!tile) return;
+  // A photo's first tap is delayed briefly so a second tap can be recognized
+  // as a double-click instead of opening the lightbox before dblclick fires.
+  const photo = e.target.closest('.feed-photo');
+  if (photo) {
+    clearTimeout(photoPressState.clickTimer);
+    photoPressState.clickTimer = null;
+    photoPressState.pendingPhotoId = null;
+  }
+  // The album artwork is itself a play button; allow double-clicking it to
+  // like the song while keeping other action buttons excluded.
+  const action = e.target.closest('button, a, input, textarea, select');
+  if (action && !action.matches('.play-song, .album-art')) return;
+  if (action?.matches('.memory-heart-toggle, [data-memory-delete], [data-memory-download]')) return;
+  const item = tile.closest('.feed-item');
+  const kind = item?.dataset.kind || item?.dataset.memoryKind || '';
+  const isPhotoOrMusic = /photo|music|song|audio/i.test(kind) ||
+    Boolean(tile.querySelector('.feed-photo, audio, .audio-player, [data-audio], .music-art, .album-art'));
+  if (!isPhotoOrMusic) return;
+  e.preventDefault();
+  void popLoveHeart(tile, e);
+});
+
 document.addEventListener('click', async e => {
+  const olderFeedButton = e.target.closest('[data-load-older-feed]');
+  if (olderFeedButton) {
+    e.preventDefault();
+    void loadMoreFeed();
+    return;
+  }
+
   // Kindness card
   if (e.target.closest('#dailyCard')) {
     rollKindness();
     return;
   }
 
-  // Heart toggle
-  const heart = e.target.closest('[data-memory-like]');
-  if (heart) {
-    e.preventDefault();
-    e.stopPropagation();
-    const card = heart.closest('.chat-message')?.querySelector('.chat-bubble') || heart.closest('.feed-item .tile');
-    if (card) await popLoveHeart(card, e);
+  // A single tap on a Notes bubble reacts; a double tap cancels the pending reaction.
+  // Delay the single-tap action briefly so the second click can be recognized.
+  const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
+  const selectedText = window.getSelection?.()?.toString().trim();
+  if (bubble && !e.target.closest('button')) {
+    if (messagePressState.suppressClick) {
+      messagePressState.suppressClick = false;
+      clearTimeout(messagePressState.suppressTimer);
+      messagePressState.suppressTimer = null;
+      messagePressState.longPressed = false;
+      clearTimeout(bubbleTapState.timer);
+      bubbleTapState.timer = null;
+      bubbleTapState.bubble = null;
+      return;
+    }
+    // A second click on the same bubble cancels the first tap instead of liking it.
+    if (bubbleTapState.timer && bubbleTapState.bubble === bubble) {
+      clearTimeout(bubbleTapState.timer);
+      bubbleTapState.timer = null;
+      bubbleTapState.bubble = null;
+      return;
+    }
+    if (selectedText || bubble.classList.contains('no-heart-reaction')) return;
+    clearTimeout(bubbleTapState.timer);
+    bubbleTapState.bubble = bubble;
+    bubbleTapState.timer = setTimeout(() => {
+      const target = bubbleTapState.bubble;
+      bubbleTapState.timer = null;
+      bubbleTapState.bubble = null;
+      if (target?.isConnected && !messagePressState.longPressed && !messagePressState.suppressClick) {
+        void popLoveHeart(target, e);
+      }
+    }, 450);
     return;
   }
-
-  // Message bubbles themselves are not reaction controls; only the explicit
-  // heart button on another user's memory can create or remove a like.
 
   // Chat action: Copy
   const copyBtn = e.target.closest('[data-chat-copy]');
@@ -3030,6 +3269,10 @@ document.addEventListener('click', async e => {
   const nav = e.target.closest('#nav button[data-page]');
   if (nav) {
     e.preventDefault();
+    if (nav.dataset.fastNavHandled === 'true') {
+      delete nav.dataset.fastNavHandled;
+      return;
+    }
     if (nav.dataset.page !== page) {
       go(nav.dataset.page);
       return;
@@ -3323,8 +3566,22 @@ document.addEventListener('click', async e => {
   // Photo open & lightbox controls
   const photo = e.target.closest('.feed-photo');
   if (photo) {
+    if (photoPressState.suppressClick) {
+      photoPressState.suppressClick = false;
+      clearTimeout(photoPressState.suppressTimer);
+      return;
+    }
     const id = photo.closest('.feed-item')?.dataset.memory;
-    if (id) void openPhotoLightbox(id);
+    if (!id) return;
+    // Wait for a possible second click; a double-click is reserved for liking.
+    clearTimeout(photoPressState.clickTimer);
+    photoPressState.pendingPhotoId = String(id);
+    photoPressState.clickTimer = setTimeout(() => {
+      const pendingId = photoPressState.pendingPhotoId;
+      photoPressState.clickTimer = null;
+      photoPressState.pendingPhotoId = null;
+      if (pendingId) void openPhotoLightbox(pendingId);
+    }, 240);
     return;
   }
   if (e.target.closest('#photoLightboxSave')) {
@@ -3371,16 +3628,6 @@ document.addEventListener('click', async e => {
   }
 
   // Notifications
-  if (e.target.closest('#notificationsReadAll')) {
-    try {
-      await api('/notifications/read-all', { method: 'PUT' });
-      await loadNotifications();
-      renderNotifications();
-    } catch (err) {
-      toast(err.message);
-    }
-    return;
-  }
   const notifItem = e.target.closest('[data-notification]');
   if (notifItem) {
     const notification = notificationRows.find(row => String(row.id) === String(notifItem.dataset.notification));
@@ -3399,6 +3646,26 @@ document.addEventListener('click', async e => {
       }
     } catch (err) {
       toast(err?.message || 'This notification could not be opened.');
+    }
+    return;
+  }
+  if (e.target.closest('#enablePhoneNotifications')) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      toast('Phone notifications are not supported by this browser.');
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        toast('Allow notifications in your browser settings to receive phone alerts.');
+        return;
+      }
+      localStorage.setItem('cuteBunnyPhoneNotifications', 'on');
+      const button = $('#enablePhoneNotifications');
+      if (button) button.textContent = 'Phone notifications enabled ✓';
+      toast('Phone notifications enabled ♡');
+    } catch (error) {
+      toast(error?.message || 'Phone notifications could not be enabled.');
     }
     return;
   }
