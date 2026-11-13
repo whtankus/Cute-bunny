@@ -2455,18 +2455,33 @@ async function openPhotoLightbox(id) {
   if (!item || item.kind !== 'photo') return;
   const gate = $('#photoLightbox'), image = $('#photoLightboxImage'), deleteButton = $('#photoLightboxDelete'), saveButton = $('#photoLightboxSave');
   const thumb = [...document.querySelectorAll('.feed-item[data-memory]')].find(node => node.dataset.memory === String(id))?.querySelector('.feed-photo');
-  const canDelete = String(item.author?.id || item.owner_id || '') === String(me?.id || '') && !item.isPending;
+  const isOwnPhoto = String(item.author?.id || item.owner_id || '') === String(me?.id || '');
+  const canDelete = isOwnPhoto && !item.isPending;
   gate.dataset.memoryId = String(id);
+  // Own photos never expose Save. While an upload is pending, show no action.
   deleteButton.classList.toggle('hidden', !canDelete);
   deleteButton.setAttribute('aria-hidden', String(!canDelete));
-  saveButton.classList.toggle('hidden', canDelete);
-  saveButton.setAttribute('aria-hidden', String(canDelete));
-  image.removeAttribute('src');
+  saveButton.classList.toggle('hidden', isOwnPhoto);
+  saveButton.setAttribute('aria-hidden', String(isOwnPhoto));
+  // Reuse the already-rendered thumbnail immediately whenever possible.
+  const visibleSource = thumb?.currentSrc || thumb?.getAttribute('src');
+  if (visibleSource) image.src = visibleSource;
+  else image.removeAttribute('src');
   gate.classList.remove('hidden');
-  if (thumb?.getAttribute('src')) image.src = thumb.getAttribute('src');
-  else if (thumb) {
-    await hydrateOneMedia(thumb);
-    if (gate.dataset.memoryId === String(id) && thumb.getAttribute('src')) image.src = thumb.getAttribute('src');
+
+  // Resolve directly through the shared cache rather than waiting for the
+  // thumbnail observer. Cached photos appear immediately; uncached photos
+  // start loading as soon as the viewer opens.
+  if (!visibleSource && item.storagePath) {
+    try {
+      const source = await resolveMediaSource(item);
+      if (gate.dataset.memoryId === String(id)) {
+        image.src = source;
+        if (thumb?.isConnected && !thumb.getAttribute('src')) thumb.src = source;
+      }
+    } catch (error) {
+      console.warn('Photo preview could not be loaded:', error?.message || error);
+    }
   }
 }
 
