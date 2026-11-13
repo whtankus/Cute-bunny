@@ -191,35 +191,22 @@
   <div id="friendProfileGate" class="auth-gate hidden">
     <section class="auth-card friend-profile-card" role="dialog" aria-modal="true" aria-labelledby="friendProfileName">
       <div class="friend-profile-heading">
-        <div class="friend-profile-identity">
-          <div class="friend-profile-avatar-wrap">
-            <div id="friendProfileBuddy" class="friend-profile-avatar">🐰</div>
-            <span id="friendProfilePresenceDot" class="friend-profile-presence-dot is-offline" aria-label="Offline"></span>
-          </div>
-          <div class="friend-profile-identity-copy">
-            <p class="eyebrow">A BUNNY FRIEND</p>
-            <h2 id="friendProfileName"></h2>
-            <p id="friendProfileHandle" class="friend-profile-handle"></p>
-          </div>
+        <p class="eyebrow">A BUNNY FRIEND</p>
+        <div class="friend-profile-avatar-wrap">
+          <div id="friendProfileBuddy" class="friend-profile-avatar">🐰</div>
+          <span id="friendProfilePresenceDot" class="friend-profile-presence-dot is-offline" aria-label="Offline"></span>
         </div>
+        <h2 id="friendProfileName"></h2>
+        <p id="friendProfileHandle" class="friend-profile-handle"></p>
         <button type="button" class="primary friend-profile-follow" id="friendProfileFollow">Follow ♡</button>
       </div>
       <p id="friendProfileBio" class="friend-profile-bio"></p>
-      <div id="friendProfileGarden" class="friend-profile-stat-plates">
-        <small class="friend-profile-queen">👑 Queen</small>
-        <small class="friend-profile-flower">🌸 <b id="friendProfileStreakCount">— flower</b></small>
-        <small class="friend-profile-heart">💖 <b id="friendProfileHearts">— heart</b></small>
-      </div>
-      <small id="friendProfileStreakStatus" class="friend-profile-streak-status">Streak activity</small>
-      <div class="friend-profile-meta">
-        <span id="friendProfileCreated" class="profile-created"></span>
-        <span id="friendProfilePresence" class="friend-profile-presence">Offline</span>
-      </div>
-      <div id="friendProfileStyle" class="profile-theme-preview">
-        <span>✿</span>
-        <div>
-          <b id="friendProfileThemeName">Rose garden</b>
-          <small>their profile colors</small>
+      <div class="friend-profile-activity-line">
+        <span id="friendProfilePresence" class="friend-profile-presence">Last active recently</span>
+        <div id="friendProfileGarden" class="friend-profile-stat-plates">
+          <small class="friend-profile-queen">👑 <b>Queen</b></small>
+          <small class="friend-profile-flower">🌸 <b id="friendProfileStreakCount">— flower</b></small>
+          <small class="friend-profile-heart">💖 <b id="friendProfileHearts">— heart</b></small>
         </div>
       </div>
     </section>
