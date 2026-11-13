@@ -11930,3 +11930,51 @@ body[data-mode="dark"] .notification-tools{background:#443447;color:#d8b9cc}
   .notification-copy time{grid-column:1;grid-row:auto;margin-top:2px}
   .notification-preferences{grid-template-columns:1fr}
 }
+
+
+/* Final requested refinements: preserve each uploaded photo's own proportions. */
+.photo-garden-grid .feed-item>.tile{
+  aspect-ratio:auto!important;
+  height:auto!important;
+  min-height:0!important;
+}
+.photo-garden-grid .photo-frame{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+.photo-garden-grid .photo-frame .feed-photo{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  max-height:460px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+}
+.photo-garden-grid .feed-item>.tile .photo-frame{
+  align-items:flex-start!important;
+}
+#photoLightbox .photo-lightbox-actions{
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  width:100%!important;
+}
+#photoLightbox .photo-lightbox-actions #photoLightboxSave{
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.auth-card.profile-card #profileSave,
+.auth-card.profile-card .profile-settings-save{
+  display:block!important;
+  width:max-content!important;
+  min-width:156px;
+  max-width:210px;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  justify-self:center!important;
+}
+.auth-card.profile-card .profile-settings-panel{
+  width:100%;
+}
