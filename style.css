@@ -12440,3 +12440,23 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
   text-overflow:ellipsis;
   white-space:nowrap;
 }
+
+
+/* Align Seen directly under the right-aligned outgoing message. */
+#content .chat-page .chat-message.is-mine {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-end!important;
+  flex-wrap:nowrap!important;
+  width:100%!important;
+}
+#content .chat-page .chat-message.is-mine>.chat-message-content {
+  align-self:flex-end!important;
+  margin-left:auto!important;
+  margin-right:0!important;
+}
+#content .chat-page .chat-message.is-mine>.chat-seen-receipt {
+  align-self:flex-end!important;
+  margin:4px 12px 0 0!important;
+  text-align:right!important;
+}
