@@ -2511,9 +2511,12 @@ function startRealtime() {
       }).subscribe();
 
     notificationChannel = sb.channel('cute-bunny-notifications-' + me.id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'recipient_id=eq.' + me.id }, () => {
-        void loadNotifications();
-        if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'recipient_id=eq.' + me.id }, payload => {
+        void loadNotifications().then(() => {
+          const added = notificationRows.find(row => String(row.id) === String(payload?.new?.id)) || notificationRows[0];
+          if (added) void showPhoneNotification(added);
+          if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+        });
         toast('A little hello from your friend ♡');
       }).subscribe();
 
@@ -2602,6 +2605,32 @@ async function loadNotifications() {
   }
 }
 
+async function showPhoneNotification(notification) {
+  if (!notification || !document.hidden || Notification.permission !== 'granted') return;
+  let enabled = false;
+  try { enabled = localStorage.getItem('cuteBunnyPhoneNotifications') === 'on'; } catch {}
+  if (!enabled || !('serviceWorker' in navigator)) return;
+  const prefs = me?.notification_preferences || {};
+  if (notification.kind && prefs.memories === false) return;
+  if (!notification.kind && prefs.buddy === false) return;
+  const actor = Array.isArray(notification.actor) ? notification.actor[0] : (notification.actor || {});
+  const title = actor.display_name || actor.username || 'A little hello from Cute Bunny';
+  const body = String(notification.message || 'Your friend shared something with you.').slice(0, 160);
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    await registration.showNotification(title, {
+      body,
+      icon: './bunny-app-icon-192.png',
+      badge: './bunny-app-icon-192.png',
+      tag: 'cute-bunny-' + String(notification.id),
+      renotify: false,
+      data: { url: './', notificationId: String(notification.id) }
+    });
+  } catch (error) {
+    console.warn('Phone notification could not be shown:', error?.message || error);
+  }
+}
+
 function updateNotificationBadge() {
   const badge = $('#notificationBadge'), count = notificationRows.filter(n => !n.read_at).length;
   badge.textContent = count > 9 ? '9+' : String(count);
@@ -2614,6 +2643,7 @@ function renderNotifications() {
   const prefs = me?.notification_preferences || {};
   $('#notifyMemories').checked = prefs.memories !== false;
   $('#notifyBuddy').checked = prefs.buddy !== false;
+  const previousScrollTop = list.scrollTop;
   list.innerHTML = notificationRows.map(n => {
     const actor = Array.isArray(n.actor) ? n.actor[0] : (n.actor || {});
     const unread = !n.read_at;
@@ -2631,6 +2661,7 @@ function renderNotifications() {
   }).join('') || (notificationLoading && !notificationLoaded
     ? '<div class="notification-loading" aria-label="Loading notifications"><span class="notification-loader" aria-hidden="true"></span></div>'
     : '<div class="notification-empty"><span aria-hidden="true">♡</span><b>You’re all caught up</b><small>New shared activity will appear here.</small></div>');
+  list.scrollTop = previousScrollTop;
   observeNotificationListRows();
 }
 
@@ -3429,16 +3460,6 @@ document.addEventListener('click', async e => {
   }
 
   // Notifications
-  if (e.target.closest('#notificationsReadAll')) {
-    try {
-      await api('/notifications/read-all', { method: 'PUT' });
-      await loadNotifications();
-      renderNotifications();
-    } catch (err) {
-      toast(err.message);
-    }
-    return;
-  }
   const notifItem = e.target.closest('[data-notification]');
   if (notifItem) {
     const notification = notificationRows.find(row => String(row.id) === String(notifItem.dataset.notification));
@@ -3457,6 +3478,26 @@ document.addEventListener('click', async e => {
       }
     } catch (err) {
       toast(err?.message || 'This notification could not be opened.');
+    }
+    return;
+  }
+  if (e.target.closest('#enablePhoneNotifications')) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      toast('Phone notifications are not supported by this browser.');
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        toast('Allow notifications in your browser settings to receive phone alerts.');
+        return;
+      }
+      localStorage.setItem('cuteBunnyPhoneNotifications', 'on');
+      const button = $('#enablePhoneNotifications');
+      if (button) button.textContent = 'Phone notifications enabled ✓';
+      toast('Phone notifications enabled ♡');
+    } catch (error) {
+      toast(error?.message || 'Phone notifications could not be enabled.');
     }
     return;
   }
