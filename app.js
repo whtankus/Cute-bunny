@@ -43,6 +43,7 @@ const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
   : null;
 const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false, suppressTimer:null };
 const photoPressState = { timer:null, image:null, pointerId:null, startX:0, startY:0, suppressClick:false, suppressTimer:null, clickTimer:null, pendingPhotoId:null };
+const bubbleTapState = { timer:null, bubble:null };
 
 
 const kindLines = [
@@ -3135,19 +3136,39 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // A short tap on a Notes bubble likes/unlikes it. Long-press is handled above.
+  // A single tap on a Notes bubble reacts; a double tap cancels the pending reaction.
+  // Delay the single-tap action briefly so the second click can be recognized.
   const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
   const selectedText = window.getSelection?.()?.toString().trim();
-  if (bubble && !e.target.closest('button') && !selectedText) {
+  if (bubble && !e.target.closest('button')) {
     if (messagePressState.suppressClick) {
       messagePressState.suppressClick = false;
       clearTimeout(messagePressState.suppressTimer);
       messagePressState.suppressTimer = null;
       messagePressState.longPressed = false;
+      clearTimeout(bubbleTapState.timer);
+      bubbleTapState.timer = null;
+      bubbleTapState.bubble = null;
       return;
     }
-    if (bubble.classList.contains('no-heart-reaction')) return;
-    popLoveHeart(bubble, e);
+    // A second click on the same bubble cancels the first tap instead of liking it.
+    if (bubbleTapState.timer && bubbleTapState.bubble === bubble) {
+      clearTimeout(bubbleTapState.timer);
+      bubbleTapState.timer = null;
+      bubbleTapState.bubble = null;
+      return;
+    }
+    if (selectedText || bubble.classList.contains('no-heart-reaction')) return;
+    clearTimeout(bubbleTapState.timer);
+    bubbleTapState.bubble = bubble;
+    bubbleTapState.timer = setTimeout(() => {
+      const target = bubbleTapState.bubble;
+      bubbleTapState.timer = null;
+      bubbleTapState.bubble = null;
+      if (target?.isConnected && !messagePressState.longPressed && !messagePressState.suppressClick) {
+        popLoveHeart(target, e);
+      }
+    }, 280);
     return;
   }
 
