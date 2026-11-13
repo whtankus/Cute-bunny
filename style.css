@@ -10697,3 +10697,65 @@ body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-hear
   .friend-profile-stat{padding:7px 6px;gap:5px}
   .friend-profile-stat b{font-size:.65rem}
 }
+
+/* Three matching friend-list badges: Queen, flowers, and hearts. */
+#content .friend-row .friend-stat-plates{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:5px;
+  margin:1px 0 0;
+}
+#content .friend-row .friend-stat-plates small,
+#content .friend-row .friend-stat-plates .friend-row-queen,
+#content .friend-row .friend-stat-plates .friend-row-streak,
+#content .friend-row .friend-stat-plates .friend-row-hearts{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:21px;
+  padding:3px 7px;
+  border:1px solid #efdfeb;
+  border-radius:8px;
+  background:#fff8fb;
+  color:#986f89;
+  font-size:.58rem;
+  font-family:inherit;
+  font-weight:800;
+  line-height:1.15;
+  white-space:nowrap;
+}
+#content .friend-row .friend-stat-plates .friend-row-queen{
+  color:#986f89;
+  background:#fff8fb;
+  border-color:#efdfeb;
+}
+#content .friend-row .friend-stat-plates .friend-row-streak{
+  color:#986f89;
+  background:#fff8fb;
+  border-color:#efdfeb;
+}
+#content .friend-row .friend-stat-plates .friend-row-hearts{
+  color:#986f89;
+  background:#fff8fb;
+  border-color:#efdfeb;
+}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates small,
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-queen,
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-streak,
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-hearts{
+  color:#ead9e7;
+  background:#453649;
+  border-color:#634d65;
+}
+@media(max-width:420px){
+  #content .friend-row .friend-stat-plates{gap:4px}
+  #content .friend-row .friend-stat-plates small,
+  #content .friend-row .friend-stat-plates .friend-row-queen,
+  #content .friend-row .friend-stat-plates .friend-row-streak,
+  #content .friend-row .friend-stat-plates .friend-row-hearts{
+    min-height:20px;
+    padding:3px 6px;
+    font-size:.55rem;
+  }
+}
