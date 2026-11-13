@@ -3267,6 +3267,14 @@ document.addEventListener('keydown', event => {
   openStreakGarden();
 }, true);
 
+// Homepage feature cards behave like buttons for keyboard and touch users.
+document.addEventListener('keydown', event => {
+  const card = event.target?.closest?.('.home-feature-card[role="button"]');
+  if (!card || (event.key !== 'Enter' && event.key !== ' ')) return;
+  event.preventDefault();
+  card.click();
+}, true);
+
 // Keep the tappable kindness card accessible to keyboard users.
 document.addEventListener('keydown', event => {
   const card = event.target?.closest?.('#dailyCard');
