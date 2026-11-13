@@ -35,7 +35,7 @@ if (!supabaseUrl.trim() || !supabaseKey.trim()) {
 const config = 'window.CUTE_BUNNY_CONFIG = ' + JSON.stringify({
   supabaseUrl: supabaseUrl.trim(),
   supabaseAnonKey: supabaseKey.trim()
-}) + ';\\n';
+}) + ';\n';
 
 fs.writeFileSync(path.join(output, 'supabase-config.js'), config, 'utf8');
 fs.writeFileSync(path.join(output, '.nojekyll'), '', 'utf8');
