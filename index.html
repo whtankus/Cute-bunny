@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=165716">
+  <link rel="stylesheet" href="style.css?v=165717">
 </head>
 <body class="is-restoring">
   <div id="sessionRestore" class="session-restore" role="status">
@@ -168,15 +168,6 @@
         <button type="button" class="theme-choice" data-theme-choice="mint" role="radio" aria-checked="false"><span class="theme-swatch mint">🍃</span><span>Mint meadow</span></button>
         <button type="button" class="theme-choice" data-theme-choice="sky" role="radio" aria-checked="false"><span class="theme-swatch sky">🐦</span><span>Bluebird day</span></button>
       </div>
-      <label class="theme-picker-label">Your profile skin</label>
-      <input id="profileSkin" class="hidden" type="hidden" value="cat">
-      <div id="profileSkinChoices" class="theme-choice-grid profile-skin-grid" role="radiogroup" aria-label="Choose your profile skin">
-        <button type="button" class="theme-choice profile-skin-choice is-selected" data-profile-skin-choice="cat" role="radio" aria-checked="true"><span class="theme-swatch skin-cat">🐱</span><span>Cat skin</span></button>
-        <button type="button" class="theme-choice profile-skin-choice" data-profile-skin-choice="bird" role="radio" aria-checked="false"><span class="theme-swatch skin-bird">🐦</span><span>Bird skin</span></button>
-        <button type="button" class="theme-choice profile-skin-choice" data-profile-skin-choice="vampire" role="radio" aria-checked="false"><span class="theme-swatch skin-vampire">🦇</span><span>Vampire skin</span></button>
-        <button type="button" class="theme-choice profile-skin-choice" data-profile-skin-choice="fairy" role="radio" aria-checked="false"><span class="theme-swatch skin-fairy">🧚</span><span>Fairy skin</span></button>
-        <button type="button" class="theme-choice profile-skin-choice" data-profile-skin-choice="galaxy" role="radio" aria-checked="false"><span class="theme-swatch skin-galaxy">🌌</span><span>Galaxy skin</span></button>
-      </div>
       <label class="theme-picker-label">Your little buddy</label>
       <input id="profileMascot" class="hidden" type="hidden" value="🐰">
       <div id="profileBuddyChoices" class="theme-choice-grid buddy-choice-grid" role="radiogroup" aria-label="Choose your little buddy">
@@ -295,7 +286,7 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=165714"></script>
+  <script src="app.js?v=165715"></script>
   <script>
     if ("serviceWorker" in navigator) {
       let reloadingForWorkerUpdate = false;
@@ -308,7 +299,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=174", {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=175", {
             scope: "./",
             updateViaCache: "none"
           });
