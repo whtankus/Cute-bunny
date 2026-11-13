@@ -1414,11 +1414,24 @@ function popLoveHeart(card, e) {
       control.setAttribute('aria-label', likedNow ? (message ? 'Unlike message' : 'Unlike memory') : (message ? 'Like message' : 'Like memory'));
     }
       if (control) {
+        clearTimeout(control.heartTimer);
         control.classList.remove('heart-tap');
         void control.offsetWidth;
         control.classList.add('heart-tap');
-        clearTimeout(control.heartTimer);
         control.heartTimer = setTimeout(() => control.classList.remove('heart-tap'), 520);
+
+        // Restart the heart bounce on every reaction, even when taps arrive
+        // before the previous animation has finished.
+        if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches && typeof control.animate === 'function') {
+          try {
+            control.heartBounceAnimation?.cancel();
+            control.heartBounceAnimation = control.animate([
+              { transform:'translateY(0) scale(1)', offset:0 },
+              { transform:'translateY(-40%) rotate(10deg) scale(1.28)', offset:.42 },
+              { transform:'translateY(0) scale(1)', offset:1 }
+            ], { duration:420, easing:'cubic-bezier(.2,.8,.25,1)' });
+          } catch {}
+        }
       }
 
   }
