@@ -24,6 +24,7 @@ const feedPageHasMore = { all: false, photo: true, song: true };
 const mediaVisibleCount = { photo: 8, song: 8 };
 let feedHistoryObserver = null, feedHistoryScrollArmed = false, mediaPageLoading = { photo: false, song: false };
 let mediaObserver = null;
+let mediaInitialLoaded = { photo: false, song: false };
 let pendingDeleteTimers = new Map(), authMode = 'register';
 let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0;
 const songUrlCache = new Map(), songUrlInFlight = new Map();
@@ -43,6 +44,7 @@ let streakGardenActiveTab = 'promises';
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
 let streakCountdownInterval = null, streakCountdownDayKey = '';
 let presenceStatus = 'closed';
+let lastActiveWriteAt = 0, lastActiveWriteUserId = '';
 let streakRecordInFlight = null, streakRecordInFlightKey = '';
 const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
   ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
@@ -138,6 +140,26 @@ async function optimizePhotoUpload(file) {
   } finally {
     bitmap?.close?.();
   }
+}
+
+async function fetchFriendHeartCounts(userIds) {
+  const ids = [...new Set((userIds || []).filter(Boolean).map(String))];
+  if (!ids.length) return new Map();
+  const { data, error } = await sb.from('memories')
+    .select('owner_id,memory_likes(count)')
+    .in('owner_id', ids);
+  if (error) {
+    console.warn('Friend heart totals could not be loaded:', error.message || error);
+    return null;
+  }
+  const totals = new Map(ids.map(id => [id, 0]));
+  (data || []).forEach(memory => {
+    const likes = Array.isArray(memory.memory_likes) ? memory.memory_likes : [];
+    const count = likes.reduce((sum, row) => sum + (Number(row.count) || 0), 0);
+    const ownerId = String(memory.owner_id);
+    totals.set(ownerId, (totals.get(ownerId) || 0) + count);
+  });
+  return totals;
 }
 
 async function api(path, options = {}) {
@@ -336,8 +358,8 @@ async function api(path, options = {}) {
 
   if (path.startsWith('/users?q=')) {
     const q = decodeURIComponent(path.slice('/users?q='.length)).trim();
-    const fields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone';
-    const basic = 'id,username,display_name,bio,theme,mascot,created_at';
+    const fields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone,last_active_at';
+    const basic = 'id,username,display_name,bio,theme,mascot,created_at,last_active_at';
     let query = sb.from('profiles').select(fields).neq('id', session.user.id).order('username').limit(30);
     if (q) query = query.ilike('username', '%' + q + '%');
     let { data, error } = await query;
@@ -350,21 +372,24 @@ async function api(path, options = {}) {
     const { data: edges, error: fe } = await sb.from('follows').select('followed_id').eq('follower_id', session.user.id);
     fail(fe);
     const followed = new Set(edges.map(x => x.followed_id));
-    return data.map(u => ({ ...u, login_streak: Number(u.login_streak) || 0, displayName: u.display_name, isFollowing: followed.has(u.id) }));
+    const heartCounts = await fetchFriendHeartCounts(data.map(u => u.id));
+    return data.map(u => ({ ...u, login_streak: Number(u.login_streak) || 0, displayName: u.display_name, isFollowing: followed.has(u.id), heartCount: heartCounts?.get(String(u.id)) ?? null }));
   }
 
   if (path === '/following') {
-    const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at)';
-    const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone)';
+    const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at,last_active_at)';
+    const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone,last_active_at)';
     let { data, error } = await sb.from('follows').select(fields).eq('follower_id', session.user.id).order('created_at', { ascending: false });
     if (error && /login_streak|last_login_date|streak_timezone/i.test(error.message || '')) {
       ({ data, error } = await sb.from('follows').select(basic).eq('follower_id', session.user.id).order('created_at', { ascending: false }));
     }
     fail(error);
-    return data.map(edge => {
+    const mapped = data.map(edge => {
       const u = Array.isArray(edge.followed) ? edge.followed[0] : edge.followed;
       return u ? ({ ...u, login_streak: Number(u.login_streak) || 0, displayName: u.display_name, isFollowing: true, followedAt: edge.created_at }) : null;
     }).filter(Boolean);
+    const heartCounts = await fetchFriendHeartCounts(mapped.map(user => user.id));
+    return mapped.map(user => ({ ...user, heartCount: heartCounts?.get(String(user.id)) ?? null }));
   }
 
   if (path.startsWith('/follow/')) {
@@ -507,15 +532,27 @@ function setUser(u) {
 }
 
 async function refresh() {
-  const results = await Promise.all([api('/me'), api('/feed'), api('/following')]);
+  const results = await Promise.all([
+    api('/me'),
+    api('/feed'),
+    api('/following'),
+    api('/feed?kind=photo&limit=8').catch(error => { console.warn('Photo warm cache skipped:', error?.message || error); return []; }),
+    api('/feed?kind=song&limit=8').catch(error => { console.warn('Music warm cache skipped:', error?.message || error); return []; })
+  ]);
   me = results[0];
-  feed = results[1];
-  feedPageOffsets.all = feed.length;
-  feedPageHasMore.all = feed.length === FEED_PAGE_SIZE;
+  const feedById = new Map();
+  [...results[1], ...results[3], ...results[4]].forEach(item => feedById.set(String(item.id), item));
+  feed = [...feedById.values()].sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
+  feedPageOffsets.all = results[1].length;
+  feedPageHasMore.all = results[1].length === FEED_PAGE_SIZE;
   feedHasMore = feedPageHasMore.all;
-  feedPageOffsets.photo = feedPageOffsets.song = 0;
+  feedPageOffsets.photo = results[3].length;
+  feedPageOffsets.song = results[4].length;
+  mediaInitialLoaded.photo = true;
+  mediaInitialLoaded.song = true;
   mediaVisibleCount.photo = mediaVisibleCount.song = 8;
-  feedPageHasMore.photo = feedPageHasMore.song = true;
+  feedPageHasMore.photo = results[3].length === 8;
+  feedPageHasMore.song = results[4].length === 8;
   friends = results[2];
   render();
   if (page === 'gallery') void loadLatestMedia('photo');
@@ -541,6 +578,7 @@ async function loadLatestMedia(kind) {
     const latest = await api('/feed?kind=' + kind + '&limit=8');
     if (page !== (kind === 'photo' ? 'gallery' : 'music')) { mergeFeedRows(latest); return; }
     mergeFeedRows(latest);
+    mediaInitialLoaded[kind] = true;
     feedPageOffsets[kind] = latest.length;
     feedPageHasMore[kind] = latest.length === 8;
     mediaVisibleCount[kind] = 8;
@@ -676,15 +714,32 @@ function formatJoinDate(value) {
   return Number.isNaN(date.getTime()) ? 'A little while ago' : new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(date);
 }
 
+function formatLastActive(value) {
+  if (!value) return 'Last active time unavailable';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Last active time unavailable';
+  const now = new Date();
+  const dayKey = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const dayLabel = dayKey(date) === dayKey(now) ? 'Today' :
+    dayKey(date) === dayKey(yesterday) ? 'Yesterday' :
+    new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date);
+  const timeLabel = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }).format(date);
+  return 'Last active ' + dayLabel + ' at ' + timeLabel;
+}
+
 function friendRow(user) {
   const snapshot = streakFriendSnapshot(user);
   const streakLabel = snapshot.count === null ? 'Streak unavailable' : snapshot.count + (snapshot.count === 1 ? ' day streak' : ' days streak');
   let liveState = {};
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
   const online = isPresenceUserOnline(user.id, liveState);
-  const presenceLabel = presenceStatus === 'ready' ? (online ? 'Online now' : 'Offline') :
-    presenceStatus === 'error' ? 'Presence unavailable' : 'Connecting…';
-  return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}</span><span class="friend-copy"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small><small class="sg-friend-presence">${esc(presenceLabel)}</small><small class="friend-row-streak">🌸 ${esc(streakLabel)} · ${esc(snapshot.label)}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
+  const presenceLabel = online ? 'Online now' : formatLastActive(user.last_active_at);
+  const heartLabel = user.heartCount === null || user.heartCount === undefined
+    ? '♡ Hearts unavailable'
+    : '♥ ' + Number(user.heartCount).toLocaleString() + ' hearts received';
+  return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}</span><span class="friend-copy"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small><small class="sg-friend-presence">${esc(presenceLabel)}</small><small class="friend-row-streak">🌸 ${esc(streakLabel)} · ${esc(snapshot.label)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
 }
 
 
@@ -1627,8 +1682,8 @@ function go(p, options = {}) {
   // page's document scroll position.
   window.scrollTo({ top: 0, behavior: 'auto' });
   render({ followLatest: p === 'notes' && previousPage === 'notes' });
-  if (p === 'gallery') void loadLatestMedia('photo');
-  else if (p === 'music') void loadLatestMedia('song');
+  if (p === 'gallery' && !mediaInitialLoaded.photo) void loadLatestMedia('photo');
+  else if (p === 'music' && !mediaInitialLoaded.song) void loadLatestMedia('song');
   syncPresenceUI();
 
   if (p === 'notes') {
@@ -1975,29 +2030,13 @@ function render(options = {}) {
       <div class="daily" id="dailyCard" role="button" tabindex="0" aria-label="A little kindness for today. Tap for another reminder">
         <span class="daily-icon">🌼</span><div><small>A LITTLE KINDNESS FOR TODAY</small><p id="compliment">${esc(getKindness())}</p></div>
       </div>
-      <div class="home-feature-heading"><span>YOUR LITTLE CORNERS</span><small>${visibleFeed.length} shared memories</small></div>
-      <section class="home-feature-stack" aria-label="Your shared spaces">
-        <article class="home-feature-card streak-feature" data-open-streak role="button" tabindex="0" aria-label="Open your streak garden">
-          <div class="feature-copy"><span class="feature-kicker">GROW A LITTLE EVERY DAY</span><h3>Your Streak</h3><p>${Math.max(0, Number(me?.login_streak) || 0)} ${Number(me?.login_streak) === 1 ? 'day' : 'days'} of showing up for yourself</p><span class="feature-link">Visit your garden <b>↗</b></span></div>
-          <div class="streak-feature-art" aria-hidden="true"><span class="streak-orbit orbit-one">✿</span><span class="streak-orbit orbit-two">✧</span><span class="streak-feature-flower">🌼</span><span class="streak-feature-leaf">🌿</span></div>
-          <span class="feature-number">01</span>
-        </article>
-        <article class="home-feature-card notes-feature" data-go="notes" role="button" tabindex="0" aria-label="Open Little Love Notes">
-          <div class="notes-feature-art" aria-hidden="true"><span class="note-spark">✦</span><span class="note-envelope">💌</span><span class="note-heart">♡</span></div>
-          <div class="feature-copy"><span class="feature-kicker">WORDS TO KEEP CLOSE</span><h3>Little Love Notes</h3><p>${notes.length} little ${notes.length === 1 ? 'message' : 'messages'} in your conversation</p><span class="feature-link">Read your notes <b>↗</b></span></div>
-          <span class="feature-number">02</span>
-        </article>
-        <article class="home-feature-card photos-feature" data-go="gallery" role="button" tabindex="0" aria-label="Open Photo Garden">
-          <div class="feature-copy"><span class="feature-kicker">MOMENTS IN BLOOM</span><h3>Photo Garden</h3><p>${pics.length} snapshots saved together</p><span class="feature-link">Wander through <b>↗</b></span></div>
-          <div class="photos-feature-art" aria-hidden="true"><span class="photo-sun">☼</span><span class="photo-polaroid photo-back">🌷</span><span class="photo-polaroid photo-front">🌸</span><span class="photo-glint">✧</span></div>
-          <span class="feature-number">03</span>
-        </article>
-        <article class="home-feature-card music-feature" data-go="music" role="button" tabindex="0" aria-label="Open Cozy Playlist">
-          <div class="music-feature-art" aria-hidden="true"><span class="music-vinyl"><i></i></span><span class="music-note note-a">♫</span><span class="music-note note-b">♪</span></div>
-          <div class="feature-copy"><span class="feature-kicker">A SOUNDTRACK FOR US</span><h3>Cozy Playlist</h3><p>${songs.length} songs waiting to play</p><span class="feature-link">Listen together <b>↗</b></span></div>
-          <span class="feature-number">04</span>
-        </article>
-      </section>
+      <div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div>
+      <div class="grid happy-things-grid">
+        ${streakWidget()}
+        <article class="tile"><button type="button" class="tile-art note-art happy-thing-art" data-happy-go="notes" aria-label="Open Little Love Notes">💌</button><h3>Little Love Notes</h3><p>${notes.length} saved notes</p><button class="primary" data-go="notes">Open notes →</button></article>
+        <article class="tile"><button type="button" class="tile-art photo-art happy-thing-art" data-happy-go="gallery" aria-label="Open Photo Garden">🌸</button><h3>Photo Garden</h3><p>${pics.length} shared photos</p><button class="primary" data-go="gallery">Open photos →</button></article>
+        <article class="tile"><button type="button" class="tile-art music-art happy-thing-art" data-happy-go="music" aria-label="Open Cozy Playlist">🎧<span>♫</span></button><h3>Cozy Playlist</h3><p>${songs.length} shared songs</p><button class="primary" data-go="music">Open music →</button></article>
+      </div>
       <div class="feed-list">
         <h3>Your memory history</h3>
         ${visibleFeed.map((m, index) => {
@@ -2646,6 +2685,31 @@ async function clearIgNote() {
 }
 
 /* Realtime */
+async function touchLastActive(force = false) {
+  if (!me?.id || !sb || document.hidden) return;
+  if (lastActiveWriteUserId !== String(me.id)) {
+    lastActiveWriteUserId = String(me.id);
+    lastActiveWriteAt = 0;
+  }
+  const now = Date.now();
+  if (!force && now - lastActiveWriteAt < 120000) return;
+  lastActiveWriteAt = now;
+  const timestamp = new Date(now).toISOString();
+  const { error } = await sb.from('profiles').update({ last_active_at: timestamp }).eq('id', me.id);
+  if (error) {
+    console.warn('Last-active timestamp could not be saved:', error.message || error);
+    return;
+  }
+  me.last_active_at = timestamp;
+}
+
+document.addEventListener('pointerdown', () => { void touchLastActive(); }, { passive: true });
+document.addEventListener('keydown', () => { void touchLastActive(); }, { passive: true });
+window.addEventListener('focus', () => { void touchLastActive(true); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) void touchLastActive(true);
+});
+
 function startRealtime() {
   if (!sb || !me) return;
   closeRealtime();
@@ -2667,6 +2731,7 @@ function startRealtime() {
           syncPresenceUI();
           try {
             await presence.track({ user_id: me.id, username: me.username, online_at: new Date().toISOString() });
+            void touchLastActive(true);
           } catch (error) {
             presenceStatus = 'error';
             console.warn('Presence tracking failed:', error?.message || error);
@@ -2692,11 +2757,22 @@ function startRealtime() {
           if (page === 'streak') renderStreakPage();
           return;
         }
-        if (friends.some(friend => String(friend.id) === changedId)) {
-          clearTimeout(window.cuteStreakProfileRefresh);
-          window.cuteStreakProfileRefresh = setTimeout(() => {
-            void refresh().catch(error => console.warn('Friend streak refresh failed:', error?.message || error));
-          }, 350);
+        const changedFriend = friends.find(friend => String(friend.id) === changedId);
+        if (changedFriend) {
+          if (payload.new?.last_active_at) {
+            changedFriend.last_active_at = payload.new.last_active_at;
+            syncPresenceUI();
+          }
+          const streakChanged =
+            Number(payload.new?.login_streak) !== Number(changedFriend.login_streak) ||
+            String(payload.new?.last_login_date || '') !== String(changedFriend.last_login_date || '') ||
+            String(payload.new?.streak_timezone || '') !== String(changedFriend.streak_timezone || '');
+          if (streakChanged) {
+            clearTimeout(window.cuteStreakProfileRefresh);
+            window.cuteStreakProfileRefresh = setTimeout(() => {
+              void refresh().catch(error => console.warn('Friend streak refresh failed:', error?.message || error));
+            }, 350);
+          }
         }
       }).subscribe();
 
@@ -2732,6 +2808,10 @@ function startRealtime() {
         clearTimeout(window.cuteMemoryLikesRefresh);
         window.cuteMemoryLikesRefresh = setTimeout(() => {
           refreshMemoryLikeIndicators().catch(error => console.warn('Live like refresh failed:', error?.message || error));
+          api('/following').then(rows => {
+            friends = rows;
+            if (page === 'friends') render();
+          }).catch(error => console.warn('Friend heart totals could not refresh:', error?.message || error));
         }, 90);
       }).subscribe(status => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
@@ -2773,10 +2853,15 @@ function syncPresenceUI() {
     node.classList.toggle('is-offline', !online);
     const presenceLabel = node.querySelector('.sg-friend-presence');
     if (presenceLabel) {
-      presenceLabel.textContent = presenceStatus === 'ready'
-        ? (online ? 'Online now' : 'Offline')
-        : presenceStatus === 'error' ? 'Presence unavailable'
-        : presenceStatus === 'closed' ? 'Offline' : 'Connecting…';
+      if (node.classList.contains('friend-row')) {
+        const friend = friends.find(user => String(user.id) === String(node.dataset.friendId));
+        presenceLabel.textContent = online ? 'Online now' : formatLastActive(friend?.last_active_at);
+      } else {
+        presenceLabel.textContent = presenceStatus === 'ready'
+          ? (online ? 'Online now' : 'Offline')
+          : presenceStatus === 'error' ? 'Presence unavailable'
+          : presenceStatus === 'closed' ? 'Offline' : 'Connecting…';
+      }
     }
   });
 }
