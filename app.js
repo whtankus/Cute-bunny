@@ -3984,15 +3984,8 @@ document.addEventListener('click', async e => {
   if (e.target.closest('#profileSettingsWallpaper')) { void cycleProfileWallpaper(); return; }
 
   // Friend search & profile & follow
-  if (e.target.closest('#searchFriends')) {
-    void searchFriends();
-    return;
-  }
-  if (e.target.closest('#friendSearchForm')) {
-    e.preventDefault();
-    void searchFriends();
-    return;
-  }
+  // Friend search is handled by the form's submit event so typing/clicking
+  // inside the input never triggers a premature empty search.
   const friendLink = e.target.closest('[data-profile]');
   const friendCard = e.target.closest('.friend-row');
   if (friendLink || (friendCard && !e.target.closest('[data-follow]'))) {
