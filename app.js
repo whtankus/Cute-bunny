@@ -464,21 +464,31 @@ async function refresh() {
 
 const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
 
+// Let the browser's active locale and device clock preference choose 12-hour or
+// 24-hour time. Reuse one formatter instead of constructing it for every row.
+const deviceClockFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: '2-digit'
+});
+const deviceDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric'
+});
+
 function formatMessageTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone, now = new Date(), yesterday = new Date(now);
+  const now = new Date(), yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  const day = date.toDateString() === now.toDateString() ? 'Today' : date.toDateString() === yesterday.toDateString() ? 'Yesterday' : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone }).format(date);
-  const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone }).format(date);
-  return day + ' · ' + time;
+  const day = date.toDateString() === now.toDateString() ? 'Today' :
+    date.toDateString() === yesterday.toDateString() ? 'Yesterday' :
+    deviceDateFormatter.format(date);
+  return day + ' · ' + deviceClockFormatter.format(date);
 }
 
 function formatNoteClock(value) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone }).format(date);
+  return Number.isNaN(date.getTime()) ? '' : deviceClockFormatter.format(date);
 }
 
 function noteDayLabel(value) {
@@ -2910,6 +2920,16 @@ document.addEventListener('keydown', event => {
 }, true);
 
 // Main delegation
+// Switch sections on pointer release immediately; the delegated click handler
+// below skips its legacy refresh path for a tab already switched here.
+document.addEventListener('pointerdown', e => {
+  const nav = e.target.closest('#nav button[data-page]');
+  if (!nav || nav.dataset.page === page || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  e.preventDefault();
+  nav.dataset.fastNavHandled = 'true';
+  go(nav.dataset.page);
+}, { capture: true, passive: false });
+
 document.addEventListener('click', async e => {
   // Kindness card
   if (e.target.closest('#dailyCard')) {
@@ -3000,6 +3020,10 @@ document.addEventListener('click', async e => {
   const nav = e.target.closest('#nav button[data-page]');
   if (nav) {
     e.preventDefault();
+    if (nav.dataset.fastNavHandled === 'true') {
+      delete nav.dataset.fastNavHandled;
+      return;
+    }
     if (nav.dataset.page !== page) {
       go(nav.dataset.page);
       return;
