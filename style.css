@@ -11263,3 +11263,73 @@ body[data-mode="dark"] .friend-profile-stat-plates .friend-profile-heart{color:#
     font-size:.64rem!important;
   }
 }
+
+
+/* Friend join date tag sits between the identity and follow action. */
+.friend-profile-main-row{
+  grid-template-columns:54px minmax(0,1fr) auto auto!important;
+  gap:9px!important;
+}
+.friend-profile-joined{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  min-width:0;
+  text-align:center;
+}
+.friend-profile-joined>span{
+  color:#a87991;
+  font-family:Caveat,cursive;
+  font-size:.95rem;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:.25px;
+  text-transform:lowercase;
+}
+.friend-profile-joined>time{
+  display:block;
+  max-width:100%;
+  padding:5px 8px;
+  border:1px solid #e5d8df;
+  border-radius:999px;
+  background:#f3edf0;
+  color:#403541;
+  font-family:Nunito,sans-serif;
+  font-size:.61rem;
+  font-weight:900;
+  line-height:1.15;
+  white-space:nowrap;
+}
+body[data-mode="dark"] .friend-profile-joined>span{color:#e3b7ce}
+body[data-mode="dark"] .friend-profile-joined>time{
+  color:#f5edf3;
+  background:#4a3d4a;
+  border-color:#695768;
+}
+@media(max-width:390px){
+  .friend-profile-main-row{
+    grid-template-columns:43px minmax(0,1fr) auto auto!important;
+    gap:6px!important;
+  }
+  .friend-profile-joined>span{font-size:.83rem}
+  .friend-profile-joined>time{padding:4px 6px;font-size:.54rem}
+}
+@media(max-width:340px){
+  .friend-profile-main-row{
+    grid-template-columns:40px minmax(0,1fr) auto!important;
+    row-gap:8px!important;
+  }
+  .friend-profile-joined{
+    grid-column:2;
+    grid-row:2;
+    flex-direction:row;
+    justify-content:flex-start;
+    gap:6px;
+  }
+  .friend-profile-main-row .friend-profile-follow{
+    grid-column:3;
+    grid-row:1 / span 2;
+  }
+}
