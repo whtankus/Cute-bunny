@@ -10795,3 +10795,28 @@ body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-hear
     font-size:.64rem!important;
   }
 }
+
+
+/* Keep all three friend badge labels typographically identical. */
+#content .friend-row .friend-stat-plates .friend-row-queen,
+#content .friend-row .friend-stat-plates .friend-row-streak,
+#content .friend-row .friend-stat-plates .friend-row-hearts{
+  font-family:inherit!important;
+  font-size:.68rem!important;
+  font-weight:700!important;
+  line-height:1.2!important;
+  letter-spacing:normal!important;
+}
+#content .friend-row .friend-stat-plates .friend-row-queen{color:#c09236!important}
+#content .friend-row .friend-stat-plates .friend-row-streak{color:#e7a4c3!important}
+#content .friend-row .friend-stat-plates .friend-row-hearts{color:#df557d!important}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-queen{color:#f1ce7c!important}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-streak{color:#f2bfd7!important}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-hearts{color:#ff9dbb!important}
+@media(max-width:420px){
+  #content .friend-row .friend-stat-plates .friend-row-queen,
+  #content .friend-row .friend-stat-plates .friend-row-streak,
+  #content .friend-row .friend-stat-plates .friend-row-hearts{
+    font-size:.64rem!important;
+  }
+}
