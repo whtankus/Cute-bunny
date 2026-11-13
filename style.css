@@ -12043,3 +12043,66 @@ body[data-mode="dark"] .notification-tools{background:#443447;color:#d8b9cc}
   max-width:190px!important;
   margin:0 auto!important;
 }
+
+
+/* Friends page search bar restored above the own-profile card. */
+.friend-search-section{
+  width:100%;
+  margin:0 0 15px;
+}
+.friend-search-bar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-width:0;
+  padding:7px 8px 7px 12px;
+  border:1px solid #efdce6;
+  border-radius:17px;
+  background:rgba(255,250,253,.94);
+  box-shadow:0 5px 16px rgba(123,91,115,.06);
+}
+.friend-search-icon{
+  flex:0 0 auto;
+  color:#a77b96;
+  font-size:23px;
+  line-height:1;
+}
+.friend-search-bar input{
+  flex:1 1 auto;
+  width:100%;
+  min-width:0;
+  height:38px;
+  padding:0 4px;
+  border:0!important;
+  outline:0;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#705366;
+  font:600 .84rem inherit;
+}
+.friend-search-bar input::placeholder{color:#b59aaa}
+.friend-search-bar #searchFriends{
+  flex:0 0 auto;
+  min-height:36px;
+  margin:0!important;
+  padding:7px 14px!important;
+  border-radius:12px!important;
+  font-size:.76rem!important;
+}
+.friend-search-results{
+  display:grid;
+  gap:8px;
+  margin-top:10px;
+}
+.friend-search-results .friend-section-title{margin-bottom:1px}
+@media(max-width:380px){
+  .friend-search-bar{gap:5px;padding:6px}
+  .friend-search-bar #searchFriends{padding:7px 10px!important}
+  .friend-search-bar input{font-size:.78rem}
+}
+body[data-mode="dark"] .friend-search-bar{
+  background:rgba(49,39,55,.96);
+  border-color:#59465c;
+}
+body[data-mode="dark"] .friend-search-bar input{color:#f4e8f0}
