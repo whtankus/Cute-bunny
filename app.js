@@ -3594,6 +3594,22 @@ document.addEventListener('dblclick', e => {
   void popLoveHeart(tile, e);
 });
 
+// Profile editor flower settings: handle in capture phase so other delegated
+// click handlers cannot swallow the button interaction.
+document.addEventListener('click', event => {
+  let target = event.target;
+  if (target && target.nodeType !== 1) target = target.parentElement;
+  const trigger = target?.closest?.('#profileSettingsTrigger');
+  if (!trigger) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const mount = document.querySelector('#profileSettingsMount');
+  if (!mount) return;
+  if (!document.querySelector('#profileSettingsPanel')) mount.innerHTML = profileSettingsMarkup();
+  renderProfileSettings();
+  document.querySelector('#profileSettingsPanel')?.classList.remove('hidden');
+}, true);
+
 document.addEventListener('click', async e => {
   // Kindness card
   if (e.target.closest('#dailyCard')) {
