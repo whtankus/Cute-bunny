@@ -11442,3 +11442,16 @@ body[data-mode="dark"] #content .friend-row .friend-stat-plates>.friend-row-hear
 #content .friend-row .friend-stat-plates>small{
   border-radius:999px!important;
 }
+
+
+/* Tighten vertical spacing between fields in the main profile editor. */
+.auth-card.profile-card>label{
+  margin:7px 0!important;
+}
+.auth-card.profile-card .profile-name-row>label{
+  margin:7px 0!important;
+}
+.auth-card.profile-card>label input,
+.auth-card.profile-card .profile-name-row>label input{
+  margin-top:4px!important;
+}
