@@ -42,6 +42,7 @@ const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
   ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
   : null;
 const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false, suppressTimer:null };
+const photoPressState = { timer:null, image:null, pointerId:null, startX:0, startY:0, suppressClick:false, suppressTimer:null };
 
 
 const kindLines = [
@@ -2923,6 +2924,49 @@ document.addEventListener('click', e => {
   }
 });
 
+// Photo long-press mirrors a normal photo tap: open the same full-screen lightbox.
+document.addEventListener('pointerdown', e => {
+  const photo = e.target.closest('.feed-photo');
+  if (!photo || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  clearTimeout(photoPressState.timer);
+  clearTimeout(photoPressState.suppressTimer);
+  photoPressState.suppressClick = false;
+  photoPressState.image = photo;
+  photoPressState.pointerId = e.pointerId;
+  photoPressState.startX = e.clientX;
+  photoPressState.startY = e.clientY;
+  photoPressState.timer = setTimeout(() => {
+    if (!photoPressState.image?.isConnected || photoPressState.pointerId !== e.pointerId) return;
+    photoPressState.suppressClick = true;
+    const id = photoPressState.image.closest('.feed-item')?.dataset.memory;
+    if (id) void openPhotoLightbox(id);
+    clearTimeout(photoPressState.suppressTimer);
+    photoPressState.suppressTimer = setTimeout(() => {
+      photoPressState.suppressClick = false;
+    }, 900);
+  }, 420);
+});
+
+function cancelPhotoPress(e) {
+  if (photoPressState.pointerId !== e.pointerId) return;
+  clearTimeout(photoPressState.timer);
+  photoPressState.timer = null;
+  photoPressState.image = null;
+  photoPressState.pointerId = null;
+}
+
+document.addEventListener('pointermove', e => {
+  if (photoPressState.pointerId !== e.pointerId || !photoPressState.image) return;
+  if (Math.hypot(e.clientX - photoPressState.startX, e.clientY - photoPressState.startY) > 12) {
+    cancelPhotoPress(e);
+  }
+});
+document.addEventListener('pointerup', cancelPhotoPress);
+document.addEventListener('pointercancel', cancelPhotoPress);
+document.addEventListener('contextmenu', e => {
+  if (e.target.closest('.feed-photo')) e.preventDefault();
+});
+
 // Notes message gestures: button press feedback, tap to like, hold for Copy/Delete.
 document.addEventListener('pointerdown', e => {
   const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
@@ -3439,6 +3483,11 @@ document.addEventListener('click', async e => {
   // Photo open & lightbox controls
   const photo = e.target.closest('.feed-photo');
   if (photo) {
+    if (photoPressState.suppressClick) {
+      photoPressState.suppressClick = false;
+      clearTimeout(photoPressState.suppressTimer);
+      return;
+    }
     const id = photo.closest('.feed-item')?.dataset.memory;
     if (id) void openPhotoLightbox(id);
     return;
