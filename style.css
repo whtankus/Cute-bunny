@@ -10343,3 +10343,202 @@ body[data-mode="dark"] .friend-profile-garden-icon{background:#594052}
   .friend-profile-meta{grid-template-columns:1fr 1fr}
   .friend-profile-meta>span:first-child{grid-column:1/-1;min-height:36px}
 }
+
+
+/* Compact final pass: preserve the existing card outlines and remove decorative clutter. */
+#content .friend-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  min-height:0;
+  padding:9px 11px;
+  /* Keep the original friend-row border, radius and surface treatment. */
+}
+#content .friend-row .friend-main{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr);
+  align-items:center;
+  gap:9px;
+  min-width:0;
+}
+#content .friend-row .friend-avatar{
+  width:42px;
+  height:42px;
+  border-radius:15px;
+  font-size:1.32rem;
+}
+#content .friend-row .friend-copy{
+  display:grid;
+  gap:3px;
+  min-width:0;
+}
+#content .friend-row .friend-name-line{
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:2px 6px;
+  min-width:0;
+}
+#content .friend-row .friend-name-line b{
+  font-size:.82rem;
+  line-height:1.15;
+  font-weight:800;
+}
+#content .friend-row .friend-name-line>small{
+  font-size:.62rem;
+  line-height:1.15;
+}
+#content .friend-row .friend-meta-line{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  margin:0;
+}
+#content .friend-row .friend-meta-line small{
+  font-size:.59rem;
+  line-height:1.15;
+}
+#content .friend-row .friend-meta-line small:first-child{
+  display:none; /* Joined date adds height but little value in this compact list. */
+}
+#content .friend-row .friend-stat-plates{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:5px;
+  margin:0;
+}
+#content .friend-row .friend-stat-plates .friend-row-streak{
+  display:inline;
+  min-height:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#98758d;
+  font-size:.59rem;
+  line-height:1.2;
+  text-align:left;
+}
+#content .friend-row .friend-stat-plates .friend-row-hearts{
+  display:none; /* Keep the follow list focused on identity and activity. */
+}
+#content .friend-row>.follow-btn{
+  min-width:82px;
+  min-height:32px;
+  max-width:94px;
+  padding:6px 9px;
+  border-radius:11px;
+  font-size:.64rem;
+}
+#content .friend-row .friend-online-dot{
+  width:10px;
+  height:10px;
+}
+#content .friend-row.is-online .friend-meta-line .sg-friend-presence{
+  color:#319a61;
+  font-weight:800;
+}
+
+/* Opened profile: keep its existing outer border; use the available space efficiently. */
+.auth-card.friend-profile-card{
+  gap:0;
+  padding:19px 20px;
+}
+.friend-profile-heading{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:0 0 12px;
+}
+.friend-profile-identity{
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr);
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.friend-profile-avatar-wrap{
+  width:48px;
+  height:48px;
+}
+.friend-profile-identity-copy{gap:1px}
+.friend-profile-identity-copy .eyebrow{font-size:.56rem;line-height:1.1}
+.friend-profile-identity-copy h2{font-size:1.04rem;line-height:1.15}
+.friend-profile-handle{margin:1px 0 0;font-size:.66rem;line-height:1.15}
+.friend-profile-follow{
+  min-width:84px;
+  min-height:33px;
+  padding:6px 9px;
+  border-radius:10px;
+  font-size:.65rem;
+}
+.friend-profile-bio{
+  margin:10px 0;
+  font-size:.78rem;
+  line-height:1.4;
+}
+.friend-profile-meta{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:4px 10px;
+  margin:0 0 10px;
+  font-size:.64rem;
+  line-height:1.25;
+}
+.friend-profile-meta>span{max-width:100%}
+.friend-profile-garden{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:9px 10px;
+  border-radius:13px;
+}
+.friend-profile-garden-icon{
+  width:31px;
+  height:31px;
+  flex:0 0 31px;
+  border-radius:10px;
+  font-size:18px;
+}
+.friend-profile-garden-copy{gap:2px}
+.friend-profile-garden small{font-size:.53rem}
+.friend-profile-garden b{font-size:.86rem;line-height:1.15}
+.friend-profile-garden em{font-size:.64rem;line-height:1.25}
+.friend-profile-card .profile-theme-preview{
+  gap:8px;
+  margin:9px 0 0;
+  padding:8px 0 0;
+}
+.friend-profile-card .profile-theme-preview>span{
+  width:28px;
+  height:28px;
+  flex-basis:28px;
+}
+.friend-profile-card .profile-theme-preview b{font-size:.7rem}
+.friend-profile-card .profile-theme-preview small{font-size:.58rem}
+@media(max-width:420px){
+  #content .friend-row{padding:8px 9px;column-gap:7px}
+  #content .friend-row .friend-main{grid-template-columns:39px minmax(0,1fr);gap:8px}
+  #content .friend-row .friend-avatar{width:39px;height:39px;font-size:1.2rem}
+  #content .friend-row .friend-name-line b{font-size:.78rem}
+  #content .friend-row .friend-name-line>small,
+  #content .friend-row .friend-meta-line small,
+  #content .friend-row .friend-stat-plates .friend-row-streak{font-size:.56rem}
+  #content .friend-row>.follow-btn{min-width:74px;max-width:80px;min-height:30px;padding:5px 7px;font-size:.6rem}
+  .auth-card.friend-profile-card{padding:16px 14px}
+  .friend-profile-heading{gap:7px}
+  .friend-profile-identity{grid-template-columns:43px minmax(0,1fr);gap:8px}
+  .friend-profile-avatar-wrap{width:43px;height:43px}
+  .friend-profile-identity-copy h2{font-size:.96rem}
+  .friend-profile-follow{min-width:76px;padding:5px 7px;font-size:.61rem}
+}
+@media(max-width:340px){
+  #content .friend-row{grid-template-columns:minmax(0,1fr)}
+  #content .friend-row>.follow-btn{justify-self:start;margin:6px 0 0 47px}
+  .friend-profile-heading{grid-template-columns:minmax(0,1fr)}
+  .friend-profile-follow{justify-self:start}
+}
