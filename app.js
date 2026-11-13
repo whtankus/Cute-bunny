@@ -208,7 +208,7 @@ async function api(path, options = {}) {
   if (!session) throw Error('Please sign in again.');
 
   if (path === '/me' && method === 'GET') {
-    const profileFields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone';
+    const profileFields = 'id,username,display_name,bio,theme,mascot,profile_skin,created_at,login_streak,last_login_date,streak_timezone';
     const [{ data, error }, { data: settings, error: settingsError }] = await Promise.all([
       sb.from('profiles').select(profileFields).eq('id', session.user.id).single(),
       sb.from('profile_private_settings').select('notification_preferences').eq('user_id', session.user.id).maybeSingle()
@@ -225,14 +225,15 @@ async function api(path, options = {}) {
   if (path === '/me' && method === 'PUT') {
     const username = String(body.username || me?.username || '').trim().toLowerCase();
     if (!/^[a-z0-9_]{3,24}$/.test(username)) throw Error('Usernames need 3–24 letters, numbers, or underscores.');
-    const profileFields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone';
+    const profileFields = 'id,username,display_name,bio,theme,mascot,profile_skin,created_at,login_streak,last_login_date,streak_timezone';
     const notificationPreferences = body.notificationPreferences || me?.notification_preferences || { memories: true, buddy: true };
     const update = {
       username,
       display_name: body.displayName,
       bio: body.bio,
       theme: body.theme,
-      mascot: body.mascot
+      mascot: body.mascot,
+      profile_skin: body.profileSkin || me?.profile_skin || 'cat'
     };
     const { data, error } = await sb.from('profiles')
       .update(update)
@@ -360,8 +361,8 @@ async function api(path, options = {}) {
 
   if (path.startsWith('/users?q=')) {
     const q = decodeURIComponent(path.slice('/users?q='.length)).trim();
-    const fields = 'id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone,last_active_at';
-    const basic = 'id,username,display_name,bio,theme,mascot,created_at,last_active_at';
+    const fields = 'id,username,display_name,bio,theme,mascot,profile_skin,created_at,login_streak,last_login_date,streak_timezone,last_active_at';
+    const basic = 'id,username,display_name,bio,theme,mascot,profile_skin,created_at,last_active_at';
     let query = sb.from('profiles').select(fields).neq('id', session.user.id).order('username').limit(30);
     if (q) query = query.ilike('username', '%' + q + '%');
     let { data, error } = await query;
@@ -379,8 +380,8 @@ async function api(path, options = {}) {
   }
 
   if (path === '/following') {
-    const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at,last_active_at)';
-    const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,created_at,login_streak,last_login_date,streak_timezone,last_active_at)';
+    const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,profile_skin,created_at,last_active_at)';
+    const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,profile_skin,created_at,login_streak,last_login_date,streak_timezone,last_active_at)';
     let { data, error } = await sb.from('follows').select(fields).eq('follower_id', session.user.id).order('created_at', { ascending: false });
     if (error && /login_streak|last_login_date|streak_timezone/i.test(error.message || '')) {
       ({ data, error } = await sb.from('follows').select(basic).eq('follower_id', session.user.id).order('created_at', { ascending: false }));
@@ -562,7 +563,7 @@ async function refresh() {
   syncStreakWidget();
   syncPresenceUI();
   if (!$('#friendProfileGate').classList.contains('hidden')) {
-    const profile = [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
+    const profile = $('#friendProfileGate').dataset.ownProfile === 'true' ? me : [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
     if (profile) showFriendProfile(profile);
   }
 }
@@ -669,6 +670,7 @@ document.addEventListener('touchmove', event => {
   if (towardHistory) { feedHistoryScrollArmed = true; requestAnimationFrame(tryAutoLoadFeedHistory); }
 }, { passive: true });
 const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
+const profileSkinNames = { cat: 'Cat skin', bird: 'Bird skin', vampire: 'Vampire skin', fairy: 'Fairy skin', galaxy: 'Galaxy skin' };
 
 // Let the browser's active locale and device clock preference choose 12-hour or
 // 24-hour time. Reuse one formatter instead of constructing it for every row.
@@ -731,7 +733,7 @@ function formatLastActive(value) {
   return 'Last active ' + dayLabel + ' at ' + timeLabel;
 }
 
-function friendRow(user) {
+function friendRow(user, isOwnProfile = false) {
   const snapshot = streakFriendSnapshot(user);
   const flowerLabel = snapshot.count === null ? '🌸 — flower' : '🌸 ' + Number(snapshot.count).toLocaleString() + ' flower';
   const heartLabel = user.heartCount === null || user.heartCount === undefined
@@ -741,7 +743,11 @@ function friendRow(user) {
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
   const online = isPresenceUserOnline(user.id, liveState);
   const presenceLabel = online ? 'Online now' : formatLastActive(user.last_active_at);
-  return `<article class="friend-row ${online ? 'is-online' : 'is-offline'}" data-friend-id="${esc(user.id)}" data-profile="${esc(user.username)}"><div class="friend-main"><span class="friend-avatar">${esc(user.mascot || '🐰')}<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)}</small></span><span class="friend-meta-line"><small class="sg-friend-presence">${esc(presenceLabel)}</small></span><span class="friend-stat-plates"><small class="friend-row-queen">👑 Queen</small><small class="friend-row-streak">${esc(flowerLabel)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></span></div><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following' : 'Follow ♡'}</button></article>`;
+  const skin = ['cat', 'bird', 'vampire', 'fairy', 'galaxy'].includes(user.profile_skin) ? user.profile_skin : 'cat';
+  const action = isOwnProfile
+    ? '<button class="primary follow-btn own-profile-action" type="button" data-open-own-profile>View profile</button>'
+    : '<button class="primary follow-btn" type="button" data-follow="' + esc(user.username) + '" data-following="' + !!user.isFollowing + '">' + (user.isFollowing ? 'Following' : 'Follow ♡') + '</button>';
+  return '<article class="friend-row ' + (online ? 'is-online' : 'is-offline') + (isOwnProfile ? ' own-profile-row' : '') + '" data-friend-id="' + esc(user.id) + '" data-profile="' + esc(user.username) + '" data-profile-skin="' + skin + '" data-own-profile="' + (isOwnProfile ? 'true' : 'false') + '"><div class="friend-main"><span class="friend-avatar">' + esc(user.mascot || '🐰') + '<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>' + esc(user.displayName || user.display_name || user.username) + '</b><small>@' + esc(user.username) + '</small></span><span class="friend-meta-line"><small class="sg-friend-presence">' + esc(presenceLabel) + '</small></span><span class="friend-stat-plates"><small class="friend-row-queen">👑 Queen</small><small class="friend-row-streak">' + esc(flowerLabel) + '</small><small class="friend-row-hearts">' + esc(heartLabel) + '</small></span></span></div>' + action + '</article>';
 }
 
 
@@ -2068,18 +2074,15 @@ function render(options = {}) {
       ${historySentinelMarkup('bottom')}
     `;
   } else if (page === 'friends') {
-    c.innerHTML = `
-      <div class="heading"><h2>Your little circle 🐰</h2><p>Find a friend, then keep your favorite things together.</p></div>
-      <div class="friend-search"><input class="input" id="friendSearch" value="${esc(friendQuery)}" placeholder="Search username…"><button class="primary" id="searchFriends">Find</button></div>
-      <section class="following-list">
-        <div class="friend-section-title"><h3>People you follow</h3><span>${friends.length}</span></div>
-        ${friends.map(friendRow).join('') || '<div class="empty">Your circle is waiting for its first friend ♡</div>'}
-      </section>
-      <section class="friend-results-section">
-        <div class="friend-section-title"><h3>Find new friends</h3></div>
-        <div id="friendResults">${friendResults.map(friendRow).join('') || '<div class="empty">Search a username to peek at their profile ♡</div>'}</div>
-      </section>
-    `;
+    c.innerHTML = [
+      '<div class="heading"><h2>Your little circle 🐰</h2><p>Your profile and the friends in your circle.</p></div>',
+      '<section class="own-profile-section"><div class="friend-section-title"><h3>Your profile</h3></div>',
+      me ? friendRow(me, true) : '<div class="empty">Your profile is not available right now.</div>',
+      '</section>',
+      '<section class="following-list"><div class="friend-section-title"><h3>Your Friends</h3><span>' + friends.length + '</span></div>',
+      friends.map(friendRow).join('') || '<div class="empty">Your circle is waiting for its first friend ♡</div>',
+      '</section>'
+    ].join('');
   }
   hydrateMedia();
   observeNotificationMemoryViews();
@@ -2104,8 +2107,12 @@ function formatFriendProfileActivity(value) {
 function showFriendProfile(user) {
   if (!user) return;
   const gate = $('#friendProfileGate');
+  const isOwnProfile = String(user.id) === String(me?.id);
   gate.dataset.username = user.username;
   gate.dataset.following = String(!!user.isFollowing);
+  gate.dataset.ownProfile = String(isOwnProfile);
+  gate.dataset.profileSkin = ['cat', 'bird', 'vampire', 'fairy', 'galaxy'].includes(user.profile_skin) ? user.profile_skin : 'cat';
+  gate.classList.toggle('is-own-profile', isOwnProfile);
   $('#friendProfileBuddy').textContent = user.mascot || '🐰';
   $('#friendProfileName').textContent = user.displayName || user.display_name || user.username;
   $('#friendProfileHandle').textContent = '@' + user.username;
@@ -2129,12 +2136,15 @@ function showFriendProfile(user) {
   $('#friendProfileStreakCount').textContent = friendGarden.count === null
     ? '— flower'
     : Number(friendGarden.count).toLocaleString() + ' flower';
-  $('#friendProfileFollow').textContent = user.isFollowing ? 'Following' : 'Follow ♡';
+  $('#friendProfileFollow').textContent = isOwnProfile ? 'Your profile' : (user.isFollowing ? 'Following' : 'Follow ♡');
+  $('#friendProfileFollow').disabled = isOwnProfile;
   $('#friendProfileFollow').classList.toggle('is-following', !!user.isFollowing);
+  $('#friendProfileFollow').classList.toggle('is-own-profile', isOwnProfile);
   gate.classList.remove('hidden');
 }
 
 async function toggleFriendFollow(username, isFollowing) {
+  if (!username || username === me?.username) return;
   const beforeFriends = friends.slice(), beforeResults = friendResults.slice();
   const found = [...friends, ...friendResults].find(user => user.username === username) || { username, displayName: username, mascot: '🐰' };
   const next = !isFollowing;
@@ -2162,6 +2172,14 @@ async function toggleFriendFollow(username, isFollowing) {
     render();
     toast(error.message);
   }
+}
+
+function updateProfileSkinChoices(value = $('#profileSkin')?.value || 'cat') {
+  document.querySelectorAll('[data-profile-skin-choice]').forEach(button => {
+    const selected = button.dataset.profileSkinChoice === value;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-checked', String(selected));
+  });
 }
 
 function updateBuddyChoices(value = $('#profileMascot')?.value || '🐰') {
@@ -2876,7 +2894,7 @@ function syncPresenceUI() {
   try { state = presenceChannel?.presenceState?.() || {}; } catch {}
   const profileGate = $('#friendProfileGate');
   if (profileGate && !profileGate.classList.contains('hidden') && profileGate.dataset.username) {
-    const profileUser = [...friends, ...friendResults].find(user => user.username === profileGate.dataset.username);
+    const profileUser = profileGate.dataset.ownProfile === 'true' ? me : [...friends, ...friendResults].find(user => user.username === profileGate.dataset.username);
     if (profileUser) {
       const online = isPresenceUserOnline(profileUser.id, state);
       const status = $('#friendProfilePresence');
@@ -3218,7 +3236,7 @@ document.addEventListener('click', event => {
   const row = event.target.closest('.friend-row[data-profile]');
   if (!row || event.target.closest('[data-follow]')) return;
   const username = row.dataset.profile;
-  const friend = [...friends, ...friendResults].find(user =>
+  const friend = row.dataset.ownProfile === 'true' ? me : [...friends, ...friendResults].find(user =>
     String(user.id) === String(row.dataset.friendId) ||
     String(user.username || '').toLowerCase() === String(username || '').toLowerCase()
   );
@@ -3755,8 +3773,10 @@ document.addEventListener('click', async e => {
     $('#profileUsername').value = me.username || '';
     $('#profileBio').value = me.bio || '';
     $('#profileTheme').value = me.theme || 'rose';
+    $('#profileSkin').value = me.profile_skin || 'cat';
     $('#profileMascot').value = me.mascot || '🐰';
     updateThemePreview(me.theme || 'rose');
+    updateProfileSkinChoices(me.profile_skin || 'cat');
     updateBuddyChoices(me.mascot || '🐰');
     $('#profileGate').classList.remove('hidden');
     return;
@@ -3774,6 +3794,7 @@ document.addEventListener('click', async e => {
           displayName: $('#profileDisplay').value.trim(),
           bio: $('#profileBio').value.trim(),
           theme: $('#profileTheme').value,
+          profileSkin: $('#profileSkin').value,
           mascot: $('#profileMascot').value
         })
       });
@@ -3840,6 +3861,12 @@ document.addEventListener('click', async e => {
   if (themeBtn) {
     $('#profileTheme').value = themeBtn.dataset.themeChoice;
     updateThemePreview(themeBtn.dataset.themeChoice);
+    return;
+  }
+  const profileSkinBtn = e.target.closest('[data-profile-skin-choice]');
+  if (profileSkinBtn) {
+    $('#profileSkin').value = profileSkinBtn.dataset.profileSkinChoice;
+    updateProfileSkinChoices(profileSkinBtn.dataset.profileSkinChoice);
     return;
   }
   const buddyBtn = e.target.closest('[data-buddy-choice]');
