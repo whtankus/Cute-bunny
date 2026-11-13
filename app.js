@@ -2089,6 +2089,9 @@ function render(options = {}) {
   } else if (page === 'friends') {
     c.innerHTML = [
       '<div class="heading"><h2>Your little circle 🐰</h2><p>Your profile and the friends in your circle.</p></div>',
+      '<section class="friend-search-section" aria-label="Find friends"><form class="friend-search-bar" id="friendSearchForm"><span class="friend-search-icon" aria-hidden="true">⌕</span><input id="friendSearch" type="search" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Search friends by username..." value="' + esc(friendQuery) + '" aria-label="Search friends by username"><button type="button" id="searchFriends" class="primary">Search</button></form>',
+      friendResults.length ? '<div class="friend-search-results"><div class="friend-section-title"><h3>Search results</h3><span>' + friendResults.length + '</span></div>' + friendResults.filter(user => !friends.some(friend => friend.username === user.username)).map(friendRow).join('') + '</div>' : '',
+      '</section>',
       '<section class="own-profile-section"><div class="friend-section-title"><h3>Your profile</h3></div>',
       me ? friendRow(me, true) : '<div class="empty">Your profile is not available right now.</div>',
       '</section>',
@@ -3973,6 +3976,11 @@ document.addEventListener('click', async e => {
 
   // Friend search & profile & follow
   if (e.target.closest('#searchFriends')) {
+    void searchFriends();
+    return;
+  }
+  if (e.target.closest('#friendSearchForm')) {
+    e.preventDefault();
     void searchFriends();
     return;
   }
