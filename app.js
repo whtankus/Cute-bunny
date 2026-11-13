@@ -2140,7 +2140,7 @@ function showFriendProfile(user) {
   $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
   const profileOnline = isPresenceUserOnline(user.id, (() => { try { return presenceChannel?.presenceState?.() || {}; } catch { return {}; } })());
   const presenceDot = $('#friendProfilePresenceDot');
-  $('#friendProfilePresence').textContent = profileOnline ? (isOwnProfile ? '' : 'Active now') : formatFriendProfileActivity(user.last_active_at);
+  $('#friendProfilePresence').textContent = profileOnline ? 'Active now' : formatFriendProfileActivity(user.last_active_at);
   presenceDot?.classList.toggle('is-online', profileOnline);
   presenceDot?.classList.toggle('is-offline', !profileOnline);
   presenceDot?.setAttribute('aria-label', profileOnline ? 'Online' : 'Offline');
@@ -2932,7 +2932,7 @@ function syncPresenceUI() {
       const online = isPresenceUserOnline(profileUser.id, state);
       const status = $('#friendProfilePresence');
       const dot = $('#friendProfilePresenceDot');
-      if (status) status.textContent = online ? (profileGate.dataset.ownProfile === 'true' ? '' : 'Active now') : formatFriendProfileActivity(profileUser.last_active_at);
+      if (status) status.textContent = online ? 'Active now' : formatFriendProfileActivity(profileUser.last_active_at);
       dot?.classList.toggle('is-online', online);
       dot?.classList.toggle('is-offline', !online);
       dot?.setAttribute('aria-label', online ? 'Online' : 'Offline');
