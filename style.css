@@ -9303,12 +9303,7 @@ body[data-mode="dark"] #app .now-playing-panel {
   color:#e75f91!important;
   text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
 }
-/* Keep the heart on the same right-hand corner for both sent and received notes. */
-.chat-page .chat-message.is-mine .chat-bubble .memory-heart-toggle,
-.home-note-memory .chat-message.is-mine .chat-bubble .memory-heart-toggle {
-  right:8px!important;
-  left:auto!important;
-}
+/* Sent notes retain their original left-side heart; received notes retain right-side placement. */
 /* Use the shared Photos/Music pop instead of the Notes-only higher bounce. */
 .chat-page .chat-bubble.heart-tap .memory-heart-toggle,
 .home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {
