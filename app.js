@@ -1941,8 +1941,8 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
             </div>
           </div>
         </div>
-        ${seenReceipt}
       </div>
+      ${seenReceipt}
       ${m.isPending ? '<span class="memory-upload-status" role="status">Sending your message…</span>' : ''}
     </div>
   `;
@@ -2929,13 +2929,13 @@ function startNotesTyping() {
       if (!typingActive || page !== 'notes' || document.hidden) return;
       typingLastSentAt = Date.now();
       void sendNotesTyping(true);
-    }, 2400);
-  } else if (now - typingLastSentAt >= 2400) {
+    }, 3000);
+  } else if (now - typingLastSentAt >= 3000) {
     typingLastSentAt = now;
     void sendNotesTyping(true);
   }
   clearTimeout(typingStopTimer);
-  typingStopTimer = setTimeout(stopNotesTyping, 1800);
+  typingStopTimer = setTimeout(stopNotesTyping, 1400);
 }
 
 function stopNotesTyping() {
@@ -2991,7 +2991,7 @@ function observeNoteSeenMessages() {
   noteSeenObserver = new IntersectionObserver(entries => {
     if (page !== 'notes' || document.hidden || !document.hasFocus()) return;
     for (const entry of entries) {
-      if (!entry.isIntersecting || entry.intersectionRatio < 0.65) continue;
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.55) continue;
       const message = entry.target;
       const ownerId = String(message.dataset.owner || '');
       const messageId = Number(message.dataset.memory);
@@ -3000,7 +3000,7 @@ function observeNoteSeenMessages() {
       if (!item || item.isPending || item.kind !== 'note') continue;
       queueNoteSeen(ownerId, messageId);
     }
-  }, { root: thread, threshold: [0, 0.65] });
+  }, { root: thread, threshold: [0, 0.55] });
 
   thread.querySelectorAll('.chat-message[data-memory][data-owner]').forEach(message => noteSeenObserver.observe(message));
 }
@@ -3013,7 +3013,7 @@ function queueNoteSeen(ownerId, messageId) {
   if (id <= known) return;
   noteSeenPending.set(owner, id);
   clearTimeout(noteSeenDebounceTimer);
-  noteSeenDebounceTimer = setTimeout(flushNoteSeenReceipts, 700);
+  noteSeenDebounceTimer = setTimeout(flushNoteSeenReceipts, 350);
 }
 
 async function flushNoteSeenReceipts() {
