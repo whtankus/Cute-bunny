@@ -536,27 +536,27 @@ async function refresh() {
     api('/me'),
     api('/feed'),
     api('/following'),
-    api('/feed?kind=photo&limit=8').catch(error => { console.warn('Photo warm cache skipped:', error?.message || error); return []; }),
-    api('/feed?kind=song&limit=8').catch(error => { console.warn('Music warm cache skipped:', error?.message || error); return []; })
+    api('/feed?kind=photo&limit=8').catch(error => { console.warn('Photo warm cache skipped:', error?.message || error); return null; }),
+    api('/feed?kind=song&limit=8').catch(error => { console.warn('Music warm cache skipped:', error?.message || error); return null; })
   ]);
   me = results[0];
   const feedById = new Map();
-  [...results[1], ...results[3], ...results[4]].forEach(item => feedById.set(String(item.id), item));
+  [...results[1], ...(results[3] || []), ...(results[4] || [])].forEach(item => feedById.set(String(item.id), item));
   feed = [...feedById.values()].sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
   feedPageOffsets.all = results[1].length;
   feedPageHasMore.all = results[1].length === FEED_PAGE_SIZE;
   feedHasMore = feedPageHasMore.all;
-  feedPageOffsets.photo = results[3].length;
-  feedPageOffsets.song = results[4].length;
-  mediaInitialLoaded.photo = true;
-  mediaInitialLoaded.song = true;
+  feedPageOffsets.photo = (results[3] || []).length;
+  feedPageOffsets.song = (results[4] || []).length;
+  mediaInitialLoaded.photo = Array.isArray(results[3]);
+  mediaInitialLoaded.song = Array.isArray(results[4]);
   mediaVisibleCount.photo = mediaVisibleCount.song = 8;
-  feedPageHasMore.photo = results[3].length === 8;
-  feedPageHasMore.song = results[4].length === 8;
+  feedPageHasMore.photo = (results[3] || []).length === 8;
+  feedPageHasMore.song = (results[4] || []).length === 8;
   friends = results[2];
   render();
-  if (page === 'gallery') void loadLatestMedia('photo');
-  else if (page === 'music') void loadLatestMedia('song');
+  if (page === 'gallery' && !mediaInitialLoaded.photo) void loadLatestMedia('photo');
+  else if (page === 'music' && !mediaInitialLoaded.song) void loadLatestMedia('song');
   syncStreakWidget();
   syncPresenceUI();
   if (!$('#friendProfileGate').classList.contains('hidden')) {
