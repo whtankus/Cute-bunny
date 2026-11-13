@@ -372,7 +372,7 @@ async function api(path, options = {}) {
   if (path.startsWith('/users?q=')) {
     const q = decodeURIComponent(path.slice('/users?q='.length)).trim();
     const fields = 'id,username,display_name,bio,theme,mascot,profile_wallpaper,gender,created_at,login_streak,last_login_date,streak_timezone,last_active_at';
-    const basic = 'id,username,display_name,bio,theme,mascot,profile_wallpaper,created_at,last_active_at';
+    const basic = 'id,username,display_name,bio,theme,mascot,profile_wallpaper,gender,created_at,last_active_at';
     let query = sb.from('profiles').select(fields).neq('id', session.user.id).order('username').limit(30);
     if (q) query = query.ilike('username', '%' + q + '%');
     let { data, error } = await query;
@@ -390,7 +390,7 @@ async function api(path, options = {}) {
   }
 
   if (path === '/following') {
-    const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,profile_wallpaper,created_at,last_active_at)';
+    const basic = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,profile_wallpaper,gender,created_at,last_active_at)';
     const fields = 'followed_id,created_at,followed:profiles!follows_followed_id_fkey(id,username,display_name,bio,theme,mascot,profile_wallpaper,gender,created_at,login_streak,last_login_date,streak_timezone,last_active_at)';
     let { data, error } = await sb.from('follows').select(fields).eq('follower_id', session.user.id).order('created_at', { ascending: false });
     if (error && /login_streak|last_login_date|streak_timezone/i.test(error.message || '')) {
