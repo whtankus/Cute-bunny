@@ -11833,3 +11833,100 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
 .auth-card.profile-card .profile-settings-wallpaper{width:100%;min-height:38px;margin:0}
 .auth-card.profile-card .profile-settings-save{width:100%;margin:0}
 @media(max-width:390px){.auth-card.profile-card .profile-settings-panel{gap:9px;padding:10px}.auth-card.profile-card .profile-settings-tabs{gap:3px}.auth-card.profile-card .profile-settings-tabs button{font-size:11px}.auth-card.profile-card .profile-settings-section{padding:10px}}
+
+
+/* Refined action sizing, natural photo proportions, and denser notifications. */
+.auth-card.profile-card #profileSave,
+.auth-card.profile-card .profile-settings-save{
+  display:block!important;
+  width:auto!important;
+  min-width:156px;
+  max-width:210px;
+  align-self:center;
+  padding:9px 22px!important;
+}
+.photo-frame{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:0;
+  max-height:470px;
+  padding:0;
+}
+.photo-frame .feed-photo{
+  width:100%;
+  height:auto!important;
+  max-height:460px!important;
+  object-fit:contain!important;
+  object-position:center;
+  border-radius:15px;
+}
+#photoLightbox .photo-lightbox-actions{
+  justify-content:center!important;
+  gap:12px!important;
+}
+#photoLightbox .photo-lightbox-action{
+  flex:0 1 46%!important;
+  max-width:190px;
+}
+#photoLightbox .photo-lightbox-actions:has(#photoLightboxDelete.hidden) #photoLightboxSave{
+  flex:0 1 48%!important;
+  margin-inline:auto!important;
+}
+.notification-card{
+  width:min(94vw,560px);
+  max-height:min(88dvh,820px);
+  padding:20px clamp(14px,3vw,24px)!important;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.notification-card h2{margin:0 0 2px!important}
+.notification-tools{margin:0!important;padding:7px 10px;border-radius:12px;background:#fff4f7;color:#9b7188;font-size:.72rem}
+.notification-list{
+  flex:1 1 auto;
+  min-height:90px;
+  max-height:min(55dvh,520px);
+  overflow-y:auto;
+  gap:6px;
+  margin:0!important;
+  padding:1px 2px 4px;
+}
+.notification-row{padding:8px 10px!important;gap:9px!important;border-radius:13px!important}
+.notification-row .notification-open{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  min-width:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+}
+.notification-avatar{flex-basis:34px!important;width:34px;height:34px!important;border-radius:11px!important;font-size:1.1rem!important}
+.notification-copy{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px;min-width:0;flex:1}
+.notification-copy b{grid-column:1;min-width:0;font-size:.78rem;line-height:1.2}
+.notification-copy small{grid-column:1;min-width:0;margin:2px 0 0!important;font-size:.7rem;line-height:1.3}
+.notification-copy time{grid-column:2;grid-row:1/3;white-space:nowrap;font-size:.62rem!important}
+.notification-settings{margin:0;border-top:1px solid #f0e3e9;padding-top:8px}
+.notification-settings summary{padding:5px 2px;color:#8d617c;font-size:.76rem;font-weight:800;cursor:pointer}
+.notification-preferences{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:center;
+  gap:6px 12px;
+  padding:10px!important;
+  margin-top:6px;
+}
+.notification-preferences label{margin:0!important;min-width:0;font-size:.7rem!important;line-height:1.3}
+.notification-preferences .phone-notification-enable,
+.notification-preferences>#notificationsSave{grid-column:1/-1;width:100%;margin:2px 0!important;min-height:34px;padding:7px 10px;font-size:.72rem}
+body[data-mode="dark"] .notification-tools{background:#443447;color:#d8b9cc}
+@media(max-width:420px){
+  .notification-card{width:calc(100vw - 24px);padding:17px 12px!important}
+  .notification-copy{grid-template-columns:minmax(0,1fr)}
+  .notification-copy time{grid-column:1;grid-row:auto;margin-top:2px}
+  .notification-preferences{grid-template-columns:1fr}
+}
