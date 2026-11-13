@@ -12227,3 +12227,33 @@ body[data-mode="dark"] .friend-search-input-wrap input{color:#f4e8f0}
   .friend-search-input-wrap{height:42px;padding-inline:10px}
   .friend-search-bar #searchFriends{min-height:38px!important;padding:7px 13px!important}
 }
+
+
+/* Final photo viewer actions: same compact footprint, centered, no own-photo Save. */
+#photoLightbox .photo-lightbox-actions{
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  width:100%!important;
+  gap:8px!important;
+  margin:0 auto!important;
+}
+#photoLightbox .photo-lightbox-action{
+  box-sizing:border-box!important;
+  display:block!important;
+  flex:0 0 112px!important;
+  width:112px!important;
+  min-width:112px!important;
+  max-width:112px!important;
+  min-height:36px!important;
+  margin:0!important;
+  padding:7px 10px!important;
+  text-align:center!important;
+}
+#photoLightbox .photo-lightbox-action.hidden{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+#photoLightbox #photoLightboxDelete,
+#photoLightbox #photoLightboxSave{margin-inline:auto!important}
