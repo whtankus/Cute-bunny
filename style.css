@@ -9457,3 +9457,22 @@ body[data-mode="dark"] #app .now-playing-panel {
   touch-action:pan-y!important;
   pointer-events:auto;
 }
+
+
+/* Make the photo viewer Save/Delete controls more compact. */
+#photoLightbox .photo-lightbox-actions {
+  width:min(220px,calc(100% - 56px))!important;
+  gap:6px!important;
+}
+#photoLightbox .photo-lightbox-action {
+  min-height:28px!important;
+  padding:5px 8px!important;
+  font-size:.66rem!important;
+  line-height:1!important;
+  border-radius:10px!important;
+  box-shadow:0 2px 0 #a85f80!important;
+}
+#photoLightbox .photo-lightbox-action:active {
+  transform:translateY(1px) scale(.98)!important;
+  box-shadow:0 1px 0 #a85f80!important;
+}
