@@ -11468,3 +11468,16 @@ body[data-mode="dark"] #content .friend-row .friend-stat-plates>.friend-row-hear
 .auth-card.profile-card .profile-name-row>label input{
   margin-top:2px!important;
 }
+
+
+/* Set the main profile editor spacing to the requested values. */
+.auth-card.profile-card>label{
+  margin:5px 0!important;
+}
+.auth-card.profile-card .profile-name-row>label{
+  margin:5px 0!important;
+}
+.auth-card.profile-card>label input,
+.auth-card.profile-card .profile-name-row>label input{
+  margin-top:3px!important;
+}
