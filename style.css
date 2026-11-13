@@ -9226,3 +9226,21 @@ body[data-mode="dark"] #app .now-playing-panel {
   #notificationGate .notification-open b{font-size:.84rem!important}
   #notificationGate .notification-open small{font-size:.72rem!important}
 }
+
+
+/* Navigation dock press motion matches the Open Photos / Music / Notes buttons.
+   Preserve the dock's existing colors, borders, sizing, and shape. */
+.app #nav button[data-page] {
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease !important;
+  transform-origin: center;
+}
+.app #nav button[data-page]:active {
+  transform: translateY(4px) !important;
+  box-shadow: 0 1px 0 #d3a8bc, 0 2px 5px #9c668018 !important;
+  filter: brightness(.99);
+}
+@media (prefers-reduced-motion: reduce) {
+  .app #nav button[data-page] {
+    transition: none !important;
+  }
+}
