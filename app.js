@@ -3607,6 +3607,32 @@ document.addEventListener('dblclick', e => {
   void popLoveHeart(tile, e);
 });
 
+// Settings category tabs use capture-phase handling so profile/card handlers
+// cannot intercept taps before the selected section is switched.
+document.addEventListener('click', event => {
+  let target = event.target;
+  if (target && target.nodeType !== 1) target = target.parentElement;
+  const tab = target?.closest?.('#profileSettingsPanel [data-settings-tab]');
+  if (!tab) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const selected = tab.dataset.settingsTab;
+  const panel = document.querySelector('#profileSettingsPanel');
+  if (!panel) return;
+  panel.querySelectorAll('[data-settings-tab]').forEach(button => {
+    const active = button === tab;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  panel.querySelectorAll('[data-settings-section]').forEach(section => {
+    const key = section.dataset.settingsSection;
+    const visible = selected === 'other'
+      ? ['other', 'accessibility', 'account'].includes(key)
+      : key === selected;
+    section.classList.toggle('hidden', !visible);
+  });
+}, true);
+
 // Profile editor flower settings: handle in capture phase so other delegated
 // click handlers cannot swallow the button interaction.
 document.addEventListener('click', event => {
