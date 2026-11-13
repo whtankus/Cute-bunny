@@ -11333,3 +11333,27 @@ body[data-mode="dark"] .friend-profile-joined>time{
     grid-row:1 / span 2;
   }
 }
+
+
+/* Keep friend identity readable beside the compact joined-date and follow tags. */
+.auth-card.friend-profile-card .friend-profile-main-row{grid-template-columns:48px minmax(0,1fr) auto auto!important;align-items:center!important;gap:7px!important}
+.auth-card.friend-profile-card .friend-profile-identity{min-width:0!important;overflow:hidden}
+.auth-card.friend-profile-card .friend-profile-identity #friendProfileName,
+.auth-card.friend-profile-card .friend-profile-identity #friendProfileHandle{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important}
+.auth-card.friend-profile-card .friend-profile-joined{align-items:center;gap:3px}
+.auth-card.friend-profile-card .friend-profile-joined>span{font-size:.78rem}
+.auth-card.friend-profile-card .friend-profile-joined>time{padding:4px 6px;font-size:.57rem;letter-spacing:-.15px}
+.auth-card.friend-profile-card .friend-profile-main-row .friend-profile-follow{min-width:0!important;width:auto!important;min-height:29px!important;padding:5px 8px!important;border-radius:999px!important;font-size:.59rem!important;line-height:1!important}
+@media(max-width:390px){
+ .auth-card.friend-profile-card .friend-profile-main-row{grid-template-columns:42px minmax(0,1fr) auto auto!important;gap:5px!important}
+ .auth-card.friend-profile-card .friend-profile-main-row .friend-profile-avatar-wrap,.auth-card.friend-profile-card .friend-profile-main-row .friend-profile-avatar{width:42px;height:42px}
+ .auth-card.friend-profile-card .friend-profile-joined>time{padding:4px 5px;font-size:.53rem}
+ .auth-card.friend-profile-card .friend-profile-main-row .friend-profile-follow{padding:5px 6px!important;font-size:.55rem!important}
+}
+@media(max-width:340px){
+ .auth-card.friend-profile-card .friend-profile-main-row{grid-template-columns:38px minmax(0,1fr) auto auto!important;gap:4px!important}
+ .auth-card.friend-profile-card .friend-profile-main-row .friend-profile-avatar-wrap,.auth-card.friend-profile-card .friend-profile-main-row .friend-profile-avatar{width:38px;height:38px}
+ .auth-card.friend-profile-card .friend-profile-joined>span{font-size:.7rem}
+ .auth-card.friend-profile-card .friend-profile-joined>time{font-size:.49rem;padding:3px 4px}
+ .auth-card.friend-profile-card .friend-profile-main-row .friend-profile-follow{font-size:.51rem!important;padding:5px 5px!important}
+}
