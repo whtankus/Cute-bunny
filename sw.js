@@ -1,9 +1,9 @@
-const CACHE_NAME = "cute-bunny-shell-v165";
+const CACHE_NAME = "cute-bunny-shell-v189";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=153",
-  "./app.js?v=132",
+  "./style.css?v=174",
+  "./app.js?v=146",
   "./manifest.webmanifest",
   "./supabase-config.js",
   "./bunny-app-icon-192.png",
@@ -86,5 +86,22 @@ self.addEventListener("fetch", event => {
     } catch (error) {
       return Response.error();
     }
+  })());
+});
+
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const targetUrl = new URL(event.notification.data?.url || "./", self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of windows) {
+      if (client.url.startsWith(self.location.origin) && "focus" in client) {
+        await client.focus();
+        client.postMessage({ type: "CUTE_BUNNY_NOTIFICATION_OPEN", notificationId: event.notification.data?.notificationId || "" });
+        return;
+      }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(targetUrl);
   })());
 });
