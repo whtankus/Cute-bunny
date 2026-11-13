@@ -2917,7 +2917,7 @@ function syncPresenceUI() {
     const presenceLabel = node.querySelector('.sg-friend-presence');
     if (presenceLabel) {
       if (node.classList.contains('friend-row')) {
-        const friend = [...friends, ...friendResults].find(user => String(user.id) === String(node.dataset.friendId));
+        const friend = [...friends, ...friendResults, ...(me ? [me] : [])].find(user => String(user.id) === String(node.dataset.friendId));
         presenceLabel.textContent = online ? 'Online now' : formatLastActive(friend?.last_active_at);
       } else {
         presenceLabel.textContent = presenceStatus === 'ready'
