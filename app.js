@@ -2089,7 +2089,7 @@ function render(options = {}) {
   } else if (page === 'friends') {
     c.innerHTML = [
       '<div class="heading"><h2>Your little circle 🐰</h2><p>Your profile and the friends in your circle.</p></div>',
-      '<section class="friend-search-section" aria-label="Find friends"><form class="friend-search-bar" id="friendSearchForm"><span class="friend-search-icon" aria-hidden="true">⌕</span><input id="friendSearch" type="search" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Search friends by username..." value="' + esc(friendQuery) + '" aria-label="Search friends by username"><button type="button" id="searchFriends" class="primary">Search</button></form>',
+      '<section class="friend-search-section" aria-label="Find friends"><form class="friend-search-bar" id="friendSearchForm"><label class="friend-search-input-wrap"><span class="friend-search-icon" aria-hidden="true">⌕</span><input id="friendSearch" type="search" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Search by username..." value="' + esc(friendQuery) + '" aria-label="Search friends by username"></label><button type="submit" id="searchFriends" class="primary">Search</button></form>',
       friendResults.length ? '<div class="friend-search-results"><div class="friend-section-title"><h3>Search results</h3><span>' + friendResults.length + '</span></div>' + friendResults.filter(user => !friends.some(friend => friend.username === user.username)).map(friendRow).join('') + '</div>' : '',
       '</section>',
       '<section class="own-profile-section"><div class="friend-section-title"><h3>Your profile</h3></div>',
@@ -2450,12 +2450,14 @@ function closeAllGates() {
 async function openPhotoLightbox(id) {
   const item = feed.find(memory => String(memory.id) === String(id));
   if (!item || item.kind !== 'photo') return;
-  const gate = $('#photoLightbox'), image = $('#photoLightboxImage'), deleteButton = $('#photoLightboxDelete');
+  const gate = $('#photoLightbox'), image = $('#photoLightboxImage'), deleteButton = $('#photoLightboxDelete'), saveButton = $('#photoLightboxSave');
   const thumb = [...document.querySelectorAll('.feed-item[data-memory]')].find(node => node.dataset.memory === String(id))?.querySelector('.feed-photo');
   const canDelete = String(item.author?.id || item.owner_id || '') === String(me?.id || '') && !item.isPending;
   gate.dataset.memoryId = String(id);
   deleteButton.classList.toggle('hidden', !canDelete);
   deleteButton.setAttribute('aria-hidden', String(!canDelete));
+  saveButton.classList.toggle('hidden', canDelete);
+  saveButton.setAttribute('aria-hidden', String(canDelete));
   image.removeAttribute('src');
   gate.classList.remove('hidden');
   if (thumb?.getAttribute('src')) image.src = thumb.getAttribute('src');
@@ -3551,7 +3553,7 @@ document.addEventListener('pointerdown', e => {
   const id = String(item?.dataset.memory || '');
   if (!id) return;
   // Cancel the pending single-photo open as soon as the second tap begins.
-  if (lastTouchMemoryTap.id === id && performance.now() - lastTouchMemoryTap.time <= 300) {
+  if (lastTouchMemoryTap.id === id && performance.now() - lastTouchMemoryTap.time <= 240) {
     clearTimeout(photoPressState.clickTimer);
     photoPressState.clickTimer = null;
     photoPressState.pendingPhotoId = null;
@@ -3569,7 +3571,7 @@ document.addEventListener('pointerup', e => {
   if (!isPhotoOrMusic) return;
   const id = String(item?.dataset.memory || '');
   const now = performance.now();
-  if (id && lastTouchMemoryTap.id === id && now - lastTouchMemoryTap.time <= 300) {
+  if (id && lastTouchMemoryTap.id === id && now - lastTouchMemoryTap.time <= 240) {
     lastTouchMemoryTap = { id: '', time: 0, tile: null };
     suppressNativeMemoryDblclickUntil = now + 500;
     if (e.target.closest('.feed-photo')) {
@@ -3655,6 +3657,13 @@ document.addEventListener('click', event => {
   panel?.classList.remove('hidden');
 }, true);
 
+
+// Submit the friend search form on Enter as well as its Search button.
+document.addEventListener('submit', e => {
+  if (!e.target.matches('#friendSearchForm')) return;
+  e.preventDefault();
+  void searchFriends();
+});
 document.addEventListener('click', async e => {
   // Kindness card
   if (e.target.closest('#dailyCard')) {
@@ -4076,7 +4085,7 @@ document.addEventListener('click', async e => {
       photoPressState.clickTimer = null;
       photoPressState.pendingPhotoId = null;
       if (pendingId) void openPhotoLightbox(pendingId);
-    }, 320);
+    }, 240);
     return;
   }
   if (e.target.closest('#photoLightboxSave')) {
