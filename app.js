@@ -26,6 +26,7 @@ let feedHistoryObserver = null, feedHistoryScrollArmed = false, mediaPageLoading
 let mediaObserver = null;
 let pendingDeleteTimers = new Map(), authMode = 'register';
 let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0;
+const songUrlCache = new Map(), songUrlInFlight = new Map();
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let notificationSeenObserver = null, notificationDismissals = new Set();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
@@ -538,7 +539,7 @@ async function loadLatestMedia(kind) {
   mediaPageLoading[kind] = true;
   try {
     const latest = await api('/feed?kind=' + kind + '&limit=8');
-    if (page !== (kind === 'photo' ? 'gallery' : 'music')) return;
+    if (page !== (kind === 'photo' ? 'gallery' : 'music')) { mergeFeedRows(latest); return; }
     mergeFeedRows(latest);
     feedPageOffsets[kind] = latest.length;
     feedPageHasMore[kind] = latest.length === 8;
@@ -1957,12 +1958,12 @@ function render(options = {}) {
 
   if (page === 'home') {
     c.innerHTML = `
-      <div class="heading"><h2>Welcome, ${esc(me?.displayName || 'friend')} ♡</h2><p>Your little shared corner for favorite things.</p></div>
-      <div class="hero">
+      <div class="heading home-welcome"><h2>Welcome, ${esc(me?.displayName || 'friend')} ♡</h2><p>Your little shared corner for favorite things.</p></div>
+      <div class="hero home-hero">
         <div>
           <small>✿ MADE FOR LITTLE MOMENTS</small>
-          <h3>Welcome to the memory garden</h3>
-          <p>Share photos, songs, and sweet notes with your friend.</p>
+          <h3>A little world to keep close</h3>
+          <p>Four small corners for the moments you share together.</p>
           <button class="primary" data-go="friends">Find your friend ♡</button>
         </div>
         <button class="hero-art bunny-button" id="bunnyBuddy" aria-label="Open your profile">
@@ -1972,19 +1973,31 @@ function render(options = {}) {
         </button>
       </div>
       <div class="daily" id="dailyCard" role="button" tabindex="0" aria-label="A little kindness for today. Tap for another reminder">
-        <span class="daily-icon">🌼</span>
-        <div>
-          <small>A LITTLE KINDNESS FOR TODAY</small>
-          <p id="compliment">${esc(getKindness())}</p>
-        </div>
+        <span class="daily-icon">🌼</span><div><small>A LITTLE KINDNESS FOR TODAY</small><p id="compliment">${esc(getKindness())}</p></div>
       </div>
-      <div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div>
-      <div class="grid happy-things-grid">
-        <article class="tile"><button type="button" class="tile-art photo-art happy-thing-art" data-happy-go="gallery" aria-label="Open Photo garden">🌸</button><h3>Photo garden</h3><p>${pics.length} shared photos</p><button class="primary" data-go="gallery">Open photos →</button></article>
-        <article class="tile"><button type="button" class="tile-art music-art happy-thing-art" data-happy-go="music" aria-label="Open Cozy playlist">🎧<span>♫</span></button><h3>Cozy playlist</h3><p>${songs.length} shared songs</p><button class="primary" data-go="music">Open music →</button></article>
-        <article class="tile"><button type="button" class="tile-art note-art happy-thing-art" data-happy-go="notes" aria-label="Open Little love notes">💌</button><h3>Little love notes</h3><p>${notes.length} saved notes</p><button class="primary" data-go="notes">Open notes →</button></article>
-        ${streakWidget()}
-      </div>
+      <div class="home-feature-heading"><span>YOUR LITTLE CORNERS</span><small>${visibleFeed.length} shared memories</small></div>
+      <section class="home-feature-stack" aria-label="Your shared spaces">
+        <article class="home-feature-card streak-feature" data-open-streak role="button" tabindex="0" aria-label="Open your streak garden">
+          <div class="feature-copy"><span class="feature-kicker">GROW A LITTLE EVERY DAY</span><h3>Your Streak</h3><p>${Math.max(0, Number(me?.login_streak) || 0)} ${Number(me?.login_streak) === 1 ? 'day' : 'days'} of showing up for yourself</p><span class="feature-link">Visit your garden <b>↗</b></span></div>
+          <div class="streak-feature-art" aria-hidden="true"><span class="streak-orbit orbit-one">✿</span><span class="streak-orbit orbit-two">✧</span><span class="streak-feature-flower">🌼</span><span class="streak-feature-leaf">🌿</span></div>
+          <span class="feature-number">01</span>
+        </article>
+        <article class="home-feature-card notes-feature" data-go="notes" role="button" tabindex="0" aria-label="Open Little Love Notes">
+          <div class="notes-feature-art" aria-hidden="true"><span class="note-spark">✦</span><span class="note-envelope">💌</span><span class="note-heart">♡</span></div>
+          <div class="feature-copy"><span class="feature-kicker">WORDS TO KEEP CLOSE</span><h3>Little Love Notes</h3><p>${notes.length} little ${notes.length === 1 ? 'message' : 'messages'} in your conversation</p><span class="feature-link">Read your notes <b>↗</b></span></div>
+          <span class="feature-number">02</span>
+        </article>
+        <article class="home-feature-card photos-feature" data-go="gallery" role="button" tabindex="0" aria-label="Open Photo Garden">
+          <div class="feature-copy"><span class="feature-kicker">MOMENTS IN BLOOM</span><h3>Photo Garden</h3><p>${pics.length} snapshots saved together</p><span class="feature-link">Wander through <b>↗</b></span></div>
+          <div class="photos-feature-art" aria-hidden="true"><span class="photo-sun">☼</span><span class="photo-polaroid photo-back">🌷</span><span class="photo-polaroid photo-front">🌸</span><span class="photo-glint">✧</span></div>
+          <span class="feature-number">03</span>
+        </article>
+        <article class="home-feature-card music-feature" data-go="music" role="button" tabindex="0" aria-label="Open Cozy Playlist">
+          <div class="music-feature-art" aria-hidden="true"><span class="music-vinyl"><i></i></span><span class="music-note note-a">♫</span><span class="music-note note-b">♪</span></div>
+          <div class="feature-copy"><span class="feature-kicker">A SOUNDTRACK FOR US</span><h3>Cozy Playlist</h3><p>${songs.length} songs waiting to play</p><span class="feature-link">Listen together <b>↗</b></span></div>
+          <span class="feature-number">04</span>
+        </article>
+      </section>
       <div class="feed-list">
         <h3>Your memory history</h3>
         ${visibleFeed.map((m, index) => {
@@ -2002,7 +2015,7 @@ function render(options = {}) {
     c.innerHTML = `
       <div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div>
       <label class="primary upload-label">＋ Add photo<input data-upload="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden></label>
-      <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || (mediaPageLoading.photo ? '<div class="empty">🐰 Gathering your latest photos…</div>' : '<div class="empty">Your garden is waiting for its first photo ♡</div>')}</section>
+      <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || '<div class="empty">Your garden is waiting for its first photo ♡</div>'}</section>
       ${historySentinelMarkup('bottom')}
     `;
   } else if (page === 'music') {
@@ -2010,7 +2023,7 @@ function render(options = {}) {
       <div class="heading"><h2>Cozy music 🎵</h2><p>Your songs play right here in the garden.</p></div>
       <label class="primary upload-label">＋ Add a song<input data-upload="song" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" hidden></label>
       <h3 class="shared-songs-title">Your shared songs</h3>
-      <div class="grid media-grid music-grid">${songs.map(memoryCard).join('') || (mediaPageLoading.song ? '<div class="empty">🐰 Gathering your latest songs…</div>' : '<div class="empty">Add a song file and listen together right here ♡')}</div>
+      <div class="grid media-grid music-grid">${songs.map(memoryCard).join('') || '<div class="empty">Add a song file and listen together right here ♡'}</div>
       ${historySentinelMarkup('bottom')}
     `;
   } else if (page === 'friends') {
@@ -2134,6 +2147,7 @@ function toggleMusicIsland(force) {
 function syncPlayer() {
   const audio = $('#globalAudio');
   if (!audio) return;
+  audio.preload = 'auto';
   document.querySelectorAll('[data-play-song]').forEach(button => {
     const active = String(playlist[playlistIndex]?.id) === String(button.dataset.playSong) && !audio.paused && !audio.ended;
     button.classList.toggle('is-playing', active);
@@ -2172,6 +2186,29 @@ function syncPlayer() {
   if (duration) duration.textContent = formatClock(audio.duration);
 }
 
+async function resolveSongSource(track) {
+  const key = String(track.id);
+  const cached = songUrlCache.get(key);
+  if (cached && cached.expiresAt > Date.now() + 30000) return cached.url;
+  if (songUrlInFlight.has(key)) return songUrlInFlight.get(key);
+  const request = sb.storage.from('memories').createSignedUrl(track.storagePath, 3600)
+    .then(({ data, error }) => {
+      if (error || !data?.signedUrl) throw error || new Error('The song file could not be loaded.');
+      const entry = { url: data.signedUrl, expiresAt: Date.now() + 3500000 };
+      songUrlCache.set(key, entry);
+      if (songUrlCache.size > 24) songUrlCache.delete(songUrlCache.keys().next().value);
+      return entry.url;
+    }).finally(() => songUrlInFlight.delete(key));
+  songUrlInFlight.set(key, request);
+  return request;
+}
+
+function warmSongSources(tracks) {
+  tracks.forEach(track => {
+    if (track?.storagePath) void resolveSongSource(track).catch(error => console.debug('Song prefetch deferred:', error?.message || error));
+  });
+}
+
 async function playSong(id) {
   const songs = feed.filter(x => x.kind === 'song');
   const index = songs.findIndex(x => String(x.id) === String(id));
@@ -2179,8 +2216,6 @@ async function playSong(id) {
   const requestId = ++songLoadSequence;
   if (index < 0) return toast('This song is no longer in your garden ♡');
 
-  // Only toggle playback when the requested track is actually loaded in the
-  // shared audio element. A new selection always replaces the previous track.
   if (String(playlist[playlistIndex]?.id) === String(id) && audio.src) {
     if (audio.paused) await audio.play().catch(error => toast(error.message));
     else audio.pause();
@@ -2191,27 +2226,17 @@ async function playSong(id) {
   playlist = songs;
   playlistIndex = index;
   const track = songs[index];
-  audio.pause();
-  audio.removeAttribute('src');
-  audio.load();
-  if (audioObjectUrl) {
-    URL.revokeObjectURL(audioObjectUrl);
-    audioObjectUrl = '';
-  }
+  // Keep the current player and audio element alive while the next signed URL
+  // is resolved; the previous song continues instead of flashing to empty.
   syncPlayer();
-
   try {
-    const { data, error } = await sb.storage.from('memories').download(track.storagePath);
+    const url = await resolveSongSource(track);
     if (requestId !== songLoadSequence) return;
-    if (error || !data) throw error || new Error('The song file could not be loaded.');
-    const nextObjectUrl = URL.createObjectURL(data);
-    if (requestId !== songLoadSequence) {
-      URL.revokeObjectURL(nextObjectUrl);
-      return;
-    }
-    audioObjectUrl = nextObjectUrl;
-    audio.src = nextObjectUrl;
-    await audio.play();
+    audio.src = url;
+    audio.preload = 'auto';
+    const playback = audio.play();
+    syncPlayer();
+    await playback;
     if (requestId !== songLoadSequence) return;
     syncPlayer();
   } catch (error) {
@@ -2999,7 +3024,7 @@ function hydrateMedia() {
   nodes.forEach((node, index) => {
     // Only the first few visible gallery images get high priority. Everything
     // else waits until it approaches the viewport.
-    const prioritize = page === 'gallery' && index < 3;
+    const prioritize = page === 'gallery' && index < 6;
     node.loading = prioritize ? 'eager' : 'lazy';
     node.decoding = 'async';
     node.fetchPriority = prioritize && index < 2 ? 'high' : 'auto';
@@ -3010,9 +3035,10 @@ function hydrateMedia() {
         mediaObserver.unobserve(entry.target);
         void hydrateOneMedia(entry.target);
       }
-    }), { rootMargin: page === 'gallery' ? '360px 0px' : '240px 0px' });
-    nodes.slice(0, page === 'gallery' ? 3 : 0).forEach(node => void hydrateOneMedia(node));
-    nodes.slice(page === 'gallery' ? 3 : 0).forEach(node => mediaObserver.observe(node));
+    }), { rootMargin: page === 'gallery' ? '700px 0px' : '320px 0px' });
+    nodes.slice(0, page === 'gallery' ? 6 : 0).forEach(node => void hydrateOneMedia(node));
+    nodes.slice(page === 'gallery' ? 6 : 0).forEach(node => mediaObserver.observe(node));
+    if (page === 'music') warmSongSources(feed.filter(item => item.kind === 'song').slice(0, 8));
   } else nodes.forEach(node => void hydrateOneMedia(node));
 }
 
