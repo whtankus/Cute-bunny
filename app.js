@@ -3566,7 +3566,7 @@ document.addEventListener('pointerup', e => {
   if (!isPhotoOrMusic) return;
   const id = String(item?.dataset.memory || '');
   const now = performance.now();
-  if (id && lastTouchMemoryTap.id === id && now - lastTouchMemoryTap.time <= 260) {
+  if (id && lastTouchMemoryTap.id === id && now - lastTouchMemoryTap.time <= 300) {
     lastTouchMemoryTap = { id: '', time: 0, tile: null };
     suppressNativeMemoryDblclickUntil = now + 500;
     if (e.target.closest('.feed-photo')) {
