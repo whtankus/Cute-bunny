@@ -1712,6 +1712,10 @@ function go(p, options = {}) {
   if (options.resetStack) appPageStack = [p];
   else if (!options.fromBack && p !== page && appBackGuardInstalled) appPageStack.push(p);
   if (page === 'notes' && p !== 'notes') {
+    noteSeenObserver?.disconnect();
+    noteSeenObserver = null;
+    clearTimeout(noteSeenDebounceTimer);
+    noteSeenPending.clear();
     $('#chatInput')?.blur();
     document.querySelector('.chat-page')?.classList.remove('notes-keyboard-open');
     document.body.classList.remove('notes-keyboard-open');
@@ -1932,8 +1936,8 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
             </div>
           </div>
         </div>
+        ${seenReceipt}
       </div>
-      ${seenReceipt}
       ${m.isPending ? '<span class="memory-upload-status" role="status">Sending your message…</span>' : ''}
     </div>
   `;
