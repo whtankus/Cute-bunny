@@ -113,7 +113,7 @@ async function api(path, options = {}) {
       email: body.email,
       password: body.password,
       options: {
-        emailRedirectTo: 'https://whtankus.github.io/Cute-bunny/',
+        emailRedirectTo: new URL('./', window.location.href).toString(),
         data: { username: body.username.toLowerCase(), display_name: body.displayName }
       }
     });
@@ -2752,7 +2752,7 @@ function formatProfileDate(value) {
 /* Event listeners */
 
 // Tapping effect on pointerdown
-document.addEventListener('pointerdown', e => {
+document.addEventListener('pointerup', e => {
   const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
   if (!interactive || e.target.closest('input, textarea, select')) return;
   interactive.classList.remove('cute-tap');
@@ -2925,7 +2925,6 @@ document.addEventListener('keydown', event => {
 document.addEventListener('pointerdown', e => {
   const nav = e.target.closest('#nav button[data-page]');
   if (!nav || nav.dataset.page === page || (e.pointerType === 'mouse' && e.button !== 0)) return;
-  e.preventDefault();
   nav.dataset.fastNavHandled = 'true';
   go(nav.dataset.page);
 }, { capture: true, passive: false });
