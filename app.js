@@ -751,7 +751,7 @@ function friendRow(user, isOwnProfile = false) {
   let liveState = {};
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
   const online = isPresenceUserOnline(user.id, liveState);
-  const presenceLabel = online ? '' : formatLastActive(user.last_active_at);
+  const presenceLabel = '';
   const wallpaper = ['normal', 'blossom', 'clouds', 'starlight', 'hearts'].includes(user.profile_wallpaper) ? user.profile_wallpaper : 'normal';
   const action = isOwnProfile
     ? '<button class="primary follow-btn own-profile-action" type="button" data-open-own-profile>View profile</button>'
@@ -2948,10 +2948,7 @@ function syncPresenceUI() {
         const friend = [...friends, ...friendResults, ...(me ? [me] : [])].find(user => String(user.id) === String(node.dataset.friendId));
         presenceLabel.textContent = online ? '' : formatLastActive(friend?.last_active_at);
       } else {
-        presenceLabel.textContent = presenceStatus === 'ready'
-          ? (online ? 'Online now' : 'Offline')
-          : presenceStatus === 'error' ? 'Presence unavailable'
-          : presenceStatus === 'closed' ? 'Offline' : 'Connecting…';
+        presenceLabel.textContent = '';
       }
     }
   });
