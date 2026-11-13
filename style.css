@@ -11709,3 +11709,68 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
 /* The Friends page own-profile row never contains or opens the settings panel. */
 .own-profile-section #profileSettingsPanel,
 .own-profile-section .profile-settings-panel{display:none!important}
+
+
+/* Compact horizontal profile settings layout. */
+.auth-card.profile-card .profile-settings-panel{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+  gap:9px;
+  margin-top:12px;
+  padding:12px;
+}
+.auth-card.profile-card .profile-settings-heading,
+.auth-card.profile-card .profile-settings-save,
+.auth-card.profile-card .profile-settings-feedback{
+  grid-column:1/-1;
+}
+.auth-card.profile-card .profile-settings-heading{align-items:center}
+.auth-card.profile-card .profile-settings-intro{margin:2px 0 0;font-size:11px}
+.auth-card.profile-card .profile-settings-section{
+  min-width:0;
+  gap:6px;
+  padding:10px;
+  border-radius:13px;
+}
+.auth-card.profile-card .profile-settings-section h4{font-size:12px}
+.auth-card.profile-card .profile-settings-section>p{font-size:10px;line-height:1.35}
+.auth-card.profile-card .profile-gender-options{display:flex;gap:6px}
+.auth-card.profile-card .profile-gender-options button{min-height:32px;padding:5px 8px;font-size:11px}
+.auth-card.profile-card .profile-settings-section[data-settings-section="chat"]{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:12px;
+  align-items:center;
+}
+.auth-card.profile-card .profile-settings-section[data-settings-section="chat"] h4,
+.auth-card.profile-card .profile-settings-section[data-settings-section="chat"]>p{grid-column:1/-1}
+.auth-card.profile-card .profile-setting-toggle{
+  min-width:0;
+  gap:8px;
+  padding:5px 0;
+  border:0;
+}
+.auth-card.profile-card .profile-setting-toggle b{font-size:11px}
+.auth-card.profile-card .profile-setting-toggle small{font-size:10px}
+.auth-card.profile-card .profile-setting-toggle input{width:16px;height:16px}
+.auth-card.profile-card .profile-settings-section[data-settings-section="other"]{grid-column:1/-1}
+.auth-card.profile-card .profile-settings-wallpaper{min-height:32px;margin:0;padding:6px 10px;font-size:11px}
+.auth-card.profile-card .profile-settings-save{
+  min-height:38px;
+  margin:0;
+  padding:8px 16px;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+.auth-card.profile-card .profile-settings-save:hover{transform:translateY(-2px)}
+.auth-card.profile-card .profile-settings-save:active{transform:translateY(4px);box-shadow:0 2px 0 #ae6888}
+.auth-card.profile-card .profile-settings-feedback{min-height:12px;margin:0;font-size:10px}
+.auth-card.profile-card #profileSave{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.auth-card.profile-card #profileSave:hover{transform:translateY(-2px)}
+.auth-card.profile-card #profileSave:active{transform:translateY(4px);box-shadow:0 2px 0 #ae6888}
+@media(max-width:390px){
+  .auth-card.profile-card .profile-settings-panel{gap:7px;padding:9px}
+  .auth-card.profile-card .profile-settings-section{padding:8px}
+  .auth-card.profile-card .profile-settings-section[data-settings-section="chat"]{column-gap:7px}
+}
