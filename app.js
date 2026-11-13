@@ -2838,11 +2838,20 @@ async function resolveMediaSource(memory) {
   if (pending) return pending;
 
   const request = (async () => {
-    // Resolve a short-lived URL instead of downloading the full image into a
-    // Blob. The browser can then lazy-load and cache image bytes natively.
-    const { data, error } = await sb.storage.from('memories').createSignedUrl(memory.storagePath, 3600);
-    if (error || !data?.signedUrl) throw error || new Error('The photo could not be loaded.');
-    const url = data.signedUrl;
+    // Serve a resized, compressed gallery rendition instead of downloading
+    // the original camera image. Keep GIFs untouched to preserve animation.
+    const storage = sb.storage.from('memories');
+    const isGif = /image\/gif/i.test(memory.contentType || memory.content_type || '');
+    let result = isGif
+      ? await storage.createSignedUrl(memory.storagePath, 3600)
+      : await storage.createSignedUrl(memory.storagePath, 3600, {
+          transform: { width: 720, quality: 72, resize: 'contain' }
+        });
+    // If image transformations are unavailable for this bucket/plan, fall back
+    // to the original signed URL so no photo becomes inaccessible.
+    if (result.error && !isGif) result = await storage.createSignedUrl(memory.storagePath, 3600);
+    if (result.error || !result.data?.signedUrl) throw result.error || new Error('The photo could not be loaded.');
+    const url = result.data.signedUrl;
     const entry = { url, expiresAt: Date.now() + 3500000 };
     cacheMediaSource(key, entry);
     return url;
@@ -2878,9 +2887,13 @@ function hydrateMedia() {
   mediaObserver = null;
   if (!sb) return;
   const nodes = [...document.querySelectorAll('[data-media]')];
-  nodes.forEach(node => {
-    node.loading = 'lazy';
+  nodes.forEach((node, index) => {
+    // Only the first few visible gallery images get high priority. Everything
+    // else waits until it approaches the viewport.
+    const prioritize = page === 'gallery' && index < 3;
+    node.loading = prioritize ? 'eager' : 'lazy';
     node.decoding = 'async';
+    node.fetchPriority = prioritize && index < 2 ? 'high' : 'auto';
   });
   if ('IntersectionObserver' in window) {
     mediaObserver = new IntersectionObserver(entries => entries.forEach(entry => {
@@ -2888,8 +2901,9 @@ function hydrateMedia() {
         mediaObserver.unobserve(entry.target);
         void hydrateOneMedia(entry.target);
       }
-    }), { rootMargin: '180px 0px' });
-    nodes.forEach(node => mediaObserver.observe(node));
+    }), { rootMargin: page === 'gallery' ? '360px 0px' : '240px 0px' });
+    nodes.slice(0, page === 'gallery' ? 3 : 0).forEach(node => void hydrateOneMedia(node));
+    nodes.slice(page === 'gallery' ? 3 : 0).forEach(node => mediaObserver.observe(node));
   } else nodes.forEach(node => void hydrateOneMedia(node));
 }
 
