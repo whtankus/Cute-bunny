@@ -1095,7 +1095,6 @@ body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{b
   -webkit-text-stroke:1.5px #70465f!important;
   font:900 2.7rem/1 Arial,sans-serif!important;
   cursor:pointer!important;
-  transform:none!important;
   transition:transform .16s ease,color .16s ease!important;
 }
 .chat-message.is-mine .chat-bubble .memory-heart-toggle {
@@ -9170,4 +9169,352 @@ body[data-mode="dark"] #app .now-playing-panel {
   right:6px!important;
   bottom:5px!important;
   font-size:1rem!important;
+}
+
+
+/* Fast, low-latency navigation feedback for touch and mouse input. */
+#nav button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 110ms ease, background-color 110ms ease, transform 110ms ease;
+}
+#nav button:active {
+  transform: scale(.96);
+}
+@media (prefers-reduced-motion: reduce) {
+  #nav button { transition: none; }
+}
+
+.older-memories-wrap{display:flex;justify-content:center;width:100%;padding:18px 0 28px}.older-memories-button{min-width:min(240px,100%)}
+
+
+/* Notification centre: compact, stable three-row viewport and softer rounded cards. */
+#notificationGate{align-items:center!important;justify-content:center!important}
+#notificationGate .notification-card{
+  width:min(420px,calc(100vw - 24px))!important;
+  max-height:min(620px,calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom)))!important;
+  height:auto!important;min-height:0!important;flex:0 1 auto!important;
+  overflow:hidden!important;overscroll-behavior:contain;
+  border-radius:30px!important;transform:none!important;
+  animation:none!important;transition:none!important;
+}
+#notificationGate .notification-tools{min-height:28px!important}
+#notificationGate .notification-list{
+  display:grid!important;grid-auto-rows:62px!important;gap:6px!important;
+  height:198px!important;min-height:198px!important;max-height:198px!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  flex:0 0 198px!important;align-content:start!important;
+  padding:2px 3px 4px!important;scrollbar-width:thin;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+}
+#notificationGate .notification-row{
+  height:62px!important;min-height:62px!important;max-height:62px!important;
+  flex:0 0 62px!important;border-radius:22px!important;
+  padding:7px 10px!important;
+}
+#notificationGate .notification-avatar{border-radius:16px!important}
+#notificationGate .notification-open b{font-size:.86rem!important;line-height:1.25!important}
+#notificationGate .notification-open small{font-size:.74rem!important;line-height:1.3!important}
+#notificationGate .notification-open time{font-size:.67rem!important}
+#notificationGate .notification-preferences{border-radius:22px!important}
+#notificationGate .phone-notification-enable{width:100%;margin:8px 0 2px}
+@media(max-width:520px){
+  #notificationGate .notification-card{width:min(420px,calc(100vw - 20px))!important;border-radius:30px!important}
+  #notificationGate .notification-list{height:198px!important;min-height:198px!important;max-height:198px!important;flex-basis:198px!important}
+  #notificationGate .notification-row{border-radius:22px!important}
+  #notificationGate .notification-open b{font-size:.84rem!important}
+  #notificationGate .notification-open small{font-size:.72rem!important}
+}
+
+
+/* Navigation dock press motion matches the Open Photos / Music / Notes buttons.
+   Preserve the dock's existing colors, borders, sizing, and shape. */
+.app #nav button[data-page] {
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease !important;
+  transform-origin: center;
+}
+.app #nav button[data-page]:active {
+  transform: translateY(4px) !important;
+  box-shadow: 0 1px 0 #d3a8bc, 0 2px 5px #9c668018 !important;
+  filter: brightness(.99);
+}
+@media (prefers-reduced-motion: reduce) {
+  .app #nav button[data-page] {
+    transition: none !important;
+  }
+}
+
+
+/* App-wide button press motion: use the same smooth downward travel as the
+   primary Open Photos / Open Music / Open Notes actions, without restyling. */
+#app button,
+.auth-gate button,
+#welcome button {
+  transition-property: transform, color, background-color, box-shadow, filter;
+  transition-duration: .18s;
+  transition-timing-function: ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+#app button:active,
+.auth-gate button:active,
+#welcome button:active {
+  transform: translateY(4px) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #app button,
+  .auth-gate button,
+  #welcome button {
+    transition: none !important;
+  }
+}
+
+
+/* Notes reactions now use the exact Photos/Music heart control and animation. */
+.chat-page .chat-bubble .memory-heart-toggle,
+.home-note-memory .chat-bubble .memory-heart-toggle {
+  position:absolute!important;
+  top:-12px!important;
+  right:8px!important;
+  left:auto!important;
+  bottom:auto!important;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  min-height:30px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#c77999!important;
+  -webkit-text-stroke:0 transparent!important;
+  font:700 1.3rem/1 Nunito,sans-serif!important;
+  text-shadow:0 1px 2px #fff9!important;
+  box-shadow:none!important;
+  transition:transform .18s,color .18s,text-shadow .18s!important;
+}
+.chat-page .chat-bubble .memory-heart-toggle:hover,
+.home-note-memory .chat-bubble .memory-heart-toggle:hover {
+  transform:scale(1.12)!important;
+}
+.chat-page .chat-bubble .memory-heart-toggle[aria-pressed="true"],
+.home-note-memory .chat-bubble .memory-heart-toggle[aria-pressed="true"] {
+  color:#e75f91!important;
+  text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
+}
+/* Sent notes retain their original left-side heart; received notes retain right-side placement. */
+/* Use the shared Photos/Music pop instead of the Notes-only higher bounce. */
+.chat-page .chat-bubble.heart-tap .memory-heart-toggle,
+.home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {
+  animation:heart-button-pop .34s ease-out!important;
+}
+@media(prefers-reduced-motion:reduce) {
+  .chat-page .chat-bubble .memory-heart-toggle,
+  .home-note-memory .chat-bubble .memory-heart-toggle {
+    animation:none!important;
+    transition:none!important;
+  }
+}
+
+
+/* Unliked hearts have no backing plate: let the photo, song tile, or note show through. */
+.memory-heart-toggle:not([aria-pressed="true"]),
+.memory-heart-toggle:not([aria-pressed="true"]):hover,
+.memory-heart-toggle:not([aria-pressed="true"]):active {
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+
+/* Unliked heart: keep the glyph clickable, but remove every visible button surface. */
+.memory-heart-toggle:not([aria-pressed="true"]),
+.memory-heart-toggle:not([aria-pressed="true"]):hover,
+.memory-heart-toggle:not([aria-pressed="true"]):active,
+.memory-heart-toggle:not([aria-pressed="true"]):focus,
+.memory-heart-toggle:not([aria-pressed="true"]):focus-visible {
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding:0!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+
+/* Heart interior uses the app wallpaper pattern; the reaction control itself stays transparent. */
+.memory-heart-toggle {
+  display:inline-grid!important;
+  place-items:center!important;
+  isolation:isolate;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+.memory-heart-toggle .heart-wallpaper-fill,
+.memory-heart-toggle .heart-outline-glyph {
+  grid-area:1 / 1;
+  display:block!important;
+  line-height:1!important;
+  pointer-events:none;
+  transition:color .18s ease,opacity .18s ease,transform .18s ease;
+}
+.memory-heart-toggle .heart-wallpaper-fill {
+  position:relative;
+  z-index:0;
+  font-size:.72em!important;
+  color:transparent!important;
+  background-color:#fdf8f1;
+  background-image:radial-gradient(#e8d6df88 .8px,transparent .8px);
+  background-size:20px 20px;
+  background-position:0 0;
+  background-attachment:fixed;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent!important;
+  opacity:1;
+}
+.memory-heart-toggle .heart-outline-glyph {
+  position:relative;
+  z-index:1;
+  font-size:1em!important;
+  color:#c77999!important;
+  -webkit-text-fill-color:currentColor!important;
+  -webkit-text-stroke:0 transparent!important;
+  text-shadow:0 1px 2px #fff9!important;
+}
+.memory-heart-toggle[aria-pressed="true"] .heart-wallpaper-fill {opacity:0!important}
+.memory-heart-toggle[aria-pressed="true"] .heart-outline-glyph {
+  color:#e75f91!important;
+  text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
+}
+.memory-heart-toggle.heart-tap,
+.chat-page .chat-bubble.heart-tap .memory-heart-toggle,
+.home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {
+  animation:heart-button-pop .34s ease-out!important;
+}
+@keyframes heart-button-pop {
+  0%,100% {transform:scale(1)}
+  45% {transform:scale(1.28)}
+}
+@media(prefers-reduced-motion:reduce) {
+  .memory-heart-toggle .heart-wallpaper-fill,
+  .memory-heart-toggle .heart-outline-glyph {transition:none!important}
+  .memory-heart-toggle.heart-tap,
+  .chat-page .chat-bubble.heart-tap .memory-heart-toggle,
+  .home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {animation:none!important}
+}
+
+
+/* Restore the heart's upward bounce on every reaction path, including pointer-active clicks. */
+.memory-heart-toggle.heart-tap,
+.feed-item .tile.heart-tap .memory-heart-toggle,
+.chat-page .chat-bubble.heart-tap .memory-heart-toggle,
+.home-note-memory .chat-bubble.heart-tap .memory-heart-toggle {
+  animation:heart-button-pop .48s cubic-bezier(.2,.8,.25,1)!important;
+  transform-origin:center;
+}
+@keyframes heart-button-pop {
+  0%,100% {transform:translateY(0) scale(1)}
+  42% {transform:translateY(-40%) rotate(10deg) scale(1.28)}
+}
+
+
+/* Compact the Save/Delete controls under the full-screen photo preview. */
+#photoLightbox .photo-lightbox-actions {
+  gap:8px!important;
+}
+#photoLightbox .photo-lightbox-action {
+  min-height:34px!important;
+  padding:7px 13px!important;
+  font-size:.76rem!important;
+  line-height:1!important;
+  border-radius:13px!important;
+}
+
+
+/* Prevent native browser image callouts, saving, dragging, and text selection. */
+#content .feed-photo,
+#content .photo-frame {
+  -webkit-touch-callout:none!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+  -webkit-user-drag:none!important;
+  user-drag:none!important;
+}
+#content .feed-photo {
+  touch-action:pan-y!important;
+  pointer-events:auto;
+}
+
+
+/* Make the photo viewer Save/Delete controls more compact. */
+#photoLightbox .photo-lightbox-actions {
+  width:min(220px,calc(100% - 56px))!important;
+  gap:6px!important;
+}
+#photoLightbox .photo-lightbox-action {
+  min-height:28px!important;
+  padding:5px 8px!important;
+  font-size:.66rem!important;
+  line-height:1!important;
+  border-radius:10px!important;
+  box-shadow:0 2px 0 #a85f80!important;
+}
+#photoLightbox .photo-lightbox-action:active {
+  transform:translateY(1px) scale(.98)!important;
+  box-shadow:0 1px 0 #a85f80!important;
+}
+
+
+/* Photo viewer actions: restore height, shorten width, round corners, enlarge labels. */
+#photoLightbox .photo-lightbox-actions {
+  width:min(190px,calc(100% - 56px))!important;
+  gap:6px!important;
+}
+#photoLightbox .photo-lightbox-action {
+  min-height:34px!important;
+  padding:7px 7px!important;
+  font-size:.84rem!important;
+  line-height:1!important;
+  border-radius:999px!important;
+  box-shadow:0 3px 0 #a85f80!important;
+}
+#photoLightbox .photo-lightbox-action:active {
+  transform:translateY(2px) scale(.98)!important;
+  box-shadow:0 1px 0 #a85f80!important;
+}
+
+
+/* Keep photo and music cards stationary during likes; animate only the heart. */
+.feed-item[data-kind="photo"] .tile.heart-tap,
+.feed-item[data-kind="song"] .tile.heart-tap {
+  animation:none!important;
+  transform:none!important;
+}
+
+
+/* Hearts are visual reaction indicators only; the content gesture controls likes. */
+.reaction-heart-indicator {
+  cursor:default!important;
+  pointer-events:none!important;
+}
+.reaction-heart-indicator.is-lit .heart-outline-glyph {
+  color:#e75f91!important;
+  -webkit-text-fill-color:currentColor!important;
+  text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
+}
+.chat-bubble .reaction-heart-indicator.is-lit .heart-outline-glyph {
+  color:#e75f91!important;
 }
