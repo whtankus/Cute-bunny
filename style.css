@@ -11618,3 +11618,25 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
 .own-profile-section .own-profile-row{position:relative}
 .own-profile-section .profile-settings-trigger{top:9px;right:9px;width:31px;height:31px}
 .own-profile-section .profile-settings-panel{margin:12px 0 18px}
+
+
+/* Profile editor settings flower: same pink garden bloom, gently orbiting in place. */
+.auth-card.profile-card .profile-title-row{position:relative;padding-right:34px}
+.auth-card.profile-card .profile-settings-trigger{
+  position:absolute;right:0;top:50%;z-index:5;
+  display:grid;place-items:center;width:30px;height:30px;padding:0;
+  border:0!important;outline:0;background:transparent!important;box-shadow:none!important;
+  border-radius:0!important;color:#d989a8;font:normal 1.85rem/1 Caveat,cursive;
+  cursor:pointer;transform:translateY(-50%);transform-origin:50% 50%;
+  animation:profile-settings-flower-orbit var(--flower-speed,18s) linear infinite;
+  animation-delay:var(--flower-delay,-5.2s);will-change:transform;
+}
+.auth-card.profile-card .profile-settings-trigger:hover{box-shadow:none!important;filter:brightness(1.05)}
+@keyframes profile-settings-flower-orbit{
+  0%{transform:translateY(-50%) translate(0,0) rotate(0deg)}
+  25%{transform:translateY(calc(-50% - 2px)) translate(-1px,-1px) rotate(90deg)}
+  50%{transform:translateY(-50%) translate(0,0) rotate(180deg)}
+  75%{transform:translateY(calc(-50% + 2px)) translate(1px,1px) rotate(270deg)}
+  100%{transform:translateY(-50%) translate(0,0) rotate(360deg)}
+}
+@media(prefers-reduced-motion:reduce){.auth-card.profile-card .profile-settings-trigger{animation:none!important}}
