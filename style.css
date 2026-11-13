@@ -11804,3 +11804,11 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
   .auth-card.profile-card .profile-settings-section[data-settings-section="accessibility"],
   .auth-card.profile-card .profile-settings-section[data-settings-section="account"]{grid-column:1/-1}
 }
+
+/* Restore the compact horizontal settings category selector. */
+.auth-card.profile-card .profile-settings-tabs{display:flex;flex-direction:row;flex-wrap:nowrap;gap:6px;margin:12px 0;padding:4px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;border-radius:14px;background:#f8edf2}
+.auth-card.profile-card .profile-settings-tabs::-webkit-scrollbar{display:none}
+.auth-card.profile-card .profile-settings-tabs button{flex:1 0 0;min-width:0;min-height:35px;padding:6px 10px;white-space:nowrap;border:0;border-radius:10px;background:transparent;color:#866c7b;font:inherit;font-size:12px;cursor:pointer}
+.auth-card.profile-card .profile-settings-tabs button.is-active{background:#fff;color:#8a4f70;box-shadow:0 2px 8px #75445b16;font-weight:700}
+.auth-card.profile-card .profile-settings-section.hidden{display:none!important}
+@media(max-width:360px){.auth-card.profile-card .profile-settings-tabs{gap:4px}.auth-card.profile-card .profile-settings-tabs button{font-size:11px;padding-inline:7px}}
