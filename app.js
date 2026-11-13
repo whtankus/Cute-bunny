@@ -36,7 +36,7 @@ let noteSeenLastAck = new Map();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
 let navRefreshInFlight = false, appExitStep = 0;
-let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null, typingChannel = null;
+let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let typingHeartbeatTimer = null, typingStopTimer = null, typingActive = false, typingLastSentAt = 0;
 const remoteTypingUsers = new Map();
 let activeMessageActionsId = null;
@@ -1766,6 +1766,7 @@ function go(p, options = {}) {
       if (thread) thread.scrollTop = thread.scrollHeight;
       notesHeaderLastScrollTop = thread?.scrollTop ?? null;
       syncNotesKeyboardLayout();
+      void refreshOwnNoteSeenStatus();
     });
   }
 }
@@ -2902,21 +2903,18 @@ async function clearIgNote() {
 
 /* Ephemeral Notes typing events use Supabase Realtime Broadcast only; no database writes. */
 async function sendNotesTyping(isTyping) {
-  if (!typingChannel || !me || page !== 'notes') return;
+  if (!presenceChannel || presenceStatus !== 'ready' || !me) return;
   try {
-    await typingChannel.send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: {
-        user_id: me.id,
-        username: me.username || 'Friend',
-        display_name: me.displayName || me.display_name || me.username || 'Friend',
-        is_typing: !!isTyping,
-        sent_at: Date.now()
-      }
+    await presenceChannel.track({
+      user_id: me.id,
+      username: me.username || 'Friend',
+      display_name: me.displayName || me.display_name || me.username || 'Friend',
+      online_at: new Date().toISOString(),
+      is_typing: !!isTyping && page === 'notes' && !document.hidden,
+      typing_at: Date.now()
     });
   } catch (error) {
-    console.warn('Notes typing update could not be sent:', error?.message || error);
+    console.warn('Notes typing presence could not be updated:', error?.message || error);
   }
 }
 
@@ -2950,27 +2948,22 @@ function stopNotesTyping() {
   void sendNotesTyping(false);
 }
 
-function receiveNotesTyping(payload) {
-  if (!payload || String(payload.user_id || '') === String(me?.id || '')) return;
-  const friend = friends.find(item => String(item.id) === String(payload.user_id));
-  if (!friend) return;
-  const userId = String(friend.id);
-  const previous = remoteTypingUsers.get(userId);
-  if (previous?.timer) clearTimeout(previous.timer);
-  if (!payload.is_typing || page !== 'notes' || document.hidden) {
-    remoteTypingUsers.delete(userId);
-    syncNotesTypingIndicator();
-    return;
+function syncNotesTypingFromPresence(state) {
+  const next = new Map();
+  if (page === 'notes' && !document.hidden) {
+    Object.values(state || {}).flat().forEach(session => {
+      const userId = String(session?.user_id || '');
+      if (!userId || userId === String(me?.id || '') || !session?.is_typing) return;
+      const friend = friends.find(item => String(item.id) === userId);
+      if (!friend) return;
+      next.set(userId, {
+        username: friend.username || session.username || 'Friend',
+        displayName: friend.displayName || friend.display_name || session.display_name || friend.username || 'Friend'
+      });
+    });
   }
-  const entry = {
-    username: friend.username || payload.username || 'Friend',
-    displayName: friend.displayName || friend.display_name || payload.display_name || friend.username || 'Friend',
-    timer: setTimeout(() => {
-      remoteTypingUsers.delete(userId);
-      syncNotesTypingIndicator();
-    }, 5000)
-  };
-  remoteTypingUsers.set(userId, entry);
+  remoteTypingUsers.clear();
+  next.forEach((entry, userId) => remoteTypingUsers.set(userId, entry));
   syncNotesTypingIndicator();
 }
 
@@ -3116,7 +3109,14 @@ function startRealtime() {
           presenceStatus = 'ready';
           syncPresenceUI();
           try {
-            await presence.track({ user_id: me.id, username: me.username, online_at: new Date().toISOString() });
+            await presence.track({
+              user_id: me.id,
+              username: me.username,
+              display_name: me.displayName || me.display_name || me.username,
+              online_at: new Date().toISOString(),
+              is_typing: typingActive && page === 'notes' && !document.hidden,
+              typing_at: Date.now()
+            });
             void touchLastActive(true);
           } catch (error) {
             presenceStatus = 'error';
@@ -3171,12 +3171,6 @@ function startRealtime() {
         });
         toast('A little hello from your friend ♡');
       }).subscribe();
-
-    typingChannel = sb.channel('cute-bunny-notes-typing', { config: { broadcast: { self: false } } })
-      .on('broadcast', { event: 'typing' }, ({ payload }) => receiveNotesTyping(payload))
-      .subscribe(status => {
-        if (status === 'SUBSCRIBED' && typingActive) void sendNotesTyping(true);
-      });
 
     memoryChannel = sb.channel('cute-bunny-memories-' + me.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'memories' }, payload => {
@@ -3247,10 +3241,10 @@ function closeRealtime() {
   remoteTypingUsers.forEach(entry => clearTimeout(entry.timer));
   remoteTypingUsers.clear();
   syncNotesTypingIndicator();
-  [presenceChannel, notificationChannel, memoryChannel, profileChannel, typingChannel].forEach(channel => {
+  [presenceChannel, notificationChannel, memoryChannel, profileChannel].forEach(channel => {
     if (channel && sb) sb.removeChannel(channel);
   });
-  presenceChannel = notificationChannel = memoryChannel = profileChannel = typingChannel = null;
+  presenceChannel = notificationChannel = memoryChannel = profileChannel = null;
   presenceStatus = 'closed';
   if (streakCountdownInterval) {
     window.clearInterval(streakCountdownInterval);
@@ -3268,6 +3262,7 @@ function isPresenceUserOnline(userId, state) {
 function syncPresenceUI() {
   let state = {};
   try { state = presenceChannel?.presenceState?.() || {}; } catch {}
+  syncNotesTypingFromPresence(state);
   const profileGate = $('#friendProfileGate');
   if (profileGate && !profileGate.classList.contains('hidden') && profileGate.dataset.username) {
     const profileUser = profileGate.dataset.ownProfile === 'true' ? me : [...friends, ...friendResults].find(user => user.username === profileGate.dataset.username);
