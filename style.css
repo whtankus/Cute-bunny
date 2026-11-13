@@ -11179,3 +11179,87 @@ body[data-mode="dark"] .friend-profile-stat-plates .friend-profile-heart{color:#
 
 /* Ensure the current friend profile activity badges remain visible. */
 .auth-card.friend-profile-card .friend-profile-stat-plates{display:flex!important;}
+
+
+/* Friend identity and action polish: keep names on one line and use pill buttons. */
+#content .friend-row .friend-name-line{
+  display:flex!important;
+  align-items:baseline;
+  flex-wrap:nowrap!important;
+  gap:6px;
+  min-width:0;
+  white-space:nowrap;
+}
+#content .friend-row .friend-name-line>b{
+  display:block;
+  flex:0 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#content .friend-row .friend-name-line>small{
+  display:block;
+  flex:0 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.auth-card.friend-profile-card .friend-profile-identity{
+  display:flex!important;
+  align-items:baseline;
+  flex-wrap:nowrap!important;
+  gap:7px;
+  min-width:0;
+  white-space:nowrap;
+}
+.auth-card.friend-profile-card .friend-profile-identity #friendProfileName{
+  flex:0 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  overflow-wrap:normal;
+}
+.auth-card.friend-profile-card .friend-profile-identity #friendProfileHandle{
+  flex:0 1 auto;
+  min-width:0;
+  margin:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  overflow-wrap:normal;
+}
+#content .friend-row .friend-stat-plates>small{
+  min-height:25px!important;
+  padding:4px 7px!important;
+  font-size:.68rem!important;
+}
+.auth-card.friend-profile-card .friend-profile-stat-plates>small{
+  min-height:26px!important;
+  padding:5px 8px!important;
+  font-size:.68rem!important;
+  border-radius:999px!important;
+}
+#content .friend-row>.follow-btn,
+.auth-card.friend-profile-card .friend-profile-follow,
+#searchFriends{
+  border-radius:999px!important;
+}
+#searchFriends{
+  min-height:44px;
+  padding:10px 22px;
+}
+@media(max-width:420px){
+  #content .friend-row .friend-stat-plates>small{
+    min-height:24px!important;
+    padding:4px 6px!important;
+    font-size:.64rem!important;
+  }
+  .auth-card.friend-profile-card .friend-profile-stat-plates>small{
+    min-height:25px!important;
+    padding:4px 7px!important;
+    font-size:.64rem!important;
+  }
+}
