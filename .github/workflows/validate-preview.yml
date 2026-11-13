@@ -21,7 +21,12 @@ jobs:
           node-version: 22
       - name: Check JavaScript syntax
         run: npm run check
-      - name: Check preview build configuration
+      - name: Test preview build
+        env:
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: preview-build-test-key
         run: |
-          test -f vercel.json
-          test -f scripts/build-preview.js
+          npm run build
+          test -s dist/index.html
+          test -s dist/supabase-config.js
+          test -s dist/app.js
