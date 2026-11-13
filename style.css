@@ -11669,3 +11669,43 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
   visibility:hidden!important;
   pointer-events:none!important;
 }
+
+
+/* Profile settings open only inside the main profile editor and stack vertically. */
+.auth-card.profile-card .profile-settings-panel{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:14px;
+  margin-top:16px;
+  width:100%;
+}
+.auth-card.profile-card .profile-settings-heading{
+  align-items:flex-start;
+}
+.auth-card.profile-card .profile-settings-intro{
+  margin:5px 0 0;
+  color:#927d89;
+  font-size:12px;
+  line-height:1.5;
+}
+.auth-card.profile-card .profile-settings-section{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:8px;
+  padding:14px;
+  border:1px solid #f0dfe8;
+  border-radius:16px;
+  background:rgba(255,250,252,.82);
+}
+.auth-card.profile-card .profile-settings-section h4{margin:0;font-size:14px}
+.auth-card.profile-card .profile-settings-section>p{margin:0}
+.auth-card.profile-card .profile-settings-section .profile-settings-preview{margin-top:3px!important}
+.auth-card.profile-card .profile-gender-options{width:100%}
+.auth-card.profile-card .profile-gender-options button{min-width:0}
+.auth-card.profile-card .profile-setting-toggle{width:100%;padding:10px 0}
+.auth-card.profile-card .profile-settings-save{margin-top:0}
+/* The Friends page own-profile row never contains or opens the settings panel. */
+.own-profile-section #profileSettingsPanel,
+.own-profile-section .profile-settings-panel{display:none!important}
