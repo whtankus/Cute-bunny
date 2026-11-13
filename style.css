@@ -10542,3 +10542,158 @@ body[data-mode="dark"] .friend-profile-garden-icon{background:#594052}
   .friend-profile-heading{grid-template-columns:minmax(0,1fr)}
   .friend-profile-follow{justify-self:start}
 }
+
+
+/* Friend profile refresh: compact portrait card with two clear social stats. */
+.auth-card.friend-profile-card{
+  width:min(390px,calc(100vw - 28px));
+  max-width:390px;
+  padding:20px;
+  border:2px dashed #e8cbd8;
+  border-radius:25px;
+  gap:0;
+  text-align:left;
+}
+.friend-profile-heading{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:0 0 13px;
+  border-bottom:1px solid #eadde6;
+}
+.friend-profile-identity{
+  display:grid;
+  grid-template-columns:50px minmax(0,1fr);
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.friend-profile-avatar-wrap{width:50px;height:50px;flex:none}
+.friend-profile-identity-copy{display:grid;gap:2px;min-width:0}
+.friend-profile-identity-copy .eyebrow{margin:0;font-size:.57rem;letter-spacing:1px}
+.friend-profile-identity-copy h2{margin:1px 0;font-size:1.12rem;line-height:1.15;overflow-wrap:anywhere}
+.friend-profile-handle{margin:0;font-size:.68rem;line-height:1.2}
+.friend-profile-follow{min-width:88px;min-height:34px;padding:7px 10px;border-radius:11px;font-size:.67rem}
+.friend-profile-bio{margin:12px 0 13px;font-size:.8rem;line-height:1.45}
+.friend-profile-stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin:0 0 11px;
+}
+.friend-profile-stat{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+  min-height:62px;
+  padding:10px 11px;
+  border:1px solid #f0dfe8;
+  border-radius:15px;
+  background:linear-gradient(145deg,#fff8fa,#f8f3ff);
+}
+.friend-profile-stat>span{font-size:1.35rem;line-height:1}
+.friend-profile-stat>div{display:grid;gap:3px;min-width:0}
+.friend-profile-stat b{color:#795c76;font-size:.78rem;line-height:1.15;overflow-wrap:anywhere}
+.friend-profile-stat small{color:#a18a9d;font-size:.58rem;line-height:1.2}
+.friend-profile-heart-stat{background:linear-gradient(145deg,#fff6f8,#fffafd)}
+.friend-profile-heart-stat b{color:#bd6d90}
+.friend-profile-meta{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:5px 12px;
+  margin:0;
+  padding:0 1px 10px;
+  color:#9a8496;
+  font-size:.63rem;
+  line-height:1.25;
+}
+.friend-profile-meta>span{min-width:0;overflow-wrap:anywhere}
+.friend-profile-meta .friend-profile-presence{font-weight:800;color:#568c68}
+.friend-profile-card .profile-theme-preview{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:0;
+  padding:10px 0 0;
+  border-top:1px solid #eadde6;
+  background:transparent;
+  box-shadow:none;
+}
+.friend-profile-card .profile-theme-preview>span{width:29px;height:29px;flex:0 0 29px;border-radius:10px}
+.friend-profile-card .profile-theme-preview>div{display:grid;gap:2px;min-width:0}
+.friend-profile-card .profile-theme-preview b{font-size:.7rem;line-height:1.2}
+.friend-profile-card .profile-theme-preview small{font-size:.59rem;line-height:1.2}
+#content .friend-row .friend-stat-plates{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px;
+  margin:0;
+}
+#content .friend-row .friend-stat-plates small{
+  display:inline-flex;
+  align-items:center;
+  min-height:20px;
+  padding:3px 6px;
+  border:1px solid #f0e2eb;
+  border-radius:8px;
+  background:#fff9fc;
+  color:#98758d;
+  font-size:.57rem;
+  line-height:1.15;
+  white-space:nowrap;
+}
+#content .friend-row .friend-stat-plates .friend-row-hearts{
+  display:inline-flex;
+  color:#bd6d90;
+  background:#fff3f7;
+  border-color:#f2dfe8;
+}
+#content .friend-row .friend-stat-plates .friend-row-streak{
+  display:inline-flex;
+  padding:3px 6px;
+  border:1px solid #f0e2eb;
+  border-radius:8px;
+  background:#fff9fc;
+  color:#98758d;
+  font-size:.57rem;
+  line-height:1.15;
+}
+body[data-mode="dark"] .friend-profile-stat{
+  background:linear-gradient(145deg,#40313f,#3b354c);
+  border-color:#655266;
+}
+body[data-mode="dark"] .friend-profile-stat b{color:#f0dce9}
+body[data-mode="dark"] .friend-profile-heart-stat b{color:#f0b8d0}
+body[data-mode="dark"] .friend-profile-meta{color:#c4afc4}
+body[data-mode="dark"] .friend-profile-card .profile-theme-preview{border-color:#655266}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates small{
+  color:#ead9e7;background:#453649;border-color:#634d65;
+}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-hearts{
+  color:#f0b8d0;background:#493442;border-color:#65495b;
+}
+@media(max-width:420px){
+  .auth-card.friend-profile-card{width:min(370px,calc(100vw - 24px));padding:17px 15px;border-radius:22px}
+  .friend-profile-heading{gap:7px;padding-bottom:11px}
+  .friend-profile-identity{grid-template-columns:44px minmax(0,1fr);gap:8px}
+  .friend-profile-avatar-wrap{width:44px;height:44px}
+  .friend-profile-identity-copy h2{font-size:1rem}
+  .friend-profile-follow{min-width:78px;min-height:32px;padding:6px 8px;font-size:.62rem}
+  .friend-profile-bio{margin:10px 0 11px;font-size:.76rem}
+  .friend-profile-stats{gap:7px;margin-bottom:9px}
+  .friend-profile-stat{min-height:56px;padding:8px;gap:7px}
+  .friend-profile-stat>span{font-size:1.15rem}
+  .friend-profile-stat b{font-size:.7rem}
+  .friend-profile-meta{padding-bottom:9px;font-size:.59rem}
+}
+@media(max-width:340px){
+  .friend-profile-heading{grid-template-columns:minmax(0,1fr)}
+  .friend-profile-follow{justify-self:start}
+  .friend-profile-stats{gap:6px}
+  .friend-profile-stat{padding:7px 6px;gap:5px}
+  .friend-profile-stat b{font-size:.65rem}
+}
