@@ -42,7 +42,7 @@ const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
   ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
   : null;
 const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false, suppressTimer:null };
-const photoPressState = { timer:null, image:null, pointerId:null, startX:0, startY:0, suppressClick:false, suppressTimer:null };
+const photoPressState = { timer:null, image:null, pointerId:null, startX:0, startY:0, suppressClick:false, suppressTimer:null, clickTimer:null, pendingPhotoId:null };
 
 
 const kindLines = [
@@ -3088,6 +3088,14 @@ document.addEventListener('pointerdown', e => {
 document.addEventListener('dblclick', e => {
   const tile = e.target.closest('.feed-item .tile');
   if (!tile) return;
+  // A photo's first tap is delayed briefly so a second tap can be recognized
+  // as a double-click instead of opening the lightbox before dblclick fires.
+  const photo = e.target.closest('.feed-photo');
+  if (photo) {
+    clearTimeout(photoPressState.clickTimer);
+    photoPressState.clickTimer = null;
+    photoPressState.pendingPhotoId = null;
+  }
   // The album artwork is itself a play button; allow double-clicking it to
   // like the song while keeping other action buttons excluded.
   const action = e.target.closest('button, a, input, textarea, select');
@@ -3502,7 +3510,16 @@ document.addEventListener('click', async e => {
       return;
     }
     const id = photo.closest('.feed-item')?.dataset.memory;
-    if (id) void openPhotoLightbox(id);
+    if (!id) return;
+    // Wait for a possible second click; a double-click is reserved for liking.
+    clearTimeout(photoPressState.clickTimer);
+    photoPressState.pendingPhotoId = String(id);
+    photoPressState.clickTimer = setTimeout(() => {
+      const pendingId = photoPressState.pendingPhotoId;
+      photoPressState.clickTimer = null;
+      photoPressState.pendingPhotoId = null;
+      if (pendingId) void openPhotoLightbox(pendingId);
+    }, 240);
     return;
   }
   if (e.target.closest('#photoLightboxSave')) {
