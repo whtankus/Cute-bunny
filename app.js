@@ -54,6 +54,7 @@ const photoPressState = { timer:null, image:null, pointerId:null, startX:0, star
 const bubbleTapState = { timer:null, bubble:null };
 let lastTouchMemoryTap = { id: '', time: 0, tile: null };
 let suppressNativeMemoryDblclickUntil = 0;
+let suppressPhotoClickUntil = 0;
 
 
 const kindLines = [
@@ -2207,6 +2208,7 @@ async function saveProfileSettings() {
     renderProfileSettings();
     if (feedback) feedback.textContent = 'Your settings are saved ♡';
     toast('Profile settings saved ♡');
+    $('#profileSettingsPanel')?.classList.add('hidden');
     render();
   } catch (error) {
     if (feedback) feedback.textContent = error.message || 'Could not save settings.';
@@ -3571,6 +3573,8 @@ document.addEventListener('pointerup', e => {
       clearTimeout(photoPressState.clickTimer);
       photoPressState.clickTimer = null;
       photoPressState.pendingPhotoId = null;
+      // The synthetic click after the second touch must not reopen the image.
+      suppressPhotoClickUntil = now + 650;
     }
     void popLoveHeart(tile, e);
   } else {
@@ -3639,8 +3643,13 @@ document.addEventListener('click', event => {
   const mount = document.querySelector('#profileSettingsMount');
   if (!mount) return;
   if (!document.querySelector('#profileSettingsPanel')) mount.innerHTML = profileSettingsMarkup();
+  const panel = document.querySelector('#profileSettingsPanel');
+  if (panel && !panel.classList.contains('hidden')) {
+    panel.classList.add('hidden');
+    return;
+  }
   renderProfileSettings();
-  document.querySelector('#profileSettingsPanel')?.classList.remove('hidden');
+  panel?.classList.remove('hidden');
 }, true);
 
 document.addEventListener('click', async e => {
@@ -3954,7 +3963,6 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  if (e.target.closest('#profileSettingsTrigger')) { e.preventDefault(); e.stopPropagation(); const mount = $('#profileSettingsMount'); if (mount && !$('#profileSettingsPanel')) mount.innerHTML = profileSettingsMarkup(); renderProfileSettings(); $('#profileSettingsPanel')?.classList.remove('hidden'); return; }
   if (e.target.closest('#profileSettingsClose')) { $('#profileSettingsPanel')?.classList.add('hidden'); return; }
   const settingsTab = e.target.closest('[data-settings-tab]');
   if (settingsTab) { const selected = settingsTab.dataset.settingsTab; document.querySelectorAll('[data-settings-tab]').forEach(button => { const active = button === settingsTab; button.classList.toggle('is-active', active); button.setAttribute('aria-pressed', String(active)); }); document.querySelectorAll('[data-settings-section]').forEach(section => { const key = section.dataset.settingsSection; const visible = selected === 'other' ? ['other', 'accessibility', 'account'].includes(key) : key === selected; section.classList.toggle('hidden', !visible); }); return; }
@@ -4051,7 +4059,8 @@ document.addEventListener('click', async e => {
     }
     const id = photo.closest('.feed-item')?.dataset.memory;
     if (!id) return;
-    // Give the browser's full double-click window time to register a like before opening the lightbox.
+    // A double-tap is reserved for liking; only a single tap opens the photo.
+    if (performance.now() < suppressPhotoClickUntil) return;
     clearTimeout(photoPressState.clickTimer);
     photoPressState.pendingPhotoId = String(id);
     photoPressState.clickTimer = setTimeout(() => {
