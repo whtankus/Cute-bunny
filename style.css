@@ -11375,3 +11375,10 @@ body[data-mode="dark"] .friend-profile-joined>time{
 @media(max-width:390px){
   .auth-card.friend-profile-card .friend-profile-main-row{column-gap:7px!important}
 }
+
+
+/* Slightly increase the gap between the avatar and identity text again. */
+.auth-card.friend-profile-card .friend-profile-main-row{column-gap:13px!important}
+@media(max-width:390px){
+  .auth-card.friend-profile-card .friend-profile-main-row{column-gap:9px!important}
+}
