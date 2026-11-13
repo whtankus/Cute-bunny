@@ -11175,3 +11175,7 @@ body[data-mode="dark"] .friend-profile-stat-plates .friend-profile-heart{color:#
 @media(max-width:340px){
   .friend-profile-activity-line{flex-wrap:wrap;justify-content:center}
 }
+
+
+/* Ensure the current friend profile activity badges remain visible. */
+.auth-card.friend-profile-card .friend-profile-stat-plates{display:flex!important;}
