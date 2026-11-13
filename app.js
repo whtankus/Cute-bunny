@@ -602,8 +602,9 @@ function tryAutoLoadFeedHistory() {
   const sentinel = document.querySelector('[data-history-sentinel]');
   if (!sentinel) return;
   const rect = sentinel.getBoundingClientRect();
+  const threadTop = $('#chatThread')?.getBoundingClientRect().top || 0;
   const near = page === 'notes'
-    ? rect.top <= ($('#chatThread')?.getBoundingClientRect().top || 0) + 220
+    ? rect.bottom >= threadTop - 220 && rect.top <= threadTop + 220
     : rect.top <= window.innerHeight + 500;
   if (near) {
     feedHistoryScrollArmed = false;
@@ -611,8 +612,20 @@ function tryAutoLoadFeedHistory() {
   }
 }
 
-window.addEventListener('wheel', () => { feedHistoryScrollArmed = true; requestAnimationFrame(tryAutoLoadFeedHistory); }, { passive: true });
-document.addEventListener('touchmove', () => { feedHistoryScrollArmed = true; requestAnimationFrame(tryAutoLoadFeedHistory); }, { passive: true });
+let feedHistoryTouchY = null;
+document.addEventListener('touchstart', event => { feedHistoryTouchY = event.touches?.[0]?.clientY ?? null; }, { passive: true });
+window.addEventListener('wheel', event => {
+  const towardHistory = page === 'notes' ? event.deltaY < 0 : event.deltaY > 0;
+  if (towardHistory) { feedHistoryScrollArmed = true; requestAnimationFrame(tryAutoLoadFeedHistory); }
+}, { passive: true });
+document.addEventListener('touchmove', event => {
+  const y = event.touches?.[0]?.clientY;
+  if (y == null || feedHistoryTouchY == null) return;
+  const fingerDelta = y - feedHistoryTouchY;
+  feedHistoryTouchY = y;
+  const towardHistory = page === 'notes' ? fingerDelta > 0 : fingerDelta < 0;
+  if (towardHistory) { feedHistoryScrollArmed = true; requestAnimationFrame(tryAutoLoadFeedHistory); }
+}, { passive: true });
 const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
 
 // Let the browser's active locale and device clock preference choose 12-hour or
