@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=165703">
+  <link rel="stylesheet" href="style.css?v=165706">
 </head>
 <body class="is-restoring">
   <div id="sessionRestore" class="session-restore" role="status">
@@ -189,20 +189,34 @@
   </div>
 
   <div id="friendProfileGate" class="auth-gate hidden">
-    <section class="auth-card friend-profile-card">
-      <div id="friendProfileBuddy" class="auth-bunny">🐰</div>
-      <p class="eyebrow">A BUNNY FRIEND</p>
-      <h2 id="friendProfileName"></h2>
-      <p id="friendProfileHandle" class="auth-hint"></p>
+    <section class="auth-card friend-profile-card" role="dialog" aria-modal="true" aria-labelledby="friendProfileName">
+      <div class="friend-profile-heading">
+        <div class="friend-profile-identity">
+          <div class="friend-profile-avatar-wrap">
+            <div id="friendProfileBuddy" class="friend-profile-avatar">🐰</div>
+            <span id="friendProfilePresenceDot" class="friend-profile-presence-dot is-offline" aria-label="Offline"></span>
+          </div>
+          <div class="friend-profile-identity-copy">
+            <p class="eyebrow">A BUNNY FRIEND</p>
+            <h2 id="friendProfileName"></h2>
+            <p id="friendProfileHandle" class="friend-profile-handle"></p>
+          </div>
+        </div>
+        <button type="button" class="primary friend-profile-follow" id="friendProfileFollow">Follow ♡</button>
+      </div>
       <p id="friendProfileBio" class="friend-profile-bio"></p>
-      <p id="friendProfileCreated" class="auth-hint profile-created"></p>
-      <div class="friend-profile-stat-plates">
-        <span class="friend-profile-presence" id="friendProfilePresence">Offline</span>
-        <span class="friend-profile-hearts" id="friendProfileHearts">0 hearts received</span>
+      <div class="friend-profile-meta">
+        <span id="friendProfileCreated" class="profile-created"></span>
+        <span id="friendProfilePresence" class="friend-profile-presence">Offline</span>
+        <span id="friendProfileHearts" class="friend-profile-hearts">0 hearts received</span>
       </div>
       <div id="friendProfileGarden" class="friend-profile-garden">
         <span class="friend-profile-garden-icon" aria-hidden="true">✿</span>
-        <div><small>THEIR GARDEN</small><b id="friendProfileStreakCount">—</b><em id="friendProfileStreakStatus">Activity unavailable</em></div>
+        <div class="friend-profile-garden-copy">
+          <small>THEIR GARDEN</small>
+          <b id="friendProfileStreakCount">—</b>
+          <em id="friendProfileStreakStatus">Activity unavailable</em>
+        </div>
       </div>
       <div id="friendProfileStyle" class="profile-theme-preview">
         <span>✿</span>
@@ -211,7 +225,6 @@
           <small>their profile colors</small>
         </div>
       </div>
-      <button type="button" class="primary auth-submit" id="friendProfileFollow">Follow ♡</button>
     </section>
   </div>
 
@@ -291,7 +304,7 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=165704"></script>
+  <script src="app.js?v=165705"></script>
   <script>
     if ("serviceWorker" in navigator) {
       let reloadingForWorkerUpdate = false;
