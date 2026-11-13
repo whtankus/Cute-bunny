@@ -9171,3 +9171,17 @@ body[data-mode="dark"] #app .now-playing-panel {
   bottom:5px!important;
   font-size:1rem!important;
 }
+
+
+/* Fast, low-latency navigation feedback for touch and mouse input. */
+#nav button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 110ms ease, background-color 110ms ease, transform 110ms ease;
+}
+#nav button:active {
+  transform: scale(.96);
+}
+@media (prefers-reduced-motion: reduce) {
+  #nav button { transition: none; }
+}
