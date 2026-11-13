@@ -12106,3 +12106,124 @@ body[data-mode="dark"] .friend-search-bar{
   border-color:#59465c;
 }
 body[data-mode="dark"] .friend-search-bar input{color:#f4e8f0}
+
+
+/* Masonry photo garden: each photo keeps its intrinsic height, with no empty row gaps. */
+.photo-garden-grid{
+  display:block!important;
+  column-count:2;
+  column-gap:12px;
+  width:100%;
+}
+.photo-garden-grid>.feed-item{
+  display:inline-flex!important;
+  flex-direction:column!important;
+  vertical-align:top;
+  width:100%!important;
+  margin:0 0 12px!important;
+  break-inside:avoid;
+  -webkit-column-break-inside:avoid;
+}
+.photo-garden-grid>.feed-item .tile{
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+}
+.photo-garden-grid>.feed-item .photo-frame{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+.photo-garden-grid>.feed-item .feed-photo{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  object-fit:initial!important;
+}
+@media(max-width:420px){
+  .photo-garden-grid{column-gap:9px}
+  .photo-garden-grid>.feed-item{margin-bottom:9px!important}
+}
+
+/* The owner's photo preview offers Delete only; friend photos keep Save. */
+#photoLightbox .photo-lightbox-actions{
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+#photoLightbox .photo-lightbox-action{
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:132px!important;
+  min-height:34px!important;
+  padding:7px 18px!important;
+  border-radius:999px!important;
+  font-size:.78rem!important;
+}
+#photoLightbox .photo-lightbox-action.hidden{display:none!important}
+#photoLightbox #photoLightboxDelete{
+  margin:0 auto!important;
+}
+
+/* Search field and Search action are separate; use a softer pill-shaped button. */
+.friend-search-bar{
+  display:flex!important;
+  align-items:center!important;
+  gap:9px!important;
+  width:100%!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.friend-search-input-wrap{
+  display:flex;
+  align-items:center;
+  flex:1 1 auto;
+  min-width:0;
+  gap:7px;
+  height:44px;
+  padding:0 13px;
+  border:1px solid #efdce6;
+  border-radius:999px;
+  background:rgba(255,250,253,.96);
+  box-shadow:0 4px 13px rgba(123,91,115,.055);
+}
+.friend-search-input-wrap input{
+  flex:1 1 auto;
+  width:100%;
+  min-width:0;
+  height:100%;
+  padding:0 2px;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#705366;
+  font:600 .84rem inherit;
+}
+.friend-search-bar .friend-search-icon{font-size:22px}
+.friend-search-bar #searchFriends{
+  flex:0 0 auto!important;
+  min-height:40px!important;
+  padding:8px 17px!important;
+  border-radius:999px!important;
+  font-size:.76rem!important;
+  box-shadow:0 3px 9px rgba(153,91,126,.12);
+}
+body[data-mode="dark"] .friend-search-input-wrap{
+  background:rgba(49,39,55,.96);
+  border-color:#59465c;
+}
+body[data-mode="dark"] .friend-search-input-wrap input{color:#f4e8f0}
+@media(max-width:380px){
+  .friend-search-bar{gap:7px!important}
+  .friend-search-input-wrap{height:42px;padding-inline:10px}
+  .friend-search-bar #searchFriends{min-height:38px!important;padding:7px 13px!important}
+}
