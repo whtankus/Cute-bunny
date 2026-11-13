@@ -3279,8 +3279,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // A single tap on a Notes bubble reacts; a double tap cancels the pending reaction.
-  // Delay the single-tap action briefly so the second click can be recognized.
+  // Notes likes are applied on the first tap; do not wait for a possible double-tap.
   const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
   const selectedText = window.getSelection?.()?.toString().trim();
   if (bubble && !e.target.closest('button')) {
@@ -3294,24 +3293,13 @@ document.addEventListener('click', async e => {
       bubbleTapState.bubble = null;
       return;
     }
-    // A second click on the same bubble cancels the first tap instead of liking it.
-    if (bubbleTapState.timer && bubbleTapState.bubble === bubble) {
-      clearTimeout(bubbleTapState.timer);
-      bubbleTapState.timer = null;
-      bubbleTapState.bubble = null;
-      return;
-    }
     if (selectedText || bubble.classList.contains('no-heart-reaction')) return;
     clearTimeout(bubbleTapState.timer);
-    bubbleTapState.bubble = bubble;
-    bubbleTapState.timer = setTimeout(() => {
-      const target = bubbleTapState.bubble;
-      bubbleTapState.timer = null;
-      bubbleTapState.bubble = null;
-      if (target?.isConnected && !messagePressState.longPressed && !messagePressState.suppressClick) {
-        void popLoveHeart(target, e);
-      }
-    }, 450);
+    bubbleTapState.timer = null;
+    bubbleTapState.bubble = null;
+    if (!messagePressState.longPressed && !messagePressState.suppressClick) {
+      void popLoveHeart(bubble, e);
+    }
     return;
   }
 
