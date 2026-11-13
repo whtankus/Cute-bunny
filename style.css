@@ -9503,3 +9503,18 @@ body[data-mode="dark"] #app .now-playing-panel {
   animation:none!important;
   transform:none!important;
 }
+
+
+/* Hearts are visual reaction indicators only; the content gesture controls likes. */
+.reaction-heart-indicator {
+  cursor:default!important;
+  pointer-events:none!important;
+}
+.reaction-heart-indicator.is-lit .heart-outline-glyph {
+  color:#e75f91!important;
+  -webkit-text-fill-color:currentColor!important;
+  text-shadow:0 0 8px #ec74a788,0 0 15px #ed84b566!important;
+}
+.chat-bubble .reaction-heart-indicator.is-lit .heart-outline-glyph {
+  color:#e75f91!important;
+}
