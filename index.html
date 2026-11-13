@@ -190,19 +190,20 @@
 
   <div id="friendProfileGate" class="auth-gate hidden">
     <section class="auth-card friend-profile-card" role="dialog" aria-modal="true" aria-labelledby="friendProfileName">
-      <div class="friend-profile-heading">
-        <p class="eyebrow">A BUNNY FRIEND</p>
+      <p class="eyebrow friend-profile-eyebrow">A BUNNY FRIEND</p>
+      <div class="friend-profile-main-row">
         <div class="friend-profile-avatar-wrap">
           <div id="friendProfileBuddy" class="friend-profile-avatar">🐰</div>
-          <span id="friendProfilePresenceDot" class="friend-profile-presence-dot is-offline" aria-label="Offline"></span>
         </div>
-        <h2 id="friendProfileName"></h2>
-        <p id="friendProfileHandle" class="friend-profile-handle"></p>
-        <button type="button" class="primary friend-profile-follow" id="friendProfileFollow">Follow ♡</button>
+        <div class="friend-profile-identity">
+          <h2 id="friendProfileName"></h2>
+          <p id="friendProfileHandle" class="friend-profile-handle"></p>
+        </div>
+        <button type="button" class="primary friend-profile-follow" id="friendProfileFollow">Following ✓</button>
       </div>
       <p id="friendProfileBio" class="friend-profile-bio"></p>
       <div class="friend-profile-activity-line">
-        <span id="friendProfilePresence" class="friend-profile-presence">Last active recently</span>
+        <span class="friend-profile-activity-status"><i id="friendProfilePresenceDot" class="friend-profile-presence-dot is-offline" aria-label="Offline"></i><span id="friendProfilePresence">5m ago</span></span>
         <div id="friendProfileGarden" class="friend-profile-stat-plates">
           <small class="friend-profile-queen">👑 <b>Queen</b></small>
           <small class="friend-profile-flower">🌸 <b id="friendProfileStreakCount">— flower</b></small>
