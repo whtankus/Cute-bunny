@@ -117,7 +117,7 @@ async function optimizePhotoUpload(file) {
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(bitmap.width * scale));
     canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-    const context = canvas.getContext('2d', { alpha: false });
+    const context = canvas.getContext('2d');
     if (!context) return file;
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.82));
