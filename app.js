@@ -1412,6 +1412,11 @@ function popLoveHeart(card, e) {
       control.setAttribute('aria-pressed', String(likedNow));
       control.setAttribute('aria-label', likedNow ? (message ? 'Unlike message' : 'Unlike memory') : (message ? 'Like message' : 'Like memory'));
     }
+      control.classList.remove('heart-tap');
+      void control.offsetWidth;
+      control.classList.add('heart-tap');
+      clearTimeout(control.heartTimer);
+      control.heartTimer = setTimeout(() => control.classList.remove('heart-tap'), 520);
 
   }
   card.classList.remove('heart-tap');
@@ -3019,6 +3024,19 @@ document.addEventListener('pointerdown', e => {
   nav.dataset.fastNavHandled = 'true';
   go(nav.dataset.page);
 }, { capture: true, passive: false });
+
+// Double-click a photo or music memory card to like/unlike it.
+document.addEventListener('dblclick', e => {
+  const tile = e.target.closest('.feed-item .tile');
+  if (!tile || e.target.closest('button, a, input, textarea, select')) return;
+  const item = tile.closest('.feed-item');
+  const kind = item?.dataset.kind || item?.dataset.memoryKind || '';
+  const isPhotoOrMusic = /photo|music|song|audio/i.test(kind) ||
+    Boolean(tile.querySelector('.feed-photo, audio, .audio-player, [data-audio], .music-art, .album-art'));
+  if (!isPhotoOrMusic) return;
+  e.preventDefault();
+  popLoveHeart(tile, e);
+});
 
 document.addEventListener('click', async e => {
   const olderFeedButton = e.target.closest('[data-load-older-feed]');
