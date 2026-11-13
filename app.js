@@ -733,10 +733,10 @@ function formatLastActive(value) {
 
 function friendRow(user) {
   const snapshot = streakFriendSnapshot(user);
-  const flowerLabel = snapshot.count === null ? '🌸 — flowers' : '🌸 ' + Number(snapshot.count).toLocaleString() + ' flowers';
+  const flowerLabel = snapshot.count === null ? '🌸 — flower' : '🌸 ' + Number(snapshot.count).toLocaleString() + ' flower';
   const heartLabel = user.heartCount === null || user.heartCount === undefined
-    ? '💖 — hearts'
-    : '💖 ' + Number(user.heartCount).toLocaleString() + ' hearts';
+    ? '💖 — heart'
+    : '💖 ' + Number(user.heartCount).toLocaleString() + ' heart';
   let liveState = {};
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
   const online = isPresenceUserOnline(user.id, liveState);
