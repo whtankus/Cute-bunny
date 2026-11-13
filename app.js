@@ -2963,9 +2963,22 @@ document.addEventListener('pointermove', e => {
 });
 document.addEventListener('pointerup', cancelPhotoPress);
 document.addEventListener('pointercancel', cancelPhotoPress);
+// Suppress the browser's native image callout/download menu on long press.
 document.addEventListener('contextmenu', e => {
-  if (e.target.closest('.feed-photo')) e.preventDefault();
-});
+  if (e.target.closest('.feed-photo, .photo-frame')) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, true);
+document.addEventListener('dragstart', e => {
+  if (e.target.closest('.feed-photo, .photo-frame')) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, true);
+document.addEventListener('selectstart', e => {
+  if (e.target.closest('.feed-photo, .photo-frame')) e.preventDefault();
+}, true);
 
 // Notes message gestures: button press feedback, tap to like, hold for Copy/Delete.
 document.addEventListener('pointerdown', e => {
