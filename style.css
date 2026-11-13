@@ -9185,3 +9185,5 @@ body[data-mode="dark"] #app .now-playing-panel {
 @media (prefers-reduced-motion: reduce) {
   #nav button { transition: none; }
 }
+
+.older-memories-wrap{display:flex;justify-content:center;width:100%;padding:18px 0 28px}.older-memories-button{min-width:min(240px,100%)}
