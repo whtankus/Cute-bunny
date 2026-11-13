@@ -758,7 +758,7 @@ function friendRow(user, isOwnProfile = false) {
   const action = isOwnProfile
     ? '<button class="primary follow-btn own-profile-action" type="button" data-open-own-profile>View profile</button>'
     : '<button class="primary follow-btn" type="button" data-follow="' + esc(user.username) + '" data-following="' + !!user.isFollowing + '">' + (user.isFollowing ? 'Following' : 'Follow ♡') + '</button>';
-  return '<article class="friend-row ' + (online ? 'is-online' : 'is-offline') + (isOwnProfile ? ' own-profile-row' : '') + '" data-friend-id="' + esc(user.id) + '" data-profile="' + esc(user.username) + '" data-wallpaper="' + wallpaper + '" data-own-profile="' + (isOwnProfile ? 'true' : 'false') + '"><div class="friend-main"><span class="friend-avatar">' + esc(user.mascot || '🐰') + '<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>' + esc(user.displayName || user.display_name || user.username) + '</b><small>@' + esc(user.username) + '</small></span><span class="friend-meta-line"><small class="sg-friend-presence">' + esc(presenceLabel) + '</small></span><span class="friend-stat-plates">' + (titleTag ? '<small class="friend-row-queen">' + esc(titleTag) + '</small>' : '') + '<small class="friend-row-streak">' + esc(flowerLabel) + '</small><small class="friend-row-hearts">' + esc(heartLabel) + '</small></span></span></div>' + action + '</article>';
+  return '<article class="friend-row ' + (online ? 'is-online' : 'is-offline') + (isOwnProfile ? ' own-profile-row' : '') + '" data-friend-id="' + esc(user.id) + '" data-profile="' + esc(user.username) + '" data-wallpaper="' + wallpaper + '" data-own-profile="' + (isOwnProfile ? 'true' : 'false') + '"><div class="friend-main"><span class="friend-avatar">' + esc(user.mascot || '🐰') + '<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>' + esc(user.displayName || user.display_name || user.username) + '</b><small>@' + esc(user.username) + '</small></span><span class="friend-meta-line"><small class="sg-friend-presence">' + esc(presenceLabel) + '</small></span><span class="friend-stat-plates">' + (titleTag ? '<small class="friend-row-queen">' + esc(titleTag) + '</small>' : '') + '<small class="friend-row-streak">' + esc(flowerLabel) + '</small><small class="friend-row-hearts">' + esc(heartLabel) + '</small></span></span></div>' + (isOwnProfile ? '<button type="button" class="profile-settings-trigger" id="profileSettingsTrigger" aria-label="Open profile settings" title="Settings">🌸</button>' : '') + action + '</article>';
 }
 
 
@@ -2090,6 +2090,7 @@ function render(options = {}) {
       '<section class="own-profile-section"><div class="friend-section-title"><h3>Your profile</h3></div>',
       me ? friendRow(me, true) : '<div class="empty">Your profile is not available right now.</div>',
       '</section>',
+      me ? profileSettingsMarkup() : '',
       '<section class="following-list"><div class="friend-section-title"><h3>Your Friends</h3><span>' + friends.length + '</span></div>',
       friends.map(friendRow).join('') || '<div class="empty">Your circle is waiting for its first friend ♡</div>',
       '</section>'
@@ -2142,8 +2143,6 @@ function showFriendProfile(user) {
   $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
   const titleTag = $('#friendProfileTitleTag');
   if (titleTag) { const title = user.gender === 'male' ? 'King' : user.gender === 'female' ? 'Queen' : ''; titleTag.hidden = !title; titleTag.innerHTML = title ? '👑 <b>' + title + '</b>' : ''; }
-  const settingsTrigger = $('#profileSettingsTrigger');
-  if (settingsTrigger) settingsTrigger.hidden = !isOwnProfile;
   const settingsPanel = $('#profileSettingsPanel');
   if (settingsPanel && !isOwnProfile) settingsPanel.classList.add('hidden');
   const profileOnline = isPresenceUserOnline(user.id, (() => { try { return presenceChannel?.presenceState?.() || {}; } catch { return {}; } })());
@@ -2167,6 +2166,10 @@ function showFriendProfile(user) {
   gate.classList.remove('hidden');
 }
 
+
+function profileSettingsMarkup() {
+  return "<section class=\"profile-settings-panel hidden\" id=\"profileSettingsPanel\" aria-label=\"Profile settings\">\n      <div class=\"profile-settings-heading\"><div><p class=\"eyebrow\">YOUR LITTLE CORNER</p><h3>Settings</h3></div><button type=\"button\" class=\"profile-settings-close\" id=\"profileSettingsClose\" aria-label=\"Close settings\">×</button></div>\n      <nav class=\"profile-settings-tabs\" aria-label=\"Settings sections\"><button type=\"button\" class=\"is-active\" data-settings-tab=\"profile\">Profile</button><button type=\"button\" data-settings-tab=\"chat\">Chat</button><button type=\"button\" data-settings-tab=\"other\">Others</button></nav>\n      <div class=\"profile-settings-section\" data-settings-section=\"profile\"><h4>Profile settings</h4><p>Choose the title shown with your profile.</p><div class=\"profile-gender-options\" role=\"group\" aria-label=\"Gender\"><button type=\"button\" data-profile-gender=\"male\">Male</button><button type=\"button\" data-profile-gender=\"female\">Female</button></div><p class=\"profile-settings-preview\" id=\"profileGenderPreview\">Choose an option to preview your profile tag.</p></div>\n      <div class=\"profile-settings-section hidden\" data-settings-section=\"chat\"><h4>Chat settings</h4><label class=\"profile-setting-toggle\"><span><b>Memory notifications</b><small>Get notified when a friend shares a memory.</small></span><input type=\"checkbox\" id=\"profileSettingMemoryNotifications\"></label><label class=\"profile-setting-toggle\"><span><b>Friend activity notifications</b><small>Keep friend activity alerts enabled.</small></span><input type=\"checkbox\" id=\"profileSettingBuddyNotifications\"></label></div>\n      <div class=\"profile-settings-section hidden\" data-settings-section=\"other\"><h4>Other settings</h4><p>Change the decorative wallpaper on your profile without changing its layout.</p><button type=\"button\" class=\"profile-settings-wallpaper\" id=\"profileSettingsWallpaper\">Change profile theme</button><p class=\"profile-settings-note\">Your settings are saved to your account and follow you across devices.</p></div>\n      <button type=\"button\" class=\"primary profile-settings-save\" id=\"profileSettingsSave\">Save settings ♡</button><p class=\"profile-settings-feedback\" id=\"profileSettingsFeedback\" role=\"status\"></p>\n    </section>";
+}
 
 function renderProfileSettings() {
   const gender = me?.gender || '';
@@ -3903,7 +3906,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  if (e.target.closest('#profileSettingsTrigger')) { renderProfileSettings(); $('#profileSettingsPanel')?.classList.remove('hidden'); return; }
+  if (e.target.closest('#profileSettingsTrigger')) { e.preventDefault(); e.stopPropagation(); renderProfileSettings(); $('#profileSettingsPanel')?.classList.remove('hidden'); return; }
   if (e.target.closest('#profileSettingsClose')) { $('#profileSettingsPanel')?.classList.add('hidden'); return; }
   const settingsTab = e.target.closest('[data-settings-tab]');
   if (settingsTab) { const selected = settingsTab.dataset.settingsTab; document.querySelectorAll('[data-settings-tab]').forEach(button => button.classList.toggle('is-active', button === settingsTab)); document.querySelectorAll('[data-settings-section]').forEach(section => section.classList.toggle('hidden', section.dataset.settingsSection !== selected)); return; }
