@@ -74,3 +74,109 @@ grant update (display_name,bio,theme,mascot) on public.profiles to authenticated
 grant select, insert, delete on public.follows to authenticated;
 grant select, insert, delete on public.memories to authenticated;
 grant usage, select on sequence public.memories_id_seq to authenticated;
+
+
+-- Persistent reactions: one like per user per memory.
+create table if not exists public.memory_likes (
+  memory_id bigint not null references public.memories(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (memory_id, user_id)
+);
+create index if not exists memory_likes_user_id_idx on public.memory_likes(user_id);
+
+alter table public.memory_likes enable row level security;
+drop policy if exists "Read likes for visible memories" on public.memory_likes;
+create policy "Read likes for visible memories"
+on public.memory_likes for select to authenticated
+using (
+  exists (
+    select 1 from public.memories m
+    where m.id = memory_likes.memory_id
+      and (
+        m.owner_id = (select auth.uid())
+        or exists (
+          select 1 from public.follows f
+          where f.follower_id = (select auth.uid())
+            and f.followed_id = m.owner_id
+        )
+      )
+  )
+);
+drop policy if exists "Like only followed users memories" on public.memory_likes;
+create policy "Like only followed users memories"
+on public.memory_likes for insert to authenticated
+with check (
+  user_id = (select auth.uid())
+  and exists (
+    select 1 from public.memories m
+    where m.id = memory_likes.memory_id
+      and m.owner_id <> (select auth.uid())
+      and exists (
+        select 1 from public.follows f
+        where f.follower_id = (select auth.uid())
+          and f.followed_id = m.owner_id
+      )
+  )
+);
+drop policy if exists "Remove only own likes" on public.memory_likes;
+create policy "Remove only own likes"
+on public.memory_likes for delete to authenticated
+using (user_id = (select auth.uid()));
+
+grant select, insert, delete on public.memory_likes to authenticated;
+
+-- Like notifications use a private trigger function, not a public RPC endpoint.
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+create or replace function private.notify_memory_like()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  memory_owner uuid;
+  memory_kind text;
+  actor_name text;
+begin
+  if auth.uid() is distinct from new.user_id then
+    raise exception 'A user can only create a like as themselves';
+  end if;
+  select m.owner_id, m.kind into memory_owner, memory_kind
+  from public.memories m where m.id = new.memory_id;
+  if memory_owner is null or memory_owner = new.user_id then
+    raise exception 'You cannot like your own memory';
+  end if;
+  select coalesce(p.display_name, p.username, 'A friend')
+    into actor_name from public.profiles p where p.id = new.user_id;
+  if to_regclass('public.notifications') is not null then
+    insert into public.notifications (recipient_id, actor_id, kind, memory_id, message)
+    values (
+      memory_owner,
+      new.user_id,
+      memory_kind,
+      new.memory_id,
+      left(coalesce(actor_name, 'A friend') || ' liked your ' || memory_kind || ' ♡', 180)
+    );
+  end if;
+  return new;
+end;
+$$;
+revoke all on function private.notify_memory_like() from public, anon, authenticated;
+
+do $$
+begin
+  if to_regclass('public.notifications') is not null then
+    execute 'drop trigger if exists on_memory_like_created on public.memory_likes';
+    execute 'create trigger on_memory_like_created after insert on public.memory_likes for each row execute function private.notify_memory_like()';
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'memory_likes'
+  ) then
+    execute 'alter publication supabase_realtime add table public.memory_likes';
+  end if;
+end $$;
