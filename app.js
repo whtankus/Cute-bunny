@@ -4068,7 +4068,7 @@ document.addEventListener('click', async e => {
       photoPressState.clickTimer = null;
       photoPressState.pendingPhotoId = null;
       if (pendingId) void openPhotoLightbox(pendingId);
-    }, 520);
+    }, 320);
     return;
   }
   if (e.target.closest('#photoLightboxSave')) {
