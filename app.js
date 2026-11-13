@@ -517,6 +517,8 @@ async function refresh() {
   feedPageHasMore.photo = feedPageHasMore.song = true;
   friends = results[2];
   render();
+  if (page === 'gallery') void loadLatestMedia('photo');
+  else if (page === 'music') void loadLatestMedia('song');
   syncStreakWidget();
   syncPresenceUI();
   if (!$('#friendProfileGate').classList.contains('hidden')) {
