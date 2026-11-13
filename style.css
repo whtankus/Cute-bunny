@@ -11436,3 +11436,9 @@ body[data-mode="dark"] #content .friend-row .friend-stat-plates>.friend-row-hear
     min-height:24px!important;padding:3px 6px!important;font-size:.61rem!important;
   }
 }
+
+
+/* Give People You Follow badges the same fully pill-shaped edges as profile badges. */
+#content .friend-row .friend-stat-plates>small{
+  border-radius:999px!important;
+}
