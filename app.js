@@ -1614,7 +1614,7 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
     : Array.from(messageValue).length;
   const hasHeartReaction = messageCharacterCount >= 6;
   const heartButton = hasHeartReaction
-    ? `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}">${liked ? '♥' : '♡'}</button>`
+    ? `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(id)}" aria-label="${liked ? 'Unlike' : 'Like'} message" aria-pressed="${liked}"><span class="heart-wallpaper-fill" aria-hidden="true">♥</span><span class="heart-outline-glyph" aria-hidden="true">${liked ? '♥' : '♡'}</span></button>`
     : '';
   const name = esc(owner.displayName || owner.display_name || owner.username || 'Friend');
   const handle = esc(owner.username || 'friend');
@@ -1658,7 +1658,7 @@ function memoryCard(m, options = {}) {
   const pet = esc(owner.mascot || '🐰');
   const liked = reactedMemories.has(String(m.id)) ? ' is-loved' : '';
   const isLiked = reactedMemories.has(String(m.id));
-  const heartButton = `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}">${isLiked ? '♥' : '♡'}</button>`;
+  const heartButton = `<button type="button" class="memory-heart-toggle" data-memory-heart="${esc(m.id)}" aria-label="${isLiked ? 'Unlike' : 'Like'} memory" aria-pressed="${isLiked}"><span class="heart-wallpaper-fill" aria-hidden="true">♥</span><span class="heart-outline-glyph" aria-hidden="true">${isLiked ? '♥' : '♡'}</span></button>`;
   const sorted = [me?.id, ...friends.map(f => f.id)].filter(Boolean).map(String).sort();
   const tone = sorted.indexOf(String(owner.id || m.owner_id || '')) % 2 ? 'tone-lavender' : 'tone-peach';
   const pending = pendingDeleteTimers.has(String(m.id)) ? ' is-pending-delete' : '';
