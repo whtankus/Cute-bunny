@@ -543,6 +543,7 @@ async function loadLatestMedia(kind) {
     feedPageOffsets[kind] = latest.length;
     feedPageHasMore[kind] = latest.length === 8;
     mediaVisibleCount[kind] = 8;
+    mediaPageLoading[kind] = false;
     render();
   } catch (error) {
     console.warn('Latest ' + kind + ' memories could not be loaded:', error?.message || error);
