@@ -555,10 +555,9 @@ function setFeedHistoryLoading(loading) {
 async function loadMoreFeed() {
   if (feedLoadingMore || !me) return;
   const kind = page === 'gallery' ? 'photo' : page === 'music' ? 'song' : 'all';
-  if (!feedPageHasMore[kind]) return;
+  if (!feedPageHasMore[kind] || (kind !== 'all' && mediaPageLoading[kind])) return;
   feedLoadingMore = true; setFeedHistoryLoading(true);
-  const previousScrollTop = page === 'notes' ? ($('#chatThread')?.scrollTop || 0) : (window.scrollY || document.documentElement.scrollTop || 0);
-  const previousScrollHeight = page === 'notes' ? ($('#chatThread')?.scrollHeight || 0) : 0;
+  const previousScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
   try {
     const offset = feedPageOffsets[kind];
     const query = kind === 'all' ? '/feed?offset=' + offset : '/feed?kind=' + kind + '&offset=' + offset;
@@ -569,7 +568,7 @@ async function loadMoreFeed() {
     mergeFeedRows(older); feedHasMore = feedPageHasMore.all;
     if (page === 'notes') {
       renderNotesPage();
-      requestAnimationFrame(() => { const thread = $('#chatThread'); if (thread) thread.scrollTop = previousScrollTop + Math.max(0, thread.scrollHeight - previousScrollHeight); observeFeedHistory(); });
+      requestAnimationFrame(observeFeedHistory);
     } else {
       render();
       requestAnimationFrame(() => { window.scrollTo({ top: previousScrollTop, behavior: 'auto' }); observeFeedHistory(); });
