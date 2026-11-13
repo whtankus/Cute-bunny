@@ -1629,7 +1629,6 @@ function memoryCard(m, options = {}) {
   const tone = sorted.indexOf(String(owner.id || m.owner_id || '')) % 2 ? 'tone-lavender' : 'tone-peach';
   const pending = pendingDeleteTimers.has(String(m.id)) ? ' is-pending-delete' : '';
   const uploading = m.isPending ? ' is-uploading' : '';
-  const mine = String(owner.id || m.owner_id || '') === String(me?.id || '');
 
   let body = '';
   if (m.kind === 'photo') {
