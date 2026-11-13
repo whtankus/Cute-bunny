@@ -22,7 +22,7 @@ const FEED_PAGE_SIZE = 40;
 const feedPageOffsets = { all: 0, photo: 0, song: 0 };
 const feedPageHasMore = { all: false, photo: true, song: true };
 const mediaVisibleCount = { photo: 8, song: 8 };
-let feedHistoryObserver = null, mediaPageLoading = { photo: false, song: false };
+let feedHistoryObserver = null, feedHistoryScrollArmed = false, mediaPageLoading = { photo: false, song: false };
 let mediaObserver = null;
 let pendingDeleteTimers = new Map(), authMode = 'register';
 let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0;
@@ -586,9 +586,31 @@ function observeFeedHistory() {
   const sentinel = document.querySelector('[data-history-sentinel]');
   if (!sentinel || !('IntersectionObserver' in window)) return;
   const root = page === 'notes' ? $('#chatThread') : null;
-  feedHistoryObserver = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) void loadMoreFeed(); }, { root, rootMargin: page === 'notes' ? '220px 0px 0px 0px' : '500px 0px' });
+  feedHistoryObserver = new IntersectionObserver(entries => {
+    if (feedHistoryScrollArmed && entries.some(entry => entry.isIntersecting)) {
+      feedHistoryScrollArmed = false;
+      void loadMoreFeed();
+    }
+  }, { root, rootMargin: page === 'notes' ? '220px 0px 0px 0px' : '500px 0px' });
   feedHistoryObserver.observe(sentinel);
 }
+
+function tryAutoLoadFeedHistory() {
+  if (!feedHistoryScrollArmed || feedLoadingMore) return;
+  const sentinel = document.querySelector('[data-history-sentinel]');
+  if (!sentinel) return;
+  const rect = sentinel.getBoundingClientRect();
+  const near = page === 'notes'
+    ? rect.top <= ($('#chatThread')?.getBoundingClientRect().top || 0) + 220
+    : rect.top <= window.innerHeight + 500;
+  if (near) {
+    feedHistoryScrollArmed = false;
+    void loadMoreFeed();
+  }
+}
+
+window.addEventListener('wheel', () => { feedHistoryScrollArmed = true; requestAnimationFrame(tryAutoLoadFeedHistory); }, { passive: true });
+document.addEventListener('touchmove', () => { feedHistoryScrollArmed = true; requestAnimationFrame(tryAutoLoadFeedHistory); }, { passive: true });
 const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
 
 // Let the browser's active locale and device clock preference choose 12-hour or
