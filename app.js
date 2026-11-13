@@ -2095,7 +2095,6 @@ function showFriendProfile(user) {
   $('#friendProfileName').textContent = user.displayName || user.display_name || user.username;
   $('#friendProfileHandle').textContent = '@' + user.username;
   $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
-  $('#friendProfileCreated').textContent = 'Joined ' + formatJoinDate(user.created_at);
   const profileOnline = isPresenceUserOnline(user.id, (() => { try { return presenceChannel?.presenceState?.() || {}; } catch { return {}; } })());
   const presenceDot = $('#friendProfilePresenceDot');
   $('#friendProfilePresence').textContent = profileOnline ? 'Online now' : 'Last active ' + formatLastActive(user.last_active_at);
@@ -2109,10 +2108,6 @@ function showFriendProfile(user) {
   $('#friendProfileStreakCount').textContent = friendGarden.count === null
     ? '— flower'
     : Number(friendGarden.count).toLocaleString() + ' flower';
-  $('#friendProfileStreakStatus').textContent = friendGarden.label;
-  $('#friendProfileStreakStatus').hidden = !friendGarden.label;
-  $('#friendProfileStyle').dataset.themePreview = user.theme || 'rose';
-  $('#friendProfileThemeName').textContent = themeNames[user.theme] || 'Rose garden';
   $('#friendProfileFollow').textContent = user.isFollowing ? 'Following ✓' : 'Follow ♡';
   $('#friendProfileFollow').classList.toggle('is-following', !!user.isFollowing);
   gate.classList.remove('hidden');
