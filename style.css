@@ -11484,35 +11484,30 @@ body[data-mode="dark"] #content .friend-row .friend-stat-plates>.friend-row-hear
 
 
 
-/* Profile wallpapers: decorative animated motifs only; content layout stays unchanged. */
-.auth-card.friend-profile-card{position:relative;isolation:isolate;overflow:hidden}
+/* Rich animated profile wallpapers: decorative scenery only; profile content remains unchanged. */
+.auth-card.friend-profile-card{position:relative;isolation:isolate;overflow:hidden;transition:background 650ms ease}
 .auth-card.friend-profile-card>*{position:relative;z-index:1}
-.auth-card.friend-profile-card::before,
-.auth-card.friend-profile-card::after{
-  content:"";position:absolute;z-index:0;left:-16%;width:132%;height:46px;
-  overflow:hidden;pointer-events:none;white-space:pre;letter-spacing:13px;
-  font-size:24px;line-height:1.5;opacity:0;
-}
-.auth-card.friend-profile-card::before{top:0;animation:profile-wallpaper-drift 18s ease-in-out infinite alternate}
-.auth-card.friend-profile-card::after{bottom:0;animation:profile-wallpaper-drift 23s ease-in-out infinite alternate-reverse}
-.auth-card.friend-profile-card[data-wallpaper="normal"]{background:linear-gradient(145deg,rgba(255,250,246,.98),rgba(255,244,249,.96) 58%,rgba(247,242,255,.96))}
-.auth-card.friend-profile-card[data-wallpaper="blossom"]{background:linear-gradient(145deg,#fff9f2 0%,#fff0f5 58%,#f9f0ff 100%)}
-.auth-card.friend-profile-card[data-wallpaper="blossom"]::before,
-.auth-card.friend-profile-card[data-wallpaper="blossom"]::after{opacity:.34;color:#d88eae;text-shadow:0 2px 8px #efc3d5;content:"✿  🌸  ✿  ♡  🌷  ✿  🌸  ✿"}
-.auth-card.friend-profile-card[data-wallpaper="clouds"]{background:linear-gradient(145deg,#f1fbff 0%,#eaf5ff 55%,#f8f4ff 100%)}
-.auth-card.friend-profile-card[data-wallpaper="clouds"]::before,
-.auth-card.friend-profile-card[data-wallpaper="clouds"]::after{opacity:.38;color:#83b8d7;text-shadow:0 3px 10px #b8d9ed;content:"☁  ୨୧  ☁  ✧  ☁  ୨୧  ☁"}
-.auth-card.friend-profile-card[data-wallpaper="starlight"]{background:linear-gradient(145deg,#f1efff 0%,#e9eaff 52%,#f8f0ff 100%)}
-.auth-card.friend-profile-card[data-wallpaper="starlight"]::before,
-.auth-card.friend-profile-card[data-wallpaper="starlight"]::after{opacity:.48;color:#9386c9;text-shadow:0 0 12px #c9baff;content:"✦  ✧  ⋆  ☆  ✧  ✦  ⋆  ☆"}
-.auth-card.friend-profile-card[data-wallpaper="hearts"]{background:linear-gradient(145deg,#fff5f7 0%,#ffedf4 55%,#f9f0ff 100%)}
-.auth-card.friend-profile-card[data-wallpaper="hearts"]::before,
-.auth-card.friend-profile-card[data-wallpaper="hearts"]::after{opacity:.35;color:#df91b0;text-shadow:0 2px 10px #f1c0d4;content:"♡  ♥  ♡  ✧  ♥  ♡  ♥  ♡"}
-@keyframes profile-wallpaper-drift{
-  0%{transform:translate3d(-2%,0,0) rotate(-1deg)}
-  50%{transform:translate3d(2%,5px,0) rotate(1deg)}
-  100%{transform:translate3d(-1%,1px,0) rotate(-.5deg)}
-}
+.auth-card.friend-profile-card::before,.auth-card.friend-profile-card::after{content:"";position:absolute;z-index:0;left:-18%;width:136%;height:54%;pointer-events:none;white-space:pre;letter-spacing:16px;font-size:clamp(24px,5vw,42px);line-height:2.2;opacity:0;filter:drop-shadow(0 5px 10px rgba(110,80,120,.12))}
+.auth-card.friend-profile-card::before{top:-8%;animation:profile-wallpaper-float 17s ease-in-out infinite alternate}
+.auth-card.friend-profile-card::after{bottom:-10%;animation:profile-wallpaper-float 23s ease-in-out infinite alternate-reverse}
+.auth-card.friend-profile-card[data-wallpaper="normal"]{background:linear-gradient(145deg,#fffdf9 0%,#fff7f5 52%,#f7f3ff 100%)}
+.auth-card.friend-profile-card[data-wallpaper="blossom"]{background:radial-gradient(ellipse at 15% 15%,rgba(255,255,255,.95),transparent 38%),radial-gradient(ellipse at 90% 85%,#f4c9dc 0,transparent 42%),linear-gradient(135deg,#fff4e9,#ffe1ed 48%,#eee2ff)}
+.auth-card.friend-profile-card[data-wallpaper="blossom"]::before{opacity:.52;color:#c76e9b;text-shadow:0 0 18px #fff;content:"🌸　✿　🦋　✿　🌷　✿　🦋"}
+.auth-card.friend-profile-card[data-wallpaper="blossom"]::after{opacity:.42;color:#d58aae;content:"🌿　🌸　୨୧　🌷　✿　🌿";animation-duration:29s}
+.auth-card.friend-profile-card[data-wallpaper="clouds"]{background:radial-gradient(ellipse at 18% 20%,#fff 0,transparent 32%),radial-gradient(ellipse at 85% 75%,#b9e5f5 0,transparent 45%),linear-gradient(145deg,#e4f8ff,#d9eaff 52%,#f2e9ff)}
+.auth-card.friend-profile-card[data-wallpaper="clouds"]::before{opacity:.62;color:#fff;text-shadow:0 4px 16px #9acde2;content:"☁　☁　🕊　☁　୨୧　☁"}
+.auth-card.friend-profile-card[data-wallpaper="clouds"]::after{opacity:.38;color:#82b9d6;content:"☁　✧　☁　🫧　☁　✧";animation-duration:27s}
+.auth-card.friend-profile-card[data-wallpaper="starlight"]{background:radial-gradient(circle at 22% 18%,#fff8c9 0 2px,transparent 4px),radial-gradient(circle at 78% 30%,#fff 0 2px,transparent 4px),radial-gradient(ellipse at 50% 120%,#9b8bd2,transparent 65%),linear-gradient(145deg,#171d48,#37366d 55%,#75649d)}
+.auth-card.friend-profile-card[data-wallpaper="starlight"]::before{opacity:.72;color:#fff1b8;text-shadow:0 0 14px #fff;content:"✦　⋆　☾　✧　☆　⋆　✦"}
+.auth-card.friend-profile-card[data-wallpaper="starlight"]::after{opacity:.56;color:#d8d0ff;text-shadow:0 0 18px #bcaeff;content:"⋆　✧　✦　🪐　✧　⋆";animation-duration:31s}
+.auth-card.friend-profile-card[data-wallpaper="hearts"]{background:radial-gradient(ellipse at 10% 90%,#ffd4e4,transparent 42%),radial-gradient(ellipse at 90% 10%,#e6d7ff,transparent 44%),linear-gradient(145deg,#fff5f4,#ffe5ef 48%,#f1e7ff)}
+.auth-card.friend-profile-card[data-wallpaper="hearts"]::before{opacity:.56;color:#df8eaf;text-shadow:0 0 16px #fff;content:"♡　💗　♡　🧸　♡　💞"}
+.auth-card.friend-profile-card[data-wallpaper="hearts"]::after{opacity:.42;color:#b58acb;content:"୨୧　♡　✧　💝　♡　୨୧";animation-duration:26s}
+@keyframes profile-wallpaper-float{0%{transform:translate3d(-3%,0,0) rotate(-2deg) scale(.98)}50%{transform:translate3d(2%,12px,0) rotate(2deg) scale(1.03)}100%{transform:translate3d(-1%,4px,0) rotate(-1deg) scale(1)}}
+#friendProfilePresenceDot{width:12px!important;height:12px!important;min-width:12px!important;min-height:12px!important;border-radius:50%!important;display:inline-block!important;box-shadow:0 0 0 3px rgba(120,130,140,.12)}
+#friendProfilePresenceDot.is-online{background:#25bd68!important;box-shadow:0 0 0 3px rgba(37,189,104,.18),0 0 12px rgba(37,189,104,.42)!important}
+#friendProfilePresenceDot.is-offline{background:#9aa0a8!important;box-shadow:0 0 0 3px rgba(154,160,168,.18)!important}
+@media(prefers-reduced-motion:reduce){.auth-card.friend-profile-card::before,.auth-card.friend-profile-card::after{animation:none!important}}
 #content .friend-row[data-wallpaper="normal"]{background:#fffdfa!important}
 #content .friend-row[data-wallpaper="blossom"]{background:linear-gradient(120deg,#fff9f2,#fff0f5)!important}
 #content .friend-row[data-wallpaper="clouds"]{background:linear-gradient(120deg,#f1fbff,#eaf5ff)!important}
