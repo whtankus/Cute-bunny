@@ -2113,6 +2113,11 @@ function showFriendProfile(user) {
   gate.dataset.ownProfile = String(isOwnProfile);
   gate.dataset.profileSkin = ['cat', 'bird', 'vampire', 'fairy', 'galaxy'].includes(user.profile_skin) ? user.profile_skin : 'cat';
   gate.classList.toggle('is-own-profile', isOwnProfile);
+  const profileCard = gate.querySelector('.friend-profile-card');
+  if (profileCard) {
+    profileCard.dataset.profileSkin = gate.dataset.profileSkin;
+    profileCard.classList.toggle('is-own-profile', isOwnProfile);
+  }
   $('#friendProfileBuddy').textContent = user.mascot || '🐰';
   $('#friendProfileName').textContent = user.displayName || user.display_name || user.username;
   $('#friendProfileHandle').textContent = '@' + user.username;
