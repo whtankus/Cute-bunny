@@ -9442,3 +9442,18 @@ body[data-mode="dark"] #app .now-playing-panel {
   line-height:1!important;
   border-radius:13px!important;
 }
+
+
+/* Prevent native browser image callouts, saving, dragging, and text selection. */
+#content .feed-photo,
+#content .photo-frame {
+  -webkit-touch-callout:none!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+  -webkit-user-drag:none!important;
+  user-drag:none!important;
+}
+#content .feed-photo {
+  touch-action:pan-y!important;
+  pointer-events:auto;
+}
