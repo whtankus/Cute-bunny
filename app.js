@@ -19,6 +19,10 @@ let mediaObjectUrls = [], mediaUrlCache = new Map(), mediaHydrationInFlight = ne
 const memoryLikeInFlight = new Set();
 let feedHasMore = false, feedLoadingMore = false;
 const FEED_PAGE_SIZE = 40;
+const feedPageOffsets = { all: 0, photo: 0, song: 0 };
+const feedPageHasMore = { all: false, photo: true, song: true };
+const mediaVisibleCount = { photo: 8, song: 8 };
+let feedHistoryObserver = null, mediaPageLoading = { photo: false, song: false };
 let mediaObserver = null;
 let pendingDeleteTimers = new Map(), authMode = 'register';
 let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0;
@@ -278,11 +282,15 @@ async function api(path, options = {}) {
 
   if (path.startsWith('/feed')) {
     const offsetMatch = path.match(/[?&]offset=(\d+)/);
+    const kindMatch = path.match(/[?&]kind=(photo|song|note)/);
+    const limitMatch = path.match(/[?&]limit=(\d+)/);
     const offset = Math.max(0, Number(offsetMatch?.[1]) || 0);
-    const { data: rows, error } = await sb.from('memories')
+    const pageSize = Math.min(120, Math.max(1, Number(limitMatch?.[1]) || FEED_PAGE_SIZE));
+    let memoriesQuery = sb.from('memories')
       .select('*,author:profiles!memories_owner_id_fkey(id,username,display_name,mascot,theme)')
-      .order('created_at', { ascending: false }).order('id', { ascending: false })
-      .range(offset, offset + FEED_PAGE_SIZE - 1);
+      .order('created_at', { ascending: false }).order('id', { ascending: false });
+    if (kindMatch) memoriesQuery = memoriesQuery.eq('kind', kindMatch[1]);
+    const { data: rows, error } = await memoriesQuery.range(offset, offset + pageSize - 1);
     fail(error);
 
     const memoryIds = (rows || []).map(memory => memory.id).filter(id => id != null);
@@ -501,7 +509,12 @@ async function refresh() {
   const results = await Promise.all([api('/me'), api('/feed'), api('/following')]);
   me = results[0];
   feed = results[1];
-  feedHasMore = feed.length === FEED_PAGE_SIZE;
+  feedPageOffsets.all = feed.length;
+  feedPageHasMore.all = feed.length === FEED_PAGE_SIZE;
+  feedHasMore = feedPageHasMore.all;
+  feedPageOffsets.photo = feedPageOffsets.song = 0;
+  mediaVisibleCount.photo = mediaVisibleCount.song = 8;
+  feedPageHasMore.photo = feedPageHasMore.song = true;
   friends = results[2];
   render();
   syncStreakWidget();
@@ -512,30 +525,71 @@ async function refresh() {
   }
 }
 
-async function loadMoreFeed() {
-  if (feedLoadingMore || !feedHasMore || !me) return;
-  feedLoadingMore = true;
-  const previousLength = feed.length;
-  render();
+function mergeFeedRows(rows) {
+  const byId = new Map(feed.map(item => [String(item.id), item]));
+  for (const row of rows || []) byId.set(String(row.id), { ...byId.get(String(row.id)), ...row });
+  feed = [...byId.values()].sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
+}
+
+async function loadLatestMedia(kind) {
+  if (!me || !['photo', 'song'].includes(kind) || mediaPageLoading[kind]) return;
+  mediaPageLoading[kind] = true;
   try {
-    const older = await api('/feed?offset=' + previousLength);
-    const known = new Set(feed.map(item => String(item.id)));
-    const additions = older.filter(item => !known.has(String(item.id)));
-    feed.push(...additions);
-    feedHasMore = older.length === FEED_PAGE_SIZE;
-  } catch (error) {
-    toast(error?.message || 'Older memories could not be loaded.');
-  } finally {
-    feedLoadingMore = false;
+    const latest = await api('/feed?kind=' + kind + '&limit=8');
+    if (page !== (kind === 'photo' ? 'gallery' : 'music')) return;
+    mergeFeedRows(latest);
+    feedPageOffsets[kind] = latest.length;
+    feedPageHasMore[kind] = latest.length === 8;
+    mediaVisibleCount[kind] = 8;
     render();
-  }
+  } catch (error) {
+    console.warn('Latest ' + kind + ' memories could not be loaded:', error?.message || error);
+    toast('Some recent ' + (kind === 'photo' ? 'photos' : 'songs') + ' could not be loaded.');
+  } finally { mediaPageLoading[kind] = false; observeFeedHistory(); }
 }
 
-function olderMemoriesButton() {
-  if (!feedHasMore && !feedLoadingMore) return '';
-  return `<div class="older-memories-wrap"><button type="button" class="primary older-memories-button" data-load-older-feed ${feedLoadingMore ? 'disabled' : ''}>${feedLoadingMore ? 'Loading older memories…' : 'Load older memories ↓'}</button></div>`;
+function setFeedHistoryLoading(loading) {
+  document.querySelectorAll('[data-history-loader]').forEach(node => { node.hidden = !loading; });
 }
 
+async function loadMoreFeed() {
+  if (feedLoadingMore || !me) return;
+  const kind = page === 'gallery' ? 'photo' : page === 'music' ? 'song' : 'all';
+  if (!feedPageHasMore[kind]) return;
+  feedLoadingMore = true; setFeedHistoryLoading(true);
+  const previousScrollTop = page === 'notes' ? ($('#chatThread')?.scrollTop || 0) : (window.scrollY || document.documentElement.scrollTop || 0);
+  const previousScrollHeight = page === 'notes' ? ($('#chatThread')?.scrollHeight || 0) : 0;
+  try {
+    const offset = feedPageOffsets[kind];
+    const query = kind === 'all' ? '/feed?offset=' + offset : '/feed?kind=' + kind + '&offset=' + offset;
+    const older = await api(query);
+    feedPageOffsets[kind] += older.length;
+    feedPageHasMore[kind] = older.length === FEED_PAGE_SIZE;
+    if (kind !== 'all') mediaVisibleCount[kind] += older.length;
+    mergeFeedRows(older); feedHasMore = feedPageHasMore.all;
+    if (page === 'notes') {
+      renderNotesPage();
+      requestAnimationFrame(() => { const thread = $('#chatThread'); if (thread) thread.scrollTop = previousScrollTop + Math.max(0, thread.scrollHeight - previousScrollHeight); observeFeedHistory(); });
+    } else {
+      render();
+      requestAnimationFrame(() => { window.scrollTo({ top: previousScrollTop, behavior: 'auto' }); observeFeedHistory(); });
+    }
+  } catch (error) { toast(error?.message || 'Older memories could not be loaded.'); }
+  finally { feedLoadingMore = false; setFeedHistoryLoading(false); }
+}
+
+function historySentinelMarkup(position = 'bottom') {
+  return '<div class="memory-history-sentinel ' + position + '" data-history-sentinel aria-hidden="true"></div><div class="memory-history-loader" data-history-loader hidden role="status"><span class="memory-history-bunny" aria-hidden="true">🐰</span><span>Gathering little memories…</span></div>';
+}
+
+function observeFeedHistory() {
+  feedHistoryObserver?.disconnect(); feedHistoryObserver = null;
+  const sentinel = document.querySelector('[data-history-sentinel]');
+  if (!sentinel || !('IntersectionObserver' in window)) return;
+  const root = page === 'notes' ? $('#chatThread') : null;
+  feedHistoryObserver = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) void loadMoreFeed(); }, { root, rootMargin: page === 'notes' ? '220px 0px 0px 0px' : '500px 0px' });
+  feedHistoryObserver.observe(sentinel);
+}
 const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
 
 // Let the browser's active locale and device clock preference choose 12-hour or
