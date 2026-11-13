@@ -52,6 +52,8 @@ const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
 const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false, suppressTimer:null };
 const photoPressState = { timer:null, image:null, pointerId:null, startX:0, startY:0, suppressClick:false, suppressTimer:null, clickTimer:null, pendingPhotoId:null };
 const bubbleTapState = { timer:null, bubble:null };
+let lastTouchMemoryTap = { id: '', time: 0, tile: null };
+let suppressNativeMemoryDblclickUntil = 0;
 
 
 const kindLines = [
@@ -739,7 +741,7 @@ function friendRow(user) {
   const heartLabel = user.heartCount === null || user.heartCount === undefined
     ? '♡ Hearts unavailable'
     : '♥ ' + Number(user.heartCount).toLocaleString() + ' hearts received';
-  return `<article class="friend-row" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}</span><span class="friend-copy"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)} · joined ${esc(formatJoinDate(user.created_at))}</small><small class="sg-friend-presence">${esc(presenceLabel)}</small><small class="friend-row-streak">🌸 ${esc(streakLabel)} · ${esc(snapshot.label)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
+  return `<article class="friend-row ${online ? 'is-online' : 'is-offline'}" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)}</small></span><span class="friend-meta-line"><small>Joined ${esc(formatJoinDate(user.created_at))}</small><small class="sg-friend-presence">${esc(presenceLabel)}</small></span><span class="friend-stat-plates"><small class="friend-row-streak">🌸 ${esc(streakLabel)} · ${esc(snapshot.label)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
 }
 
 
@@ -2094,6 +2096,11 @@ function showFriendProfile(user) {
   $('#friendProfileHandle').textContent = '@' + user.username;
   $('#friendProfileBio').textContent = user.bio || 'A little mystery friend ♡';
   $('#friendProfileCreated').textContent = 'Joined ' + formatJoinDate(user.created_at);
+  const profileOnline = isPresenceUserOnline(user.id, (() => { try { return presenceChannel?.presenceState?.() || {}; } catch { return {}; } })());
+  $('#friendProfilePresence').textContent = profileOnline ? 'Online now' : formatLastActive(user.last_active_at);
+  $('#friendProfileHearts').textContent = user.heartCount === null || user.heartCount === undefined
+    ? 'Hearts received unavailable'
+    : Number(user.heartCount).toLocaleString() + ' hearts received';
   const friendGarden = streakFriendSnapshot(user);
   $('#friendProfileStreakCount').textContent = friendGarden.count === null
     ? 'Streak unavailable'
@@ -2854,7 +2861,7 @@ function syncPresenceUI() {
     const presenceLabel = node.querySelector('.sg-friend-presence');
     if (presenceLabel) {
       if (node.classList.contains('friend-row')) {
-        const friend = friends.find(user => String(user.id) === String(node.dataset.friendId));
+        const friend = [...friends, ...friendResults].find(user => String(user.id) === String(node.dataset.friendId));
         presenceLabel.textContent = online ? 'Online now' : formatLastActive(friend?.last_active_at);
       } else {
         presenceLabel.textContent = presenceStatus === 'ready'
@@ -3378,8 +3385,46 @@ document.addEventListener('pointerdown', e => {
   go(nav.dataset.page);
 }, { capture: true, passive: false });
 
+// Touch double-taps are recognized on pointer release, so the heart reacts
+// on the second tap instead of waiting for the browser's synthetic dblclick.
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+  const tile = e.target.closest('.feed-item .tile');
+  if (!tile || e.target.closest('button:not(.play-song):not(.album-art), a, input, textarea, select')) return;
+  const item = tile.closest('.feed-item');
+  const id = String(item?.dataset.memory || '');
+  if (!id) return;
+  tile.dataset.touchLikeStart = id;
+}, { passive: true });
+
+document.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+  const tile = e.target.closest('.feed-item .tile');
+  if (!tile || tile.dataset.touchLikeStart !== String(tile.closest('.feed-item')?.dataset.memory || '')) return;
+  const item = tile.closest('.feed-item');
+  const kind = item?.dataset.kind || item?.dataset.memoryKind || '';
+  const isPhotoOrMusic = /photo|music|song|audio/i.test(kind) || Boolean(tile.querySelector('.feed-photo, audio, .audio-player, [data-audio], .music-art, .album-art'));
+  if (!isPhotoOrMusic) return;
+  const id = String(item?.dataset.memory || '');
+  const now = performance.now();
+  if (id && lastTouchMemoryTap.id === id && now - lastTouchMemoryTap.time <= 260) {
+    lastTouchMemoryTap = { id: '', time: 0, tile: null };
+    suppressNativeMemoryDblclickUntil = now + 500;
+    if (e.target.closest('.feed-photo')) {
+      clearTimeout(photoPressState.clickTimer);
+      photoPressState.clickTimer = null;
+      photoPressState.pendingPhotoId = null;
+    }
+    void popLoveHeart(tile, e);
+  } else {
+    lastTouchMemoryTap = { id, time: now, tile };
+  }
+  tile.dataset.touchLikeStart = '';
+}, { passive: true });
+
 // Double-click a photo or music memory card to like/unlike it.
 document.addEventListener('dblclick', e => {
+  if (performance.now() < suppressNativeMemoryDblclickUntil) { e.preventDefault(); return; }
   const tile = e.target.closest('.feed-item .tile');
   if (!tile) return;
   // A photo's first tap is delayed briefly so a second tap can be recognized
