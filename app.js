@@ -1892,7 +1892,7 @@ function render(options = {}) {
 
   if (page === 'notes') {
     renderNotesPage({ followLatest: !!options.followLatest });
-    requestAnimationFrame(observeNotificationMemoryViews);
+    requestAnimationFrame(() => { observeNotificationMemoryViews(); observeFeedHistory(); });
     return;
   }
   if (page === 'streak') {
@@ -2939,8 +2939,8 @@ function hydrateMedia() {
   mediaObserver = null;
   if (!sb) return;
   const nodes = [...document.querySelectorAll('[data-media]')];
-  nodes.forEach(node => {
-    node.loading = 'lazy';
+  nodes.forEach((node, index) => {
+    node.loading = page === 'gallery' && index < 8 ? 'eager' : 'lazy';
     node.decoding = 'async';
   });
   if ('IntersectionObserver' in window) {
@@ -2949,8 +2949,9 @@ function hydrateMedia() {
         mediaObserver.unobserve(entry.target);
         void hydrateOneMedia(entry.target);
       }
-    }), { rootMargin: '180px 0px' });
-    nodes.forEach(node => mediaObserver.observe(node));
+    }), { rootMargin: page === 'gallery' ? '900px 0px' : '320px 0px' });
+    nodes.slice(0, page === 'gallery' ? 8 : 0).forEach(node => void hydrateOneMedia(node));
+    nodes.slice(page === 'gallery' ? 8 : 0).forEach(node => mediaObserver.observe(node));
   } else nodes.forEach(node => void hydrateOneMedia(node));
 }
 
