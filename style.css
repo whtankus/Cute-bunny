@@ -11613,3 +11613,8 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
 .profile-settings-feedback{min-height:16px;margin:7px 0 0;text-align:center;color:#8a5571;font-size:11px}
 .profile-settings-panel.hidden{display:none!important}
 @media(max-width:420px){.profile-settings-panel{padding:13px}.profile-settings-trigger{top:10px;right:10px}}
+
+/* Main profile settings shortcut belongs to the Your profile card, not the profile modal. */
+.own-profile-section .own-profile-row{position:relative}
+.own-profile-section .profile-settings-trigger{top:9px;right:9px;width:31px;height:31px}
+.own-profile-section .profile-settings-panel{margin:12px 0 18px}
