@@ -11357,3 +11357,12 @@ body[data-mode="dark"] .friend-profile-joined>time{
  .auth-card.friend-profile-card .friend-profile-joined>time{font-size:.49rem;padding:3px 4px}
  .auth-card.friend-profile-card .friend-profile-main-row .friend-profile-follow{font-size:.51rem!important;padding:5px 5px!important}
 }
+
+
+/* Raise the joined-date tag slightly to align more closely with the name line. */
+.auth-card.friend-profile-card .friend-profile-joined{
+  transform:translateY(-4px);
+}
+@media(max-width:340px){
+  .auth-card.friend-profile-card .friend-profile-joined{transform:translateY(-3px)}
+}
