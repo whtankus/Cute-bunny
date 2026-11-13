@@ -1,0 +1,9 @@
+{
+  "name": "cute-bunny",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-preview.js",
+    "check": "node --check app.js && node --check sw.js && node --check scripts/build-preview.js"
+  }
+}
