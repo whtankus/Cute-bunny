@@ -3789,8 +3789,11 @@ document.addEventListener('click', async e => {
     return;
   }
   const friendLink = e.target.closest('[data-profile]');
-  if (friendLink) {
-    showFriendProfile([...friends, ...friendResults].find(u => u.username === friendLink.dataset.profile));
+  const friendCard = e.target.closest('.friend-row');
+  if (friendLink || (friendCard && !e.target.closest('[data-follow]'))) {
+    const profileTrigger = friendLink || friendCard.querySelector('[data-profile]');
+    const friend = [...friends, ...friendResults].find(u => u.username === profileTrigger?.dataset.profile);
+    if (friend) showFriendProfile(friend);
     return;
   }
   const followBtn = e.target.closest('#friendProfileFollow, [data-follow]');
