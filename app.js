@@ -30,6 +30,9 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0
 const songUrlCache = new Map(), songUrlInFlight = new Map();
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let notificationSeenObserver = null, notificationDismissals = new Set();
+let noteSeenObserver = null, noteSeenDebounceTimer = null;
+const noteSeenPending = new Map(), noteSeenInFlight = new Map();
+let noteSeenLastAck = new Map();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
 let navRefreshInFlight = false, appExitStep = 0;
@@ -332,6 +335,19 @@ async function api(path, options = {}) {
     const { data: rows, error } = await memoriesQuery.range(offset, offset + pageSize - 1);
     fail(error);
 
+    let latestOwnNoteId = null;
+    let ownNoteSeenCount = 0;
+    if (!kindMatch || kindMatch[1] === 'note') {
+      const [{ data: latestOwnNote, error: latestNoteError }, { data: ownReadCursors, error: ownReadError }] = await Promise.all([
+        sb.from('memories').select('id').eq('owner_id', session.user.id).eq('kind', 'note').order('id', { ascending: false }).limit(1).maybeSingle(),
+        sb.from('note_read_cursors').select('reader_id,last_read_message_id').eq('owner_id', session.user.id)
+      ]);
+      fail(latestNoteError);
+      fail(ownReadError);
+      latestOwnNoteId = latestOwnNote?.id ?? null;
+      ownNoteSeenCount = latestOwnNoteId == null ? 0 : (ownReadCursors || []).filter(cursor => Number(cursor.last_read_message_id) >= Number(latestOwnNoteId)).length;
+    }
+
     const memoryIds = (rows || []).map(memory => memory.id).filter(id => id != null);
     let likeRows = [];
     if (memoryIds.length) {
@@ -357,6 +373,8 @@ async function api(path, options = {}) {
         ...m,
         like_count: likeState.count,
         liked_by_me: likeState.likedByMe,
+        is_latest_own_note: m.kind === 'note' && String(m.id) === String(latestOwnNoteId),
+        seen_by_count: m.kind === 'note' && String(m.id) === String(latestOwnNoteId) ? ownNoteSeenCount : 0,
         createdAt: m.created_at,
         fileName: m.file_name,
         contentType: m.content_type,
@@ -406,6 +424,26 @@ async function api(path, options = {}) {
     }).filter(Boolean);
     const heartCounts = await fetchFriendHeartCounts(mapped.map(user => user.id));
     return mapped.map(user => ({ ...user, heartCount: heartCounts?.get(String(user.id)) ?? null }));
+  }
+
+  if (path === '/notes/my-read-cursors') {
+    const { data, error } = await sb.from('note_read_cursors')
+      .select('owner_id,last_read_message_id')
+      .eq('reader_id', session.user.id);
+    fail(error);
+    return data || [];
+  }
+
+  if (path === '/notes/seen-status') {
+    const [{ data: latestNote, error: latestError }, { data: cursors, error: cursorsError }] = await Promise.all([
+      sb.from('memories').select('id').eq('owner_id', session.user.id).eq('kind', 'note').order('id', { ascending: false }).limit(1).maybeSingle(),
+      sb.from('note_read_cursors').select('reader_id,last_read_message_id').eq('owner_id', session.user.id)
+    ]);
+    fail(latestError);
+    fail(cursorsError);
+    const latestNoteId = latestNote?.id ?? null;
+    const seenByCount = latestNoteId == null ? 0 : (cursors || []).filter(cursor => Number(cursor.last_read_message_id) >= Number(latestNoteId)).length;
+    return { latestNoteId, seenByCount };
   }
 
   if (path.startsWith('/follow/')) {
@@ -553,7 +591,8 @@ async function refresh() {
     api('/feed'),
     api('/following'),
     api('/feed?kind=photo&limit=8').catch(error => { console.warn('Photo warm cache skipped:', error?.message || error); return null; }),
-    api('/feed?kind=song&limit=8').catch(error => { console.warn('Music warm cache skipped:', error?.message || error); return null; })
+    api('/feed?kind=song&limit=8').catch(error => { console.warn('Music warm cache skipped:', error?.message || error); return null; }),
+    api('/notes/my-read-cursors').catch(error => { console.warn('Note read cursors could not be loaded:', error?.message || error); return [] })
   ]);
   me = results[0];
   const feedById = new Map();
@@ -570,6 +609,7 @@ async function refresh() {
   feedPageHasMore.photo = (results[3] || []).length === 8;
   feedPageHasMore.song = (results[4] || []).length === 8;
   friends = results[2];
+  noteSeenLastAck = new Map((results[5] || []).map(cursor => [String(cursor.owner_id), Number(cursor.last_read_message_id) || 0]));
   render();
   // Warm the first gallery photos in the background while the user is on Home.
   // This means opening Photo Garden usually displays cached image bytes immediately.
@@ -1846,7 +1886,7 @@ function handleAppBackNavigation() {
 window.addEventListener('popstate', handleAppBackNavigation);
 
 /* One reusable note message structure for the Notes conversation and Home history. */
-function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
+function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen = false) {
   const owner = m.author || {};
   const ownerId = owner.id || m.owner_id || '';
   const mine = String(ownerId) === String(me?.id || '');
@@ -1875,6 +1915,9 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
           <small>@${handle}</small>
         </${senderTag}>
   ` : '';
+  const seenReceipt = showSeen && mine && Number(m.seen_by_count || 0) > 0
+    ? '<small class="chat-seen-receipt" aria-label="Seen">Seen</small>'
+    : '';
 
   return `
     <div class="chat-message ${mine ? 'is-mine' : 'is-friend'}${liked ? ' is-loved' : ''}${m.isPending ? ' is-uploading' : ''}${isContinuation ? ' is-continuation' : ''}" data-kind="note" data-memory="${esc(id)}" data-owner="${esc(ownerId)}">
@@ -1890,6 +1933,7 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false) {
           </div>
         </div>
       </div>
+      ${seenReceipt}
       ${m.isPending ? '<span class="memory-upload-status" role="status">Sending your message…</span>' : ''}
     </div>
   `;
@@ -1948,7 +1992,7 @@ function renderNotesPage(options = {}) {
     const isContinuation = !isNewDay && !!ownerId && ownerId === previousOwnerId;
     previousLabel = label;
     previousOwnerId = ownerId;
-    return divider + chatMessageMarkup(m, !isContinuation, isContinuation);
+    return divider + chatMessageMarkup(m, !isContinuation, isContinuation, true);
   }).join('');
   const emptyMarkup = '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>';
   const olderControl = historySentinelMarkup('top');
@@ -1994,6 +2038,7 @@ function renderNotesPage(options = {}) {
         );
       }
       syncNotesKeyboardLayout();
+      observeNoteSeenMessages();
     });
     return;
   }
@@ -2014,6 +2059,7 @@ function renderNotesPage(options = {}) {
     syncNotesKeyboardLayout();
     const thread = $('#chatThread');
     if (thread) thread.scrollTop = thread.scrollHeight;
+    observeNoteSeenMessages();
   });
 }
 function render(options = {}) {
@@ -2022,7 +2068,7 @@ function render(options = {}) {
 
   if (page === 'notes') {
     renderNotesPage({ followLatest: !!options.followLatest });
-    requestAnimationFrame(() => { observeNotificationMemoryViews(); observeFeedHistory(); });
+    requestAnimationFrame(() => { observeNotificationMemoryViews(); observeFeedHistory(); observeNoteSeenMessages(); });
     return;
   }
   if (page === 'streak') {
@@ -2844,6 +2890,82 @@ async function clearIgNote() {
   }
 }
 
+/* Notes read receipts: mark only messages that remain substantially visible. */
+function observeNoteSeenMessages() {
+  noteSeenObserver?.disconnect();
+  noteSeenObserver = null;
+  const thread = $('#chatThread');
+  if (!thread || page !== 'notes' || document.hidden || !me || !('IntersectionObserver' in window)) return;
+
+  noteSeenObserver = new IntersectionObserver(entries => {
+    if (page !== 'notes' || document.hidden || !document.hasFocus()) return;
+    for (const entry of entries) {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.65) continue;
+      const message = entry.target;
+      const ownerId = String(message.dataset.owner || '');
+      const messageId = Number(message.dataset.memory);
+      if (!ownerId || ownerId === String(me.id) || !Number.isSafeInteger(messageId) || messageId <= 0) continue;
+      const item = feed.find(row => String(row.id) === String(messageId));
+      if (!item || item.isPending || item.kind !== 'note') continue;
+      queueNoteSeen(ownerId, messageId);
+    }
+  }, { root: thread, threshold: [0, 0.65] });
+
+  thread.querySelectorAll('.chat-message[data-memory][data-owner]').forEach(message => noteSeenObserver.observe(message));
+}
+
+function queueNoteSeen(ownerId, messageId) {
+  const owner = String(ownerId || '');
+  const id = Number(messageId);
+  if (!owner || owner === String(me?.id || '') || !Number.isSafeInteger(id) || id <= 0) return;
+  const known = Math.max(noteSeenLastAck.get(owner) || 0, noteSeenPending.get(owner) || 0);
+  if (id <= known) return;
+  noteSeenPending.set(owner, id);
+  clearTimeout(noteSeenDebounceTimer);
+  noteSeenDebounceTimer = setTimeout(flushNoteSeenReceipts, 700);
+}
+
+async function flushNoteSeenReceipts() {
+  if (!sb || !me || page !== 'notes' || document.hidden || !document.hasFocus()) return;
+  const batch = [...noteSeenPending.entries()];
+  noteSeenPending.clear();
+  for (const [ownerId, messageId] of batch) {
+    if (noteSeenInFlight.has(ownerId)) {
+      noteSeenPending.set(ownerId, Math.max(noteSeenPending.get(ownerId) || 0, messageId));
+      continue;
+    }
+    const request = (async () => {
+      const { error } = await sb.rpc('mark_notes_seen', {
+        p_owner_id: ownerId,
+        p_last_read_message_id: messageId
+      });
+      if (error) throw error;
+      noteSeenLastAck.set(ownerId, Math.max(noteSeenLastAck.get(ownerId) || 0, messageId));
+    })();
+    noteSeenInFlight.set(ownerId, request);
+    request.catch(error => console.warn('Notes seen receipt could not be saved:', error?.message || error))
+      .finally(() => {
+        noteSeenInFlight.delete(ownerId);
+        if (noteSeenPending.size && page === 'notes' && !document.hidden) {
+          clearTimeout(noteSeenDebounceTimer);
+          noteSeenDebounceTimer = setTimeout(flushNoteSeenReceipts, 250);
+        }
+      });
+  }
+}
+
+async function refreshOwnNoteSeenStatus() {
+  if (!me || !sb) return;
+  try {
+    const status = await api('/notes/seen-status');
+    const latest = feed.find(item => item.kind === 'note' && String(item.id) === String(status.latestNoteId));
+    if (latest) latest.seen_by_count = Number(status.seenByCount) || 0;
+    if (page === 'notes') renderNotesPage();
+  } catch (error) {
+    console.warn('Notes seen status could not refresh:', error?.message || error);
+  }
+}
+
 /* Realtime */
 async function touchLastActive(force = false) {
   if (!me?.id || !sb || document.hidden) return;
@@ -2867,7 +2989,12 @@ document.addEventListener('pointerdown', () => { void touchLastActive(); }, { pa
 document.addEventListener('keydown', () => { void touchLastActive(); }, { passive: true });
 window.addEventListener('focus', () => { void touchLastActive(true); });
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) void touchLastActive(true);
+  if (!document.hidden) {
+    void touchLastActive(true);
+    if (page === 'notes') requestAnimationFrame(observeNoteSeenMessages);
+  } else {
+    clearTimeout(noteSeenDebounceTimer);
+  }
 });
 
 function startRealtime() {
@@ -2994,6 +3121,10 @@ function startRealtime() {
             })
           ]).catch(error => console.warn('Friend heart totals could not refresh:', error?.message || error));
         }, 90);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'note_read_cursors', filter: 'owner_id=eq.' + me.id }, () => {
+        clearTimeout(window.cuteNoteSeenRefresh);
+        window.cuteNoteSeenRefresh = setTimeout(() => { void refreshOwnNoteSeenStatus(); }, 160);
       }).subscribe(status => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.warn('Live Notes channel status:', status);
