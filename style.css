@@ -11639,3 +11639,23 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
   100%{transform:translate(0,0) rotate(360deg)}
 }
 @media(prefers-reduced-motion:reduce){.auth-card.profile-card .profile-settings-trigger{animation:none!important}}
+
+
+/* Keep the profile settings flower completely still and reliably tappable. */
+.auth-card.profile-card .profile-settings-trigger{
+  pointer-events:auto!important;
+  touch-action:manipulation;
+  animation:none!important;
+  transition:none!important;
+  transform:none!important;
+  -webkit-tap-highlight-color:transparent;
+}
+.auth-card.profile-card .profile-settings-trigger:hover,
+.auth-card.profile-card .profile-settings-trigger:active,
+.auth-card.profile-card .profile-settings-trigger:focus,
+.auth-card.profile-card .profile-settings-trigger:focus-visible{
+  transform:none!important;
+  animation:none!important;
+  box-shadow:none!important;
+  outline:none!important;
+}
