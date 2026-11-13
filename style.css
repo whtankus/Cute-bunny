@@ -9495,3 +9495,11 @@ body[data-mode="dark"] #app .now-playing-panel {
   transform:translateY(2px) scale(.98)!important;
   box-shadow:0 1px 0 #a85f80!important;
 }
+
+
+/* Keep photo and music cards stationary during likes; animate only the heart. */
+.feed-item[data-kind="photo"] .tile.heart-tap,
+.feed-item[data-kind="song"] .tile.heart-tap {
+  animation:none!important;
+  transform:none!important;
+}
