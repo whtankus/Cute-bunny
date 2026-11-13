@@ -733,15 +733,15 @@ function formatLastActive(value) {
 
 function friendRow(user) {
   const snapshot = streakFriendSnapshot(user);
-  const streakLabel = snapshot.count === null ? 'Streak unavailable' : snapshot.count + (snapshot.count === 1 ? ' day streak' : ' days streak');
+  const flowerLabel = snapshot.count === null ? '🌸 — flowers' : '🌸 ' + Number(snapshot.count).toLocaleString() + ' flowers';
+  const heartLabel = user.heartCount === null || user.heartCount === undefined
+    ? '💕 — hearts'
+    : '💕 ' + Number(user.heartCount).toLocaleString() + ' hearts';
   let liveState = {};
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
   const online = isPresenceUserOnline(user.id, liveState);
   const presenceLabel = online ? 'Online now' : formatLastActive(user.last_active_at);
-  const heartLabel = user.heartCount === null || user.heartCount === undefined
-    ? '♡ Hearts unavailable'
-    : '♥ ' + Number(user.heartCount).toLocaleString() + ' hearts received';
-  return `<article class="friend-row ${online ? 'is-online' : 'is-offline'}" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)}</small></span><span class="friend-meta-line"><small>Joined ${esc(formatJoinDate(user.created_at))}</small><small class="sg-friend-presence">${esc(presenceLabel)}</small></span><span class="friend-stat-plates"><small class="friend-row-streak">🌸 ${esc(streakLabel)} · ${esc(snapshot.label)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
+  return `<article class="friend-row ${online ? 'is-online' : 'is-offline'}" data-friend-id="${esc(user.id)}"><button class="friend-main" type="button" data-profile="${esc(user.username)}"><span class="friend-avatar">${esc(user.mascot || '🐰')}<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>${esc(user.displayName || user.display_name || user.username)}</b><small>@${esc(user.username)}</small></span><span class="friend-meta-line"><small class="sg-friend-presence">${esc(presenceLabel)}</small></span><span class="friend-stat-plates"><small class="friend-row-streak">${esc(flowerLabel)}</small><small class="friend-row-hearts">${esc(heartLabel)}</small></span></span></button><button class="primary follow-btn" type="button" data-follow="${esc(user.username)}" data-following="${!!user.isFollowing}">${user.isFollowing ? 'Following ✓' : 'Follow ♡'}</button></article>`;
 }
 
 
@@ -2103,12 +2103,12 @@ function showFriendProfile(user) {
   presenceDot?.classList.toggle('is-offline', !profileOnline);
   presenceDot?.setAttribute('aria-label', profileOnline ? 'Online' : 'Offline');
   $('#friendProfileHearts').textContent = user.heartCount === null || user.heartCount === undefined
-    ? 'Hearts received unavailable'
-    : Number(user.heartCount).toLocaleString() + ' hearts received';
+    ? '— hearts'
+    : Number(user.heartCount).toLocaleString() + ' hearts';
   const friendGarden = streakFriendSnapshot(user);
   $('#friendProfileStreakCount').textContent = friendGarden.count === null
-    ? 'Streak unavailable'
-    : friendGarden.count + (friendGarden.count === 1 ? ' day' : ' days');
+    ? '— flowers'
+    : Number(friendGarden.count).toLocaleString() + (friendGarden.count === 1 ? ' flower' : ' flowers');
   $('#friendProfileStreakStatus').textContent = friendGarden.label;
   $('#friendProfileStreakStatus').hidden = !friendGarden.label;
   $('#friendProfileStyle').dataset.themePreview = user.theme || 'rose';
