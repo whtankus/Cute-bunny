@@ -11382,3 +11382,57 @@ body[data-mode="dark"] .friend-profile-joined>time{
 @media(max-width:390px){
   .auth-card.friend-profile-card .friend-profile-main-row{column-gap:9px!important}
 }
+
+
+/* Match People You Follow badges to the polished opened-profile badges. */
+#content .friend-row .friend-stat-plates{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+  gap:6px!important;
+  min-width:0!important;
+}
+#content .friend-row .friend-stat-plates>small{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 1 auto!important;
+  gap:4px!important;
+  min-width:0!important;
+  min-height:25px!important;
+  padding:4px 8px!important;
+  border:1px solid #efdfeb!important;
+  border-radius:9px!important;
+  background:#fff8fb!important;
+  font-family:inherit!important;
+  font-size:.68rem!important;
+  font-weight:700!important;
+  line-height:1.2!important;
+  letter-spacing:normal!important;
+  white-space:nowrap!important;
+}
+#content .friend-row .friend-stat-plates>.friend-row-queen{
+  color:#c09236!important;background:#fffaf0!important;border-color:#f0e4c9!important;
+}
+#content .friend-row .friend-stat-plates>.friend-row-streak{
+  color:#e7a4c3!important;background:#fff7fb!important;border-color:#f2dce8!important;
+}
+#content .friend-row .friend-stat-plates>.friend-row-hearts{
+  color:#df557d!important;background:#fff5f7!important;border-color:#f2dce4!important;
+}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates>.friend-row-queen{
+  color:#f1ce7c!important;background:#453b32!important;border-color:#65543e!important;
+}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates>.friend-row-streak{
+  color:#f2bfd7!important;background:#453646!important;border-color:#684d60!important;
+}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates>.friend-row-hearts{
+  color:#ff9dbb!important;background:#493442!important;border-color:#65495b!important;
+}
+@media(max-width:420px){
+  #content .friend-row .friend-stat-plates{gap:4px!important}
+  #content .friend-row .friend-stat-plates>small{
+    min-height:24px!important;padding:3px 6px!important;font-size:.61rem!important;
+  }
+}
