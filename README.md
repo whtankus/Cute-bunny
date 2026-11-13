@@ -1,69 +1,193 @@
-# Cute Bunny ♡
+# Cute Bunny
 
-A mobile-friendly shared scrapbook. The hosted app uses Supabase Auth, PostgreSQL, and private Supabase Storage. The Spring Boot/MySQL prototype under `backend/` is separate and is not used by the Pages deployment.
+<p align="center">
+  <img src="bunny-app-icon-192.png" width="112" alt="Cute Bunny app icon">
+</p>
 
-## Supabase setup
+<p align="center">
+  <strong>A cozy shared scrapbook for photos, music, notes, and little everyday moments.</strong>
+</p>
 
-1. Create a Supabase project.
-2. In **SQL Editor**, run `supabase/schema.sql`.
-3. In **Project Settings → API**, copy the Project URL and the publishable key (or legacy anon key) into `supabase-config.js`.
-4. In **Authentication → URL Configuration**, add your future GitHub Pages URL to the allowed redirect URLs.
-5. Users register with a real email, username, display name, and password. Deploy `supabase/functions/username-login` with JWT verification disabled for the pre-session credential exchange; users can then sign in with username or email and password. Email-free signup is not supported by Supabase Auth. Apply the timestamped SQL migrations in `supabase/migrations/` in filename order after the feature upgrade. These migrations install server-side streak persistence, private notification preferences, required indexes, and the final permission restrictions.
-6. Host the project root with GitHub Pages. In repository Settings → Pages, choose the main branch and root folder.
+Cute Bunny is a mobile-friendly social scrapbook designed around a small circle of friends. Create a personal profile, connect with friends, share memories, keep a streak, and revisit the moments that matter — all in a soft, playful interface that can also be installed on a phone like an app.
 
-The publishable/anon key is intended for the browser. Never put a `service_role` key in frontend files. Database access is protected by Row Level Security and column-level grants. Profile discovery exposes only public profile fields; notification preferences are stored in a separate private table. The media bucket is private. Follow permissions allow friends to see each other's memories; users can delete only their own memories.
+---
 
-## Features
+## What you can do
 
-- Email registration with username-or-email password sign-in
-- Profiles, themes, mascots, username search, follow/unfollow
-- Shared notes, photos, and audio files
-- Private photo/audio storage with friend-aware access
-- Personal light/dark mode and responsive layouts
+| Area | What it offers |
+| --- | --- |
+| **Home** | A shared memory feed for the latest photos, songs, and notes from you and the people you follow. |
+| **Photos** | A dedicated photo garden with natural image proportions, a full-screen preview, and photo saving for friends' posts. |
+| **Music** | Share audio, play songs from the music section, and use the persistent mini-player/music island while moving around the app. |
+| **Notes** | A private-feeling, chat-style space for short messages and shared thoughts. |
+| **Friends** | Discover profiles, search by username, follow or unfollow, and see friend activity. |
+| **Profiles** | Personalise your display name, username, bio, mascot, profile appearance, and themes. |
+| **Streak Garden** | Keep track of daily visits with timezone-aware streaks and a garden-inspired progress view. |
+| **Notifications** | View activity updates and manage supported notification preferences. |
 
-## Free-plan note
+### Interaction and experience
 
-Supabase's free plan has a 500 MB database quota and can pause projects after low activity. Keep backups of important media. Free service limits can change.
+- Responsive layouts designed for phones and desktop screens.
+- Light and dark appearance modes.
+- Double-tap reactions on supported memory cards and long-press interaction menus.
+- Owner-only memory deletion, with an undo window for supported swipe-to-delete actions.
+- Friend-aware memory access and live presence while members are connected.
+- Photo source caching and preloading to make the photo garden feel faster on repeat visits.
+- Installable Progressive Web App (PWA) experience with app icons, a standalone display mode, and a service worker for the app shell.
 
-## Local preview
+---
 
-The page loads Supabase JS from jsDelivr, so use a browser with internet access. Set `supabase-config.js` first, then serve the project over HTTP or use GitHub Pages. Opening the file directly works only if the browser permits the CDN script and Supabase network requests.
-## Publish the app with GitHub Pages
+## Technology
 
-The included workflow publishes only the static website files. It creates `supabase-config.js` during deployment from GitHub Actions secrets; your local placeholder config remains unchanged.
+| Layer | Technology |
+| --- | --- |
+| Frontend | HTML, CSS, and vanilla JavaScript |
+| Authentication | Supabase Auth |
+| Database | Supabase PostgreSQL |
+| File storage | Private Supabase Storage bucket |
+| Live updates | Supabase Realtime |
+| Username sign-in helper | Supabase Edge Function |
+| Hosting and deployment | GitHub Pages with GitHub Actions |
+| Installable app support | Web App Manifest and Service Worker |
 
-1. Create a GitHub repository. For free GitHub Pages on GitHub Free, make it public. Do not commit passwords, database URLs, or service-role keys.
-2. Push the **contents of this `cute-bunny` folder** to the repository's `main` branch, including `.github/workflows/deploy-pages.yml`.
-3. In the repository, open **Settings → Secrets and variables → Actions → New repository secret**. Add:
-   - `SUPABASE_URL`: your Supabase project's URL.
-   - `SUPABASE_PUBLISHABLE_KEY`: the project's publishable key (or legacy anon key). Never use `service_role`.
-4. Open **Settings → Pages**, set **Source** to **GitHub Actions**.
-5. In Supabase **Authentication → URL Configuration**, set the GitHub Pages URL as the Site URL and add it to the allowed redirect URLs.
-6. Push a commit or run **Actions → Deploy Cute Bunny to GitHub Pages → Run workflow**. The deployed link appears in the workflow run and in **Settings → Pages**.
+The GitHub Pages deployment is a static website. The browser connects to Supabase for authentication, database operations, file storage, and realtime features.
 
-The workflow follows GitHub's Pages artifact deployment flow and runs a JavaScript syntax check before deployment. The Supabase publishable key is designed for frontend use; access must remain protected by the Row Level Security policies and the ordered migrations.
+---
 
+## Project structure
 
-## Phone full-screen use
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── deploy-pages.yml       # GitHub Pages deployment workflow
+├── app.js                         # Application logic and interactions
+├── index.html                     # App structure and entry point
+├── style.css                      # Responsive UI and themes
+├── manifest.webmanifest            # Installable PWA metadata
+├── sw.js                           # App-shell caching and offline fallback
+├── bunny-app-icon-192.png          # PWA icon
+├── bunny-app-icon-512.png          # Large PWA icon
+├── apple-touch-icon.png            # iOS home-screen icon
+├── scripts/
+│   └── build-preview.js            # Local production-preview builder
+└── supabase/
+    ├── schema.sql                  # Initial database and storage setup
+    ├── feature-upgrades.sql        # Feature upgrade SQL
+    ├── migrations/                 # Ordered database migrations
+    └── functions/
+        └── username-login/         # Username-to-email login helper
+```
 
-The site fills the phone viewport and includes a standalone app manifest. In your phone browser, use **Add to Home Screen** (or **Install app**) to open Cute Bunny without the usual browser tabs and address bar.
+---
 
-## Feature upgrade migration
+## Set up Supabase
 
-To enable username changes, persistent notification history, buddy activity pings, and notification preferences, run `supabase/feature-upgrades.sql` once in **Supabase → SQL Editor**. Then apply every file in `supabase/migrations/` in filename order. These migrations are additive and preserve existing profiles, memories, follows, notifications, and media. The older `supabase/login-streak.sql` is retained only as a compatibility script; do not run it when the timestamped migrations have already been applied.
+A Supabase project is required for sign-in, profiles, memories, friends, notifications, and media storage.
 
-The hosted site currently uses the Supabase JavaScript client. The Spring Boot/MySQL code under `backend/` is a separate prototype and is not used by GitHub Pages.
+1. Create a project in [Supabase](https://supabase.com/).
+2. Open **SQL Editor** and run `supabase/schema.sql`.
+3. Run `supabase/feature-upgrades.sql` once.
+4. Apply every SQL file in `supabase/migrations/` in filename order. The migration files are timestamped; keep that order when applying them to an existing project.
+5. Deploy the username login Edge Function with JWT verification disabled for the pre-session login exchange:
 
-## Recent interaction improvements
+   ```bash
+   supabase functions deploy username-login --no-verify-jwt
+   ```
 
-- Music playback uses one audio player that stays mounted while pages change.
-- Shared memory cards have stable colors for the two scrapbook owners.
-- Long-press, right-click, and keyboard context menus offer copy, download, multi-select, and owner-only delete actions.
-- Right-swipe reveals deletion; completing the swipe starts a short Undo window before anything is removed.
-- Friends see live presence while the app is open. Buddy taps can send a rate-limited notification to a mutual friend.
-- Photos, songs, and notes create notification history entries for followers after the feature migration is installed.
+6. In **Authentication → URL Configuration**, configure your deployed GitHub Pages URL as the Site URL and add the URL (and any required auth callback paths) to the allowed redirect URLs.
 
+The older `supabase/login-streak.sql` file is retained for compatibility with earlier setups. Do not run it on top of the timestamped migrations unless you are deliberately following a legacy upgrade path.
 
-## Local streak calendar and live friend presence
+### Frontend Supabase configuration
 
-The streak system stores each member's IANA timezone and records streak days using that member's local calendar date. Friend streak labels are evaluated in each friend's timezone, while the shared Realtime Presence channel shows who is online now. The daily streak RPC is server-authoritative; a saved browser streak can be imported once only when a profile has never had a server streak date.
+The app expects a `supabase-config.js` file at the project root. Create it locally with your Supabase project URL and publishable key (or legacy anon key):
+
+```js
+window.CUTE_BUNNY_CONFIG = {
+  supabaseUrl: "https://YOUR-PROJECT.supabase.co",
+  supabaseAnonKey: "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY"
+};
+```
+
+The publishable/anon key is intended to be used in browser applications. **Never put a Supabase `service_role` key or other privileged secret in frontend code.**
+
+Email registration uses Supabase Auth. Username-or-email sign-in is supported through the Edge Function. Supabase Auth still requires a real email address for account registration; email-free signup is not supported.
+
+---
+
+## Run locally
+
+You need Node.js and a browser with internet access.
+
+1. Complete the Supabase setup above and create `supabase-config.js`.
+2. Install no dependencies for the basic syntax check; the project uses browser-native JavaScript and loads Supabase JS v2 from jsDelivr.
+3. Run the project checks:
+
+   ```bash
+   npm run check
+   ```
+
+4. To create a local preview build:
+
+   ```bash
+   npm run build
+   ```
+
+   The build writes the static preview to `dist/` and reads the Supabase URL and publishable key from `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` environment variables.
+
+5. Serve the project over HTTP rather than relying on opening `index.html` directly. For example:
+
+   ```bash
+   python -m http.server 8000
+   ```
+
+   Then open `http://localhost:8000`.
+
+---
+
+## Deploy to GitHub Pages
+
+The repository includes an automated workflow at `.github/workflows/deploy-pages.yml`. It runs on pushes to `main` and can also be started manually from the Actions tab.
+
+1. Push the project to the repository's `main` branch.
+2. In **Settings → Secrets and variables → Actions**, add these repository secrets:
+   - `SUPABASE_URL` — your Supabase project URL.
+   - `SUPABASE_PUBLISHABLE_KEY` — your Supabase publishable key or legacy anon key.
+3. In **Settings → Pages**, set the publishing source to **GitHub Actions**.
+4. Confirm the Site URL and allowed redirect URLs in Supabase Authentication settings.
+5. Push a commit to `main`, or run **Actions → Deploy Cute Bunny to GitHub Pages → Run workflow**.
+6. When the workflow succeeds, open its deployment environment URL or visit **Settings → Pages** for the published address.
+
+The workflow creates `supabase-config.js` during deployment from the repository secrets. The generated configuration is included in the Pages artifact; the local configuration file does not need to be committed.
+
+---
+
+## Security and data access
+
+- Row Level Security (RLS) policies protect database records.
+- Members can create memories as themselves and delete only their own memories.
+- Memory visibility follows the app's friend/follow relationship rules.
+- Media is stored in a private Supabase Storage bucket and access is governed by storage policies.
+- Notification preferences are stored separately from public profile information.
+- Keep Supabase migrations and policies in sync with the deployed application.
+- Never commit passwords, service-role keys, private access tokens, or other privileged credentials.
+
+Supabase's free-plan quotas and inactivity policies can change. Check the current Supabase plan limits and keep independent backups of important data and media.
+
+---
+
+## Contributing
+
+Changes should preserve existing authentication, friend permissions, storage policies, and mobile interactions. Before opening a pull request or publishing a change:
+
+1. Run `npm run check`.
+2. Test the affected feature on both a narrow mobile viewport and a desktop viewport.
+3. Verify that signed-in users can access only the memories and actions permitted by the database policies.
+4. Test the relevant GitHub Actions workflow before considering a change deployed.
+
+---
+
+<p align="center">
+  Made for sharing the little things. ♡
+</p>
