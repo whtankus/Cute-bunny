@@ -247,7 +247,7 @@ async function api(path, options = {}) {
   }
 
   if (path.startsWith('/feed')) {
-    const offsetMatch = path.match(/[?&]offset=(\\d+)/);
+    const offsetMatch = path.match(/[?&]offset=(\d+)/);
     const offset = Math.max(0, Number(offsetMatch?.[1]) || 0);
     const { data: rows, error } = await sb.from('memories')
       .select('*,author:profiles!memories_owner_id_fkey(id,username,display_name,mascot,theme)')
@@ -482,7 +482,7 @@ async function loadMoreFeed() {
 
 function olderMemoriesButton() {
   if (!feedHasMore && !feedLoadingMore) return '';
-  return `<div class="older-memories-wrap"><button type="button" class="primary older-memories-button" data-load-older-feed ${feedLoadingMore ? 'disabled' : ''} ${feedLoadingMore ? 'disabled' : ''}>${feedLoadingMore ? 'Loading older memories…' : 'Load older memories ↓'}</button></div>`;
+  return `<div class="older-memories-wrap"><button type="button" class="primary older-memories-button" data-load-older-feed ${feedLoadingMore ? 'disabled' : ''}>${feedLoadingMore ? 'Loading older memories…' : 'Load older memories ↓'}</button></div>`;
 }
 
 const themeNames = { rose: 'Rose garden', lavender: 'Lavender skies', mint: 'Mint meadow', sky: 'Bluebird day' };
