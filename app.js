@@ -758,7 +758,7 @@ function friendRow(user, isOwnProfile = false) {
   const action = isOwnProfile
     ? '<button class="primary follow-btn own-profile-action" type="button" data-open-own-profile>View profile</button>'
     : '<button class="primary follow-btn" type="button" data-follow="' + esc(user.username) + '" data-following="' + !!user.isFollowing + '">' + (user.isFollowing ? 'Following' : 'Follow ♡') + '</button>';
-  return '<article class="friend-row ' + (online ? 'is-online' : 'is-offline') + (isOwnProfile ? ' own-profile-row' : '') + '" data-friend-id="' + esc(user.id) + '" data-profile="' + esc(user.username) + '" data-wallpaper="' + wallpaper + '" data-own-profile="' + (isOwnProfile ? 'true' : 'false') + '"><div class="friend-main"><span class="friend-avatar">' + esc(user.mascot || '🐰') + '<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>' + esc(user.displayName || user.display_name || user.username) + '</b><small>@' + esc(user.username) + '</small></span><span class="friend-meta-line"><small class="sg-friend-presence">' + esc(presenceLabel) + '</small></span><span class="friend-stat-plates">' + (titleTag ? '<small class="friend-row-queen">' + esc(titleTag) + '</small>' : '') + '<small class="friend-row-streak">' + esc(flowerLabel) + '</small><small class="friend-row-hearts">' + esc(heartLabel) + '</small></span></span></div>' + (isOwnProfile ? '<button type="button" class="profile-settings-trigger" id="profileSettingsTrigger" aria-label="Open profile settings" title="Settings">🌸</button>' : '') + action + '</article>';
+  return '<article class="friend-row ' + (online ? 'is-online' : 'is-offline') + (isOwnProfile ? ' own-profile-row' : '') + '" data-friend-id="' + esc(user.id) + '" data-profile="' + esc(user.username) + '" data-wallpaper="' + wallpaper + '" data-own-profile="' + (isOwnProfile ? 'true' : 'false') + '"><div class="friend-main"><span class="friend-avatar">' + esc(user.mascot || '🐰') + '<i class="friend-online-dot" aria-hidden="true"></i></span><span class="friend-copy"><span class="friend-name-line"><b>' + esc(user.displayName || user.display_name || user.username) + '</b><small>@' + esc(user.username) + '</small></span><span class="friend-meta-line"><small class="sg-friend-presence">' + esc(presenceLabel) + '</small></span><span class="friend-stat-plates">' + (titleTag ? '<small class="friend-row-queen">' + esc(titleTag) + '</small>' : '') + '<small class="friend-row-streak">' + esc(flowerLabel) + '</small><small class="friend-row-hearts">' + esc(heartLabel) + '</small></span></span></div>' + action + '</article>';
 }
 
 
@@ -2090,7 +2090,6 @@ function render(options = {}) {
       '<section class="own-profile-section"><div class="friend-section-title"><h3>Your profile</h3></div>',
       me ? friendRow(me, true) : '<div class="empty">Your profile is not available right now.</div>',
       '</section>',
-      me ? profileSettingsMarkup() : '',
       '<section class="following-list"><div class="friend-section-title"><h3>Your Friends</h3><span>' + friends.length + '</span></div>',
       friends.map(friendRow).join('') || '<div class="empty">Your circle is waiting for its first friend ♡</div>',
       '</section>'
@@ -3906,7 +3905,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  if (e.target.closest('#profileSettingsTrigger')) { e.preventDefault(); e.stopPropagation(); renderProfileSettings(); $('#profileSettingsPanel')?.classList.remove('hidden'); return; }
+  if (e.target.closest('#profileSettingsTrigger')) { e.preventDefault(); e.stopPropagation(); const mount = $('#profileSettingsMount'); if (mount && !$('#profileSettingsPanel')) mount.innerHTML = profileSettingsMarkup(); renderProfileSettings(); $('#profileSettingsPanel')?.classList.remove('hidden'); return; }
   if (e.target.closest('#profileSettingsClose')) { $('#profileSettingsPanel')?.classList.add('hidden'); return; }
   const settingsTab = e.target.closest('[data-settings-tab]');
   if (settingsTab) { const selected = settingsTab.dataset.settingsTab; document.querySelectorAll('[data-settings-tab]').forEach(button => button.classList.toggle('is-active', button === settingsTab)); document.querySelectorAll('[data-settings-section]').forEach(section => section.classList.toggle('hidden', section.dataset.settingsSection !== selected)); return; }
