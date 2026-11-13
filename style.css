@@ -9585,3 +9585,21 @@ body[data-mode="dark"] #app .now-playing-panel {
 /* The friend-photo Save action and own-photo Save/Delete actions share one exact button footprint. */
 #photoLightbox .photo-lightbox-actions{display:flex!important;align-items:center!important}
 #photoLightbox .photo-lightbox-action{flex:1 1 0!important;width:auto!important;min-width:0!important}
+
+
+/* Make Music Island's glass surface 40% less transparent in both themes. */
+#app .now-playing-panel{
+  background:rgba(253,248,241,.89)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.25)!important;
+  backdrop-filter:blur(14px) saturate(1.25)!important;
+}
+body[data-mode="dark"] #app .now-playing-panel{
+  background:rgba(43,35,51,.90)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.2)!important;
+  backdrop-filter:blur(14px) saturate(1.2)!important;
+}
+/* Keep the friend Save button the same half-width footprint as own-photo Save. */
+#photoLightbox .photo-lightbox-action{flex:0 0 calc(50% - 3px)!important}
+#photoLightbox .photo-lightbox-delete.hidden{
+  display:block!important;visibility:hidden!important;pointer-events:none!important
+}
