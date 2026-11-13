@@ -1471,55 +1471,70 @@ async function popLoveHeart(card, event) {
   const memoryRoot = card.closest('[data-memory]');
   const memoryId = String(memoryRoot?.dataset.memory || '');
   if (!memoryId || memoryLikeInFlight.has(memoryId)) return false;
-
   const item = feed.find(memory => String(memory.id) === memoryId);
   if (!item || item.isPending) return false;
   const ownerId = String(item.owner_id || item.author?.id || memoryRoot?.dataset.owner || '');
   if (!ownerId || ownerId === String(me.id)) return false;
-
-  const nextLiked = !item.liked_by_me;
-  memoryLikeInFlight.add(memoryId);
-  try {
-    const result = nextLiked
-      ? await sb.from('memory_likes').insert({ memory_id: item.id, user_id: me.id })
-      : await sb.from('memory_likes').delete().eq('memory_id', item.id).eq('user_id', me.id);
-    if (result.error) {
-      // A second device may have changed the reaction first. Refresh authoritative state.
-      if (result.error.code !== '23505') throw result.error;
-    }
-
-    item.liked_by_me = nextLiked;
-    item.like_count = Math.max(0, Number(item.like_count || 0) + (nextLiked ? 1 : -1));
-    const hasAnyLikes = item.like_count > 0;
-
+  const wasLiked = !!item.liked_by_me;
+  const previousCount = Number(item.like_count || 0);
+  const nextLiked = !wasLiked;
+  const nextCount = Math.max(0, previousCount + (nextLiked ? 1 : -1));
+  item.liked_by_me = nextLiked; item.like_count = nextCount;
+  const paint = () => {
+    const hasAnyLikes = Number(item.like_count || 0) > 0;
     document.querySelectorAll('[data-memory="' + CSS.escape(memoryId) + '"]').forEach(root => {
       root.classList.toggle('is-loved', hasAnyLikes);
       root.querySelectorAll('.chat-bubble, .tile').forEach(target => {
         target.classList.toggle('is-loved', hasAnyLikes);
         const indicator = target.querySelector('.reaction-heart-indicator .heart-outline-glyph');
-        if (indicator) {
-          indicator.textContent = hasAnyLikes ? '♥' : '♡';
-          indicator.closest('.reaction-heart-indicator')?.classList.toggle('is-lit', hasAnyLikes);
-        }
-        target.classList.remove('heart-tap');
-        void target.offsetWidth;
-        target.classList.add('heart-tap');
-        clearTimeout(target.heartTimer);
-        target.heartTimer = setTimeout(() => target.classList.remove('heart-tap'), 850);
+        if (indicator) { indicator.textContent = hasAnyLikes ? '♥' : '♡'; indicator.closest('.reaction-heart-indicator')?.classList.toggle('is-lit', hasAnyLikes); }
       });
-      root.setAttribute('data-liked-by-me', String(nextLiked));
+      root.setAttribute('data-liked-by-me', String(item.liked_by_me));
       root.setAttribute('data-like-count', String(item.like_count));
     });
+  };
+  paint();
+  memoryLikeInFlight.add(memoryId);
+  try {
+    const result = nextLiked
+      ? await sb.from('memory_likes').insert({ memory_id: item.id, user_id: me.id })
+      : await sb.from('memory_likes').delete().eq('memory_id', item.id).eq('user_id', me.id);
+    if (result.error) throw result.error;
     return true;
   } catch (error) {
+    item.liked_by_me = wasLiked; item.like_count = previousCount; paint();
     console.warn('Could not save memory reaction:', error?.message || error);
     toast('Your like could not be saved. Please try again.');
     return false;
-  } finally {
-    memoryLikeInFlight.delete(memoryId);
-  }
+  } finally { memoryLikeInFlight.delete(memoryId); }
 }
 
+async function refreshMemoryLikeIndicators() {
+  if (!sb || !me || !feed.length) return;
+  const ids = [...new Set(feed.filter(item => !item.isPending).map(item => item.id).filter(Boolean))];
+  if (!ids.length) return;
+  const { data, error } = await sb.from('memory_likes').select('memory_id,user_id').in('memory_id', ids);
+  if (error) throw error;
+  const states = new Map();
+  for (const row of data || []) {
+    const key = String(row.memory_id); const state = states.get(key) || { count: 0, mine: false };
+    state.count++; if (String(row.user_id) === String(me.id)) state.mine = true; states.set(key, state);
+  }
+  for (const item of feed) {
+    if (item.isPending) continue;
+    const state = states.get(String(item.id)) || { count: 0, mine: false };
+    item.like_count = state.count; item.liked_by_me = state.mine;
+    const lit = state.count > 0;
+    document.querySelectorAll('[data-memory="' + CSS.escape(String(item.id)) + '"]').forEach(root => {
+      root.classList.toggle('is-loved', lit);
+      root.querySelectorAll('.chat-bubble, .tile').forEach(target => {
+        target.classList.toggle('is-loved', lit);
+        const glyph = target.querySelector('.reaction-heart-indicator .heart-outline-glyph');
+        if (glyph) { glyph.textContent = lit ? '♥' : '♡'; glyph.closest('.reaction-heart-indicator')?.classList.toggle('is-lit', lit); }
+      });
+    });
+  }
+}
 function go(p, options = {}) {
   const previousPage = page;
   const validPages = ['home', 'gallery', 'music', 'notes', 'friends', 'streak'];
@@ -1939,7 +1954,7 @@ function render(options = {}) {
     c.innerHTML = `
       <div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div>
       <label class="primary upload-label">＋ Add photo<input data-upload="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden></label>
-      <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || (mediaPageLoading.photo ? '<div class="empty">🐰 Gathering your latest photos…</div>' : '<div class="empty">Your garden is waiting for its first photo ♡')}</section>
+      <section class="photo-garden-grid" aria-label="Shared photo garden">${pics.map(memoryCard).join('') || (mediaPageLoading.photo ? '<div class="empty">🐰 Gathering your latest photos…</div>' : '<div class="empty">Your garden is waiting for its first photo ♡</div>')}</section>
       ${historySentinelMarkup('bottom')}
     `;
   } else if (page === 'music') {
@@ -2642,22 +2657,9 @@ function startRealtime() {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
         clearTimeout(window.cuteMemoryLikesRefresh);
-        window.cuteMemoryLikesRefresh = setTimeout(async () => {
-          try {
-            const fresh = await api('/feed');
-            const freshById = new Map(fresh.map(memory => [String(memory.id), memory]));
-            feed = feed.map(memory => {
-              const latest = freshById.get(String(memory.id));
-              return latest
-                ? { ...memory, like_count: latest.like_count, liked_by_me: latest.liked_by_me }
-                : memory;
-            });
-            if (page === 'notes') renderNotesPage();
-            else if (page === 'home' || page === 'gallery' || page === 'music') render();
-          } catch (error) {
-            console.warn('Live like refresh failed:', error?.message || error);
-          }
-        }, 140);
+        window.cuteMemoryLikesRefresh = setTimeout(() => {
+          refreshMemoryLikeIndicators().catch(error => console.warn('Live like refresh failed:', error?.message || error));
+        }, 90);
       }).subscribe(status => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.warn('Live Notes channel status:', status);
