@@ -9244,3 +9244,28 @@ body[data-mode="dark"] #app .now-playing-panel {
     transition: none !important;
   }
 }
+
+
+/* App-wide button press motion: use the same smooth downward travel as the
+   primary Open Photos / Open Music / Open Notes actions, without restyling. */
+#app button,
+.auth-gate button,
+#welcome button {
+  transition-property: transform, color, background-color, box-shadow, filter;
+  transition-duration: .18s;
+  transition-timing-function: ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+#app button:active,
+.auth-gate button:active,
+#welcome button:active {
+  transform: translateY(4px) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #app button,
+  .auth-gate button,
+  #welcome button {
+    transition: none !important;
+  }
+}
