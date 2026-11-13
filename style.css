@@ -11020,3 +11020,18 @@ body[data-mode="dark"] .friend-profile-stat-plates .friend-profile-heart{color:#
   .friend-profile-stat-plates{gap:4px}
   .friend-profile-stat-plates>small{font-size:.61rem;padding:3px 5px}
 }
+
+
+/* Friend identity area is a plain card surface, not a button control. */
+#content .friend-row .friend-main{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  border:0!important;
+  outline:0;
+  background:transparent!important;
+  box-shadow:none!important;
+  cursor:default;
+  text-decoration:none;
+}
+#content .friend-row{cursor:default}
+#content .friend-row:active{transform:none!important;filter:none!important}
