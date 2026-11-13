@@ -10759,3 +10759,39 @@ body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-hear
     font-size:.55rem;
   }
 }
+
+
+/* Match each friend badge label to its emoji's visual size and color. */
+#content .friend-row .friend-stat-plates small,
+#content .friend-row .friend-stat-plates .friend-row-queen,
+#content .friend-row .friend-stat-plates .friend-row-streak,
+#content .friend-row .friend-stat-plates .friend-row-hearts{
+  font-size:.68rem!important;
+  line-height:1.2;
+}
+#content .friend-row .friend-stat-plates .friend-row-queen{
+  color:#bd8734!important;
+}
+#content .friend-row .friend-stat-plates .friend-row-streak{
+  color:#d77da5!important;
+}
+#content .friend-row .friend-stat-plates .friend-row-hearts{
+  color:#df7298!important;
+}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-queen{
+  color:#f0c879!important;
+}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-streak{
+  color:#f0b4d0!important;
+}
+body[data-mode="dark"] #content .friend-row .friend-stat-plates .friend-row-hearts{
+  color:#ffabc7!important;
+}
+@media(max-width:420px){
+  #content .friend-row .friend-stat-plates small,
+  #content .friend-row .friend-stat-plates .friend-row-queen,
+  #content .friend-row .friend-stat-plates .friend-row-streak,
+  #content .friend-row .friend-stat-plates .friend-row-hearts{
+    font-size:.64rem!important;
+  }
+}
