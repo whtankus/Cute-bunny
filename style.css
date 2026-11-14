@@ -12654,3 +12654,16 @@ body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-single-character:active
 .chat-bubble-wrap>.chat-bubble.is-short-message .chat-message-text {
   text-align:center!important;
 }
+
+
+/* Notification action copy should remain readable instead of truncating mid-sentence. */
+.notification-open small {
+  white-space:normal!important;
+  overflow:visible!important;
+  overflow-wrap:anywhere!important;
+  text-overflow:clip!important;
+  line-height:1.35!important;
+}
+.notification-copy {
+  min-width:0!important;
+}
