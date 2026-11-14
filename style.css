@@ -12517,8 +12517,11 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
 #content .chat-page .chat-message.is-mine>.chat-seen-receipt {
   display:none!important;
 }
-#content .chat-page .chat-composer {
+#content .chat-page:not(.notes-keyboard-open) .chat-composer {
   position:relative!important;
+}
+#content .chat-page.notes-keyboard-open .chat-composer {
+  position:fixed!important;
 }
 #content .chat-page .chat-composer>.chat-seen-status {
   position:absolute!important;
