@@ -1908,7 +1908,6 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
   const messageCharacterCount = noteGraphemeSegmenter
     ? [...noteGraphemeSegmenter.segment(messageValue)].length
     : Array.from(messageValue).length;
-  const isSingleCharacter = messageCharacterCount === 1;
   const hasHeartReaction = messageCharacterCount >= 6;
   const heartButton = hasHeartReaction
     ? `<span class="memory-heart-toggle reaction-heart-indicator${liked ? ' is-lit' : ''}" aria-hidden="true"><span class="heart-wallpaper-fill">♥</span><span class="heart-outline-glyph">${liked ? '♥' : '♡'}</span></span>`
@@ -1940,7 +1939,7 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
         <div class="chat-message-line">
           <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>
           <div class="chat-bubble-wrap">
-            <div class="chat-bubble${hasHeartReaction ? '' : ' no-heart-reaction'}${isSingleCharacter ? ' is-single-character' : ''}" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
+            <div class="chat-bubble${hasHeartReaction ? '' : ' no-heart-reaction'}" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
               ${heartButton}
               <span class="chat-message-text" dir="auto">${messageText}</span>
             </div>
