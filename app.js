@@ -38,7 +38,7 @@ let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
 let navRefreshInFlight = false, appExitStep = 0;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null, noteReadCursorChannel = null;
-let seenStatusRefreshTimer = null, seenStatusRefreshInFlight = false;
+let seenStatusRefreshTimer = null, seenStatusRefreshInFlight = false, seenStatusRefreshQueued = false;
 let typingHeartbeatTimer = null, typingStopTimer = null, typingActive = false, typingLastSentAt = 0;
 let notesTypingChannelReady = false, notesTypingQueuedState = null;
 const remoteTypingUsers = new Map();
@@ -3200,7 +3200,11 @@ function startNotesIncomingPoll() {
 }
 
 async function refreshOwnNoteSeenStatus() {
-  if (!me || !sb || seenStatusRefreshInFlight) return;
+  if (!me || !sb) return;
+  if (seenStatusRefreshInFlight) {
+    seenStatusRefreshQueued = true;
+    return;
+  }
   seenStatusRefreshInFlight = true;
   try {
     // Fetch the owner's newest note and read cursors directly in parallel.
@@ -3245,6 +3249,11 @@ async function refreshOwnNoteSeenStatus() {
     console.warn('Notes seen status could not refresh:', error?.message || error);
   } finally {
     seenStatusRefreshInFlight = false;
+    if (seenStatusRefreshQueued) {
+      seenStatusRefreshQueued = false;
+      clearTimeout(seenStatusRefreshTimer);
+      seenStatusRefreshTimer = setTimeout(() => void refreshOwnNoteSeenStatus(), 0);
+    }
   }
 }
 
