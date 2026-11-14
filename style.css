@@ -12362,24 +12362,28 @@ body[data-mode="dark"] .chat-page .chat-message-content>.chat-seen-receipt {
 }
 
 
-/* Lightweight Instagram-style typing hint above the Notes composer. */
-#content .chat-page .chat-composer { position:relative; }
+/* Typing appears as the final row in the conversation, after the newest message. */
 #content .chat-page .chat-typing-indicator {
-  position:absolute;
-  left:14px;
-  bottom:calc(100% + 7px);
   display:flex;
   align-items:center;
   gap:7px;
-  max-width:calc(100% - 28px);
-  padding:6px 11px;
+  align-self:flex-start;
+  width:max-content;
+  max-width:calc(100% - 20px);
+  margin:7px 0 3px 8px;
+  padding:7px 12px;
   border:1px solid #ecdce9;
-  border-radius:999px;
+  border-radius:16px 16px 16px 5px;
   background:#fffafd;
   color:#98728f;
   box-shadow:0 3px 12px #80627b12;
   font:800 .75rem/1.2 Nunito,sans-serif;
   pointer-events:none;
+  animation:chat-typing-appear .16s ease-out both;
+}
+@keyframes chat-typing-appear {
+  from { opacity:0;transform:translateY(4px); }
+  to { opacity:1;transform:translateY(0); }
 }
 #content .chat-page .chat-typing-indicator[hidden] { display:none!important; }
 .chat-typing-dots { display:inline-flex;align-items:center;gap:3px;height:10px; }
@@ -12427,9 +12431,9 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
   min-width:0!important;
 }
 #content .chat-page .chat-typing-indicator {
-  bottom:calc(100% + 12px)!important;
-  left:10px!important;
-  z-index:3!important;
+  position:relative!important;
+  inset:auto!important;
+  z-index:1!important;
   width:max-content!important;
   max-width:calc(100% - 20px)!important;
   white-space:nowrap;
