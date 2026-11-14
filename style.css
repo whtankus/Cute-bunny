@@ -1053,6 +1053,29 @@ body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{b
 .chat-message.is-mine .chat-bubble-wrap>.chat-bubble {
   background:#fffafd;
 }
+
+/* A one-character message stays a true circle instead of collapsing smaller. */
+.chat-bubble-wrap>.chat-bubble.is-single-character {
+  box-sizing:border-box!important;
+  display:grid!important;
+  place-items:center!important;
+  flex:0 0 64px!important;
+  width:64px!important;
+  min-width:64px!important;
+  max-width:64px!important;
+  height:64px!important;
+  min-height:64px!important;
+  max-height:64px!important;
+  aspect-ratio:1/1!important;
+  padding:0!important;
+  border-radius:50%!important;
+}
+.chat-bubble-wrap>.chat-bubble.is-single-character .chat-message-text {
+  width:100%!important;
+  text-align:center!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+}
 .chat-message-text {
   display:block;
   min-width:0;
