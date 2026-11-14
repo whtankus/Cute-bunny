@@ -12510,3 +12510,36 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
   pointer-events:none!important;
   z-index:1!important;
 }
+
+
+/* One stable Seen label belongs to the composer, not to an individual bubble.
+   New messages can be added without carrying the label up through old messages. */
+#content .chat-page .chat-message.is-mine>.chat-seen-receipt {
+  display:none!important;
+}
+#content .chat-page .chat-composer {
+  position:relative!important;
+}
+#content .chat-page .chat-composer>.chat-seen-status {
+  position:absolute!important;
+  top:-19px!important;
+  right:13px!important;
+  bottom:auto!important;
+  left:auto!important;
+  display:block!important;
+  width:max-content!important;
+  max-width:calc(100% - 26px)!important;
+  margin:0!important;
+  padding:0 2px!important;
+  color:#9b7890!important;
+  font:700 .62rem/1.15 Nunito,sans-serif!important;
+  text-align:right!important;
+  pointer-events:none!important;
+  z-index:2!important;
+}
+#content .chat-page .chat-composer>.chat-seen-status[hidden] {
+  display:none!important;
+}
+body[data-mode="dark"] #content .chat-page .chat-composer>.chat-seen-status {
+  color:#d3a9c3!important;
+}
