@@ -2091,7 +2091,7 @@ function renderNotesPage(options = {}) {
         <div id="chatTypingIndicator" class="chat-typing-indicator" aria-live="polite" aria-atomic="true" hidden></div>
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
-        <small id="chatSeenStatus" class="chat-seen-receipt chat-seen-status" hidden></small>
+        <small id="chatSeenStatus" class="chat-seen-receipt chat-seen-status" data-seen-at="${esc(latestSeenAt)}" aria-label="${esc(latestSeenLabel || "Not seen")}" ${latestSeenAt ? "" : "hidden"}>${esc(latestSeenLabel)}</small>
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>💌</button>
       </form>
