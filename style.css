@@ -12472,3 +12472,8 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
   line-height:1.15!important;
   letter-spacing:0!important;
 }
+
+/* Tighter Notes text bubbles: reduce inner spacing on every side. */
+#content .chat-page .chat-bubble-wrap>.chat-bubble {
+  padding:9px 13px 8px!important;
+}
