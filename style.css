@@ -12644,3 +12644,13 @@ body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-single-character:hover,
 body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-single-character:active {
   box-shadow:none!important;
 }
+
+
+/* Short Notes: keep a four-character minimum width and center messages under four words. */
+.chat-bubble-wrap>.chat-bubble {
+  min-width:4ch!important;
+}
+.chat-bubble-wrap>.chat-bubble.is-short-message,
+.chat-bubble-wrap>.chat-bubble.is-short-message .chat-message-text {
+  text-align:center!important;
+}
