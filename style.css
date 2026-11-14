@@ -12477,3 +12477,13 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
 #content .chat-page .chat-bubble-wrap>.chat-bubble {
   padding:6px 9px 3px!important;
 }
+
+/* Vertically center the message text inside compact Notes bubbles. */
+#content .chat-page .chat-bubble-wrap>.chat-bubble {
+  align-items:center!important;
+  padding-top:3px!important;
+  padding-bottom:3px!important;
+}
+#content .chat-page .chat-bubble-wrap>.chat-bubble>.chat-message-text {
+  align-self:center!important;
+}
