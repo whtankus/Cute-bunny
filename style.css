@@ -12464,3 +12464,11 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
   margin:4px 12px 0 0!important;
   text-align:right!important;
 }
+
+/* Keep Notes Seen receipts subtle and smaller than message metadata. */
+#content .chat-page .chat-seen-receipt {
+  font-size:.62rem!important;
+  font-weight:700!important;
+  line-height:1.15!important;
+  letter-spacing:0!important;
+}
