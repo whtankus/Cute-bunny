@@ -1921,7 +1921,7 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
   const createdAt = m.createdAt || m.created_at || '';
   const time = esc(formatNoteClock(createdAt));
   const senderTag = mine ? 'div' : 'button';
-  const senderAttrs = mine ? '' : `type="button" data-friend-profile="${handle}" aria-label="Open ${name}'s profile"`;
+  const senderAttrs = mine ? '' : `type="button" data-friend-profile="${handle}" data-friend-id="${esc(ownerId)}" aria-label="Open ${name}'s profile"`;
   const senderMeta = showMeta ? `
         <${senderTag} class="chat-meta${mine ? '' : ' chat-sender-link'}" ${senderAttrs}>
           <span class="sender-pet" aria-hidden="true">${pet}</span>
@@ -2192,13 +2192,13 @@ function render(options = {}) {
     c.innerHTML = [
       '<div class="heading"><h2>Your little circle 🐰</h2><p>Your profile and the friends in your circle.</p></div>',
       '<section class="friend-search-section" aria-label="Find friends"><form class="friend-search-bar" id="friendSearchForm"><label class="friend-search-input-wrap"><span class="friend-search-icon" aria-hidden="true">⌕</span><input id="friendSearch" type="search" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Search by username..." value="' + esc(friendQuery) + '" aria-label="Search friends by username"></label><button type="submit" id="searchFriends" class="primary">Search</button></form>',
-      friendResults.length ? '<div class="friend-search-results"><div class="friend-section-title"><h3>Search results</h3><span>' + friendResults.length + '</span></div>' + friendResults.filter(user => !friends.some(friend => friend.username === user.username)).map(friendRow).join('') + '</div>' : '',
+      friendResults.length ? '<div class="friend-search-results"><div class="friend-section-title"><h3>Search results</h3><span>' + friendResults.length + '</span></div>' + friendResults.filter(user => !friends.some(friend => friend.username === user.username)).map(user => friendRow(user, false)).join('') + '</div>' : '',
       '</section>',
       '<section class="own-profile-section"><div class="friend-section-title"><h3>Your profile</h3></div>',
       me ? friendRow(me, true) : '<div class="empty">Your profile is not available right now.</div>',
       '</section>',
       '<section class="following-list"><div class="friend-section-title"><h3>Your Friends</h3><span>' + friends.length + '</span></div>',
-      friends.map(friendRow).join('') || '<div class="empty">Your circle is waiting for its first friend ♡</div>',
+      friends.map(user => friendRow(user, false)).join('') || '<div class="empty">Your circle is waiting for its first friend ♡</div>',
       '</section>'
     ].join('');
   }
@@ -3411,9 +3411,14 @@ function startRealtime() {
           updateNotificationBadge();
           const added = rows.find(row => String(row.id) === String(payload?.new?.id));
           if (added) void showPhoneNotification(added);
-          if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+          if (!$('#notificationGate').classList.contains('hidden')) {
+            rows.forEach(row => notificationViewedIds.add(String(row.id)));
+            renderNotifications();
+          }
         }).catch(error => console.warn('Live notification refresh failed:', error?.message || error));
-        toast('A little hello from your friend ♡');
+        if (!(page === 'notes' && String(payload?.new?.kind || '') === 'note')) {
+          toast('A little hello from your friend ♡');
+        }
       }).subscribe();
 
     // The other person's read cursor is the source of our Seen receipt.
@@ -3631,12 +3636,20 @@ function renderNotifications() {
   list.innerHTML = notificationRows.map(n => {
     const actor = Array.isArray(n.actor) ? n.actor[0] : (n.actor || {});
     const unread = !n.read_at;
+    const actorName = String(actor.display_name || actor.username || 'Friend');
+    const rawMessage = String(n.message || '');
+    const likedMatch = rawMessage.match(/\bliked your (photo|song|note)\b/i);
+    let actionText = likedMatch ? 'liked your ' + likedMatch[1] : rawMessage;
+    if (!likedMatch && actionText.toLowerCase().startsWith(actorName.toLowerCase())) {
+      actionText = actionText.slice(actorName.length).trim();
+    }
+    if (!actionText) actionText = 'shared something with you';
     return `<div class="notification-row${unread ? ' is-unread' : ''}" data-notification-row="${esc(n.id)}">
-      <button type="button" class="notification-open" data-notification="${esc(n.id)}" aria-label="Open notification from ${esc(actor.display_name || actor.username || 'Friend')}">
+      <button type="button" class="notification-open" data-notification="${esc(n.id)}" aria-label="Open notification from ${esc(actorName)}">
         <span class="notification-avatar">${esc(actor.mascot || '🐰')}</span>
         <span class="notification-copy">
-          <b>${esc(actor.display_name || actor.username || 'Friend')}</b>
-          <small>@${esc(actor.username || 'friend')} · ${esc(n.message)}</small>
+          <b>${esc(actorName)}</b>
+          <small>${esc(actionText)}</small>
           <time>${esc(formatMessageTime(n.created_at))}</time>
         </span>
         ${unread ? '<i class="notification-unread-dot" aria-label="Unread"></i>' : ''}
@@ -3940,12 +3953,14 @@ document.addEventListener('change', e => {
 document.addEventListener('click', event => {
   const row = event.target.closest('.friend-row[data-profile]');
   if (!row || event.target.closest('[data-follow]')) return;
-  const username = row.dataset.profile;
-  const friend = row.dataset.ownProfile === 'true' ? me : [...friends, ...friendResults].find(user =>
-    String(user.id) === String(row.dataset.friendId) ||
-    String(user.username || '').toLowerCase() === String(username || '').toLowerCase()
+  const username = String(row.dataset.profile || '').toLowerCase();
+  const rowId = String(row.dataset.friendId || '');
+  const isOwnProfile = row.dataset.ownProfile === 'true' || (!!me?.id && rowId === String(me.id));
+  const friend = isOwnProfile ? me : [...friends, ...friendResults].find(user =>
+    (rowId && String(user.id) === rowId) ||
+    String(user.username || '').toLowerCase() === username
   );
-  if (!friend) return;
+  if (!friend || (!isOwnProfile && String(friend.id) === String(me?.id || ''))) return;
   event.preventDefault();
   event.stopPropagation();
   showFriendProfile(friend);
@@ -4344,9 +4359,13 @@ document.addEventListener('click', async e => {
   // Instagram Notes: tap friend note
   const friendNoteItem = e.target.closest('[data-friend-profile]');
   if (friendNoteItem) {
-    const username = friendNoteItem.dataset.friendProfile;
-    const f = friends.find(u => u.username === username);
-    if (f) showFriendProfile(f);
+    const friendId = String(friendNoteItem.dataset.friendId || '');
+    const username = String(friendNoteItem.dataset.friendProfile || '').toLowerCase();
+    const f = [...friends, ...friendResults].find(u =>
+      (friendId && String(u.id) === friendId) ||
+      String(u.username || '').toLowerCase() === username
+    );
+    if (f && String(f.id) !== String(me?.id || '')) showFriendProfile(f);
     return;
   }
 
@@ -4516,8 +4535,14 @@ document.addEventListener('click', async e => {
     return;
   }
   if (e.target.closest('#notificationOpen')) {
+    notificationRows.forEach(row => notificationViewedIds.add(String(row.id)));
     $('#notificationGate').classList.remove('hidden');
-    void loadNotifications().then(() => renderNotifications());
+    void loadNotifications().then(() => {
+      if (!$('#notificationGate').classList.contains('hidden')) {
+        notificationRows.forEach(row => notificationViewedIds.add(String(row.id)));
+        renderNotifications();
+      }
+    });
     return;
   }
   if (e.target.closest('#profileOpen, [data-open-profile]')) {
