@@ -29,7 +29,7 @@ const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl.trim() || !supabaseKey.trim()) {
-  throw new Error('Configure SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in the Vercel project environment variables.');
+  throw new Error('Configure SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in the repository Actions secrets.');
 }
 
 const config = 'window.CUTE_BUNNY_CONFIG = ' + JSON.stringify({
