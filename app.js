@@ -3107,8 +3107,34 @@ async function flushNoteSeenReceipts() {
 function formatSeenRelative(value) {
   const timestamp = new Date(value).getTime();
   if (!Number.isFinite(timestamp)) return 'Seen';
-  const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
-  return minutes < 1 ? 'Seen' : 'Seen ' + minutes + 'm';
+  const elapsed = Math.max(0, Date.now() - timestamp);
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const week = 7 * day;
+  const month = 30 * day;
+  const year = 365 * day;
+
+  if (elapsed < minute) return 'Seen';
+  if (elapsed < hour) return 'Seen ' + Math.floor(elapsed / minute) + 'm';
+  if (elapsed < day) {
+    const count = Math.floor(elapsed / hour);
+    return 'Seen ' + count + 'hr';
+  }
+  if (elapsed < week) {
+    const count = Math.floor(elapsed / day);
+    return 'Seen ' + count + (count === 1 ? 'day' : 'days');
+  }
+  if (elapsed < month) {
+    const count = Math.floor(elapsed / week);
+    return 'Seen ' + count + (count === 1 ? 'week' : 'weeks');
+  }
+  if (elapsed < year) {
+    const count = Math.floor(elapsed / month);
+    return 'Seen ' + count + (count === 1 ? 'month' : 'months');
+  }
+  const count = Math.floor(elapsed / year);
+  return 'Seen ' + count + (count === 1 ? 'year' : 'years');
 }
 
 function hideSeenReceiptImmediately() {
