@@ -12473,7 +12473,7 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
   letter-spacing:0!important;
 }
 
-/* Tighter Notes text bubbles: reduce inner spacing on every side. */
+/* Compact Notes text bubbles with reduced inner spacing on every side. */
 #content .chat-page .chat-bubble-wrap>.chat-bubble {
-  padding:9px 13px 8px!important;
+  padding:6px 9px 5px!important;
 }
