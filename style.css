@@ -12475,5 +12475,5 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
 
 /* Compact Notes text bubbles with reduced inner spacing on every side. */
 #content .chat-page .chat-bubble-wrap>.chat-bubble {
-  padding:6px 9px 4px!important;
+  padding:6px 9px 3px!important;
 }
