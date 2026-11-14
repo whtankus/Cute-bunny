@@ -30,7 +30,7 @@ let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0
 const songUrlCache = new Map(), songUrlInFlight = new Map();
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
 let notificationSeenObserver = null, notificationDismissals = new Set();
-let noteSeenObserver = null, noteSeenDebounceTimer = null;
+let noteSeenObserver = null, noteSeenDebounceTimer = null, seenRelativeInterval = null;
 const noteSeenPending = new Map(), noteSeenInFlight = new Map();
 let noteSeenLastAck = new Map();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
@@ -1927,7 +1927,7 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
   ` : '';
   const seenLabel = m.last_seen_at ? formatSeenRelative(m.last_seen_at) : 'Seen';
   const seenReceipt = showSeen && mine && Number(m.seen_by_count || 0) > 0
-    ? '<small class="chat-seen-receipt" aria-label="' + esc(seenLabel) + '">' + esc(seenLabel) + '</small>'
+    ? '<small class="chat-seen-receipt" data-seen-at="' + esc(m.last_seen_at || '') + '" aria-label="' + esc(seenLabel) + '">' + esc(seenLabel) + '</small>'
     : '';
 
   return `
@@ -1985,6 +1985,16 @@ function memoryCard(m, options = {}) {
 
 /* Clean Notes conversation; message markup is shared with Home → Memory History. */
 function renderNotesPage(options = {}) {
+  if (!seenRelativeInterval) {
+    seenRelativeInterval = setInterval(() => {
+      if (page !== 'notes') return;
+      document.querySelectorAll('#chatThread .chat-seen-receipt[data-seen-at]').forEach(node => {
+        const label = formatSeenRelative(node.dataset.seenAt);
+        node.textContent = label;
+        node.setAttribute('aria-label', label);
+      });
+    }, 15000);
+  }
   const content = $('#content');
   if (!content) return;
 
@@ -3091,8 +3101,11 @@ async function flushNoteSeenReceipts() {
   }
 }
 
-function formatSeenRelative() {
-  return 'Seen';
+function formatSeenRelative(value) {
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return 'Seen';
+  const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+  return minutes < 1 ? 'Seen' : 'Seen ' + minutes + 'm';
 }
 
 async function refreshOwnNoteSeenStatus() {
@@ -3122,25 +3135,16 @@ async function refreshOwnNoteSeenStatus() {
     const latestConversationNoteIsMine = latestConversationNote &&
       String(latestConversationNote.author?.id || latestConversationNote.owner_id) === String(me.id);
 
+    const latestOwnMessageId = Number(latestConversationNote?.id || 0);
     const cursors = (cursorResult.data || [])
-      .filter(cursor => Number(cursor.last_read_message_id) > 0)
-      .sort((a, b) => Number(b.last_read_message_id) - Number(a.last_read_message_id));
-    const furthestMessageId = Number(cursors[0]?.last_read_message_id || 0);
-    if (latestConversationNoteIsMine && furthestMessageId && furthestMessageId <= Number(status.latestNoteId || 0)) {
-      const receiptMessage = feed.find(item =>
-        item.kind === 'note' &&
-        String(item.author?.id || item.owner_id) === String(me.id) &&
-        Number(item.id) === furthestMessageId
-      );
-      if (receiptMessage) {
-        const readersAtCursor = cursors.filter(cursor => Number(cursor.last_read_message_id) === furthestMessageId);
-        receiptMessage.seen_by_count = readersAtCursor.length;
-        receiptMessage.last_seen_at = readersAtCursor
-          .map(cursor => cursor.last_read_at)
-          .filter(Boolean)
-          .sort()
-          .at(-1) || null;
-      }
+      .filter(cursor => Number(cursor.last_read_message_id) >= latestOwnMessageId && latestOwnMessageId > 0);
+    if (latestConversationNoteIsMine && latestOwnMessageId <= Number(status.latestNoteId || 0) && cursors.length) {
+      latestConversationNote.seen_by_count = cursors.length;
+      latestConversationNote.last_seen_at = cursors
+        .map(cursor => cursor.last_read_at)
+        .filter(Boolean)
+        .sort()
+        .at(-1) || null;
     }
     if (page === 'notes') renderNotesPage();
   } catch (error) {
@@ -3268,11 +3272,16 @@ function startRealtime() {
 
     notificationChannel = sb.channel('cute-bunny-notifications-' + me.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'recipient_id=eq.' + me.id }, payload => {
-        void loadNotifications().then(() => {
-          const added = notificationRows.find(row => String(row.id) === String(payload?.new?.id)) || notificationRows[0];
+        // Fetch the inserted notification directly; loadNotifications() may be
+        // busy with an older request and otherwise return before this row arrives.
+        void api('/notifications').then(rows => {
+          notificationRows = rows;
+          notificationLoaded = true;
+          updateNotificationBadge();
+          const added = rows.find(row => String(row.id) === String(payload?.new?.id));
           if (added) void showPhoneNotification(added);
           if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
-        });
+        }).catch(error => console.warn('Live notification refresh failed:', error?.message || error));
         toast('A little hello from your friend ♡');
       }).subscribe();
 
@@ -3287,12 +3296,14 @@ function startRealtime() {
             const pending = feed.filter(item => item.isPending);
             const pendingIds = new Set(pending.map(item => String(item.id)));
             feed = [...freshFeed.filter(item => !pendingIds.has(String(item.id))), ...pending];
-            if (page === 'notes') renderNotesPage();
-            else if (page === 'home') render();
+            if (page === 'notes') {
+              renderNotesPage();
+              void refreshOwnNoteSeenStatus();
+            } else if (page === 'home') render();
           } catch (error) {
             console.warn('Live Notes update could not refresh the feed:', error?.message || error);
           }
-        }, 60);
+        }, 0);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
         clearTimeout(window.cuteMemoryLikesRefresh);
