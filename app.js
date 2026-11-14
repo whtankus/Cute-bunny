@@ -3091,19 +3091,8 @@ async function flushNoteSeenReceipts() {
   }
 }
 
-function formatSeenRelative(value) {
-  const timestamp = new Date(value).getTime();
-  if (!Number.isFinite(timestamp)) return 'Seen';
-  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (seconds < 45) return 'Seen now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return 'Seen ' + minutes + 'm ago';
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return 'Seen ' + hours + 'h ago';
-  const days = Math.floor(hours / 24);
-  if (days === 1) return 'Seen yesterday';
-  if (days < 7) return 'Seen ' + days + 'd ago';
-  return 'Seen ' + new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' }).format(new Date(timestamp));
+function formatSeenRelative() {
+  return 'Seen';
 }
 
 async function refreshOwnNoteSeenStatus() {
