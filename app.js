@@ -32,6 +32,7 @@ let notificationRows = [], notificationLoaded = false, notificationLoading = fal
 let notificationSeenObserver = null, notificationDismissals = new Set();
 let noteSeenObserver = null, noteSeenDebounceTimer = null, seenRelativeInterval = null;
 const noteSeenPending = new Map(), noteSeenInFlight = new Map();
+let notesIncomingPollTimer = null, notesIncomingPollInFlight = false, lastObservedFriendNoteId = null;
 let noteSeenLastAck = new Map();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
@@ -1985,6 +1986,7 @@ function memoryCard(m, options = {}) {
 
 /* Clean Notes conversation; message markup is shared with Home → Memory History. */
 function renderNotesPage(options = {}) {
+  startNotesIncomingPoll();
   if (!seenRelativeInterval) {
     seenRelativeInterval = setInterval(() => {
       if (page !== 'notes') return;
@@ -3119,6 +3121,53 @@ function hideSeenReceiptImmediately() {
   }
 }
 
+// Realtime INSERT events can be missed when a browser's Supabase socket is
+// interrupted. While Notes is visible, poll only the newest friend note as a
+// lightweight fallback; this removes stale Seen without requiring a refresh.
+async function checkForIncomingFriendNote() {
+  if (!sb || !me?.id || page !== 'notes' || document.hidden || notesIncomingPollInFlight) return;
+  notesIncomingPollInFlight = true;
+  try {
+    const { data, error } = await sb.from('memories')
+      .select('id,owner_id,kind,created_at')
+      .eq('kind', 'note')
+      .neq('owner_id', me.id)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return;
+    const incomingId = String(data.id);
+    if (lastObservedFriendNoteId === null) {
+      lastObservedFriendNoteId = incomingId;
+      return;
+    }
+    if (incomingId !== lastObservedFriendNoteId) {
+      lastObservedFriendNoteId = incomingId;
+      hideSeenReceiptImmediately();
+      // Fetch the conversation in the background; the old Seen is already gone.
+      const freshFeed = await api('/feed');
+      const pending = feed.filter(item => item.isPending);
+      const pendingIds = new Set(pending.map(item => String(item.id)));
+      feed = [...freshFeed.filter(item => !pendingIds.has(String(item.id))), ...pending];
+      if (page === 'notes') renderNotesPage();
+    }
+  } catch (error) {
+    console.warn('Incoming Notes check failed:', error?.message || error);
+  } finally {
+    notesIncomingPollInFlight = false;
+  }
+}
+
+function startNotesIncomingPoll() {
+  if (notesIncomingPollTimer) return;
+  void checkForIncomingFriendNote();
+  notesIncomingPollTimer = setInterval(() => {
+    if (page === 'notes' && !document.hidden) void checkForIncomingFriendNote();
+  }, 700);
+}
+
 async function refreshOwnNoteSeenStatus() {
   if (!me || !sb) return;
   try {
@@ -3299,9 +3348,12 @@ function startRealtime() {
     memoryChannel = sb.channel('cute-bunny-memories-' + me.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'memories' }, payload => {
         const incoming = payload?.new || {};
-        if (page === 'notes' && incoming.kind === 'note' && String(incoming.owner_id || '') !== String(me.id)) {
-          // Hide the old receipt synchronously as soon as the friend's INSERT arrives.
-          hideSeenReceiptImmediately();
+        if (incoming.kind === 'note' && String(incoming.owner_id || '') !== String(me.id)) {
+          lastObservedFriendNoteId = String(incoming.id || lastObservedFriendNoteId || '');
+          if (page === 'notes') {
+            // Hide the old receipt synchronously as soon as the friend's INSERT arrives.
+            hideSeenReceiptImmediately();
+          }
         }
         // Refresh only the shared memory feed; a full app refresh can rebuild
         // the current page and interrupt the Notes conversation.
