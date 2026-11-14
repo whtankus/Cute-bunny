@@ -1924,8 +1924,9 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
           <small>@${handle}</small>
         </${senderTag}>
   ` : '';
+  const seenLabel = m.last_seen_at ? formatSeenRelative(m.last_seen_at) : 'Seen';
   const seenReceipt = showSeen && mine && Number(m.seen_by_count || 0) > 0
-    ? '<small class="chat-seen-receipt" aria-label="Seen">Seen</small>'
+    ? '<small class="chat-seen-receipt" aria-label="' + esc(seenLabel) + '">' + esc(seenLabel) + '</small>'
     : '';
 
   return `
@@ -3077,12 +3078,41 @@ async function flushNoteSeenReceipts() {
   }
 }
 
+function formatSeenRelative(value) {
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return 'Seen';
+  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (seconds < 45) return 'Seen now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return 'Seen ' + minutes + 'm ago';
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return 'Seen ' + hours + 'h ago';
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Seen yesterday';
+  if (days < 7) return 'Seen ' + days + 'd ago';
+  return 'Seen ' + new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' }).format(new Date(timestamp));
+}
+
 async function refreshOwnNoteSeenStatus() {
   if (!me || !sb) return;
   try {
-    const status = await api('/notes/seen-status');
+    const [status, cursorResult] = await Promise.all([
+      api('/notes/seen-status'),
+      sb.from('note_read_cursors')
+        .select('last_read_message_id,last_read_at')
+        .eq('owner_id', me.id)
+        .order('last_read_at', { ascending: false })
+        .limit(1)
+    ]);
+    if (cursorResult.error) throw cursorResult.error;
     const latest = feed.find(item => item.kind === 'note' && String(item.id) === String(status.latestNoteId));
-    if (latest) latest.seen_by_count = Number(status.seenByCount) || 0;
+    if (latest) {
+      latest.seen_by_count = Number(status.seenByCount) || 0;
+      const cursor = cursorResult.data?.[0];
+      latest.last_seen_at = cursor && Number(cursor.last_read_message_id) >= Number(latest.id)
+        ? cursor.last_read_at
+        : null;
+    }
     if (page === 'notes') renderNotesPage();
   } catch (error) {
     console.warn('Notes seen status could not refresh:', error?.message || error);
