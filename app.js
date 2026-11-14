@@ -2019,13 +2019,19 @@ function renderNotesPage(options = {}) {
     return divider + chatMessageMarkup(m, !isContinuation, isContinuation, false);
   }).join('');
   const emptyMarkup = '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>';
-  const latestNote = chatNotes[chatNotes.length - 1];
+  // The Seen indicator reflects the newest conversation note, and is shown
+  // whenever that note has a reader cursor—even if the timestamp is unavailable.
+  const latestNote = chatNotes
+    .filter(note => !note.isPending)
+    .slice()
+    .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0))[0];
   const latestOwnerId = String(latestNote?.author?.id || latestNote?.owner_id || '');
   const latestIsMine = !!latestNote && latestOwnerId === String(me?.id || '');
-  const latestSeenAt = latestIsMine && Number(latestNote.seen_by_count || 0) > 0
-    ? String(latestNote.last_seen_at || '')
+  const latestHasBeenSeen = latestIsMine && Number(latestNote.seen_by_count || 0) > 0;
+  const latestSeenAt = latestHasBeenSeen ? String(latestNote.last_seen_at || '') : '';
+  const latestSeenLabel = latestHasBeenSeen
+    ? (latestSeenAt ? formatSeenRelative(latestSeenAt) : 'Seen')
     : '';
-  const latestSeenLabel = latestSeenAt ? formatSeenRelative(latestSeenAt) : '';
   const olderControl = historySentinelMarkup('top');
   const existingThread = $('#chatThread');
   const updateSeenStatus = () => {
@@ -2091,7 +2097,7 @@ function renderNotesPage(options = {}) {
         <div id="chatTypingIndicator" class="chat-typing-indicator" aria-live="polite" aria-atomic="true" hidden></div>
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
-        <small id="chatSeenStatus" class="chat-seen-receipt chat-seen-status" data-seen-at="${esc(latestSeenAt)}" aria-label="${esc(latestSeenLabel || "Not seen")}" ${latestSeenAt ? "" : "hidden"}>${esc(latestSeenLabel)}</small>
+        <small id="chatSeenStatus" class="chat-seen-receipt chat-seen-status" ${latestSeenAt ? 'data-seen-at="' + esc(latestSeenAt) + '"' : ''} aria-label="${esc(latestSeenLabel || "Not seen")}" ${latestHasBeenSeen ? "" : "hidden"}>${esc(latestSeenLabel)}</small>
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>💌</button>
       </form>
