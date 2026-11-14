@@ -12526,7 +12526,7 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
 #content .chat-page .chat-composer>.chat-seen-status {
   position:absolute!important;
   top:-16px!important;
-  right:6px!important;
+  right:2px!important;
   bottom:auto!important;
   left:auto!important;
   display:block!important;
