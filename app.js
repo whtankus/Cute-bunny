@@ -38,7 +38,7 @@ let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
 let navRefreshInFlight = false, appExitStep = 0;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null, noteReadCursorChannel = null;
-let seenStatusRefreshTimer = null;
+let seenStatusRefreshTimer = null, seenStatusRefreshInFlight = false;
 let typingHeartbeatTimer = null, typingStopTimer = null, typingActive = false, typingLastSentAt = 0;
 let notesTypingChannelReady = false, notesTypingQueuedState = null;
 const remoteTypingUsers = new Map();
@@ -2863,7 +2863,11 @@ async function sendChatMessage() {
   refocusComposer();
 
   try {
-    const saved = await api('/memories', { method: 'POST', body: JSON.stringify({ kind: 'note', text }) });
+    const { data: saved, error: sendError } = await sb.from('memories')
+      .insert({ owner_id: me.id, kind: 'note', text })
+      .select('id,owner_id,kind,text,created_at')
+      .single();
+    if (sendError) throw sendError;
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
     feed = feed.map(m => String(m.id) === tempId ? record : m);
     renderNotesPage({ followLatest: true });
@@ -2920,9 +2924,9 @@ async function clearIgNote() {
    The typing hint is attached to the conversation thread, never the composer,
    and heartbeat/expiry timings are short enough to feel live without flicker. */
 let notesTypingChannel = null;
-const NOTES_TYPING_HEARTBEAT_MS = 800;
-const NOTES_TYPING_EXPIRY_MS = 2400;
-const NOTES_TYPING_IDLE_MS = 1100;
+const NOTES_TYPING_HEARTBEAT_MS = 450;
+const NOTES_TYPING_EXPIRY_MS = 1600;
+const NOTES_TYPING_IDLE_MS = 700;
 
 async function sendNotesTyping(isTyping) {
   const nextState = !!isTyping && page === 'notes' && !document.hidden;
@@ -3192,23 +3196,24 @@ function startNotesIncomingPoll() {
   void checkForIncomingFriendNote();
   notesIncomingPollTimer = setInterval(() => {
     if (page === 'notes' && !document.hidden) void checkForIncomingFriendNote();
-  }, 700);
+  }, 500);
 }
 
 async function refreshOwnNoteSeenStatus() {
-  if (!me || !sb) return;
+  if (!me || !sb || seenStatusRefreshInFlight) return;
+  seenStatusRefreshInFlight = true;
   try {
-    const [status, cursorResult] = await Promise.all([
-      api('/notes/seen-status'),
-      sb.from('note_read_cursors')
-        .select('reader_id,last_read_message_id,last_read_at')
-        .eq('owner_id', me.id)
-        .order('last_read_message_id', { ascending: false })
+    // Fetch the owner's newest note and read cursors directly in parallel.
+    // This avoids the extra API wrapper request and its duplicate cursor query.
+    const [{ data: latestOwnNote, error: latestError }, { data: cursors, error: cursorError }] = await Promise.all([
+      sb.from('memories').select('id').eq('owner_id', me.id).eq('kind', 'note')
+        .order('id', { ascending: false }).limit(1).maybeSingle(),
+      sb.from('note_read_cursors').select('reader_id,last_read_message_id,last_read_at')
+        .eq('owner_id', me.id).order('last_read_message_id', { ascending: false })
     ]);
-    if (cursorResult.error) throw cursorResult.error;
+    if (latestError) throw latestError;
+    if (cursorError) throw cursorError;
 
-    // The receipt belongs beneath the newest message any reader has reached,
-    // not permanently beneath the owner's newest message.
     for (const item of feed) {
       if (item.kind !== 'note' || String(item.author?.id || item.owner_id) !== String(me.id)) continue;
       item.seen_by_count = 0;
@@ -3221,13 +3226,15 @@ async function refreshOwnNoteSeenStatus() {
       .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0))[0];
     const latestConversationNoteIsMine = latestConversationNote &&
       String(latestConversationNote.author?.id || latestConversationNote.owner_id) === String(me.id);
-
     const latestOwnMessageId = Number(latestConversationNote?.id || 0);
-    const cursors = (cursorResult.data || [])
-      .filter(cursor => Number(cursor.last_read_message_id) >= latestOwnMessageId && latestOwnMessageId > 0);
-    if (latestConversationNoteIsMine && latestOwnMessageId <= Number(status.latestNoteId || 0) && cursors.length) {
-      latestConversationNote.seen_by_count = cursors.length;
-      latestConversationNote.last_seen_at = cursors
+    const latestOwnNoteId = Number(latestOwnNote?.id || 0);
+    const seenCursors = (cursors || []).filter(cursor =>
+      latestOwnMessageId > 0 && Number(cursor.last_read_message_id) >= latestOwnMessageId
+    );
+
+    if (latestConversationNoteIsMine && latestOwnMessageId <= latestOwnNoteId && seenCursors.length) {
+      latestConversationNote.seen_by_count = seenCursors.length;
+      latestConversationNote.last_seen_at = seenCursors
         .map(cursor => cursor.last_read_at)
         .filter(Boolean)
         .sort()
@@ -3236,6 +3243,8 @@ async function refreshOwnNoteSeenStatus() {
     if (page === 'notes') renderNotesPage();
   } catch (error) {
     console.warn('Notes seen status could not refresh:', error?.message || error);
+  } finally {
+    seenStatusRefreshInFlight = false;
   }
 }
 
@@ -3383,7 +3392,7 @@ function startRealtime() {
         clearTimeout(seenStatusRefreshTimer);
         seenStatusRefreshTimer = setTimeout(() => {
           void refreshOwnNoteSeenStatus();
-        }, 35);
+        }, 10);
       })
       .subscribe(status => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
