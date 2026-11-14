@@ -3108,6 +3108,17 @@ function formatSeenRelative(value) {
   return minutes < 1 ? 'Seen' : 'Seen ' + minutes + 'm';
 }
 
+function hideSeenReceiptImmediately() {
+  // A newly received friend message invalidates the previous Seen receipt at once.
+  document.querySelectorAll('#chatThread .chat-seen-receipt').forEach(node => node.remove());
+  for (const item of feed) {
+    if (item.kind === 'note' && String(item.author?.id || item.owner_id) === String(me?.id || '')) {
+      item.seen_by_count = 0;
+      item.last_seen_at = null;
+    }
+  }
+}
+
 async function refreshOwnNoteSeenStatus() {
   if (!me || !sb) return;
   try {
@@ -3287,6 +3298,11 @@ function startRealtime() {
 
     memoryChannel = sb.channel('cute-bunny-memories-' + me.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'memories' }, payload => {
+        const incoming = payload?.new || {};
+        if (page === 'notes' && incoming.kind === 'note' && String(incoming.owner_id || '') !== String(me.id)) {
+          // Hide the old receipt synchronously as soon as the friend's INSERT arrives.
+          hideSeenReceiptImmediately();
+        }
         // Refresh only the shared memory feed; a full app refresh can rebuild
         // the current page and interrupt the Notes conversation.
         clearTimeout(window.cuteMemoryRefresh);
