@@ -12487,3 +12487,26 @@ body[data-mode="dark"] .chat-typing-dots i { background:#d5a5c5; }
 #content .chat-page .chat-bubble-wrap>.chat-bubble>.chat-message-text {
   align-self:center!important;
 }
+
+
+/* Keep the Seen receipt visually below the latest outgoing bubble without
+   adding height to the message row or moving the conversation/composer. */
+#content .chat-page .chat-message.is-mine {
+  position:relative!important;
+}
+#content .chat-page .chat-message.is-mine>.chat-seen-receipt {
+  position:absolute!important;
+  right:12px!important;
+  bottom:-15px!important;
+  left:auto!important;
+  top:auto!important;
+  display:block!important;
+  width:max-content!important;
+  max-width:calc(100% - 24px)!important;
+  margin:0!important;
+  padding:0 2px!important;
+  text-align:right!important;
+  line-height:1.15!important;
+  pointer-events:none!important;
+  z-index:1!important;
+}
