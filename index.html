@@ -291,7 +291,7 @@
   <script src="supabase-config.js"></script>
   <script src="app.js?v=165723"></script>
   <script>
-    if ("serviceWorker" in navigator) {
+    if (!window.Capacitor?.isNativePlatform?.() && "serviceWorker" in navigator) {
       let reloadingForWorkerUpdate = false;
 
       navigator.serviceWorker.addEventListener("controllerchange", () => {
