@@ -8,6 +8,8 @@ on:
       - "app.js"
       - "style.css"
       - "index.html"
+      - "bunny-app-icon-192.png"
+      - "bunny-app-icon-512.png"
       - "scripts/build-preview.js"
       - "package.json"
       - "capacitor.config.json"
@@ -48,6 +50,26 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+
+      - name: Apply the website logo as the Android launcher icon
+        run: |
+          npm install --no-save --no-audit --no-fund sharp
+          node --input-type=module <<'NODE'
+          import sharp from 'sharp';
+          import { mkdir, rm } from 'node:fs/promises';
+          const source = 'dist/bunny-app-icon-512.png';
+          const root = 'android/app/src/main/res';
+          const sizes = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
+          for (const [density, size] of Object.entries(sizes)) {
+            const dir = `${root}/mipmap-${density}`;
+            await mkdir(dir, { recursive: true });
+            await sharp(source).resize(size, size, { fit: 'contain' }).png().toFile(`${dir}/ic_launcher.png`);
+            await sharp(source).resize(size, size, { fit: 'contain' }).png().toFile(`${dir}/ic_launcher_round.png`);
+          }
+          // Remove Capacitor's generated adaptive icon so Android uses the
+          // exact same full-square artwork as the website favicon/app icon.
+          await rm(`${root}/mipmap-anydpi-v26`, { recursive: true, force: true });
+          NODE
 
       - name: Build debug APK
         run: |
