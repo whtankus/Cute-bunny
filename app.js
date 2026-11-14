@@ -3115,11 +3115,18 @@ async function refreshOwnNoteSeenStatus() {
       item.last_seen_at = null;
     }
 
+    const latestConversationNote = feed
+      .filter(item => item.kind === 'note' && !item.isPending)
+      .slice()
+      .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0))[0];
+    const latestConversationNoteIsMine = latestConversationNote &&
+      String(latestConversationNote.author?.id || latestConversationNote.owner_id) === String(me.id);
+
     const cursors = (cursorResult.data || [])
       .filter(cursor => Number(cursor.last_read_message_id) > 0)
       .sort((a, b) => Number(b.last_read_message_id) - Number(a.last_read_message_id));
     const furthestMessageId = Number(cursors[0]?.last_read_message_id || 0);
-    if (furthestMessageId && furthestMessageId <= Number(status.latestNoteId || 0)) {
+    if (latestConversationNoteIsMine && furthestMessageId && furthestMessageId <= Number(status.latestNoteId || 0)) {
       const receiptMessage = feed.find(item =>
         item.kind === 'note' &&
         String(item.author?.id || item.owner_id) === String(me.id) &&
