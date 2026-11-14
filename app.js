@@ -1991,7 +1991,7 @@ function renderNotesPage(options = {}) {
   if (!seenRelativeInterval) {
     seenRelativeInterval = setInterval(() => {
       if (page !== 'notes') return;
-      document.querySelectorAll('#chatThread .chat-seen-receipt[data-seen-at]').forEach(node => {
+      document.querySelectorAll('#chatSeenStatus[data-seen-at]').forEach(node => {
         const label = formatSeenRelative(node.dataset.seenAt);
         node.textContent = label;
         node.setAttribute('aria-label', label);
@@ -2016,11 +2016,28 @@ function renderNotesPage(options = {}) {
     const isContinuation = !isNewDay && !!ownerId && ownerId === previousOwnerId;
     previousLabel = label;
     previousOwnerId = ownerId;
-    return divider + chatMessageMarkup(m, !isContinuation, isContinuation, true);
+    return divider + chatMessageMarkup(m, !isContinuation, isContinuation, false);
   }).join('');
   const emptyMarkup = '<div class="chat-empty"><span>💌</span><b>Your conversation starts here</b><small>Send the first little hello ♡</small></div>';
+  const latestNote = chatNotes[chatNotes.length - 1];
+  const latestOwnerId = String(latestNote?.author?.id || latestNote?.owner_id || '');
+  const latestIsMine = !!latestNote && latestOwnerId === String(me?.id || '');
+  const latestSeenAt = latestIsMine && Number(latestNote.seen_by_count || 0) > 0
+    ? String(latestNote.last_seen_at || '')
+    : '';
+  const latestSeenLabel = latestSeenAt ? formatSeenRelative(latestSeenAt) : '';
   const olderControl = historySentinelMarkup('top');
   const existingThread = $('#chatThread');
+  const updateSeenStatus = () => {
+    const status = $('#chatSeenStatus');
+    if (!status) return;
+    status.hidden = !latestSeenAt;
+    status.textContent = latestSeenLabel;
+    status.setAttribute('aria-label', latestSeenLabel || 'Not seen');
+    if (latestSeenAt) status.dataset.seenAt = latestSeenAt;
+    else delete status.dataset.seenAt;
+  };
+  updateSeenStatus();
 
   // Update the existing scrollport in place so realtime refreshes never rebuild
   // the page or reset the reader's position in a long conversation.
@@ -2074,6 +2091,7 @@ function renderNotesPage(options = {}) {
         <div id="chatTypingIndicator" class="chat-typing-indicator" aria-live="polite" aria-atomic="true" hidden></div>
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
+        <small id="chatSeenStatus" class="chat-seen-receipt chat-seen-status" hidden></small>
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>💌</button>
       </form>
