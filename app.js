@@ -38,6 +38,7 @@ let notificationViewedIds = new Set();
 let navRefreshInFlight = false, appExitStep = 0;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
 let typingHeartbeatTimer = null, typingStopTimer = null, typingActive = false, typingLastSentAt = 0;
+let notesTypingChannelReady = false, notesTypingQueuedState = null;
 const remoteTypingUsers = new Map();
 let activeMessageActionsId = null;
 let hiddenNoteIds = new Set();
@@ -2906,25 +2907,35 @@ async function clearIgNote() {
    The typing hint is attached to the conversation thread, never the composer,
    and heartbeat/expiry timings are short enough to feel live without flicker. */
 let notesTypingChannel = null;
-const NOTES_TYPING_HEARTBEAT_MS = 1100;
-const NOTES_TYPING_EXPIRY_MS = 2600;
-const NOTES_TYPING_IDLE_MS = 1250;
+const NOTES_TYPING_HEARTBEAT_MS = 800;
+const NOTES_TYPING_EXPIRY_MS = 2400;
+const NOTES_TYPING_IDLE_MS = 1100;
 
 async function sendNotesTyping(isTyping) {
+  const nextState = !!isTyping && page === 'notes' && !document.hidden;
   if (!notesTypingChannel || !me) return;
+  if (!notesTypingChannelReady) {
+    notesTypingQueuedState = nextState;
+    return;
+  }
   try {
-    await notesTypingChannel.send({
+    const result = await notesTypingChannel.send({
       type: 'broadcast',
       event: 'typing',
       payload: {
         user_id: String(me.id),
         username: me.username || 'Friend',
         display_name: me.displayName || me.display_name || me.username || 'Friend',
-        is_typing: !!isTyping && page === 'notes' && !document.hidden,
+        is_typing: nextState,
         sent_at: Date.now()
       }
     });
+    if (result !== 'ok') {
+      notesTypingQueuedState = nextState;
+      console.warn('Notes typing broadcast status:', result);
+    }
   } catch (error) {
+    notesTypingQueuedState = nextState;
     console.warn('Notes typing update could not be sent:', error?.message || error);
   }
 }
@@ -2934,6 +2945,8 @@ function receiveNotesTyping(payload) {
   if (!userId || userId === String(me?.id || '')) return;
   const friend = friends.find(item => String(item.id || item.user_id || '') === userId);
   if (!friend) return;
+  const sentAt = Number(payload?.sent_at || 0);
+  if (sentAt && Date.now() - sentAt > NOTES_TYPING_EXPIRY_MS + 500) return;
   const existing = remoteTypingUsers.get(userId);
   if (existing?.timer) clearTimeout(existing.timer);
   if (!payload.is_typing || page !== 'notes' || document.hidden) {
@@ -3101,7 +3114,7 @@ async function refreshOwnNoteSeenStatus() {
       sb.from('note_read_cursors')
         .select('last_read_message_id,last_read_at')
         .eq('owner_id', me.id)
-        .order('last_read_at', { ascending: false })
+        .order('last_read_message_id', { ascending: false })
         .limit(1)
     ]);
     if (cursorResult.error) throw cursorResult.error;
@@ -3165,7 +3178,13 @@ function startRealtime() {
     notesTypingChannel = sb.channel('cute-bunny-notes-typing')
       .on('broadcast', { event: 'typing' }, ({ payload }) => receiveNotesTyping(payload))
       .subscribe(status => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        if (status === 'SUBSCRIBED') {
+          notesTypingChannelReady = true;
+          const queuedState = notesTypingQueuedState;
+          notesTypingQueuedState = null;
+          void sendNotesTyping(queuedState == null ? typingActive : queuedState);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          notesTypingChannelReady = false;
           console.warn('Notes typing channel status:', status);
         }
       });
@@ -3314,6 +3333,8 @@ function closeRealtime() {
     if (channel && sb) sb.removeChannel(channel);
   });
   presenceChannel = notesTypingChannel = notificationChannel = memoryChannel = profileChannel = null;
+  notesTypingChannelReady = false;
+  notesTypingQueuedState = null;
   presenceStatus = 'closed';
   if (streakCountdownInterval) {
     window.clearInterval(streakCountdownInterval);
