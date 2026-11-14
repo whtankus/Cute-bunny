@@ -2056,9 +2056,9 @@ function renderNotesPage(options = {}) {
     <section class="chat-page" aria-label="Notes conversation">
       <div class="chat-thread" id="chatThread" aria-live="polite">
         ${olderControl}${messagesHtml || emptyMarkup}
+        <div id="chatTypingIndicator" class="chat-typing-indicator" aria-live="polite" aria-atomic="true" hidden></div>
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
-        <div id="chatTypingIndicator" class="chat-typing-indicator" aria-live="polite" aria-atomic="true" hidden></div>
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>💌</button>
       </form>
@@ -2902,9 +2902,12 @@ async function clearIgNote() {
 }
 
 /* Ephemeral Notes typing uses its own Realtime Broadcast channel.
-   It is deliberately separate from online Presence so typing updates cannot
-   overwrite or interfere with a user's online-session metadata. */
+   The typing hint is attached to the conversation thread, never the composer,
+   and heartbeat/expiry timings are short enough to feel live without flicker. */
 let notesTypingChannel = null;
+const NOTES_TYPING_HEARTBEAT_MS = 1100;
+const NOTES_TYPING_EXPIRY_MS = 2600;
+const NOTES_TYPING_IDLE_MS = 1250;
 
 async function sendNotesTyping(isTyping) {
   if (!notesTypingChannel || !me) return;
@@ -2943,7 +2946,7 @@ function receiveNotesTyping(payload) {
     timer: setTimeout(() => {
       remoteTypingUsers.delete(userId);
       syncNotesTypingIndicator();
-    }, 4500)
+    }, NOTES_TYPING_EXPIRY_MS)
   };
   remoteTypingUsers.set(userId, entry);
   syncNotesTypingIndicator();
@@ -2960,13 +2963,10 @@ function startNotesTyping() {
       if (!typingActive || page !== 'notes' || document.hidden) return;
       typingLastSentAt = Date.now();
       void sendNotesTyping(true);
-    }, 3000);
-  } else if (now - typingLastSentAt >= 3000) {
-    typingLastSentAt = now;
-    void sendNotesTyping(true);
+    }, NOTES_TYPING_HEARTBEAT_MS);
   }
   clearTimeout(typingStopTimer);
-  typingStopTimer = setTimeout(stopNotesTyping, 1400);
+  typingStopTimer = setTimeout(stopNotesTyping, NOTES_TYPING_IDLE_MS);
 }
 
 function stopNotesTyping() {
@@ -2984,17 +2984,31 @@ function syncNotesTypingFromPresence() {
 }
 
 function syncNotesTypingIndicator() {
-  const indicator = $('#chatTypingIndicator');
-  if (!indicator) return;
+  const thread = $('#chatThread');
+  if (!thread || page !== 'notes') return;
+  let indicator = $('#chatTypingIndicator');
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.id = 'chatTypingIndicator';
+    indicator.className = 'chat-typing-indicator';
+    indicator.setAttribute('aria-live', 'polite');
+    indicator.setAttribute('aria-atomic', 'true');
+  }
   const names = [...remoteTypingUsers.values()].map(entry => entry.displayName);
   let label = '';
   if (names.length === 1) label = names[0] + ' is typing';
   else if (names.length === 2) label = names[0] + ' and ' + names[1] + ' are typing';
   else if (names.length >= 3) label = 'Several people are typing';
-  indicator.hidden = !label || page !== 'notes';
+  indicator.hidden = !label;
   indicator.innerHTML = label
     ? '<span class="chat-typing-label">' + esc(label) + '</span><span class="chat-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>'
     : '';
+  // It stays at the end of the conversation, after the newest message.
+  if (indicator.parentElement !== thread) thread.append(indicator);
+  if (label) {
+    const nearLatest = thread.scrollHeight - thread.scrollTop - thread.clientHeight < 110;
+    if (nearLatest) requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
+  }
 }
 
 /* Notes read receipts: mark only messages that remain substantially visible. */
@@ -3028,8 +3042,10 @@ function queueNoteSeen(ownerId, messageId) {
   const known = Math.max(noteSeenLastAck.get(owner) || 0, noteSeenPending.get(owner) || 0);
   if (id <= known) return;
   noteSeenPending.set(owner, id);
+  // Mark visible incoming notes immediately; do not wait for a debounce timer.
   clearTimeout(noteSeenDebounceTimer);
-  noteSeenDebounceTimer = setTimeout(flushNoteSeenReceipts, 350);
+  noteSeenDebounceTimer = null;
+  void flushNoteSeenReceipts();
 }
 
 async function flushNoteSeenReceipts() {
@@ -3055,7 +3071,7 @@ async function flushNoteSeenReceipts() {
         noteSeenInFlight.delete(ownerId);
         if (noteSeenPending.size && page === 'notes' && !document.hidden) {
           clearTimeout(noteSeenDebounceTimer);
-          noteSeenDebounceTimer = setTimeout(flushNoteSeenReceipts, 250);
+          noteSeenDebounceTimer = setTimeout(flushNoteSeenReceipts, 40);
         }
       });
   }
@@ -3211,7 +3227,7 @@ function startRealtime() {
           } catch (error) {
             console.warn('Live Notes update could not refresh the feed:', error?.message || error);
           }
-        }, 120);
+        }, 60);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
         clearTimeout(window.cuteMemoryLikesRefresh);
@@ -3246,7 +3262,7 @@ function startRealtime() {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'note_read_cursors', filter: 'owner_id=eq.' + me.id }, () => {
         clearTimeout(window.cuteNoteSeenRefresh);
-        window.cuteNoteSeenRefresh = setTimeout(() => { void refreshOwnNoteSeenStatus(); }, 160);
+        window.cuteNoteSeenRefresh = setTimeout(() => { void refreshOwnNoteSeenStatus(); }, 40);
       }).subscribe(status => {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.warn('Live Notes channel status:', status);
