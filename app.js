@@ -2037,7 +2037,7 @@ function renderNotesPage(options = {}) {
   const updateSeenStatus = () => {
     const status = $('#chatSeenStatus');
     if (!status) return;
-    status.hidden = !latestSeenAt;
+    status.hidden = !latestHasBeenSeen;
     status.textContent = latestSeenLabel;
     status.setAttribute('aria-label', latestSeenLabel || 'Not seen');
     if (latestSeenAt) status.dataset.seenAt = latestSeenAt;
