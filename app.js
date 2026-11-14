@@ -37,7 +37,8 @@ let noteSeenLastAck = new Map();
 let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
 let navRefreshInFlight = false, appExitStep = 0;
-let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null;
+let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null, noteReadCursorChannel = null;
+let seenStatusRefreshTimer = null;
 let typingHeartbeatTimer = null, typingStopTimer = null, typingActive = false, typingLastSentAt = 0;
 let notesTypingChannelReady = false, notesTypingQueuedState = null;
 const remoteTypingUsers = new Map();
@@ -3345,6 +3346,25 @@ function startRealtime() {
         toast('A little hello from your friend ♡');
       }).subscribe();
 
+    // The other person's read cursor is the source of our Seen receipt.
+    // Subscribe directly so Seen appears as soon as their read is committed.
+    noteReadCursorChannel = sb.channel('cute-bunny-note-read-cursors-' + me.id)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'note_read_cursors',
+        filter: 'owner_id=eq.' + me.id
+      }, payload => {
+        if (String(payload?.new?.reader_id || '') === String(me.id)) return;
+        clearTimeout(seenStatusRefreshTimer);
+        seenStatusRefreshTimer = setTimeout(() => {
+          void refreshOwnNoteSeenStatus();
+        }, 35);
+      })
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.warn('Seen receipt realtime channel status:', status);
+        }
+      });
+
     memoryChannel = sb.channel('cute-bunny-memories-' + me.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'memories' }, payload => {
         const incoming = payload?.new || {};
@@ -3424,10 +3444,12 @@ function closeRealtime() {
   remoteTypingUsers.forEach(entry => clearTimeout(entry.timer));
   remoteTypingUsers.clear();
   syncNotesTypingIndicator();
-  [presenceChannel, notesTypingChannel, notificationChannel, memoryChannel, profileChannel].forEach(channel => {
+  [presenceChannel, notesTypingChannel, notificationChannel, memoryChannel, profileChannel, noteReadCursorChannel].forEach(channel => {
     if (channel && sb) sb.removeChannel(channel);
   });
-  presenceChannel = notesTypingChannel = notificationChannel = memoryChannel = profileChannel = null;
+  presenceChannel = notesTypingChannel = notificationChannel = memoryChannel = profileChannel = noteReadCursorChannel = null;
+  clearTimeout(seenStatusRefreshTimer);
+  seenStatusRefreshTimer = null;
   notesTypingChannelReady = false;
   notesTypingQueuedState = null;
   presenceStatus = 'closed';
