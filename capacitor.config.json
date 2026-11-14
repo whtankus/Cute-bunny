@@ -1,0 +1,9 @@
+{
+  "appId": "com.cutebunny.app",
+  "appName": "Cute Bunny",
+  "webDir": "dist",
+  "backgroundColor": "#fdf1ea",
+  "android": {
+    "allowMixedContent": false
+  }
+}
