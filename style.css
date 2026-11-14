@@ -1054,28 +1054,6 @@ body[data-mode="dark"] .auth-close,body[data-mode="dark"] .memory-action-close{b
   background:#fffafd;
 }
 
-/* A one-character message stays a true circle instead of collapsing smaller. */
-.chat-bubble-wrap>.chat-bubble.is-single-character {
-  box-sizing:border-box!important;
-  display:grid!important;
-  place-items:center!important;
-  flex:0 0 64px!important;
-  width:64px!important;
-  min-width:64px!important;
-  max-width:64px!important;
-  height:64px!important;
-  min-height:64px!important;
-  max-height:64px!important;
-  aspect-ratio:1/1!important;
-  padding:0!important;
-  border-radius:50%!important;
-}
-.chat-bubble-wrap>.chat-bubble.is-single-character .chat-message-text {
-  width:100%!important;
-  text-align:center!important;
-  overflow-wrap:normal!important;
-  word-break:normal!important;
-}
 .chat-message-text {
   display:block;
   min-width:0;
@@ -12570,6 +12548,54 @@ body[data-mode="dark"] #content .chat-page .chat-composer>.chat-seen-status {
   color:#d3a9c3!important;
 }
 
+
+/* Final override: one-character Notes messages must render as an actual circle. */
+.chat-bubble-wrap:has(>.chat-bubble.is-single-character) {
+  flex:0 0 64px!important;
+  width:64px!important;
+  min-width:64px!important;
+  max-width:64px!important;
+}
+.chat-bubble-wrap>.chat-bubble.is-single-character,
+.chat-bubble-wrap>.chat-bubble.is-single-character:hover,
+.chat-bubble-wrap>.chat-bubble.is-single-character:active,
+.chat-bubble-wrap>.chat-bubble.is-single-character.is-pressed {
+  display:flex!important;
+  flex:0 0 64px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  width:64px!important;
+  min-width:64px!important;
+  max-width:64px!important;
+  height:64px!important;
+  min-height:64px!important;
+  max-height:64px!important;
+  padding:0!important;
+  border-width:2px!important;
+  border-radius:50%!important;
+  box-shadow:none!important;
+  transform:none!important;
+  overflow:hidden!important;
+}
+.chat-bubble-wrap>.chat-bubble.is-single-character .chat-message-text {
+  display:block!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:0!important;
+  text-align:center!important;
+  white-space:pre!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  line-height:1!important;
+}
+body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-single-character,
+body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-single-character:hover,
+body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-single-character:active {
+  box-shadow:none!important;
+}
 
 /* Final override: one-character Notes messages must render as an actual circle. */
 .chat-bubble-wrap:has(>.chat-bubble.is-single-character) {
