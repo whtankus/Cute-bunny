@@ -3112,19 +3112,39 @@ async function refreshOwnNoteSeenStatus() {
     const [status, cursorResult] = await Promise.all([
       api('/notes/seen-status'),
       sb.from('note_read_cursors')
-        .select('last_read_message_id,last_read_at')
+        .select('reader_id,last_read_message_id,last_read_at')
         .eq('owner_id', me.id)
         .order('last_read_message_id', { ascending: false })
-        .limit(1)
     ]);
     if (cursorResult.error) throw cursorResult.error;
-    const latest = feed.find(item => item.kind === 'note' && String(item.id) === String(status.latestNoteId));
-    if (latest) {
-      latest.seen_by_count = Number(status.seenByCount) || 0;
-      const cursor = cursorResult.data?.[0];
-      latest.last_seen_at = cursor && Number(cursor.last_read_message_id) >= Number(latest.id)
-        ? cursor.last_read_at
-        : null;
+
+    // The receipt belongs beneath the newest message any reader has reached,
+    // not permanently beneath the owner's newest message.
+    for (const item of feed) {
+      if (item.kind !== 'note' || String(item.author?.id || item.owner_id) !== String(me.id)) continue;
+      item.seen_by_count = 0;
+      item.last_seen_at = null;
+    }
+
+    const cursors = (cursorResult.data || [])
+      .filter(cursor => Number(cursor.last_read_message_id) > 0)
+      .sort((a, b) => Number(b.last_read_message_id) - Number(a.last_read_message_id));
+    const furthestMessageId = Number(cursors[0]?.last_read_message_id || 0);
+    if (furthestMessageId && furthestMessageId <= Number(status.latestNoteId || 0)) {
+      const receiptMessage = feed.find(item =>
+        item.kind === 'note' &&
+        String(item.author?.id || item.owner_id) === String(me.id) &&
+        Number(item.id) === furthestMessageId
+      );
+      if (receiptMessage) {
+        const readersAtCursor = cursors.filter(cursor => Number(cursor.last_read_message_id) === furthestMessageId);
+        receiptMessage.seen_by_count = readersAtCursor.length;
+        receiptMessage.last_seen_at = readersAtCursor
+          .map(cursor => cursor.last_read_at)
+          .filter(Boolean)
+          .sort()
+          .at(-1) || null;
+      }
     }
     if (page === 'notes') renderNotesPage();
   } catch (error) {
