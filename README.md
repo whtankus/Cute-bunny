@@ -37,6 +37,44 @@ Cute Bunny is a mobile-friendly social scrapbook designed around a small circle 
 
 ---
 
+## Android app
+
+Cute Bunny is also packaged as a native Android app using Capacitor.
+
+| Android detail | Value |
+| --- | --- |
+| App name | Cute Bunny |
+| Package name | `com.cutebunny.app` |
+| Application ID | `com.cutebunny.app` |
+| APK type | Debug APK (`app-debug.apk`) |
+| Build workflow | [Build Cute Bunny Android APK](.github/workflows/android-apk.yml) |
+
+### Install on Android
+
+1. Open the repository's [Actions page](https://github.com/whtankus/Cute-bunny/actions).
+2. Select the latest successful **Build Cute Bunny Android APK** workflow run.
+3. Under **Artifacts**, download `cute-bunny-android-apk`.
+4. Extract the ZIP file to get `app-debug.apk`.
+5. Transfer `app-debug.apk` to your Android phone and open it.
+6. If Android asks, allow installation from that source, then tap **Install**.
+
+The APK artifact is retained by GitHub Actions for 30 days. A new APK is generated when relevant app files are pushed to `main), or the workflow can be started manually from the Actions page.
+
+### Build the Android APK locally
+
+Requirements: Node.js 22, Java 21, and the Android SDK.
+
+```bash
+npm install
+npm run build
+npx cap add android
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+
+The generated debug APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`.
+
 ## Technology
 
 | Layer | Technology |
@@ -64,7 +102,7 @@ The GitHub Pages deployment is a static website. The browser connects to Supabas
 ├── app.js                         # Application logic and interactions
 ├── index.html                     # App structure and entry point
 ├── style.css                      # Responsive UI and themes
-├── manifest.webmanifest            # Installable PWA metadata
+├── manifest.webmanifest            # Installable PWA metadata\n├── capacitor.config.json          # Native Android app ID and configuration
 ├── sw.js                           # App-shell caching and offline fallback
 ├── bunny-app-icon-192.png          # PWA icon
 ├── bunny-app-icon-512.png          # Large PWA icon
