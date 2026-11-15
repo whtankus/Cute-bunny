@@ -229,3 +229,16 @@ Changes should preserve existing authentication, friend permissions, storage pol
 <p align="center">
   Made for sharing the little things. ♡
 </p>
+
+## App screenshots
+
+The following screenshots show the main areas of Cute Bunny:
+
+### Home
+![Cute Bunny home dashboard](https://raw.githubusercontent.com/whtankus/Cute-bunny/main/screenshots/home-dashboard.jpg)
+
+### Streak Garden
+![Cute Bunny streak garden](https://raw.githubusercontent.com/whtankus/Cute-bunny/main/screenshots/streak-garden.jpg)
+
+### Friends and profile
+![Cute Bunny friends and profile](https://raw.githubusercontent.com/whtankus/Cute-bunny/main/screenshots/friends-profile.jpg)
