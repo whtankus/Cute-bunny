@@ -11,6 +11,7 @@ on:
       - "bunny-app-icon-192.png"
       - "bunny-app-icon-512.png"
       - "scripts/build-preview.js"
+      - "scripts/configure-android-signing.js"
       - "package.json"
       - "capacitor.config.json"
       - ".github/workflows/android-apk.yml"
@@ -85,14 +86,57 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish APK as a GitHub Release asset for Orion Store
+      - name: Prepare persistent Android release keystore
+        id: release-signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Release APK publishing is skipped until all four Android signing secrets are configured."
+            exit 0
+          fi
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release-key.keystore
+          chmod 600 android/app/release-key.keystore
+          keytool -list -keystore android/app/release-key.keystore -storetype PKCS12 -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build signed Android release APK
+        if: steps.release-signing.outputs.ready == 'true'
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/android/app/release-key.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_VERSION_CODE: ${{ github.run_number }}
+          ANDROID_VERSION_NAME: 1.0.${{ github.run_number }}
+        run: |
+          node scripts/configure-android-signing.js
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Upload signed Android release APK
+        if: steps.release-signing.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cute-bunny-android-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish signed APK as a GitHub Release asset for Orion Store
+        if: steps.release-signing.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          ANDROID_VERSION_NAME: 1.0.${{ github.run_number }}
         run: |
-          TAG="v1.0.${GITHUB_RUN_NUMBER}"
-          cp android/app/build/outputs/apk/debug/app-debug.apk Cute-Bunny.apk
+          TAG="v${ANDROID_VERSION_NAME}"
+          cp android/app/build/outputs/apk/release/app-release.apk Cute-Bunny.apk
           gh release create "$TAG" Cute-Bunny.apk \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "Cute Bunny $TAG" \
-            --notes "Android installation package for Cute Bunny. This release is generated automatically from the successful Android build workflow."
+            --notes "Signed Android installation package for Cute Bunny. Android version code: ${GITHUB_RUN_NUMBER}.";
