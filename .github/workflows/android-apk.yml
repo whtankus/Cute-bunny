@@ -16,7 +16,7 @@ on:
       - ".github/workflows/android-apk.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-android:
@@ -84,3 +84,15 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish APK as a GitHub Release asset for Orion Store
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.0.${GITHUB_RUN_NUMBER}"
+          cp android/app/build/outputs/apk/debug/app-debug.apk Cute-Bunny.apk
+          gh release create "$TAG" Cute-Bunny.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Cute Bunny $TAG" \
+            --notes "Android installation package for Cute Bunny. This release is generated automatically from the successful Android build workflow."
