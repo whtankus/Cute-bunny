@@ -2155,6 +2155,7 @@ function renderNotesPage(options = {}) {
         );
       }
       syncNotesKeyboardLayout();
+      syncNotesSeenReceiptVisibility(existingThread);
       observeNoteSeenMessages();
     });
     return;
@@ -2178,6 +2179,7 @@ function renderNotesPage(options = {}) {
     syncNotesKeyboardLayout();
     const thread = $('#chatThread');
     if (thread) thread.scrollTop = thread.scrollHeight;
+    syncNotesSeenReceiptVisibility(thread);
     observeNoteSeenMessages();
   });
 }
@@ -5098,10 +5100,22 @@ window.addEventListener('orientationchange', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('resize', scheduleNotesKeyboardLayout);
 window.visualViewport?.addEventListener('scroll', scheduleNotesKeyboardLayout);
 
+// Keep the Seen receipt visible only while the reader is at the latest messages.
+function syncNotesSeenReceiptVisibility(thread = $('#chatThread')) {
+  if (!thread) return;
+  const status = $('#chatSeenStatus');
+  if (!status) return;
+  const distanceFromBottom = Math.max(0, thread.scrollHeight - thread.scrollTop - thread.clientHeight);
+  const hasReceipt = status.getAttribute('aria-label') !== 'Not seen';
+  status.hidden = !hasReceipt || distanceFromBottom > 32;
+}
+
 // Hide the masthead while reading downward and reveal it when scrolling upward.
 document.addEventListener('scroll', event => {
   const thread = event.target;
   if (page !== 'notes' || thread?.id !== 'chatThread') return;
+
+  syncNotesSeenReceiptVisibility(thread);
 
   const currentTop = Math.max(0, Math.round(thread.scrollTop));
   if (document.body.classList.contains('notes-keyboard-open') && !notesKeyboardDismissed) {
