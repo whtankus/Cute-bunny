@@ -3074,20 +3074,34 @@ async function sendNotesTyping(isTyping) {
 function receiveNotesTyping(payload) {
   const userId = String(payload?.user_id || '');
   if (!userId || userId === String(me?.id || '')) return;
+
+  // A conversation participant can be present in the followed-friends list or
+  // already represented by a message in this Notes thread. The latter keeps
+  // typing visible when the follow list has not refreshed yet.
   const friend = friends.find(item => String(item.id || item.user_id || '') === userId);
-  if (!friend) return;
+  const knownAuthor = feed.find(item =>
+    item.kind === 'note' &&
+    String(item.author?.id || item.owner_id || '') === userId
+  )?.author;
+  if (!friend && !knownAuthor) return;
+
   const sentAt = Number(payload?.sent_at || 0);
-  if (sentAt && Date.now() - sentAt > NOTES_TYPING_EXPIRY_MS + 500) return;
+  if (sentAt && Date.now() - sentAt > NOTES_TYPING_EXPIRY_MS + 1000) return;
   const existing = remoteTypingUsers.get(userId);
   if (existing?.timer) clearTimeout(existing.timer);
+
   if (!payload.is_typing || page !== 'notes' || document.hidden) {
     remoteTypingUsers.delete(userId);
     syncNotesTypingIndicator();
     return;
   }
+
+  const username = friend?.username || knownAuthor?.username || payload.username || 'Friend';
   const entry = {
-    username: friend.username || payload.username || 'Friend',
-    displayName: friend.displayName || friend.display_name || payload.display_name || friend.username || 'Friend',
+    username,
+    displayName: friend?.displayName || friend?.display_name ||
+      knownAuthor?.displayName || knownAuthor?.display_name ||
+      payload.display_name || username,
     timer: setTimeout(() => {
       remoteTypingUsers.delete(userId);
       syncNotesTypingIndicator();
