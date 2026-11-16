@@ -62,6 +62,7 @@ async function configureStatusBar() {
     if (!source.includes('setDecorFitsSystemWindows')) {
       const imports = [
         'import android.graphics.Color',
+        'import android.os.Bundle',
         'import androidx.core.view.WindowCompat',
         'import androidx.core.view.WindowInsetsControllerCompat'
       ];
@@ -126,19 +127,6 @@ async function configureAdaptiveIcons() {
   fs.writeFileSync(path.join(adaptiveDir, 'ic_launcher.xml'), adaptive);
   fs.writeFileSync(path.join(adaptiveDir, 'ic_launcher_round.xml'), adaptive);
 
-  const themedDir = path.join(resources, 'drawable');
-  fs.mkdirSync(themedDir, { recursive: true });
-  fs.writeFileSync(path.join(themedDir, 'ic_launcher_monochrome.xml'), `<?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="512"
-    android:viewportHeight="512">
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M256,64 C205,64 180,118 177,178 C129,143 77,151 67,201 C57,249 91,285 130,302 C89,355 112,425 174,445 C213,458 240,443 256,420 C272,443 299,458 338,445 C400,425 423,355 382,302 C421,285 455,249 445,201 C435,151 383,143 335,178 C332,118 307,64 256,64 Z" />
-</vector>
-`);
   console.log('Configured Android status/navigation bars and adaptive launcher icons. Launcher background: ' + background);
 }
 
