@@ -2215,7 +2215,7 @@ function render(options = {}) {
           <button class="primary" data-go="friends">Find your friend ♡</button>
         </div>
         <button class="hero-art bunny-button" id="bunnyBuddy" aria-label="Open your profile">
-          <span>☁️</span><span class="buddy-pet">${esc(me?.mascot || '🐰')}</span><span>🌷</span>
+          <span>☁️</span><span>${esc(me?.mascot || '🐰')}</span><span>🌷</span>
           <svg class="doodle-bouquet" viewBox="0 0 94 72" aria-hidden="true"><path d="M45 67 Q27 50 9 37"/><path d="M45 67 Q33 45 21 27"/><path d="M45 67 Q40 40 34 18"/><path d="M45 67 Q46 44 47 25"/><path d="M45 67 Q53 39 60 16"/><path d="M45 67 Q59 45 73 28"/><path d="M45 67 Q65 50 85 37"/><path d="M39 57q-13-13-21-5 7 12 21 5M51 55q12-15 21-7-6 13-21 7M34 62q-11-8-17-1 8 9 17 1M56 62q11-8 17-1-8 9-17 1"/><g class="bloom red"><circle cx="9" cy="32" r="4.3"/><circle cx="4" cy="32" r="3.6"/><circle cx="14" cy="32" r="3.6"/><circle cx="9" cy="27" r="3.6"/><circle cx="9" cy="37" r="3.6"/></g><g class="bloom pink"><circle cx="21" cy="22" r="4.3"/><circle cx="16" cy="22" r="3.6"/><circle cx="26" cy="22" r="3.6"/><circle cx="21" cy="17" r="3.6"/><circle cx="21" cy="27" r="3.6"/></g><g class="bloom lavender"><circle cx="34" cy="13" r="4.3"/><circle cx="29" cy="13" r="3.6"/><circle cx="39" cy="13" r="3.6"/><circle cx="34" cy="8" r="3.6"/><circle cx="34" cy="18" r="3.6"/></g><g class="bloom peach"><circle cx="47" cy="20" r="4.3"/><circle cx="42" cy="20" r="3.6"/><circle cx="52" cy="20" r="3.6"/><circle cx="47" cy="15" r="3.6"/><circle cx="47" cy="25" r="3.6"/></g><g class="bloom red"><circle cx="60" cy="11" r="4.3"/><circle cx="55" cy="11" r="3.6"/><circle cx="65" cy="11" r="3.6"/><circle cx="60" cy="6" r="3.6"/><circle cx="60" cy="16" r="3.6"/></g><g class="bloom lavender"><circle cx="73" cy="23" r="4.3"/><circle cx="68" cy="23" r="3.6"/><circle cx="78" cy="23" r="3.6"/><circle cx="73" cy="18" r="3.6"/><circle cx="73" cy="28" r="3.6"/></g><g class="bloom pink"><circle cx="85" cy="32" r="4.3"/><circle cx="80" cy="32" r="3.6"/><circle cx="90" cy="32" r="3.6"/><circle cx="85" cy="27" r="3.6"/><circle cx="85" cy="37" r="3.6"/></g></svg>
           <i>✦</i>
         </button>
@@ -4331,48 +4331,6 @@ document.addEventListener('dblclick', e => {
   void popLoveHeart(tile, e);
 });
 
-// Give the home companion its own reliable tap interaction before other delegated clicks run.
-document.addEventListener('click', event => {
-  let target = event.target;
-  if (target && target.nodeType !== 1) target = target.parentElement;
-  const bunny = target?.closest?.('#bunnyBuddy');
-  if (!bunny) return;
-  event.preventDefault();
-
-  const buddy = me?.mascot || '🐰';
-  const greetings = { '🐰': 'Bunny says hi! ♡', '🐱': 'Kitty says meow! ♡', '🐻': 'Bear sends a hug! ♡', '🐸': 'Froggy says ribbit! ♡' };
-  const pet = bunny.querySelector('.buddy-pet');
-  playBoing();
-
-  bunny.classList.remove('bunny-happy');
-  void bunny.offsetWidth;
-  bunny.classList.add('bunny-happy');
-
-  let savedReducedMotion = false;
-  try { savedReducedMotion = localStorage.getItem('cuteBunnyReduceMotion') === 'true'; } catch {}
-  const reduceMotion = savedReducedMotion
-    || document.documentElement.classList.contains('reduce-app-motion')
-    || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-  if (pet && !reduceMotion && typeof pet.animate === 'function') {
-    pet._buddyTapAnimation?.cancel();
-    const animation = pet.animate([
-      { transform: 'translate3d(0, 0, 0) rotate(0deg) scale(1)' },
-      { transform: 'translate3d(0, -25px, 0) rotate(-13deg) scale(1.16)', offset: 0.32 },
-      { transform: 'translate3d(0, 3px, 0) rotate(11deg) scale(.98)', offset: 0.7 },
-      { transform: 'translate3d(0, 0, 0) rotate(0deg) scale(1)' }
-    ], { duration: 680, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'none' });
-    pet._buddyTapAnimation = animation;
-    animation.onfinish = () => {
-      if (pet._buddyTapAnimation === animation) pet._buddyTapAnimation = null;
-    };
-    animation.oncancel = () => {
-      if (pet._buddyTapAnimation === animation) pet._buddyTapAnimation = null;
-    };
-  }
-
-  toast(greetings[buddy] || 'Your buddy says hi! ♡');
-}, true);
-
 // Profile editor choices inside the restored Profile settings section.
 document.addEventListener('click', event => {
   let target = event.target;
@@ -4659,6 +4617,18 @@ document.addEventListener('click', async e => {
   if (e.target.closest('#streakAddGoal')) { const form = $('#streakGoalForm'); form?.classList.toggle('hidden'); if (form && !form.classList.contains('hidden')) $('#streakGoalInput')?.focus(); return; }
   const removeStreakGoal = e.target.closest('[data-streak-remove-goal]');
   if (removeStreakGoal) { writeStreakGoals(readStreakGoals().filter(goal => goal.id !== removeStreakGoal.dataset.streakRemoveGoal)); renderStreakPage(); return; }
+
+  // Mascot button — restore the earlier, soft CSS hop from the previous design.
+  if (e.target.closest('#bunnyBuddy')) {
+    playBoing();
+    const bunny = $('#bunnyBuddy'), buddy = me?.mascot || '🐰';
+    const greetings = { '🐰': 'Bunny says hi! ♡', '🐱': 'Kitty says meow! ♡', '🐻': 'Bear sends a hug! ♡', '🐸': 'Froggy says ribbit! ♡' };
+    bunny.classList.remove('bunny-happy');
+    void bunny.offsetWidth;
+    bunny.classList.add('bunny-happy');
+    toast(greetings[buddy] || 'Your buddy says hi! ♡');
+    return;
+  }
 
   // Two-step Home exit: "No" returns to the scrapbook; Exit reveals the cat.
   if (e.target.closest('#appExitStay')) {
