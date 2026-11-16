@@ -25,7 +25,7 @@ for (const file of ['style.css', 'app.js']) {
 }
 
 const required = [
-  'index.html', 'app.js', 'style.css', 'sw.js', 'manifest.webmanifest',
+  'index.html', 'app.js', 'style.css', 'manifest.webmanifest',
   'bunny-app-icon-192.png', 'bunny-app-icon-512.png', 'apple-touch-icon.png'
 ];
 for (const file of required) {
