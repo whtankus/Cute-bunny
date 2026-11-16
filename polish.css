@@ -1744,3 +1744,27 @@ body[data-mode="dark"] .auth-card.profile-card .profile-settings-trigger { backg
     left:43px!important; bottom:12px!important; width:64px!important; height:52px!important;
   }
 }
+
+
+/* Compact profile editor: username and gender only. */
+.auth-card.profile-card .profile-settings-panel {display:flex!important;flex-direction:column!important;gap:18px!important;width:min(100%,390px)!important;max-height:min(68dvh,520px)!important;padding:18px!important;overflow-y:auto!important;overflow-x:hidden!important;border:1px solid #efd9e4!important;border-radius:22px!important;background:linear-gradient(155deg,#fffafd,#fff1f6 58%,#f5f0ff)!important;box-shadow:0 18px 48px rgba(126,78,108,.2)!important}
+.auth-card.profile-card .profile-settings-panel.hidden {display:none!important}
+.auth-card.profile-card .profile-settings-heading {padding:0 0 13px!important;border-bottom:1px solid #f0dce6!important}
+.auth-card.profile-card .profile-settings-heading h3 {font-size:1.2rem!important}
+.auth-card.profile-card .profile-editor-settings {display:grid!important;gap:18px!important;padding:4px 0!important}
+.auth-card.profile-card .profile-settings-field {display:grid!important;gap:9px!important;color:#80677e!important;font-size:.82rem!important;font-weight:800!important}
+.auth-card.profile-card .profile-username-input {display:flex!important;align-items:center!important;gap:9px!important;min-height:50px!important;padding:0 14px!important;border:1px solid #ead2df!important;border-radius:15px!important;background:#fff!important;color:#bd789a!important;font-size:1rem!important}
+.auth-card.profile-card .profile-username-input input {flex:1!important;min-width:0!important;height:46px!important;padding:0!important;border:0!important;outline:0!important;background:transparent!important;color:#59465b!important;font:700 .95rem Nunito,sans-serif!important;box-shadow:none!important}
+.auth-card.profile-card .profile-settings-gender {display:grid!important;gap:10px!important;margin:0!important}
+.auth-card.profile-card .profile-settings-gender>label {margin:0!important;color:#80677e!important;font-size:.82rem!important;font-weight:800!important}
+.auth-card.profile-card .profile-gender-options {display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
+.auth-card.profile-card .profile-gender-options button {min-height:46px!important;border:1px solid #ead2df!important;border-radius:14px!important;background:#fff!important;color:#92758a!important;font-weight:800!important}
+.auth-card.profile-card .profile-gender-options button.is-selected {border-color:#d88eae!important;background:linear-gradient(135deg,#ffe8f1,#f1eaff)!important;color:#995b7c!important;box-shadow:inset 0 0 0 1px #e9b6cb!important}
+.auth-card.profile-card .profile-settings-actions {position:sticky!important;bottom:-18px!important;display:grid!important;grid-template-columns:1fr!important;gap:8px!important;margin:0 -18px -18px!important;padding:12px 18px max(12px,env(safe-area-inset-bottom))!important;border-top:1px solid #f0dce6!important;background:rgba(255,250,252,.97)!important;backdrop-filter:blur(14px)!important}
+.auth-card.profile-card .profile-settings-feedback {text-align:center!important}
+.auth-card.profile-card .profile-settings-save {min-height:48px!important;border-radius:15px!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-panel {background:linear-gradient(155deg,#342b3c,#302738 60%,#352d43)!important;border-color:#59465e!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-field,body[data-mode="dark"] .auth-card.profile-card .profile-settings-gender>label {color:#e5d5e5!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-username-input,body[data-mode="dark"] .auth-card.profile-card .profile-gender-options button {background:#2c2434!important;border-color:#5c4b63!important;color:#f4eaf2!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-actions {background:rgba(48,39,55,.97)!important;border-color:#59465e!important}
+@media(max-width:430px){.auth-card.profile-card .profile-settings-panel{width:min(100%,360px)!important;padding:15px!important}.auth-card.profile-card .profile-settings-actions{bottom:-15px!important;margin:0 -15px -15px!important;padding:11px 15px max(11px,env(safe-area-inset-bottom))!important}}
