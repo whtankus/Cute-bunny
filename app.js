@@ -2215,7 +2215,7 @@ function render(options = {}) {
           <button class="primary" data-go="friends">Find your friend ♡</button>
         </div>
         <button class="hero-art bunny-button" id="bunnyBuddy" aria-label="Open your profile">
-          <span>☁️</span><span>${esc(me?.mascot || '🐰')}</span><span>🌷</span>
+          <span>☁️</span><span class="buddy-pet">${esc(me?.mascot || '🐰')}</span><span>🌷</span>
           <svg class="doodle-bouquet" viewBox="0 0 90 70" aria-hidden="true"><path d="M45 66Q35 42 20 27M45 66Q46 38 47 20M45 66Q56 42 72 30"/><path d="M39 54q-13-13-21-5 7 12 21 5M51 53q12-15 21-7-6 13-21 7"/><g class="bloom"><circle cx="20" cy="22" r="5"/><circle cx="14" cy="22" r="4"/><circle cx="26" cy="22" r="4"/><circle cx="20" cy="16" r="4"/><circle cx="20" cy="28" r="4"/></g><g class="bloom lavender"><circle cx="47" cy="16" r="5"/><circle cx="41" cy="16" r="4"/><circle cx="53" cy="16" r="4"/><circle cx="47" cy="10" r="4"/><circle cx="47" cy="22" r="4"/></g><g class="bloom peach"><circle cx="73" cy="27" r="5"/><circle cx="67" cy="27" r="4"/><circle cx="79" cy="27" r="4"/><circle cx="73" cy="21" r="4"/><circle cx="73" cy="33" r="4"/></g></svg>
           <i>✦</i>
         </button>
@@ -4360,6 +4360,45 @@ document.addEventListener('dblclick', e => {
   void popLoveHeart(tile, e);
 });
 
+// Give the home companion its own reliable tap interaction before other delegated clicks run.
+document.addEventListener('click', event => {
+  let target = event.target;
+  if (target && target.nodeType !== 1) target = target.parentElement;
+  const bunny = target?.closest?.('#bunnyBuddy');
+  if (!bunny) return;
+  event.preventDefault();
+
+  const buddy = me?.mascot || '🐰';
+  const greetings = { '🐰': 'Bunny says hi! ♡', '🐱': 'Kitty says meow! ♡', '🐻': 'Bear sends a hug! ♡', '🐸': 'Froggy says ribbit! ♡' };
+  const pet = bunny.querySelector('.buddy-pet');
+  playBoing();
+
+  bunny.classList.remove('bunny-happy');
+  void bunny.offsetWidth;
+  bunny.classList.add('bunny-happy');
+
+  const reduceMotion = document.documentElement.classList.contains('reduce-app-motion')
+    || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  if (pet && !reduceMotion && typeof pet.animate === 'function') {
+    pet._buddyTapAnimation?.cancel();
+    const animation = pet.animate([
+      { transform: 'translate3d(0, 0, 0) rotate(0deg) scale(1)' },
+      { transform: 'translate3d(0, -25px, 0) rotate(-13deg) scale(1.16)', offset: 0.32 },
+      { transform: 'translate3d(0, 3px, 0) rotate(11deg) scale(.98)', offset: 0.7 },
+      { transform: 'translate3d(0, 0, 0) rotate(0deg) scale(1)' }
+    ], { duration: 680, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'none' });
+    pet._buddyTapAnimation = animation;
+    animation.onfinish = () => {
+      if (pet._buddyTapAnimation === animation) pet._buddyTapAnimation = null;
+    };
+    animation.oncancel = () => {
+      if (pet._buddyTapAnimation === animation) pet._buddyTapAnimation = null;
+    };
+  }
+
+  toast(greetings[buddy] || 'Your buddy says hi! ♡');
+}, true);
+
 // Profile editor choices inside the restored Profile settings section.
 document.addEventListener('click', event => {
   let target = event.target;
@@ -4628,18 +4667,6 @@ document.addEventListener('click', async e => {
   if (e.target.closest('#streakAddGoal')) { const form = $('#streakGoalForm'); form?.classList.toggle('hidden'); if (form && !form.classList.contains('hidden')) $('#streakGoalInput')?.focus(); return; }
   const removeStreakGoal = e.target.closest('[data-streak-remove-goal]');
   if (removeStreakGoal) { writeStreakGoals(readStreakGoals().filter(goal => goal.id !== removeStreakGoal.dataset.streakRemoveGoal)); renderStreakPage(); return; }
-
-  // Mascot button
-  if (e.target.closest('#bunnyBuddy')) {
-    playBoing();
-    const bunny = $('#bunnyBuddy'), buddy = me?.mascot || '🐰';
-    const greetings = { '🐰': 'Bunny says hi! ♡', '🐱': 'Kitty says meow! ♡', '🐻': 'Bear sends a hug! ♡', '🐸': 'Froggy says ribbit! ♡' };
-    bunny.classList.remove('bunny-happy');
-    void bunny.offsetWidth;
-    bunny.classList.add('bunny-happy');
-    toast(greetings[buddy] || 'Your buddy says hi! ♡');
-    return;
-  }
 
   // Two-step Home exit: "No" returns to the scrapbook; Exit reveals the cat.
   if (e.target.closest('#appExitStay')) {
