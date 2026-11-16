@@ -25,7 +25,12 @@ async function configureStatusBar() {
     const imports = [
       'import android.graphics.Color;',
       'import android.os.Bundle;',
+      'import android.graphics.drawable.ColorDrawable;',
+      'import android.view.View;',
+      'import androidx.core.graphics.Insets;',
+      'import androidx.core.view.ViewCompat;',
       'import androidx.core.view.WindowCompat;',
+      'import androidx.core.view.WindowInsetsCompat;',
       'import androidx.core.view.WindowInsetsControllerCompat;'
     ];
     for (const item of imports) {
@@ -42,9 +47,25 @@ async function configureStatusBar() {
 
         // Keep the WebView below Android system bars. This lets the existing
         // Cute Bunny header sit directly beneath the status bar without overlap.
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-        getWindow().setStatusBarColor(Color.parseColor("#FCF7F2"));
-        getWindow().setNavigationBarColor(Color.parseColor("#FCF7F2"));
+        int shellColor = Color.parseColor("#FCF7F2");
+        getWindow().setBackgroundDrawable(new ColorDrawable(shellColor));
+        getWindow().setStatusBarColor(shellColor);
+        getWindow().setNavigationBarColor(shellColor);
+
+        // Handle edge-to-edge insets explicitly, including Android 15+ where
+        // the system enforces transparent system bars for modern target SDKs.
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        View content = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(content, (view, windowInsets) -> {
+            Insets barsInsets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
+            );
+            view.setPadding(
+                barsInsets.left, barsInsets.top, barsInsets.right, barsInsets.bottom
+            );
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(content);
 
         WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(
             getWindow(), getWindow().getDecorView()
@@ -68,7 +89,12 @@ async function configureStatusBar() {
       const imports = [
         'import android.graphics.Color',
         'import android.os.Bundle',
+        'import android.graphics.drawable.ColorDrawable',
+        'import android.view.View',
+        'import androidx.core.graphics.Insets',
+        'import androidx.core.view.ViewCompat',
         'import androidx.core.view.WindowCompat',
+        'import androidx.core.view.WindowInsetsCompat',
         'import androidx.core.view.WindowInsetsControllerCompat'
       ];
       const lastImport = [...source.matchAll(/^import .*$/gm)].at(-1);
@@ -77,9 +103,20 @@ async function configureStatusBar() {
       source = source.replace(/class MainActivity\s*:\s*BridgeActivity\(\)\s*(?:\{\s*\})?/, `class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
-        window.statusBarColor = Color.parseColor("#FCF7F2")
-        window.navigationBarColor = Color.parseColor("#FCF7F2")
+        val shellColor = Color.parseColor("#FCF7F2")
+        window.setBackgroundDrawable(ColorDrawable(shellColor))
+        window.statusBarColor = shellColor
+        window.navigationBarColor = shellColor
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val content = findViewById<View>(android.R.id.content)
+        ViewCompat.setOnApplyWindowInsetsListener(content) { view, windowInsets ->
+            val barsInsets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            view.setPadding(barsInsets.left, barsInsets.top, barsInsets.right, barsInsets.bottom)
+            windowInsets
+        }
+        ViewCompat.requestApplyInsets(content)
         val bars = WindowCompat.getInsetsController(window, window.decorView)
         bars.isAppearanceLightStatusBars = true
         bars.isAppearanceLightNavigationBars = true
