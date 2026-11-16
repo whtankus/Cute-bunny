@@ -10,6 +10,7 @@ const assets = [
   'index.html',
   'app.js',
   'style.css',
+  'polish.css',
   'sw.js',
   'manifest.webmanifest',
   'bunny-app-icon-192.png',
