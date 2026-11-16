@@ -11561,7 +11561,6 @@ body[data-mode="dark"] .auth-card.friend-profile-card.is-own-profile #friendProf
 .auth-card.friend-profile-card[data-wallpaper="starlight"]{color:#fff!important}
 .auth-card.friend-profile-card[data-wallpaper="starlight"] h2,
 .auth-card.friend-profile-card[data-wallpaper="starlight"] p,
-.auth-card.friend-profile-card[data-wallpaper="starlight"] small,
 .auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileHandle{color:#fff!important}
 .auth-card.friend-profile-card[data-wallpaper="hearts"]{
   background:radial-gradient(ellipse at 14% 16%,rgba(255,173,199,.7),transparent 32%),radial-gradient(ellipse at 88% 82%,rgba(226,184,255,.66),transparent 36%),linear-gradient(145deg,#ffe8ef 0%,#ffdce9 48%,#f2e3ff 100%)!important
@@ -12668,6 +12667,531 @@ body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-single-character:active
   min-width:0!important;
 }
 
+/* Android/standalone shell: preserve the existing header geometry while
+   allowing its pastel background to meet the native status-bar inset cleanly. */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .app header {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+}
+
+
+/* Streak Garden: selectable Flowers / Hearts / Daily Quest dashboard. */
+.sg-garden-switcher{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:7px;border:1px solid #eadde5;border-radius:19px;background:linear-gradient(135deg,#fffaf6,#f7edf2);box-shadow:0 5px 14px #775e6b0a}
+.sg-garden-switch{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:58px;padding:9px 7px;border:1px solid transparent;border-radius:14px;background:transparent;color:#806b7d;transition:background .2s,border-color .2s,transform .2s}
+.sg-garden-switch>span{font-size:1.18rem;line-height:1}
+.sg-garden-switch>b{font:800 .78rem/1.2 Nunito,sans-serif;white-space:nowrap}
+.sg-garden-switch.is-active{border-color:#e7cbd7;background:#fffdfb;color:#a45e80;box-shadow:0 3px 9px #b978951a}
+.sg-garden-switch:active{transform:scale(.98)}
+.sg-tab-panel[hidden]{display:none!important}
+.sg-tab-panel.is-active{animation:sg-panel-in .24s ease both}
+@keyframes sg-panel-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.sg-heart-milestone-art{font-size:2rem;background:radial-gradient(circle at 50% 40%,#fff9f6,#f7e4eb)}
+.sg-hearts-section{background:linear-gradient(145deg,#fff8f6,#f8f0f4 60%,#f4eff8)}
+.sg-daily-quests-section{position:relative;padding:20px;border:1px solid #e7d8df;border-radius:21px;background:linear-gradient(145deg,#fffaf3 0%,#fff7f5 54%,#f5f0f8 100%);box-shadow:0 5px 14px #775e6b0a;overflow:hidden}
+.sg-daily-quests-section:after{content:"✿";position:absolute;right:12px;top:7px;color:#d9b5c3;font:2.1rem Caveat,cursive;opacity:.55;pointer-events:none}
+.sg-daily-quest-card{position:relative;z-index:1;padding:16px;border:1px solid #ecdce2;border-radius:17px;background:#fffdfb;box-shadow:0 5px 14px #805f7410}
+.sg-daily-quest-top{display:flex;align-items:center;gap:9px;min-width:0}
+.sg-daily-quest-icon{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:14px;background:#f9e9ef;font-size:1.35rem}
+.sg-daily-quest-step{color:#a17b91;font-size:.62rem;font-weight:900;letter-spacing:1px}
+.sg-daily-quest-status{margin-left:auto;padding:5px 9px;border:1px solid #eadce3;border-radius:99px;background:#faf3f6;color:#987c8e;font-size:.63rem;font-weight:900;white-space:nowrap}
+.sg-daily-quest-status.is-done{border-color:#d5e2ce;background:#eff5e9;color:#66805f}
+.sg-daily-quest-card h4{margin:13px 0 5px;color:#6c536d;font:700 1.08rem/1.3 Quicksand,sans-serif}
+.sg-daily-quest-card p{margin:0;color:#927e8e;font-size:.78rem;line-height:1.5}
+.sg-daily-quest-progress{height:9px;margin:15px 0 6px;border-radius:99px;background:#f0e6e8;overflow:hidden}
+.sg-daily-quest-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#dca0b7,#b99bc9);transition:width .35s ease}
+.sg-daily-quest-count{color:#a08798;font-size:.67rem;font-weight:800}
+.sg-daily-quest-picker{display:flex;justify-content:center;gap:9px;margin-top:15px}
+.sg-daily-quest-picker button{display:grid;place-items:center;width:34px;height:34px;border:1px solid #e8dce2;border-radius:50%;background:#faf4f5;color:#987e91;font-size:.68rem;font-weight:900;transition:transform .18s,background .18s}
+.sg-daily-quest-picker button.is-active{border-color:#c98ba6;background:#f3dfe8;color:#995b7b;box-shadow:0 0 0 3px #f7eaf0}
+.sg-daily-quest-picker button.is-done{border-color:#cbdcc2;background:#edf4e8;color:#66805f}
+.sg-daily-quest-picker button:active{transform:scale(.94)}
+.sg-daily-quest-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:12px 2px 0;color:#8e788b;font-size:.7rem;font-weight:800}
+.sg-daily-quest-footer small{color:#a38d9c;font-size:.65rem;font-weight:600}
+.sg-daily-bloom-badge{padding:6px 10px;border:1px solid #d8e4ce;border-radius:99px;background:#eff5e9;color:#68825f;font-size:.68rem}
+body[data-mode="dark"] .sg-garden-switcher{border-color:#59495d;background:linear-gradient(135deg,#39303e,#342d3a)}
+body[data-mode="dark"] .sg-garden-switch{color:#c7b4c6}
+body[data-mode="dark"] .sg-garden-switch.is-active{border-color:#856078;background:#4a3948;color:#f1cbdc}
+body[data-mode="dark"] .sg-heart-milestone-art{background:radial-gradient(circle at 50% 40%,#604251,#443641)}
+body[data-mode="dark"] .sg-hearts-section{background:linear-gradient(145deg,#3d333d,#39313d)}
+body[data-mode="dark"] .sg-daily-quests-section{border-color:#59495d;background:linear-gradient(145deg,#3d343e,#39313d 54%,#34313f)}
+body[data-mode="dark"] .sg-daily-quest-card{border-color:#604d60;background:#302838}
+body[data-mode="dark"] .sg-daily-quest-icon{background:#4e3948}
+body[data-mode="dark"] .sg-daily-quest-card h4{color:#f0deeb}
+body[data-mode="dark"] .sg-daily-quest-card p,body[data-mode="dark"] .sg-daily-quest-count,body[data-mode="dark"] .sg-daily-quest-footer{color:#c4b1c2}
+body[data-mode="dark"] .sg-daily-quest-status{border-color:#655364;background:#403541;color:#d6c0d1}
+body[data-mode="dark"] .sg-daily-quest-status.is-done,body[data-mode="dark"] .sg-daily-bloom-badge{border-color:#61765b;background:#39483b;color:#d6e8cc}
+body[data-mode="dark"] .sg-daily-quest-progress{background:#51434e}
+body[data-mode="dark"] .sg-daily-quest-picker button{border-color:#655365;background:#403541;color:#d3bfd0}
+body[data-mode="dark"] .sg-daily-quest-picker button.is-active{border-color:#b77b98;background:#5a3f50;color:#f5dce8}
+body[data-mode="dark"] .sg-daily-quest-picker button.is-done{border-color:#708366;background:#3c4b3c;color:#d8e9cf}
+@media(max-width:620px){
+  .sg-garden-switcher{gap:5px;padding:5px;border-radius:16px}
+  .sg-garden-switch{flex-direction:column;gap:4px;min-height:59px;padding:7px 3px}
+  .sg-garden-switch>b{font-size:.66rem}
+  .sg-daily-quests-section{padding:15px 12px}
+  .sg-daily-quest-card{padding:13px}
+  .sg-daily-quest-card h4{font-size:1rem}
+  .sg-daily-quest-footer{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:360px){
+  .sg-garden-switch>b{font-size:.6rem}
+  .sg-garden-switch>span{font-size:1.05rem}
+}
+
+
+/* Streak Garden polish: soft segmented tabs, illustrated heart awards, and clear daily checklist. */
+.streak-garden-page .sg-garden-switcher{gap:8px;padding:6px;border:1px solid #ead9e2;border-radius:23px;background:linear-gradient(125deg,#fff9f6 0%,#f8eef4 55%,#f1eef8 100%);box-shadow:0 8px 22px #876a7b10}
+.streak-garden-page .sg-garden-switch{position:relative;min-height:62px;gap:8px;padding:9px 10px;border:1px solid transparent;border-radius:17px;color:#947c90;transition:transform .22s ease,background .22s ease,box-shadow .22s ease}
+.streak-garden-page .sg-garden-switch:before{content:"";position:absolute;inset:4px;border-radius:13px;background:transparent;transition:background .22s ease}
+.streak-garden-page .sg-garden-switch>*{position:relative;z-index:1}
+.streak-garden-page .sg-garden-switch .sg-switch-icon{display:grid;place-items:center;width:31px;height:31px;border-radius:11px;background:#f4e8ed;color:#b77d98;font:700 1.25rem/1 Quicksand,sans-serif;box-shadow:inset 0 1px 2px #fff}
+.streak-garden-page .sg-garden-switch .sg-switch-daily{background:#f8efd9;color:#b28c4f}
+.streak-garden-page .sg-garden-switch .sg-switch-hearts{background:#f7e4eb;color:#bf7897}
+.streak-garden-page .sg-garden-switch .sg-switch-flowers{background:#e9f0e3;color:#78966f}
+.streak-garden-page .sg-garden-switch>b{font-size:.79rem;letter-spacing:.05px}
+.streak-garden-page .sg-garden-switch.is-active{transform:translateY(-1px);border-color:#e8cbd8;background:#fffdfb;color:#a45e80;box-shadow:0 5px 12px #bd82951c,inset 0 0 0 1px #fff}
+.streak-garden-page .sg-garden-switch.is-active:before{background:linear-gradient(135deg,#fff8f8,#fff)}
+.streak-garden-page .sg-garden-switch.is-active .sg-switch-icon{box-shadow:0 3px 8px #b982981e}
+.streak-garden-page .sg-heart-milestone-art{font-size:initial;background:radial-gradient(circle at 50% 35%,#fffdf8,#f7e8ee 78%)}
+.streak-garden-page .sg-heart-milestone-art svg{width:68px;height:60px;overflow:visible;filter:drop-shadow(0 3px 2px #b67e9418);transition:transform .25s ease,filter .25s ease}
+.streak-garden-page .sg-milestone:hover .sg-heart-milestone-art svg{transform:translateY(-3px) rotate(-3deg)}
+.streak-garden-page .sg-milestone.is-locked .sg-heart-milestone-art svg{filter:grayscale(.28) saturate(.7);opacity:.78}
+.streak-garden-page .sg-milestone.is-earned .sg-heart-milestone-art{background:radial-gradient(circle at 50% 35%,#fffdf7,#f7e1e9);border-color:#e5bfd0}
+.streak-garden-page .sg-daily-quest-list{position:relative;z-index:1;display:grid;gap:9px}
+.streak-garden-page .sg-daily-quest-card{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:11px;padding:12px 13px;border-radius:16px;box-shadow:0 3px 10px #805f7409}
+.streak-garden-page .sg-daily-quest-card.is-done{border-color:#d7e3d0;background:linear-gradient(110deg,#fbfff8,#fffdfb)}
+.streak-garden-page .sg-daily-quest-icon{width:39px;height:39px;border-radius:13px;background:#f8e9ef;color:#b87593;font:700 1.45rem/1 Quicksand,sans-serif}
+.streak-garden-page .sg-daily-quest-card:nth-child(2) .sg-daily-quest-icon{background:#f8efdf;color:#b28d58}
+.streak-garden-page .sg-daily-quest-card:nth-child(3) .sg-daily-quest-icon{background:#eee9f7;color:#9580b0}
+.streak-garden-page .sg-daily-quest-copy{min-width:0}
+.streak-garden-page .sg-daily-quest-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.streak-garden-page .sg-daily-quest-title-row>b{color:#6c536d;font:800 .86rem/1.25 Nunito,sans-serif}
+.streak-garden-page .sg-daily-quest-card h4{display:none}
+.streak-garden-page .sg-daily-quest-card p{margin:3px 0 7px;font-size:.72rem;line-height:1.35}
+.streak-garden-page .sg-daily-quest-status{margin:0;padding:4px 8px;font-size:.59rem}
+.streak-garden-page .sg-daily-quest-progress{height:5px;margin:0 0 4px}
+.streak-garden-page .sg-daily-quest-count{font-size:.61rem}
+.streak-garden-page .sg-daily-quest-footer{margin-top:11px}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switcher{border-color:#59495d;background:linear-gradient(125deg,#39303e,#342d3a)}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switch{color:#c7b4c6}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switch.is-active{border-color:#856078;background:#4a3948;color:#f1cbdc}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switch .sg-switch-icon{background:#51404d;color:#e5b8cc}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switch .sg-switch-daily{background:#514936;color:#e4c98e}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switch .sg-switch-flowers{background:#3f4c3d;color:#c5d9b8}
+body[data-mode="dark"] .streak-garden-page .sg-daily-quest-card.is-done{border-color:#61765b;background:#354236}
+body[data-mode="dark"] .streak-garden-page .sg-daily-quest-title-row>b{color:#f0deeb}
+body[data-mode="dark"] .streak-garden-page .sg-heart-milestone-art{background:radial-gradient(circle at 50% 35%,#51404b,#3d3541)}
+@media(max-width:620px){
+ .streak-garden-page .sg-garden-switcher{gap:5px;padding:5px;border-radius:19px}
+ .streak-garden-page .sg-garden-switch{min-height:67px;gap:5px;padding:7px 2px;border-radius:14px}
+ .streak-garden-page .sg-garden-switch .sg-switch-icon{width:28px;height:28px;font-size:1.15rem}
+ .streak-garden-page .sg-garden-switch>b{font-size:.65rem}
+ .streak-garden-page .sg-daily-quest-card{grid-template-columns:35px minmax(0,1fr);gap:9px;padding:10px}
+ .streak-garden-page .sg-daily-quest-icon{width:34px;height:34px}
+ .streak-garden-page .sg-daily-quest-title-row>b{font-size:.78rem}
+}
+@media(max-width:360px){
+ .streak-garden-page .sg-garden-switch>b{font-size:.59rem}
+ .streak-garden-page .sg-garden-switch .sg-switch-icon{width:25px;height:25px}
+}
+
+
+/* v108 — tighten Streak Garden typography and align heart milestone cards. */
+.streak-garden-page .sg-tab-panel .sg-section-heading h3{font-size:17px!important;line-height:1.2!important}
+.streak-garden-page .sg-tab-panel .sg-section-heading p{font-size:11px!important;line-height:1.4!important}
+.streak-garden-page .sg-garden-switch{min-height:54px!important;padding:7px 8px!important;gap:6px!important}
+.streak-garden-page .sg-garden-switch>b{font-size:.68rem!important;line-height:1.15!important}
+.streak-garden-page .sg-garden-switch .sg-switch-icon{width:27px!important;height:27px!important;font-size:1.05rem!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-route{grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:stretch!important;gap:9px!important}
+.streak-garden-page .sg-hearts-section .sg-milestone{
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+  min-width:0!important;min-height:158px!important;height:100%!important;padding:10px 8px 9px!important;
+  gap:5px!important;text-align:center!important;
+}
+.streak-garden-page .sg-hearts-section .sg-heart-milestone-art{
+  display:grid!important;place-items:center!important;flex:0 0 46px!important;width:46px!important;height:46px!important;margin:0 auto 2px!important;
+}
+.streak-garden-page .sg-hearts-section .sg-heart-milestone-art svg{display:block!important;width:43px!important;height:39px!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-copy{
+  display:flex!important;flex:1 1 auto!important;align-items:center!important;justify-content:flex-start!important;
+  width:100%!important;min-width:0!important;gap:3px!important;text-align:center!important;
+}
+.streak-garden-page .sg-hearts-section .sg-milestone-day{font-size:8px!important;line-height:1.2!important;letter-spacing:.45px!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-copy b{font-size:10px!important;line-height:1.22!important;overflow-wrap:anywhere!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-copy em{font-size:9px!important;line-height:1.25!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-progress{display:block!important;flex:0 0 4px!important;width:100%!important;height:4px!important;margin-top:2px!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-progress-copy{display:block!important;width:100%!important;font-size:8px!important;line-height:1.2!important;text-align:center!important}
+.streak-garden-page .sg-daily-quest-title-row>b{font-size:.76rem!important;line-height:1.25!important}
+.streak-garden-page .sg-daily-quest-card p{font-size:.66rem!important;line-height:1.35!important}
+.streak-garden-page .sg-daily-quest-status,.streak-garden-page .sg-daily-quest-count{font-size:.56rem!important}
+@media(max-width:620px){
+  .streak-garden-page .sg-tab-panel .sg-section-heading h3{font-size:15px!important}
+  .streak-garden-page .sg-tab-panel .sg-section-heading p{font-size:10px!important}
+  .streak-garden-page .sg-garden-switch{min-height:51px!important;padding:6px 3px!important;gap:4px!important}
+  .streak-garden-page .sg-garden-switch>b{font-size:.58rem!important}
+  .streak-garden-page .sg-garden-switch .sg-switch-icon{width:24px!important;height:24px!important;font-size:.95rem!important}
+  .streak-garden-page .sg-hearts-section .sg-milestone-route{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .streak-garden-page .sg-hearts-section .sg-milestone{min-height:148px!important;padding:9px 7px!important}
+  .streak-garden-page .sg-hearts-section .sg-heart-milestone-art{flex-basis:42px!important;width:42px!important;height:42px!important}
+  .streak-garden-page .sg-hearts-section .sg-heart-milestone-art svg{width:40px!important;height:36px!important}
+  .streak-garden-page .sg-hearts-section .sg-milestone-copy b{font-size:9px!important}
+  .streak-garden-page .sg-hearts-section .sg-milestone-copy em{font-size:8px!important}
+}
+body[data-mode="dark"] .streak-garden-page .sg-hearts-section .sg-milestone{background:#403541!important;border-color:#5d4b5c!important}
+body[data-mode="dark"] .streak-garden-page .sg-hearts-section .sg-milestone.is-earned{background:#394638!important;border-color:#60785a!important}
+
+
+/* v109 — compact, title-only garden selector with a softer daily checklist icon. */
+.streak-garden-page .sg-garden-switcher{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:5px!important;padding:5px!important;border-radius:18px!important;
+}
+.streak-garden-page .sg-garden-switch{
+  display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;
+  min-width:0!important;min-height:43px!important;padding:6px 5px!important;gap:6px!important;border-radius:13px!important;
+}
+.streak-garden-page .sg-garden-switch .sg-switch-icon{
+  flex:0 0 25px!important;width:25px!important;height:25px!important;border-radius:9px!important;
+}
+.streak-garden-page .sg-garden-switch .sg-switch-icon svg{display:block!important;width:17px!important;height:17px!important}
+.streak-garden-page .sg-garden-switch .sg-switch-label{display:block!important;min-width:0!important}
+.streak-garden-page .sg-garden-switch .sg-switch-label>b{
+  display:block!important;margin:0!important;font-size:.68rem!important;line-height:1.15!important;
+  white-space:nowrap!important;letter-spacing:0!important;
+}
+.streak-garden-page .sg-garden-switch .sg-switch-label small{display:none!important}
+@media(max-width:620px){
+  .streak-garden-page .sg-garden-switcher{gap:4px!important;padding:4px!important}
+  .streak-garden-page .sg-garden-switch{min-height:40px!important;padding:5px 3px!important;gap:4px!important}
+  .streak-garden-page .sg-garden-switch .sg-switch-icon{flex-basis:22px!important;width:22px!important;height:22px!important}
+  .streak-garden-page .sg-garden-switch .sg-switch-icon svg{width:15px!important;height:15px!important}
+  .streak-garden-page .sg-garden-switch .sg-switch-label>b{font-size:.59rem!important}
+}
+@media(max-width:360px){
+  .streak-garden-page .sg-garden-switch{gap:3px!important}
+  .streak-garden-page .sg-garden-switch .sg-switch-label>b{font-size:.55rem!important}
+}
+
+
+/* v110 — match heart achievement cards to the flower milestone dimensions. */
+.streak-garden-page .sg-hearts-section .sg-milestone-route{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:10px!important;
+  align-items:stretch!important;
+}
+.streak-garden-page .sg-hearts-section .sg-milestone{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  justify-items:center!important;
+  align-content:start!important;
+  gap:6px!important;
+  min-height:0!important;
+  height:100%!important;
+  padding:12px 8px 10px!important;
+  text-align:center!important;
+}
+.streak-garden-page .sg-hearts-section .sg-heart-milestone-art{
+  display:grid!important;
+  place-items:center!important;
+  flex:none!important;
+  width:48px!important;
+  height:48px!important;
+  margin:0!important;
+}
+.streak-garden-page .sg-hearts-section .sg-heart-milestone-art svg{
+  display:block!important;
+  width:43px!important;
+  height:39px!important;
+}
+.streak-garden-page .sg-hearts-section .sg-milestone-copy{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex:none!important;
+  width:100%!important;
+  gap:3px!important;
+  text-align:center!important;
+}
+.streak-garden-page .sg-hearts-section .sg-milestone-day{font-size:10px!important;line-height:1.2!important;letter-spacing:.35px!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-copy b{font-size:13px!important;line-height:1.25!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-copy em{font-size:12px!important;line-height:1.25!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-progress{width:100%!important;height:5px!important;margin-top:1px!important}
+.streak-garden-page .sg-hearts-section .sg-milestone-progress-copy{width:100%!important;font-size:11px!important;text-align:center!important}
+@media(max-width:620px){
+  .streak-garden-page .sg-hearts-section .sg-milestone-route{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .streak-garden-page .sg-hearts-section .sg-milestone{padding:10px 7px!important}
+}
+
+
+/* v111 — rounded capsule selector with a smooth active-tab transition. */
+.streak-garden-page .sg-garden-switcher{
+  position:relative!important;
+  isolation:isolate!important;
+  overflow:hidden!important;
+  padding:5px!important;
+  gap:4px!important;
+  border-radius:999px!important;
+  background:linear-gradient(120deg,#fff8f7 0%,#f8eff5 54%,#f1eff8 100%)!important;
+  box-shadow:inset 0 1px 3px #9d7c8a12,0 5px 16px #876a7b0c!important;
+}
+.streak-garden-page .sg-garden-switch{
+  position:relative!important;
+  z-index:1!important;
+  min-height:42px!important;
+  border:1px solid transparent!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+  transition:color .24s ease,background .24s ease,border-color .24s ease,box-shadow .24s ease,transform .24s ease!important;
+}
+.streak-garden-page .sg-garden-switch:before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:-1!important;
+  border-radius:inherit!important;
+  background:transparent!important;
+  opacity:0!important;
+  transform:scale(.92)!important;
+  transition:opacity .24s ease,transform .24s cubic-bezier(.2,.8,.2,1),background .24s ease!important;
+}
+.streak-garden-page .sg-garden-switch.is-active{
+  border-color:#e8cbd8!important;
+  border-radius:999px!important;
+  background:linear-gradient(135deg,#fffefe 0%,#fff7fa 100%)!important;
+  color:#a45e80!important;
+  box-shadow:0 3px 9px #bd82951b,inset 0 0 0 1px #ffffffb8!important;
+  transform:translateY(-1px)!important;
+}
+.streak-garden-page .sg-garden-switch.is-active:before{
+  background:linear-gradient(135deg,#fffefe,#fff5f8)!important;
+  opacity:1!important;
+  transform:scale(1)!important;
+}
+.streak-garden-page .sg-garden-switch .sg-switch-icon{
+  transition:transform .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s ease!important;
+}
+.streak-garden-page .sg-garden-switch.is-active .sg-switch-icon{
+  transform:scale(1.06)!important;
+  box-shadow:0 3px 8px #b982981e!important;
+}
+.streak-garden-page .sg-garden-switch:active{transform:scale(.97)!important}
+@media(prefers-reduced-motion:reduce){
+  .streak-garden-page .sg-garden-switch,
+  .streak-garden-page .sg-garden-switch:before,
+  .streak-garden-page .sg-garden-switch .sg-switch-icon{transition:none!important}
+}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switcher{
+  border-radius:999px!important;
+  background:linear-gradient(120deg,#39303e,#342d3a)!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switch.is-active{
+  border-color:#856078!important;
+  background:linear-gradient(135deg,#51404d,#483744)!important;
+  box-shadow:0 3px 10px #1c15231c,inset 0 0 0 1px #ffffff0b!important;
+}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switch.is-active:before{
+  background:linear-gradient(135deg,#51404d,#483744)!important;
+}
+
+
+/* Happy Things — bespoke pastel thumbnail illustrations. */
+.happy-things-grid>.tile>.happy-thing-art{
+  position:relative!important;isolation:isolate!important;display:grid!important;place-items:center!important;
+  min-height:91px!important;overflow:hidden!important;border:1px solid #fff!important;
+  box-shadow:inset 0 1px 0 #ffffffa8,0 4px 12px #92758a0c!important;
+}
+.happy-things-grid>.tile>.happy-thing-art svg{
+  position:relative;z-index:1;display:block;width:min(100%,220px);height:100%;max-height:116px;
+  overflow:visible;filter:drop-shadow(0 4px 3px #8c6b7c12);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1),filter .35s ease;
+}
+.happy-things-grid>.tile>.happy-thing-art:hover svg{transform:translateY(-3px) scale(1.035);filter:drop-shadow(0 7px 5px #8c6b7c20)}
+.happy-things-grid>.tile>.happy-note-thumbnail{background:radial-gradient(ellipse at 50% 100%,#f6dfe8 0%,#fff1f4 48%,#f7edf5 100%)!important}
+.happy-things-grid>.tile>.happy-photo-thumbnail{background:radial-gradient(ellipse at 50% 100%,#dfead7 0%,#f1f6e9 52%,#f7f1e8 100%)!important}
+.happy-things-grid>.tile>.happy-music-thumbnail{background:radial-gradient(ellipse at 50% 100%,#e7def3 0%,#f3edfa 52%,#f8eef1 100%)!important}
+.happy-things-grid .happy-art-sparkle{
+  position:absolute;z-index:2;right:13%;top:13%;display:grid;place-items:center;
+  width:23px;height:23px;border-radius:50%;background:#fff9f0b8;color:#c49b68;
+  font:700 14px/1 Quicksand,sans-serif;box-shadow:0 2px 8px #9b7d8a12;
+  pointer-events:none;animation:happy-art-twinkle 3.2s ease-in-out infinite;
+}
+.happy-things-grid>.tile>.happy-photo-thumbnail .happy-art-sparkle{color:#91a77d}
+.happy-things-grid>.tile>.happy-music-thumbnail .happy-art-sparkle{color:#a38abb}
+@keyframes happy-art-twinkle{0%,100%{opacity:.65;transform:scale(.9) rotate(-8deg)}50%{opacity:1;transform:scale(1.12) rotate(8deg)}}
+body[data-mode="dark"] .happy-things-grid>.tile>.happy-note-thumbnail{background:radial-gradient(ellipse at 50% 100%,#563d4b,#403543 75%)!important;border-color:#604b5b!important}
+body[data-mode="dark"] .happy-things-grid>.tile>.happy-photo-thumbnail{background:radial-gradient(ellipse at 50% 100%,#40503d,#343d38 75%)!important;border-color:#52614d!important}
+body[data-mode="dark"] .happy-things-grid>.tile>.happy-music-thumbnail{background:radial-gradient(ellipse at 50% 100%,#4a3e59,#383344 75%)!important;border-color:#5a4c68!important}
+@media(prefers-reduced-motion:reduce){.happy-things-grid .happy-art-sparkle{animation:none!important}.happy-things-grid>.tile>.happy-thing-art svg{transition:none!important}}
+
+
+/* v114 — richer bespoke artwork for notes, playlist, and the streak garden. */
+.happy-things-grid>.tile>.happy-note-thumbnail,
+.happy-things-grid>.tile>.happy-music-thumbnail{
+  min-height:112px!important;
+  background-size:cover!important;
+}
+.happy-things-grid>.tile>.happy-note-thumbnail svg,
+.happy-things-grid>.tile>.happy-music-thumbnail svg{
+  width:min(100%,232px)!important;
+  max-height:118px!important;
+}
+.happy-things-grid>.tile>.happy-note-thumbnail svg{filter:drop-shadow(0 6px 5px #a56e841e)!important}
+.happy-things-grid>.tile>.happy-music-thumbnail svg{filter:drop-shadow(0 6px 5px #8975a51f)!important}
+.happy-things-grid>.tile>.happy-note-thumbnail:hover svg{transform:translateY(-4px) rotate(-1deg) scale(1.04)!important}
+.happy-things-grid>.tile>.happy-music-thumbnail:hover svg{transform:translateY(-4px) rotate(1deg) scale(1.04)!important}
+.happy-things-grid>.streak-tile>.streak-art-trigger{
+  position:relative!important;isolation:isolate!important;overflow:hidden!important;
+  min-height:112px!important;height:112px!important;flex:0 0 112px!important;
+  border:1px solid #fff!important;border-radius:17px!important;
+  background:radial-gradient(ellipse at 50% 100%,#f5dce8 0%,#f5eafa 56%,#e8f3ee 100%)!important;
+  box-shadow:inset 0 1px 0 #ffffffa8,0 4px 13px #92758a0c!important;
+}
+.happy-things-grid>.streak-tile>.streak-art-trigger:before,
+.happy-things-grid>.streak-tile>.streak-art-trigger:after{
+  content:"";position:absolute;z-index:0;border-radius:50%;pointer-events:none;
+}
+.happy-things-grid>.streak-tile>.streak-art-trigger:before{
+  width:116px;height:116px;left:-27px;top:-58px;
+  background:radial-gradient(circle,#fff9f5b8 0 3px,transparent 4px),radial-gradient(circle at 70% 70%,#fff8f5 0 2px,transparent 3px);
+  border:1px solid #ffffff80;
+}
+.happy-things-grid>.streak-tile>.streak-art-trigger:after{
+  width:90px;height:90px;right:-26px;bottom:-55px;
+  background:#ffffff38;border:1px solid #ffffff80;
+}
+.happy-things-grid .streak-plant-svg{
+  position:relative!important;z-index:1!important;display:grid!important;place-items:center!important;
+  width:100%!important;height:100%!important;
+}
+.happy-things-grid .streak-plant-svg svg{
+  display:block;width:min(100%,230px);height:100%;max-height:112px;overflow:visible;
+  filter:drop-shadow(0 5px 4px #8e71821c);
+  animation:streak-bloom-float 4s ease-in-out infinite;
+}
+@keyframes streak-bloom-float{0%,100%{transform:translateY(1px)}50%{transform:translateY(-3px)}}
+body[data-mode="dark"] .happy-things-grid>.streak-tile>.streak-art-trigger{
+  background:radial-gradient(ellipse at 50% 100%,#543c4c,#42394d 58%,#34433f 100%)!important;
+  border-color:#66546a!important;
+}
+@media(max-width:520px){
+  .happy-things-grid>.tile>.happy-note-thumbnail,
+  .happy-things-grid>.tile>.happy-music-thumbnail{min-height:98px!important}
+  .happy-things-grid>.streak-tile>.streak-art-trigger{min-height:98px!important;height:98px!important;flex-basis:98px!important}
+  .happy-things-grid .streak-plant-svg svg{max-height:98px}
+}
+@media(prefers-reduced-motion:reduce){
+  .happy-things-grid .streak-plant-svg svg{animation:none!important}
+}
+
+
+/* v116 — keep the happy-things artwork free of floating glyph badges. */
+.happy-things-grid .happy-art-sparkle{display:none!important;content:none!important}
+.happy-things-grid>.tile>.happy-note-thumbnail::before,
+.happy-things-grid>.tile>.happy-note-thumbnail::after,
+.happy-things-grid>.tile>.happy-photo-thumbnail::before,
+.happy-things-grid>.tile>.happy-photo-thumbnail::after,
+.happy-things-grid>.tile>.happy-music-thumbnail::before,
+.happy-things-grid>.tile>.happy-music-thumbnail::after{content:none!important;display:none!important}
+
+
+/* Perfect-1 profile and Notes refinements retained alongside current Streak Garden work. */
+/* Starlight profile: keep semantic tag colours independent of wallpaper text. */
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileGarden > #friendProfileTitleTag {
+  color: #c09236 !important;
+  background: #fffaf0 !important;
+  border: 1px solid #f0e4c9 !important;
+  text-shadow: none !important;
+}
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileGarden > .friend-profile-flower,
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileGarden > .friend-profile-flower b {
+  color: #a95f83 !important;
+  background: #fff7fb !important;
+  border-color: #f2dce8 !important;
+  text-shadow: none !important;
+}
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileGarden > .friend-profile-heart,
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileGarden > .friend-profile-heart b {
+  color: #df557d !important;
+  background: #fff5f7 !important;
+  border-color: #f2dce4 !important;
+  text-shadow: none !important;
+}
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileJoined {
+  color: #514052 !important;
+  background: rgba(255,255,255,.92) !important;
+  border-color: rgba(91,65,91,.2) !important;
+  text-shadow: none !important;
+}
+
+
+/* Hidden profile title badges must stay hidden; flex badge styling must not reveal them. */
+.auth-card.friend-profile-card #friendProfileGarden > #friendProfileTitleTag[hidden]{display:none!important;}
+
+
+/* Notes: remove only the chat-thread wallpaper; keep individual message bubbles styled. */
+.chat-thread {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+
+/* Notes transparency: remove any remaining wrapper/pseudo-element surface so the app wallpaper shows through. */
+.app main:has(> #content .chat-page),
+#content:has(.chat-page),
+#content .chat-page,
+#content .chat-page .chat-thread {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+#content:has(.chat-page)::before,
+#content:has(.chat-page)::after,
+#content .chat-page::before,
+#content .chat-page::after,
+#content .chat-page .chat-thread::before,
+#content .chat-page .chat-thread::after {
+  content: none !important;
+  display: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+
+/* Keep the Notes masthead aligned with the app-wide raised header position.
+   Do not override the separate slide-away transform used while the keyboard is open. */
+body.notes-page-active:not(.notes-header-hidden) .app > header {
+  transform: translate3d(0, -4px, 0) !important;
+}
+
+
+
+
+/* v118 — richer scrapbook illustrations with gentle, slow movement. */
+.happy-things-grid>.tile>.happy-note-thumbnail svg,
+.happy-things-grid>.tile>.happy-music-thumbnail svg{width:min(100%,238px)!important;max-height:120px!important;overflow:visible}
+.happy-things-grid .note-artwork{transform-box:fill-box;transform-origin:50% 78%;animation:note-scrapbook-float 8.8s ease-in-out infinite}
+.happy-things-grid .music-artwork{transform-box:fill-box;transform-origin:50% 78%;animation:music-record-float 9.6s ease-in-out infinite}
+.happy-things-grid .streak-artwork{transform-box:fill-box;transform-origin:50% 92%;animation:streak-garden-sway 9.2s ease-in-out infinite}
+.happy-things-grid>.tile>.happy-note-thumbnail:hover .note-artwork,
+.happy-things-grid>.tile>.happy-music-thumbnail:hover .music-artwork{animation-play-state:paused}
+@keyframes note-scrapbook-float{0%,100%{transform:translateY(1px) rotate(-.35deg)}50%{transform:translateY(-3px) rotate(.35deg)}}
+@keyframes music-record-float{0%,100%{transform:translateY(1px) rotate(.3deg)}50%{transform:translateY(-3px) rotate(-.3deg)}}
+@keyframes streak-garden-sway{0%,100%{transform:translateY(1px) rotate(-.8deg)}50%{transform:translateY(-2px) rotate(.8deg)}}
+.happy-things-grid>.tile>.happy-note-thumbnail{background:radial-gradient(ellipse at 50% 100%,#f4dce6 0%,#fff2f5 53%,#f8eff5 100%)!important}
+.happy-things-grid>.tile>.happy-music-thumbnail{background:radial-gradient(ellipse at 50% 100%,#e4d9f0 0%,#f4effa 53%,#faf1f4 100%)!important}
+body[data-mode="dark"] .happy-things-grid .happy-note-thumbnail{background:radial-gradient(ellipse at 50% 100%,#583e4d,#403543 76%)!important}
+body[data-mode="dark"] .happy-things-grid .happy-music-thumbnail{background:radial-gradient(ellipse at 50% 100%,#4c3e5d,#383344 76%)!important}
+@media(prefers-reduced-motion:reduce){.happy-things-grid .note-artwork,.happy-things-grid .music-artwork,.happy-things-grid .streak-artwork{animation:none!important}}
 
 /* Classic profile editor restored only inside the Profile settings tab. */
 .profile-editor-settings .profile-settings-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
