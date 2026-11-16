@@ -55,7 +55,7 @@ async function configureStatusBar() {
 `;
     if (!source.includes('setDecorFitsSystemWindows')) {
       const updated = source.replace(
-        /(public class MainActivity extends BridgeActivity)\\s*\\{\\s*\\}/,
+        /(public class MainActivity extends BridgeActivity)\s*\{\s*\}/,
         '$1 {' + body + '}'
       );
       if (updated === source) throw new Error('Could not safely patch generated MainActivity.java.');
