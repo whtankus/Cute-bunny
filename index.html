@@ -14,7 +14,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=165724">
+  <link rel="stylesheet" href="style.css?v=preview-20261116">
+  <link rel="stylesheet" href="polish.css?v=26">
 </head>
 <body class="is-restoring">
   <div id="sessionRestore" class="session-restore" role="status">
@@ -40,6 +41,7 @@
       <h1>Cute Bunny <span>♡</span></h1>
       <p class="intro">A pocketful of photos, favorite songs, and tiny moments worth keeping.</p>
       <button class="primary" id="enter">Let's begin ♡</button>
+      <button type="button" class="install-app-button hidden" id="installAppButton">Install Cute Bunny app ↓</button>
       <small>take a breath · stay a little ☁</small>
     </div>
     <div class="ground"></div>
@@ -289,7 +291,25 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=165724"></script>
+  <script src="app.js?v=preview-20261116"></script>
+  <script>
+(() => {
+  let deferredInstallPrompt = null;
+  const installButton = document.getElementById("installAppButton");
+  const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.matchMedia("(display-mode: minimal-ui)").matches || window.navigator.standalone === true;
+  if (installButton && !isStandalone()) {
+    window.addEventListener("beforeinstallprompt", event => { event.preventDefault(); deferredInstallPrompt = event; installButton.classList.remove("hidden"); });
+    installButton.addEventListener("click", async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      installButton.classList.add("hidden");
+    });
+  }
+  window.addEventListener("appinstalled", () => { deferredInstallPrompt = null; installButton?.classList.add("hidden"); });
+})();
+</script>
   <script>
     if (!window.Capacitor?.isNativePlatform?.() && "serviceWorker" in navigator) {
       let reloadingForWorkerUpdate = false;
@@ -302,7 +322,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=178", {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=180", {
             scope: "./",
             updateViaCache: "none"
           });
