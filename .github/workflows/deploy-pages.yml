@@ -27,11 +27,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Check JavaScript syntax
-        run: |
-          node --check app.js
-          node --check sw.js
-          node --check scripts/build-preview.js
+      - name: Validate app JavaScript and offline app shell
+        run: npm run check
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
