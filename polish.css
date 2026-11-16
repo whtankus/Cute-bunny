@@ -1768,3 +1768,6 @@ body[data-mode="dark"] .auth-card.profile-card .profile-settings-field,body[data
 body[data-mode="dark"] .auth-card.profile-card .profile-username-input,body[data-mode="dark"] .auth-card.profile-card .profile-gender-options button {background:#2c2434!important;border-color:#5c4b63!important;color:#f4eaf2!important}
 body[data-mode="dark"] .auth-card.profile-card .profile-settings-actions {background:rgba(48,39,55,.97)!important;border-color:#59465e!important}
 @media(max-width:430px){.auth-card.profile-card .profile-settings-panel{width:min(100%,360px)!important;padding:15px!important}.auth-card.profile-card .profile-settings-actions{bottom:-15px!important;margin:0 -15px -15px!important;padding:11px 15px max(11px,env(safe-area-inset-bottom))!important}}
+
+/* Warm red accents for the expanded seven-flower bunny bouquet. */
+.doodle-bouquet .bloom.red{fill:#df8294!important;stroke:#fff8f2!important}
