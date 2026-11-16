@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=preview-20261116">
-  <link rel="stylesheet" href="polish.css?v=26">
+  <link rel="stylesheet" href="polish.css?v=27">
 </head>
 <body class="is-restoring">
   <div id="sessionRestore" class="session-restore" role="status">
@@ -170,7 +170,11 @@
         <button type="button" class="theme-choice is-selected" data-theme-choice="rose" role="radio" aria-checked="true"><span class="theme-swatch rose">🌷</span><span>Rose garden</span></button>
         <button type="button" class="theme-choice" data-theme-choice="lavender" role="radio" aria-checked="false"><span class="theme-swatch lavender">☁️</span><span>Lavender skies</span></button>
         <button type="button" class="theme-choice" data-theme-choice="mint" role="radio" aria-checked="false"><span class="theme-swatch mint">🍃</span><span>Mint meadow</span></button>
-        <button type="button" class="theme-choice" data-theme-choice="sky" role="radio" aria-checked="false"><span class="theme-swatch sky">🐦</span><span>Bluebird day</span></button>
+        <button type="button" class="theme-choice" data-theme-choice="sky" role="radio" aria-checked="false"><span class="theme-swatch sky">🐦</span><span>Bluebird day</span></button>        <button type="button" class="theme-choice" data-theme-choice="peach" role="radio" aria-checked="false"><span class="theme-swatch peach">🍑</span><span>Peach cloud</span></button>
+        <button type="button" class="theme-choice" data-theme-choice="berry" role="radio" aria-checked="false"><span class="theme-swatch berry">🫐</span><span>Berry blush</span></button>
+        <button type="button" class="theme-choice" data-theme-choice="midnight" role="radio" aria-checked="false"><span class="theme-swatch midnight">🌙</span><span>Midnight lilac</span></button>
+        <button type="button" class="theme-choice" data-theme-choice="sage" role="radio" aria-checked="false"><span class="theme-swatch sage">🌿</span><span>Sage garden</span></button>
+        <button type="button" class="theme-choice" data-theme-choice="buttercup" role="radio" aria-checked="false"><span class="theme-swatch buttercup">🌼</span><span>Buttercup</span></button>
       </div>
       <label class="theme-picker-label">Your little buddy</label>
       <input id="profileMascot" class="hidden" type="hidden" value="🐰">
@@ -291,7 +295,7 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=preview-20261116"></script>
+  <script src="app.js?v=preview-20261116a"></script>
   <script>
 (() => {
   let deferredInstallPrompt = null;
@@ -322,7 +326,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=180", {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=181", {
             scope: "./",
             updateViaCache: "none"
           });
