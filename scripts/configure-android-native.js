@@ -54,7 +54,12 @@ async function configureStatusBar() {
     }
 `;
     if (!source.includes('setDecorFitsSystemWindows')) {
-      source = source.replace(/\n\s*}\s*$/, '\n' + body + '\n}\n');
+      const updated = source.replace(
+        /(public class MainActivity extends BridgeActivity)\\s*\\{\\s*\\}/,
+        '$1 {' + body + '}'
+      );
+      if (updated === source) throw new Error('Could not safely patch generated MainActivity.java.');
+      source = updated;
     }
     fs.writeFileSync(activity, source);
   } else {
