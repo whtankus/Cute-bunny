@@ -2344,8 +2344,8 @@ function showFriendProfile(user) {
 
 
 function profileSettingsMarkup() {
-  return `<section class="profile-settings-panel hidden" id="profileSettingsPanel" aria-label="Profile settings">
-      <div class="profile-settings-heading"><h3>Settings</h3></div>
+  return `<section class="profile-settings-panel hidden" id="profileSettingsPanel" aria-label="Profile settings" aria-modal="false">
+      <div class="profile-settings-heading"><div><small>YOUR LITTLE CORNER</small><h3>Profile settings</h3></div><button type="button" class="profile-settings-close" id="profileSettingsClose" aria-label="Close profile settings">×</button></div>
       <nav class="profile-settings-tabs" aria-label="Settings sections"><button type="button" class="is-active" data-settings-tab="profile" aria-pressed="true">Profile</button><button type="button" data-settings-tab="chat" aria-pressed="false">Chat</button><button type="button" data-settings-tab="account" aria-pressed="false">Account</button><button type="button" data-settings-tab="other" aria-pressed="false">Others</button></nav>
       <div class="profile-settings-section profile-editor-settings" data-settings-section="profile">
         <h4>Edit your profile</h4><p>Make this little corner feel like you.</p>
@@ -2376,7 +2376,7 @@ function profileSettingsMarkup() {
       <div class="profile-settings-section hidden" data-settings-section="chat"><h4>Chat</h4><label class="profile-setting-toggle"><span><b>Memory notifications</b><small>Get notified when a friend shares a memory.</small></span><input type="checkbox" id="profileSettingMemoryNotifications"></label><label class="profile-setting-toggle"><span><b>Friend activity notifications</b><small>Keep friend activity alerts enabled.</small></span><input type="checkbox" id="profileSettingBuddyNotifications"></label></div>
       <div class="profile-settings-section hidden" data-settings-section="account"><h4>Account</h4><p>Your current Cute Bunny profile details.</p><div class="profile-settings-account"><span>Username</span><b id="profileSettingsUsername">—</b></div><div class="profile-settings-account"><span>Display name</span><b id="profileSettingsDisplayName">—</b></div></div>
       <div class="profile-settings-section hidden" data-settings-section="other"><h4>Others</h4><p>Change the decorative wallpaper on your profile without changing its layout.</p><button type="button" class="profile-settings-wallpaper" id="profileSettingsWallpaper">Change profile theme</button><div class="profile-settings-extra"><h4>Accessibility</h4><label class="profile-setting-toggle"><span><b>Reduce animations</b><small>Limit decorative movement across the app.</small></span><input type="checkbox" id="profileSettingReduceMotion"></label></div></div>
-      <button type="button" class="primary profile-settings-save" id="profileSettingsSave">Save settings</button><p class="profile-settings-feedback" id="profileSettingsFeedback" role="status"></p>
+      <div class="profile-settings-actions"><p class="profile-settings-feedback" id="profileSettingsFeedback" role="status" aria-live="polite"></p><button type="button" class="primary profile-settings-save" id="profileSettingsSave"><span aria-hidden="true">♡</span> Save profile</button></div>
     </section>`;
 }
 function renderProfileSettings() {
@@ -4438,26 +4438,44 @@ document.addEventListener('click', event => {
   });
 }, true);
 
-// Profile editor flower settings: handle in capture phase so other delegated
-// click handlers cannot swallow the button interaction.
+// Profile settings: the flower is a true toggle; taps outside close it,
+// while taps inside the panel never dismiss it.
 document.addEventListener('click', event => {
   let target = event.target;
   if (target && target.nodeType !== 1) target = target.parentElement;
   const trigger = target?.closest?.('#profileSettingsTrigger');
+  const panel = document.querySelector('#profileSettingsPanel');
+  if (!trigger && panel && !panel.classList.contains('hidden') &&
+      !target?.closest?.('#profileSettingsPanel')) {
+    panel.classList.add('hidden');
+    document.querySelector('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false');
+    return;
+  }
   if (!trigger) return;
   event.preventDefault();
   event.stopImmediatePropagation();
   const mount = document.querySelector('#profileSettingsMount');
   if (!mount) return;
   if (!document.querySelector('#profileSettingsPanel')) mount.innerHTML = profileSettingsMarkup();
-  const panel = document.querySelector('#profileSettingsPanel');
-  if (panel && !panel.classList.contains('hidden')) {
-    panel.classList.add('hidden');
+  const currentPanel = document.querySelector('#profileSettingsPanel');
+  const willOpen = !!currentPanel?.classList.contains('hidden');
+  if (!willOpen) {
+    currentPanel.classList.add('hidden');
+    trigger.setAttribute('aria-expanded', 'false');
     return;
   }
   renderProfileSettings();
-  panel?.classList.remove('hidden');
+  currentPanel?.classList.remove('hidden');
+  trigger.setAttribute('aria-expanded', 'true');
 }, true);
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  const panel = document.querySelector('#profileSettingsPanel');
+  if (!panel || panel.classList.contains('hidden')) return;
+  panel.classList.add('hidden');
+  document.querySelector('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false');
+});
 
 
 // Submit the friend search form on Enter as well as its Search button.
@@ -4773,7 +4791,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  if (e.target.closest('#profileSettingsClose')) { $('#profileSettingsPanel')?.classList.add('hidden'); return; }
+  if (e.target.closest('#profileSettingsClose')) { $('#profileSettingsPanel')?.classList.add('hidden'); $('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false'); return; }
   const settingsTab = e.target.closest('[data-settings-tab]');
   if (settingsTab) { const selected = settingsTab.dataset.settingsTab; document.querySelectorAll('[data-settings-tab]').forEach(button => { const active = button === settingsTab; button.classList.toggle('is-active', active); button.setAttribute('aria-pressed', String(active)); }); document.querySelectorAll('[data-settings-section]').forEach(section => { const key = section.dataset.settingsSection; const visible = selected === 'other' ? ['other', 'accessibility', 'account'].includes(key) : key === selected; section.classList.toggle('hidden', !visible); }); return; }
   const genderChoice = e.target.closest('[data-profile-gender]');
