@@ -4377,7 +4377,10 @@ document.addEventListener('click', event => {
   void bunny.offsetWidth;
   bunny.classList.add('bunny-happy');
 
-  const reduceMotion = document.documentElement.classList.contains('reduce-app-motion')
+  let savedReducedMotion = false;
+  try { savedReducedMotion = localStorage.getItem('cuteBunnyReduceMotion') === 'true'; } catch {}
+  const reduceMotion = savedReducedMotion
+    || document.documentElement.classList.contains('reduce-app-motion')
     || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   if (pet && !reduceMotion && typeof pet.animate === 'function') {
     pet._buddyTapAnimation?.cancel();
