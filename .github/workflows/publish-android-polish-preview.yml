@@ -1,9 +1,9 @@
-name: Publish Cute Bunny Android polish preview
+name: Publish Cute Bunny development preview
 
 on:
   push:
     branches:
-      - fix/android-safe-area-adaptive-launcher
+      - development-preview
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Check out preview branch
+      - name: Check out development branch
         uses: actions/checkout@v4
 
       - name: Set up Node.js
