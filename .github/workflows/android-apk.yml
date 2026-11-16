@@ -20,6 +20,7 @@ on:
       - "package-lock.json"
       - "capacitor.config.json"
       - ".github/workflows/android-apk.yml"
+      - ".github/workflows/deploy-pages.yml"
 
 permissions:
   contents: write
