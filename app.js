@@ -2345,96 +2345,67 @@ function showFriendProfile(user) {
 
 function profileSettingsMarkup() {
   return `<section class="profile-settings-panel hidden" id="profileSettingsPanel" aria-label="Profile settings" aria-modal="false">
-      <div class="profile-settings-heading"><div><small>YOUR LITTLE CORNER</small><h3>Profile settings</h3></div><button type="button" class="profile-settings-close" id="profileSettingsClose" aria-label="Close profile settings">×</button></div>
-      <nav class="profile-settings-tabs" aria-label="Settings sections"><button type="button" class="is-active" data-settings-tab="profile" aria-pressed="true">Profile</button><button type="button" data-settings-tab="chat" aria-pressed="false">Chat</button><button type="button" data-settings-tab="account" aria-pressed="false">Account</button><button type="button" data-settings-tab="other" aria-pressed="false">Others</button></nav>
-      <div class="profile-settings-section profile-editor-settings" data-settings-section="profile">
-        <h4>Edit your profile</h4><p>Make this little corner feel like you.</p>
-        <div class="profile-settings-fields"><label>Display name<input id="profileEditDisplay" maxlength="60" autocomplete="name" placeholder="Your name"></label><label>Username<input id="profileEditUsername" maxlength="24" autocomplete="username" spellcheck="false" placeholder="your_username"></label></div>
-        <label>About you<input id="profileEditBio" maxlength="300" placeholder="A little hello…"></label>
-        <label class="profile-settings-choice-label">Your colors</label>
-        <div class="profile-settings-theme-grid" role="radiogroup" aria-label="Choose profile colors">
-          <button type="button" data-settings-theme-choice="rose" aria-checked="false" role="radio"><i class="theme-swatch rose">🌷</i><span>Rose garden</span></button>
-          <button type="button" data-settings-theme-choice="lavender" aria-checked="false" role="radio"><i class="theme-swatch lavender">☁️</i><span>Lavender skies</span></button>
-          <button type="button" data-settings-theme-choice="mint" aria-checked="false" role="radio"><i class="theme-swatch mint">🍃</i><span>Mint meadow</span></button>
-          <button type="button" data-settings-theme-choice="sky" aria-checked="false" role="radio"><i class="theme-swatch sky">🐦</i><span>Bluebird day</span></button>
-          <button type="button" data-settings-theme-choice="peach" aria-checked="false" role="radio"><i class="theme-swatch peach">🍑</i><span>Peach glow</span></button>
-          <button type="button" data-settings-theme-choice="berry" aria-checked="false" role="radio"><i class="theme-swatch berry">🫐</i><span>Berry bloom</span></button>
-          <button type="button" data-settings-theme-choice="midnight" aria-checked="false" role="radio"><i class="theme-swatch midnight">🌙</i><span>Midnight lilac</span></button>
-          <button type="button" data-settings-theme-choice="sage" aria-checked="false" role="radio"><i class="theme-swatch sage">🌿</i><span>Sage garden</span></button>
-          <button type="button" data-settings-theme-choice="buttercup" aria-checked="false" role="radio"><i class="theme-swatch buttercup">🌼</i><span>Buttercup cream</span></button>
+    <div class="profile-settings-heading">
+      <div><small>YOUR LITTLE CORNER</small><h3>Edit profile</h3></div>
+      <button type="button" class="profile-settings-close" id="profileSettingsClose" aria-label="Close profile settings">×</button>
+    </div>
+    <div class="profile-settings-section profile-editor-settings">
+      <label class="profile-settings-field">Username
+        <span class="profile-username-input"><span aria-hidden="true">@</span><input id="profileEditUsername" maxlength="24" autocomplete="username" spellcheck="false" placeholder="your_username"></span>
+      </label>
+      <div class="profile-settings-gender">
+        <label>Gender</label>
+        <div class="profile-gender-options" role="group" aria-label="Choose your gender">
+          <button type="button" data-profile-gender="male" aria-pressed="false">Male</button>
+          <button type="button" data-profile-gender="female" aria-pressed="false">Female</button>
         </div>
-        <label class="profile-settings-choice-label">Your little buddy</label>
-        <div class="profile-settings-buddy-grid" role="radiogroup" aria-label="Choose your buddy">
-          <button type="button" data-settings-buddy-choice="🐰" role="radio" aria-checked="false">🐰 <span>Bunny</span></button>
-          <button type="button" data-settings-buddy-choice="🐱" role="radio" aria-checked="false">🐱 <span>Kitty</span></button>
-          <button type="button" data-settings-buddy-choice="🐻" role="radio" aria-checked="false">🐻 <span>Bear</span></button>
-          <button type="button" data-settings-buddy-choice="🐸" role="radio" aria-checked="false">🐸 <span>Frog</span></button>
-        </div>
-        <div class="profile-settings-gender"><label>Profile title</label><div class="profile-gender-options" role="group" aria-label="Profile title"><button type="button" data-profile-gender="male">King</button><button type="button" data-profile-gender="female">Queen</button></div></div>
-        <p class="profile-settings-preview" id="profileGenderPreview">Choose a profile title or leave it blank.</p>
       </div>
-      <div class="profile-settings-section hidden" data-settings-section="chat"><h4>Chat</h4><label class="profile-setting-toggle"><span><b>Memory notifications</b><small>Get notified when a friend shares a memory.</small></span><input type="checkbox" id="profileSettingMemoryNotifications"></label><label class="profile-setting-toggle"><span><b>Friend activity notifications</b><small>Keep friend activity alerts enabled.</small></span><input type="checkbox" id="profileSettingBuddyNotifications"></label></div>
-      <div class="profile-settings-section hidden" data-settings-section="account"><h4>Account</h4><p>Your current Cute Bunny profile details.</p><div class="profile-settings-account"><span>Username</span><b id="profileSettingsUsername">—</b></div><div class="profile-settings-account"><span>Display name</span><b id="profileSettingsDisplayName">—</b></div></div>
-      <div class="profile-settings-section hidden" data-settings-section="other"><h4>Others</h4><p>Change the decorative wallpaper on your profile without changing its layout.</p><button type="button" class="profile-settings-wallpaper" id="profileSettingsWallpaper">Change profile theme</button><div class="profile-settings-extra"><h4>Accessibility</h4><label class="profile-setting-toggle"><span><b>Reduce animations</b><small>Limit decorative movement across the app.</small></span><input type="checkbox" id="profileSettingReduceMotion"></label></div></div>
-      <div class="profile-settings-actions"><p class="profile-settings-feedback" id="profileSettingsFeedback" role="status" aria-live="polite"></p><button type="button" class="primary profile-settings-save" id="profileSettingsSave"><span aria-hidden="true">♡</span> Save profile</button></div>
-    </section>`;
+    </div>
+    <div class="profile-settings-actions">
+      <p class="profile-settings-feedback" id="profileSettingsFeedback" role="status" aria-live="polite"></p>
+      <button type="button" class="primary profile-settings-save" id="profileSettingsSave"><span aria-hidden="true">♡</span> Save changes</button>
+    </div>
+  </section>`;
 }
 function renderProfileSettings() {
-  const gender = me?.gender || '';
-  const display = $('#profileEditDisplay'), usernameField = $('#profileEditUsername'), bioField = $('#profileEditBio');
-  if (display) display.value = me?.displayName || me?.display_name || '';
+  const usernameField = $('#profileEditUsername');
   if (usernameField) usernameField.value = me?.username || '';
-  if (bioField) bioField.value = me?.bio || '';
-  document.querySelectorAll('[data-profile-gender]').forEach(button => { button.classList.toggle('is-selected', button.dataset.profileGender === gender); button.setAttribute('aria-pressed', String(button.dataset.profileGender === gender)); });
-  document.querySelectorAll('[data-settings-theme-choice]').forEach(button => { const selected = button.dataset.settingsThemeChoice === (me?.theme || 'rose'); button.classList.toggle('is-selected', selected); button.setAttribute('aria-checked', String(selected)); });
-  document.querySelectorAll('[data-settings-buddy-choice]').forEach(button => { const selected = button.dataset.settingsBuddyChoice === (me?.mascot || '🐰'); button.classList.toggle('is-selected', selected); button.setAttribute('aria-checked', String(selected)); });
-  const preview = $('#profileGenderPreview');
-  if (preview) preview.textContent = gender === 'male' ? 'Preview: 👑 King' : gender === 'female' ? 'Preview: 👑 Queen' : 'Choose a profile title or leave it blank.';
-  const prefs = me?.notification_preferences || {};
-  const memory = $('#profileSettingMemoryNotifications'), buddy = $('#profileSettingBuddyNotifications');
-  if (memory) memory.checked = prefs.memories !== false;
-  if (buddy) buddy.checked = prefs.buddy !== false;
-  const reduceMotion = $('#profileSettingReduceMotion');
-  let reduceMotionEnabled = false;
-  try { reduceMotionEnabled = localStorage.getItem('cuteBunnyReduceMotion') === 'true'; } catch {}
-  if (reduceMotion) reduceMotion.checked = reduceMotionEnabled;
-  document.documentElement.classList.toggle('reduce-app-motion', reduceMotionEnabled);
-  const username = $('#profileSettingsUsername'), displayName = $('#profileSettingsDisplayName');
-  if (username) username.textContent = me?.username ? '@' + me.username : '—';
-  if (displayName) displayName.textContent = me?.displayName || me?.display_name || '—';
+  const gender = me?.gender || '';
+  document.querySelectorAll('[data-profile-gender]').forEach(button => {
+    const selected = button.dataset.profileGender === gender;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
 }
 async function saveProfileSettings() {
   if (!me?.id) return;
   const save = $('#profileSettingsSave'), feedback = $('#profileSettingsFeedback');
   const gender = document.querySelector('[data-profile-gender].is-selected')?.dataset.profileGender || null;
-  const username = String($('#profileEditUsername')?.value || me.username || '').trim().toLowerCase();
-  const displayName = String($('#profileEditDisplay')?.value || '').trim();
-  const bio = String($('#profileEditBio')?.value || '').trim();
-  const theme = document.querySelector('[data-settings-theme-choice].is-selected')?.dataset.settingsThemeChoice || me.theme || 'rose';
-  const mascot = document.querySelector('[data-settings-buddy-choice].is-selected')?.dataset.settingsBuddyChoice || me.mascot || '🐰';
-  if (!/^[a-z0-9_]{3,24}$/.test(username)) { if (feedback) feedback.textContent = 'Username must be 3–24 letters, numbers, or underscores.'; toast('Check your username ♡'); return; }
-  const notificationPreferences = { ...(me.notification_preferences || {}), memories: $('#profileSettingMemoryNotifications')?.checked !== false, buddy: $('#profileSettingBuddyNotifications')?.checked !== false };
-  const reduceMotionEnabled = $('#profileSettingReduceMotion')?.checked === true;
+  const username = String($('#profileEditUsername')?.value || '').trim().toLowerCase();
+  if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+    if (feedback) feedback.textContent = 'Username must be 3–24 letters, numbers, or underscores.';
+    toast('Check your username ♡');
+    return;
+  }
   if (save) save.disabled = true;
-  if (feedback) feedback.textContent = 'Saving your settings…';
+  if (feedback) feedback.textContent = 'Saving your changes…';
   try {
-    const saved = await api('/me', { method: 'PUT', body: JSON.stringify({ username, displayName, bio, theme, mascot, gender, notificationPreferences }) });
-    me = { ...me, ...saved, username: saved.username || username, displayName: saved.displayName || saved.display_name || displayName, bio: saved.bio ?? bio, theme: saved.theme || theme, mascot: saved.mascot || mascot, gender, notification_preferences: saved.notification_preferences || notificationPreferences };
-    setTheme(me.theme);
-    delete document.documentElement.dataset.themePreview;
-    try { localStorage.setItem('cuteBunnyReduceMotion', String(reduceMotionEnabled)); } catch {}
-    document.documentElement.classList.toggle('reduce-app-motion', reduceMotionEnabled);
+    const saved = await api('/me', { method: 'PUT', body: JSON.stringify({ username, gender }) });
+    me = { ...me, ...saved, username: saved.username || username, gender };
     const gate = $('#friendProfileGate');
     if (gate && !gate.classList.contains('hidden') && gate.dataset.ownProfile === 'true') showFriendProfile(me);
     renderProfileSettings();
-    if (feedback) feedback.textContent = 'Your settings are saved ♡';
-    toast('Profile settings saved ♡');
+    if (feedback) feedback.textContent = 'Your profile is updated ♡';
+    toast('Profile updated ♡');
     $('#profileSettingsPanel')?.classList.add('hidden');
+    $('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false');
     render();
   } catch (error) {
-    if (feedback) feedback.textContent = error.message || 'Could not save settings.';
-    toast(error.message || 'Could not save settings.');
-  } finally { if (save) save.disabled = false; }
+    if (feedback) feedback.textContent = error.message || 'Could not save your profile.';
+    toast(error.message || 'Could not save your profile.');
+  } finally {
+    if (save) save.disabled = false;
+  }
 }
 
 const PROFILE_WALLPAPERS = ['normal', 'blossom', 'clouds', 'starlight', 'hearts'];
