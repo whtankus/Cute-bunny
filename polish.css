@@ -1582,3 +1582,11 @@ body[data-theme] .app > header {
     padding:6px 2px!important;
   }
 }
+
+
+/* Theme picker swatches for the five additional palettes. */
+.theme-swatch.peach { background: linear-gradient(145deg,#ffe0ca,#f4b995 55%,#d88f79); }
+.theme-swatch.berry { background: linear-gradient(145deg,#f8d8e7,#dca2c1 55%,#a96c91); }
+.theme-swatch.midnight { background: linear-gradient(145deg,#e8dff6,#b6a2d0 55%,#76628f); }
+.theme-swatch.sage { background: linear-gradient(145deg,#e5efd9,#b7cba6 55%,#829c78); }
+.theme-swatch.buttercup { background: linear-gradient(145deg,#fff4c4,#e9d88d 55%,#c5ad5f); }
