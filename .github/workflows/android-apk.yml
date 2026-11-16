@@ -7,12 +7,17 @@ on:
     paths:
       - "app.js"
       - "style.css"
+      - "polish.css"
       - "index.html"
+      - "sw.js"
+      - "manifest.webmanifest"
+      - "supabase-config.js"
       - "bunny-app-icon-192.png"
       - "bunny-app-icon-512.png"
       - "scripts/build-preview.js"
       - "scripts/configure-android-signing.js"
       - "package.json"
+      - "package-lock.json"
       - "capacitor.config.json"
       - ".github/workflows/android-apk.yml"
 
@@ -67,8 +72,6 @@ jobs:
             await sharp(source).resize(size, size, { fit: 'contain' }).png().toFile(`${dir}/ic_launcher.png`);
             await sharp(source).resize(size, size, { fit: 'contain' }).png().toFile(`${dir}/ic_launcher_round.png`);
           }
-          // Remove Capacitor's generated adaptive icon so Android uses the
-          // exact same full-square artwork as the website favicon/app icon.
           await rm(`${root}/mipmap-anydpi-v26`, { recursive: true, force: true });
           NODE
 
@@ -95,9 +98,6 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-
-          # Remove accidental line breaks/spaces introduced while copying
-          # GitHub secret values, without changing the actual password bytes.
           keystore_b64="$(printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '[:space:]')"
           store_password="$(printf '%s' "$ANDROID_KEYSTORE_PASSWORD" | tr -d '\r\n')"
           key_alias="$(printf '%s' "$ANDROID_KEY_ALIAS" | tr -d '[:space:]')"
@@ -110,27 +110,13 @@ jobs:
           fi
 
           if ! [[ "$keystore_b64" =~ ^[A-Za-z0-9+/]+={0,2}$ ]] || [ $(( ${#keystore_b64} % 4 )) -ne 0 ]; then
-            echo "::error::ANDROID_KEYSTORE_BASE64 is not valid Base64. Re-copy the complete value from PowerShell and update that secret."
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not valid Base64."
             exit 1
           fi
 
           printf '%s' "$keystore_b64" | base64 --decode > android/app/release-key.keystore
           chmod 600 android/app/release-key.keystore
-          keystore_bytes="$(wc -c < android/app/release-key.keystore | tr -d ' ')"
-          echo "Decoded keystore size: ${keystore_bytes} bytes"
-
-          if [ "$keystore_bytes" -eq 0 ]; then
-            echo "::error::The Base64 secret decoded to an empty keystore file."
-            exit 1
-          fi
-
-          # Do not suppress keytool output: it identifies whether the
-          # password, alias, or keystore format is incorrect.
-          if ! keytool -list -keystore android/app/release-key.keystore -storetype PKCS12 -storepass "$store_password" -alias "$key_alias"; then
-            echo "::error::Keystore validation failed. Check ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS against the local keytool test."
-            exit 1
-          fi
-
+          keytool -list -keystore android/app/release-key.keystore -storetype PKCS12 -storepass "$store_password" -alias "$key_alias"
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - name: Build signed Android release APK
