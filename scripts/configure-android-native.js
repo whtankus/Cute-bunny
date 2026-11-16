@@ -69,7 +69,7 @@ async function configureStatusBar() {
       const lastImport = [...source.matchAll(/^import .*$/gm)].at(-1);
       if (!lastImport) throw new Error('MainActivity.kt has no imports.');
       source = source.slice(0, lastImport.index + lastImport[0].length) + '\n' + imports.join('\n') + source.slice(lastImport.index + lastImport[0].length);
-      source = source.replace(/class MainActivity : BridgeActivity\(\)\s*\{\s*\}/, `class MainActivity : BridgeActivity() {
+      source = source.replace(/class MainActivity\s*:\s*BridgeActivity\(\)\s*(?:\{\s*\})?/, `class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, true)
