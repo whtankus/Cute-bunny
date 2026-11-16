@@ -10,7 +10,7 @@ on:
       - "index.html"
       - "bunny-app-icon-192.png"
       - "bunny-app-icon-512.png"
-      - "scripts/build-preview.js"
+      - "scripts/build-preview.js"\n      - "scripts/configure-android-native.js"
       - "scripts/configure-android-signing.js"
       - "package.json"
       - "capacitor.config.json"

@@ -12667,3 +12667,12 @@ body[data-mode="dark"] .chat-bubble-wrap>.chat-bubble.is-single-character:active
 .notification-copy {
   min-width:0!important;
 }
+
+/* Android/standalone shell: preserve the existing header geometry while
+   allowing its pastel background to meet the native status-bar inset cleanly. */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .app header {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+}
