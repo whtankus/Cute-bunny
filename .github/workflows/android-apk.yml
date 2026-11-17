@@ -17,7 +17,6 @@ on:
       - "scripts/build-preview.js"
       - "scripts/configure-android-signing.js"
       - "scripts/android-updater-entry.js"
-      - "ota/**"
       - "package.json"
       - "package-lock.json"
       - "capacitor.config.json"
