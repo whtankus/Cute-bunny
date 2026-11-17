@@ -2344,22 +2344,32 @@ function showFriendProfile(user) {
 
 
 function profileSettingsMarkup() {
+  const themeOptions = [
+    ['rose','🌷','Rose garden'],['lavender','☁️','Lavender skies'],['mint','🍃','Mint meadow'],
+    ['sky','🐦','Bluebird day'],['peach','🍑','Peach glow'],['berry','🫐','Berry bloom'],
+    ['midnight','🌙','Midnight lilac'],['sage','🌿','Sage garden'],['buttercup','🌼','Buttercup']
+  ];
+  const buddyOptions = [['🐰','Bunny'],['🐱','Kitty'],['🐻','Bear'],['🐸','Frog']];
   return `<section class="profile-settings-panel hidden" id="profileSettingsPanel" aria-label="Profile settings" aria-modal="false">
     <div class="profile-settings-heading">
-      <div><small>YOUR LITTLE CORNER</small><h3>Edit profile</h3></div>
+      <div><small>YOUR LITTLE CORNER</small><h3>Settings</h3><p>Make this space feel like yours.</p></div>
       <button type="button" class="profile-settings-close" id="profileSettingsClose" aria-label="Close profile settings">×</button>
     </div>
-    <div class="profile-settings-tabs" role="tablist" aria-label="Profile settings sections">
+    <div class="profile-settings-tabs" role="tablist" aria-label="Settings sections">
       <button type="button" class="profile-settings-tab is-active" data-settings-tab="account" role="tab" aria-selected="true" aria-controls="profileSettingsAccount">Account</button>
       <button type="button" class="profile-settings-tab" data-settings-tab="personal" role="tab" aria-selected="false" aria-controls="profileSettingsPersonal">Personal</button>
+      <button type="button" class="profile-settings-tab" data-settings-tab="appearance" role="tab" aria-selected="false" aria-controls="profileSettingsAppearance">Appearance</button>
+      <button type="button" class="profile-settings-tab" data-settings-tab="notifications" role="tab" aria-selected="false" aria-controls="profileSettingsNotifications">Alerts</button>
     </div>
     <div class="profile-settings-section profile-editor-settings" id="profileSettingsAccount" data-settings-section="account" role="tabpanel">
+      <div class="settings-section-intro"><span class="settings-section-icon">♡</span><div><b>Account details</b><small>Your unique identity in Cute Bunny.</small></div></div>
       <label class="profile-settings-field">Username
         <span class="profile-username-input"><span aria-hidden="true">@</span><input id="profileEditUsername" maxlength="24" autocomplete="username" spellcheck="false" placeholder="your_username"></span>
       </label>
-      <p class="profile-settings-hint">Your unique name in your little corner.</p>
+      <p class="profile-settings-hint">Use 3–24 letters, numbers or underscores.</p>
     </div>
     <div class="profile-settings-section profile-editor-settings hidden" id="profileSettingsPersonal" data-settings-section="personal" role="tabpanel">
+      <div class="settings-section-intro"><span class="settings-section-icon">✿</span><div><b>About you</b><small>Personalize how your profile is represented.</small></div></div>
       <div class="profile-settings-gender">
         <label>Gender</label>
         <div class="profile-gender-options" role="group" aria-label="Choose your gender">
@@ -2367,11 +2377,29 @@ function profileSettingsMarkup() {
           <button type="button" data-profile-gender="female" aria-pressed="false">Female</button>
         </div>
       </div>
-      <p class="profile-settings-hint">This helps personalize your profile experience.</p>
+    </div>
+    <div class="profile-settings-section profile-editor-settings hidden" id="profileSettingsAppearance" data-settings-section="appearance" role="tabpanel">
+      <div class="settings-section-intro"><span class="settings-section-icon">✧</span><div><b>Your appearance</b><small>Choose the colours and little buddy you love.</small></div></div>
+      <input id="settingsThemeValue" type="hidden" value="rose">
+      <div class="settings-choice-heading">Colour theme</div>
+      <div class="settings-theme-grid" role="radiogroup" aria-label="Choose a colour theme">
+        ${themeOptions.map(([value,emoji,label]) => `<button type="button" class="settings-theme-choice" data-settings-theme-choice="${value}" role="radio" aria-checked="false"><span>${emoji}</span><small>${label}</small></button>`).join('')}
+      </div>
+      <input id="settingsBuddyValue" type="hidden" value="🐰">
+      <div class="settings-choice-heading">Little buddy</div>
+      <div class="settings-buddy-row" role="radiogroup" aria-label="Choose your little buddy">
+        ${buddyOptions.map(([value,label]) => `<button type="button" class="settings-buddy-choice" data-settings-buddy-choice="${value}" role="radio" aria-checked="false"><span>${value}</span><small>${label}</small></button>`).join('')}
+      </div>
+      <button type="button" class="settings-wallpaper-action" id="profileSettingsWallpaper">Change profile wallpaper <span>→</span></button>
+    </div>
+    <div class="profile-settings-section profile-editor-settings hidden" id="profileSettingsNotifications" data-settings-section="notifications" role="tabpanel">
+      <div class="settings-section-intro"><span class="settings-section-icon">♡</span><div><b>Your notifications</b><small>Choose what you want to hear about.</small></div></div>
+      <div class="settings-notification-card"><span>Photos, songs & notes</span><small>Updates shared in your little corner</small><button type="button" class="settings-open-notifications" id="profileSettingsOpenNotifications">Manage alerts →</button></div>
+      <div class="settings-notification-card"><span>Buddy hellos</span><small>When your friends stop by</small><button type="button" class="settings-open-notifications" data-open-notification-settings>Notification preferences →</button></div>
     </div>
     <div class="profile-settings-actions">
       <p class="profile-settings-feedback" id="profileSettingsFeedback" role="status" aria-live="polite"></p>
-      <button type="button" class="primary profile-settings-save" id="profileSettingsSave"><span aria-hidden="true">♡</span> Save changes</button>
+      <button type="button" class="primary profile-settings-save" id="profileSettingsSave"><span aria-hidden="true">♡</span> Save settings</button>
     </div>
   </section>`;
 }
