@@ -1,3 +1,4 @@
+window.CUTE_BUNNY_CONFIG = { supabaseUrl: 'https://test.supabase.co', supabaseAnonKey: 'test-anon-key' };
 (() => {
   const now = new Date().toISOString();
   const me = {

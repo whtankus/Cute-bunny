@@ -12,6 +12,7 @@ const assets = [
   'app.js',
   'style.css',
   'polish.css',
+  'button-interactions.css',
   'sw.js',
   'manifest.webmanifest',
   'bunny-app-icon-192.png',
