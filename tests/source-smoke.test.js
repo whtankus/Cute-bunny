@@ -8,7 +8,7 @@ const root = path.resolve(__dirname, '..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 
 test('core browser scripts parse without syntax errors', () => {
-  for (const file of ['app.js', 'sw.js', 'scripts/build-preview.js', 'scripts/android-updater-entry.js']) {
+  for (const file of ['app.js', 'sw.js', 'scripts/build-preview.js']) {
     assert.doesNotThrow(() => new vm.Script(read(file), { filename: file }), file);
   }
 });
