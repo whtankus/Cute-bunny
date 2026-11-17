@@ -2407,6 +2407,21 @@ function renderProfileSettings() {
   const usernameField = $('#profileEditUsername');
   if (usernameField) usernameField.value = me?.username || '';
   const gender = me?.gender || '';
+  const theme = me?.theme || 'rose';
+  const buddy = me?.mascot || '🐰';
+  const themeInput = $('#settingsThemeValue'), buddyInput = $('#settingsBuddyValue');
+  if (themeInput) themeInput.value = theme;
+  if (buddyInput) buddyInput.value = buddy;
+  document.querySelectorAll('[data-settings-theme-choice]').forEach(button => {
+    const selected = button.dataset.settingsThemeChoice === theme;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-checked', String(selected));
+  });
+  document.querySelectorAll('[data-settings-buddy-choice]').forEach(button => {
+    const selected = button.dataset.settingsBuddyChoice === buddy;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-checked', String(selected));
+  });
   document.querySelectorAll('[data-profile-gender]').forEach(button => {
     const selected = button.dataset.profileGender === gender;
     button.classList.toggle('is-selected', selected);
@@ -2426,8 +2441,13 @@ async function saveProfileSettings() {
   if (save) save.disabled = true;
   if (feedback) feedback.textContent = 'Saving your changes…';
   try {
-    const saved = await api('/me', { method: 'PUT', body: JSON.stringify({ username, gender }) });
-    me = { ...me, ...saved, username: saved.username || username, gender };
+    const theme = $('#settingsThemeValue')?.value || me.theme || 'rose';
+    const mascot = $('#settingsBuddyValue')?.value || me.mascot || '🐰';
+    const saved = await api('/me', { method: 'PUT', body: JSON.stringify({ username, gender, theme, mascot }) });
+    me = { ...me, ...saved, username: saved.username || username, gender, theme, mascot };
+    setTheme(theme);
+    const topMascot = $('#topMascot');
+    if (topMascot) topMascot.textContent = mascot;
     const gate = $('#friendProfileGate');
     if (gate && !gate.classList.contains('hidden') && gate.dataset.ownProfile === 'true') showFriendProfile(me);
     renderProfileSettings();
@@ -4389,11 +4409,16 @@ document.addEventListener('click', event => {
   const buddy = target?.closest?.('[data-settings-buddy-choice]');
   if (theme) {
     document.querySelectorAll('[data-settings-theme-choice]').forEach(button => { const active = button === theme; button.classList.toggle('is-selected', active); button.setAttribute('aria-checked', String(active)); });
-    // Live preview the complete app palette immediately; Save persists it to Supabase.
-    setTheme(theme.dataset.settingsThemeChoice);
-    document.documentElement.dataset.themePreview = theme.dataset.settingsThemeChoice;
+    const value = theme.dataset.settingsThemeChoice;
+    const field = document.querySelector('#settingsThemeValue');
+    if (field) field.value = value;
+    setTheme(value);
   }
-  if (buddy) document.querySelectorAll('[data-settings-buddy-choice]').forEach(button => { const active = button === buddy; button.classList.toggle('is-selected', active); button.setAttribute('aria-checked', String(active)); });
+  if (buddy) {
+    document.querySelectorAll('[data-settings-buddy-choice]').forEach(button => { const active = button === buddy; button.classList.toggle('is-selected', active); button.setAttribute('aria-checked', String(active)); });
+    const field = document.querySelector('#settingsBuddyValue');
+    if (field) field.value = buddy.dataset.settingsBuddyChoice;
+  }
 }, true);
 
 // Settings category tabs: capture clicks before other delegated handlers.
@@ -4789,6 +4814,13 @@ document.addEventListener('click', async e => {
   const genderChoice = e.target.closest('[data-profile-gender]');
   if (genderChoice) { document.querySelectorAll('[data-profile-gender]').forEach(button => button.classList.toggle('is-selected', button === genderChoice)); const preview = $('#profileGenderPreview'); if (preview) preview.textContent = genderChoice.dataset.profileGender === 'male' ? 'Preview: 👑 King' : 'Preview: 👑 Queen'; return; }
   if (e.target.closest('#profileSettingsSave')) { void saveProfileSettings(); return; }
+  if (e.target.closest('#profileSettingsWallpaper')) { void cycleProfileWallpaper(); return; }
+  if (e.target.closest('#profileSettingsOpenNotifications, [data-open-notification-settings]')) {
+    $('#profileSettingsPanel')?.classList.add('hidden');
+    $('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false');
+    $('#notificationGate')?.classList.remove('hidden');
+    return;
+  }
   if (e.target.closest('#profileSettingsWallpaper')) { void cycleProfileWallpaper(); return; }
 
   // Friend search & profile & follow
