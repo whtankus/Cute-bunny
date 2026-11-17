@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
+      - name: Install dependencies and resolve lockfile
         run: npm install --no-audit --no-fund
 
       - name: Check JavaScript syntax
@@ -36,3 +36,11 @@ jobs:
 
       - name: Run source smoke tests
         run: npm test
+
+      - name: Preserve generated dependency lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: cute-bunny-package-lock
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 7
