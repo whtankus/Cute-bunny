@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
-    "@capacitor/core": "^7.4.3"
+    "@capacitor/core": "^7.4.3",
+    "@capgo/capacitor-updater": "7.51.15"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.4.3"
+    "@capacitor/cli": "^7.4.3",
+    "esbuild": "^0.25.12"
   }
 }
