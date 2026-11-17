@@ -2127,3 +2127,181 @@ body[data-mode="dark"] .auth-card.profile-card .settings-section-intro small{col
 body[data-mode="dark"] .auth-card.profile-card .settings-theme-choice,body[data-mode="dark"] .auth-card.profile-card .settings-buddy-choice,body[data-mode="dark"] .auth-card.profile-card .settings-wallpaper-action,body[data-mode="dark"] .auth-card.profile-card .settings-notification-card{background:#2b2433!important;border-color:#5d4a63!important;color:#f2e4ef!important}
 body[data-mode="dark"] .auth-card.profile-card .settings-open-notifications{background:#47364b!important;color:#efbfd5!important}
 @media(max-width:430px){.auth-card.profile-card .profile-settings-panel{padding:15px!important;max-height:80dvh!important}.auth-card.profile-card .settings-theme-grid{gap:6px!important}.auth-card.profile-card .settings-theme-choice{min-height:62px!important}}
+
+
+/* 2026-11-17 — app-wide soft motion and tactile interaction polish. */
+:root {
+  scroll-behavior: smooth;
+  --cb-ease-out: cubic-bezier(.2,.75,.25,1);
+  --cb-ease-spring: cubic-bezier(.2,.85,.25,1.18);
+}
+body, .app, #content { -webkit-tap-highlight-color: transparent; }
+.app > header,
+.app #nav,
+#content .tile,
+#content .daily,
+#content .friend-row,
+#content .home-feature-card,
+#content .chat-page,
+.profile-settings-panel,
+.notification-card,
+.auth-card,
+.photo-lightbox-card,
+.music-player-card {
+  transition:
+    background-color .28s var(--cb-ease-out),
+    border-color .28s var(--cb-ease-out),
+    box-shadow .28s var(--cb-ease-out),
+    color .2s ease,
+    transform .28s var(--cb-ease-out);
+}
+#content .tile,
+#content .daily,
+#content .friend-row,
+#content .home-feature-card,
+#content .chat-page,
+.profile-settings-panel,
+.notification-card,
+.auth-card,
+.photo-lightbox-card,
+.music-player-card {
+  box-shadow: 0 8px 24px rgba(var(--cb-shadow-color, 91,62,88),.055);
+}
+#content .tile,
+#content .daily,
+#content .friend-row,
+#content .home-feature-card {
+  border-radius: 22px;
+}
+#content button,
+#nav button,
+.app > header button,
+.profile-settings-panel button,
+.notification-card button,
+.auth-card button {
+  touch-action: manipulation;
+  transition:
+    transform .2s var(--cb-ease-out),
+    background-color .22s ease,
+    border-color .22s ease,
+    box-shadow .22s ease,
+    color .18s ease,
+    opacity .18s ease;
+}
+#content button:active,
+#nav button:active,
+.app > header button:active,
+.profile-settings-panel button:active,
+.notification-card button:active,
+.auth-card button:active {
+  transform: scale(.975);
+}
+#content button:focus-visible,
+#nav button:focus-visible,
+.app > header button:focus-visible,
+.profile-settings-panel button:focus-visible,
+.notification-card button:focus-visible,
+.auth-card button:focus-visible,
+#content input:focus-visible,
+#content textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--cb-accent) 48%, transparent);
+  outline-offset: 3px;
+}
+#content .tile:hover,
+#content .daily:hover,
+#content .friend-row:hover,
+#content .home-feature-card:hover {
+  border-color: color-mix(in srgb, var(--cb-accent) 32%, var(--cb-border));
+  box-shadow: 0 13px 30px rgba(var(--cb-shadow-color, 91,62,88),.09);
+}
+#content .tile:active,
+#content .daily:active,
+#content .friend-row:active { transform: translateY(1px); }
+#nav button {
+  border-radius: 17px;
+  transition: transform .22s var(--cb-ease-spring), background .22s ease, color .2s ease;
+}
+#nav button.active { box-shadow: 0 4px 12px rgba(var(--cb-shadow-color,91,62,88),.08); }
+#content input:not([type="file"]),
+#content textarea,
+.auth-gate input:not([type="checkbox"]):not([type="radio"]),
+.auth-gate textarea {
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+#content input:focus,
+#content textarea:focus,
+.auth-gate input:focus,
+.auth-gate textarea:focus {
+  border-color: color-mix(in srgb, var(--cb-accent) 66%, white);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cb-accent-soft) 78%, transparent);
+  outline: 0;
+}
+#content img,
+#content .tile-art,
+#content .feed-photo,
+#content .memory img {
+  transition: filter .28s ease, transform .35s var(--cb-ease-out);
+}
+#content .feed-photo:hover { filter: saturate(1.035); }
+#content .chat-bubble {
+  transition: transform .18s var(--cb-ease-out), box-shadow .2s ease, background-color .2s ease;
+}
+#content .chat-bubble-wrap { animation: cb-message-arrive .24s var(--cb-ease-out) both; }
+@keyframes cb-message-arrive {
+  from { opacity: 0; transform: translateY(5px) scale(.992); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+#content > .heading,
+#content > .toolbar,
+#content > .happy-things-grid,
+#content > .home-hero {
+  animation: cb-page-arrive .3s var(--cb-ease-out) both;
+}
+@keyframes cb-page-arrive {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.profile-settings-panel .settings-theme-choice,
+.profile-settings-panel .settings-buddy-choice,
+.profile-settings-panel .settings-wallpaper-action,
+.profile-settings-panel .settings-notification-card {
+  transition: transform .2s var(--cb-ease-out), box-shadow .22s ease, border-color .22s ease, background .22s ease;
+}
+.profile-settings-panel .settings-theme-choice:hover,
+.profile-settings-panel .settings-buddy-choice:hover,
+.profile-settings-panel .settings-wallpaper-action:hover,
+.profile-settings-panel .settings-notification-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 16px rgba(var(--cb-shadow-color,91,62,88),.08);
+}
+.app > header { transition: background-color .25s ease, box-shadow .25s ease, border-color .25s ease; }
+#nowPlayingPanel { transform-origin: top right; animation: cb-panel-open .2s var(--cb-ease-out) both; }
+@keyframes cb-panel-open {
+  from { opacity: 0; transform: translateY(-5px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (hover:none) {
+  #content .tile:hover,
+  #content .daily:hover,
+  #content .friend-row:hover,
+  #content .home-feature-card:hover { box-shadow: inherit; }
+}
+@media (prefers-reduced-motion:reduce) {
+  :root { scroll-behavior: auto; }
+  #content .chat-bubble-wrap,
+  #content > .heading,
+  #content > .toolbar,
+  #content > .happy-things-grid,
+  #content > .home-hero,
+  #nowPlayingPanel { animation: none !important; }
+  #content button,
+  #nav button,
+  .app > header button,
+  #content .tile,
+  #content .daily,
+  #content .friend-row,
+  #content .home-feature-card,
+  #content .chat-bubble,
+  .profile-settings-panel,
+  .profile-settings-panel button { transition: none !important; }
+}
