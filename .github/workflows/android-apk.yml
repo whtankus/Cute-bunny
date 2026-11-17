@@ -102,6 +102,38 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Publish free OTA bundle and refresh update manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OTA_VERSION: ${{ env.OTA_VERSION }}
+          OTA_CHECKSUM: ${{ env.OTA_CHECKSUM }}
+        run: |
+          set -euo pipefail
+          TAG="ota-v${OTA_VERSION}"
+          gh release create "$TAG" cute-bunny-ota.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Cute Bunny OTA $OTA_VERSION" \
+            --notes "Web-only OTA bundle for Cute Bunny. SHA-256: $OTA_CHECKSUM"
+
+          DOWNLOAD_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/cute-bunny-ota.zip"
+          jq -n \
+            --arg appId "com.cutebunny.app" \
+            --arg version "$OTA_VERSION" \
+            --arg url "$DOWNLOAD_URL" \
+            --arg checksum "$OTA_CHECKSUM" \
+            --arg publishedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{appId:$appId,version:$version,url:$url,checksum:$checksum,publishedAt:$publishedAt}' > ota-latest.json
+
+          MANIFEST_SHA="$(gh api "repos/$GITHUB_REPOSITORY/contents/ota/latest.json" --jq .sha)"
+          MANIFEST_CONTENT="$(base64 -w 0 ota-latest.json)"
+          gh api "repos/$GITHUB_REPOSITORY/contents/ota/latest.json" \
+            -X PUT \
+            -f message="Publish Cute Bunny OTA $OTA_VERSION" \
+            -f content="$MANIFEST_CONTENT" \
+            -f sha="$MANIFEST_SHA" \
+            -f branch="main"
+
       - name: Prepare persistent Android release keystore
         id: release-signing
         env:
@@ -154,38 +186,6 @@ jobs:
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 90
-
-      - name: Publish free OTA bundle and refresh update manifest
-        env:
-          GH_TOKEN: ${{ github.token }}
-          OTA_VERSION: ${{ env.OTA_VERSION }}
-          OTA_CHECKSUM: ${{ env.OTA_CHECKSUM }}
-        run: |
-          set -euo pipefail
-          TAG="ota-v${OTA_VERSION}"
-          gh release create "$TAG" cute-bunny-ota.zip \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "Cute Bunny OTA $OTA_VERSION" \
-            --notes "Web-only OTA bundle for Cute Bunny. SHA-256: $OTA_CHECKSUM"
-
-          DOWNLOAD_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/cute-bunny-ota.zip"
-          jq -n \
-            --arg appId "com.cutebunny.app" \
-            --arg version "$OTA_VERSION" \
-            --arg url "$DOWNLOAD_URL" \
-            --arg checksum "$OTA_CHECKSUM" \
-            --arg publishedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            '{appId:$appId,version:$version,url:$url,checksum:$checksum,publishedAt:$publishedAt}' > ota-latest.json
-
-          MANIFEST_SHA="$(gh api "repos/$GITHUB_REPOSITORY/contents/ota/latest.json" --jq .sha)"
-          MANIFEST_CONTENT="$(base64 -w 0 ota-latest.json)"
-          gh api "repos/$GITHUB_REPOSITORY/contents/ota/latest.json" \
-            -X PUT \
-            -f message="Publish Cute Bunny OTA $OTA_VERSION" \
-            -f content="$MANIFEST_CONTENT" \
-            -f sha="$MANIFEST_SHA" \
-            -f branch="main"
 
       - name: Publish signed APK as a GitHub Release asset for Orion Store
         if: steps.release-signing.outputs.ready == 'true'
