@@ -34,7 +34,7 @@
       profile_private_settings: [{ user_id: me.id, notification_preferences: { memories: true, buddy: true } }]
     }
   };
-  window.__cuteBunnyTestState = state;
+  window.__cuteBunnyTestState = state;\n  window.IntersectionObserver = class { constructor(callback) { this.callback = callback; } observe(target) { this.callback([{ target, isIntersecting: true, intersectionRatio: 1 }]); } unobserve() {} disconnect() {} };
 
   class Query {
     constructor(table) {
@@ -119,7 +119,7 @@
     createClient() {
       return {
         auth: {
-          async getSession() { return { data: { session }, error: null }; },
+          async getSession() { return { data: { session: localStorage.getItem('cuteBunnyTestAuth') === 'true' ? session : null }, error: null }; },
           async signOut() { return { error: null }; },
           onAuthStateChange() { return { data: { subscription: { unsubscribe() {} } } }; },
           async setSession() { return { data: { session }, error: null }; }
