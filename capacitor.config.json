@@ -5,5 +5,11 @@
   "backgroundColor": "#fdf1ea",
   "android": {
     "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "appReadyTimeout": 10000
+    }
   }
 }
