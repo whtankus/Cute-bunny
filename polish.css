@@ -2305,3 +2305,460 @@ body, .app, #content { -webkit-tap-highlight-color: transparent; }
   .profile-settings-panel,
   .profile-settings-panel button { transition: none !important; }
 }
+
+
+/* Keyboard users can bypass the app header and reach the main workspace. */
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  left: 12px;
+  padding: 11px 16px;
+  border: 1px solid #e8cbd9;
+  border-radius: 999px;
+  background: #fffdfb;
+  color: #75445f;
+  box-shadow: 0 8px 24px rgba(91, 62, 88, .16);
+  font-weight: 800;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 18px));
+  transition: transform 160ms ease;
+}
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid #bd6f91;
+  outline-offset: 3px;
+}
+#mainContent:focus {
+  outline: none;
+}
+#mainContent:focus-visible {
+  outline: 2px solid rgba(189, 111, 145, .55);
+  outline-offset: -3px;
+  border-radius: 18px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .skip-link { transition: none; }
+}
+
+/* Photo Garden — slow scrapbook-like thumbnail drift. Scoped to the gallery only. */
+#content .photo-garden-grid .feed-photo {
+  transform-origin: center;
+  backface-visibility: hidden;
+  animation: cb-photo-garden-float 3.4s ease-in-out infinite;
+  will-change: transform;
+}
+#content .photo-garden-grid .feed-item:nth-child(3n + 2) .feed-photo {
+  animation-delay: -1.1s;
+}
+#content .photo-garden-grid .feed-item:nth-child(3n) .feed-photo {
+  animation-delay: -2.2s;
+}
+@keyframes cb-photo-garden-float {
+  0%, 100% { transform: translate3d(0, 2px, 0) rotate(-.25deg) scale(1.018); }
+  50% { transform: translate3d(0, -2px, 0) rotate(.3deg) scale(1.03); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #content .photo-garden-grid .feed-photo {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto;
+  }
+}
+
+/* Illustrated icon system + mobile safe-area/content fixes (2026-11-17). */
+.cb-icon-sprite { position:absolute; width:0; height:0; overflow:hidden; }
+#nav button i { display:grid!important; place-items:center!important; width:30px!important; height:30px!important; font-size:0!important; }
+#nav button i svg { display:block; width:28px; height:28px; overflow:visible; }
+.auth-card.profile-card .buddy-swatch { display:grid!important; place-items:center!important; }
+.auth-card.profile-card .buddy-swatch svg { width:34px!important; height:34px!important; display:block!important; }
+.auth-card.profile-card .profile-settings-field textarea { display:block!important; width:100%!important; min-height:92px!important; padding:12px 13px 30px!important; resize:vertical!important; }
+.auth-card.profile-card .profile-settings-field .profile-bio-count { display:block!important; position:static!important; margin:6px 2px 0 auto!important; width:max-content!important; line-height:1.3!important; }
+.auth-card.profile-card .profile-settings-field { display:flex!important; flex-direction:column!important; align-items:stretch!important; gap:7px!important; }
+.auth-card.profile-card .profile-settings-hint { margin:3px 0 9px!important; }
+.auth-card.profile-card .profile-settings-panel { padding-bottom:18px!important; }
+#content .sg-tab-panel { padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))!important; }
+#content .sg-milestone-route { padding-bottom:20px!important; scroll-padding-bottom:calc(120px + env(safe-area-inset-bottom,0px)); }
+#content .sg-milestones-section { padding-bottom:calc(26px + env(safe-area-inset-bottom,0px))!important; }
+@media(max-width:640px) {
+  #content { padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))!important; }
+  #content .sg-tab-panel { padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))!important; }
+}
+
+.cb-buddy-illustration { display:block; width:100%; height:100%; overflow:visible; }
+#topMascot .cb-buddy-illustration { width:34px; height:34px; }
+#friendProfileBuddy .cb-buddy-illustration { width:100%; height:100%; }
+.profile-live-avatar .cb-buddy-illustration { width:42px; height:42px; }
+
+/* Replace profile appearance picker emoji with a cohesive illustrated set. */
+.auth-card.profile-card .settings-theme-choice .theme-illustration { display:grid!important; place-items:center!important; width:42px!important; height:42px!important; border-radius:15px!important; background:color-mix(in srgb,currentColor 12%,white)!important; }
+.auth-card.profile-card .settings-theme-choice .theme-illustration svg { width:31px!important; height:31px!important; display:block!important; }
+.auth-card.profile-card .settings-theme-choice.theme-rose { color:#c87598!important; }
+.auth-card.profile-card .settings-theme-choice.theme-lavender { color:#9279b8!important; }
+.auth-card.profile-card .settings-theme-choice.theme-mint,
+.auth-card.profile-card .settings-theme-choice.theme-sage { color:#779d83!important; }
+.auth-card.profile-card .settings-theme-choice.theme-sky { color:#6d9db9!important; }
+.auth-card.profile-card .settings-theme-choice.theme-peach { color:#d18c69!important; }
+.auth-card.profile-card .settings-theme-choice.theme-berry { color:#b86e9a!important; }
+.auth-card.profile-card .settings-theme-choice.theme-midnight { color:#79658f!important; }
+.auth-card.profile-card .settings-theme-choice.theme-buttercup { color:#c49b45!important; }
+.auth-card.profile-card .settings-buddy-choice .buddy-choice-art { display:grid!important; place-items:center!important; min-height:46px!important; }
+.auth-card.profile-card .settings-buddy-choice .cb-buddy-illustration { width:44px!important; height:44px!important; }
+
+
+/* Illustrated achievement garden, weekly blooms and shop collectibles. */
+#content .sg-collectible-art,
+#content .sg-weekly-art,
+#content .sg-daily-quest-icon,
+#content .sg-petal-balance-art,
+#content .sg-chest-art {
+  display:grid; place-items:center; flex:0 0 auto;
+}
+#content .sg-collectible-art { width:76px; height:76px; margin:0 auto 8px; border-radius:23px; background:linear-gradient(145deg,#fff8f1,#f8e7ef); box-shadow:inset 0 1px 0 #fff,0 5px 14px rgba(151,103,126,.08); }
+#content .sg-collectible-art svg { width:66px; height:66px; filter:drop-shadow(0 3px 2px rgba(110,78,92,.10)); }
+#content .sg-weekly-art { width:58px; height:58px; border-radius:19px; background:linear-gradient(145deg,#fff8ed,#f7e7ed); }
+#content .sg-weekly-art svg { width:54px; height:54px; }
+#content .sg-daily-quest-icon { width:48px; height:48px; border-radius:16px; background:linear-gradient(145deg,#fff8ef,#f8e8ef); }
+#content .sg-daily-quest-icon svg { width:43px; height:43px; }
+#content .sg-petal-balance-art { width:46px; height:46px; border-radius:16px; background:#fff5e9; }
+#content .sg-petal-balance-art svg { width:43px; height:43px; }
+#content .sg-chest-art { display:inline-grid; width:26px; height:26px; vertical-align:middle; }
+#content .sg-chest-art svg { width:26px; height:26px; }
+#content .sg-collectible-card { overflow:hidden; }
+#content .sg-collectible-card.is-equipped .sg-collectible-art { background:linear-gradient(145deg,#f8f0d9,#f6e4eb); box-shadow:0 0 0 2px rgba(190,151,91,.28),inset 0 1px 0 #fff; }
+#content .sg-weekly-tier.is-unlocked .sg-weekly-art { background:linear-gradient(145deg,#f8f0d9,#f8e4ed); box-shadow:0 0 0 2px rgba(190,151,91,.24); }
+#content .sg-heart-milestone-art { display:grid; place-items:center; }
+#content .sg-heart-milestone-art svg { width:100%; height:100%; max-width:76px; filter:drop-shadow(0 3px 3px rgba(130,86,111,.10)); }
+@media(max-width:430px) {
+  #content .sg-collectible-art { width:66px; height:66px; }
+  #content .sg-collectible-art svg { width:58px; height:58px; }
+  #content .sg-weekly-art { width:52px; height:52px; }
+  #content .sg-weekly-art svg { width:48px; height:48px; }
+}
+
+
+/* The jumping buddy should never flash a rectangular tap/focus frame. */
+.hero-art.bunny-button,
+.hero-art.bunny-button:active,
+.hero-art.bunny-button:focus {
+  outline:none!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.hero-art.bunny-button:focus:not(:focus-visible) { box-shadow:none!important; }
+.hero-art.bunny-button:focus-visible {
+  outline:2px solid rgba(190,126,158,.72)!important;
+  outline-offset:5px!important;
+  border-radius:50%!important;
+  box-shadow:none!important;
+}
+/* A smaller, more editorial Achievement Garden on the home page. */
+#content > .achievement-garden {
+  margin:15px auto 19px!important;
+  padding:13px 14px!important;
+  border-radius:19px!important;
+  max-width:860px;
+  box-shadow:0 6px 17px rgba(155,113,133,.08)!important;
+}
+#content > .achievement-garden .achievement-garden-heading {
+  gap:8px!important;margin-bottom:10px!important;
+}
+#content > .achievement-garden .achievement-garden-heading small {
+  font-size:.54rem!important;letter-spacing:.11em!important;
+}
+#content > .achievement-garden .achievement-garden-heading h3 {
+  margin:3px 0 2px!important;font-size:.98rem!important;
+}
+#content > .achievement-garden .achievement-garden-heading p {
+  font-size:.68rem!important;line-height:1.35!important;
+}
+#content > .achievement-garden .achievement-count {
+  min-width:49px!important;padding:6px 8px!important;border-radius:13px!important;
+}
+#content > .achievement-garden .achievement-count strong {font-size:.82rem!important}
+#content > .achievement-garden .achievement-count span {font-size:.53rem!important}
+#content > .achievement-garden .achievement-grid {
+  gap:7px!important;
+}
+#content > .achievement-garden .achievement-card {
+  gap:8px!important;padding:9px!important;border-radius:14px!important;
+}
+#content > .achievement-garden .achievement-medallion {
+  flex-basis:32px!important;width:32px!important;height:32px!important;border-radius:11px!important;font-size:1rem!important;
+}
+#content > .achievement-garden .achievement-copy strong {font-size:.7rem!important}
+#content > .achievement-garden .achievement-copy p {
+  min-height:0!important;margin:2px 0 6px!important;font-size:.59rem!important;line-height:1.3!important;
+}
+#content > .achievement-garden .achievement-progress {height:4px!important}
+#content > .achievement-garden .achievement-copy>small {margin-top:4px!important;font-size:.55rem!important}
+#content > .achievement-garden .achievement-status {top:7px!important;right:8px!important;font-size:.68rem!important}
+@media(max-width:520px) {
+  #content > .achievement-garden {padding:12px!important;margin:13px 0 17px!important}
+  #content > .achievement-garden .achievement-grid {grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #content > .achievement-garden .achievement-card {padding:8px!important}
+}
+
+/* Remove the unintended blank strip above the app header. */
+#app {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+#app > header {
+  margin-top: 0 !important;
+  transform: none !important;
+}
+
+
+/* Match the Notes masthead: remove the separate tinted/glass header surface. */
+#app > header {
+  background: var(--cb-bg) !important;
+  background-color: var(--cb-bg) !important;
+  border-bottom: 1px solid var(--cb-border) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+
+/* Header cleanup: keep the app chrome transparent, including on Notes.
+   Remove the top/status-bar shadow and size the buddy icon to the name capsule. */
+html body #app > header,
+html body.notes-page-active #app > header,
+html body[data-theme] #app > header {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+}
+html body #app > header::before,
+html body #app > header::after {
+  content: none !important;
+  display: none !important;
+  box-shadow: none !important;
+}
+html body #app > header .brand > span {
+  flex-basis: 50px !important;
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px !important;
+  min-height: 50px !important;
+}
+html body #app > header .brand > b {
+  min-height: 50px !important;
+}
+@media (max-width: 520px) {
+  html body #app > header .brand > span {
+    flex-basis: 44px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  html body #app > header .brand > b {
+    min-height: 44px !important;
+  }
+}
+
+
+/* Final Notes header cascade: override the later global transparent-header reset. */
+html body.notes-page-active #app > header,
+html body.notes-page-active.notes-header-hidden #app > header {
+  background: rgba(255, 247, 251, .64) !important;
+  background-color: rgba(255, 247, 251, .64) !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .30) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
+  backdrop-filter: blur(24px) saturate(1.4) !important;
+  filter: none !important;
+  isolation: isolate;
+}
+html body.notes-page-active #app,
+html body.notes-page-active #app > header {
+  filter: none !important;
+  box-shadow: none !important;
+}
+html body.notes-page-active #app > header::before,
+html body.notes-page-active #app > header::after {
+  content: none !important;
+  display: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+html body[data-mode="dark"].notes-page-active #app > header,
+html body[data-mode="dark"].notes-page-active.notes-header-hidden #app > header {
+  background: rgba(37, 29, 44, .70) !important;
+  background-color: rgba(37, 29, 44, .70) !important;
+  border-bottom-color: rgba(255, 255, 255, .12) !important;
+}
+
+
+/* Match the Notes masthead to the native status-bar blush and remove every dark edge. */
+html body.notes-page-active #app,
+html body.notes-page-active #app > header,
+html body.notes-page-active.notes-header-hidden #app > header {
+  background: #fff1f5 !important;
+  background-color: #fff1f5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+html body.notes-page-active #app > header .brand,
+html body.notes-page-active #app > header .brand > span,
+html body.notes-page-active #app > header .brand > b {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+}
+html body.notes-page-active #app > header::before,
+html body.notes-page-active #app > header::after,
+html body.notes-page-active #app::before,
+html body.notes-page-active #app::after {
+  content: none !important;
+  display: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+
+/* Notes header capsule shadow removal: the dark edge comes from the individual
+   avatar/name/action capsules, not just the header surface. Keep their shape,
+   fill and borders, but remove every raised/drop-shadow treatment. */
+html body.notes-page-active #app > header .brand,
+html body.notes-page-active #app > header .brand > span,
+html body.notes-page-active #app > header .brand > b,
+html body.notes-page-active #app > header .header-actions,
+html body.notes-page-active #app > header .header-actions > *,
+html body.notes-page-active #app > header .round,
+html body.notes-page-active #app > header button {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  text-shadow: none !important;
+}
+html body.notes-page-active #app > header .brand > span,
+html body.notes-page-active #app > header .brand > b,
+html body.notes-page-active #app > header .round,
+html body.notes-page-active #app > header button {
+  transform: none;
+}
+
+
+/* Remove the outer brand button capsule on Notes. The avatar and title pills
+   remain separate; only their shared wrapper loses its surface and outline. */
+html body.notes-page-active #app > header > button.brand,
+html body.notes-page-active #app > header > .brand#profileOpen {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  padding: 0 !important;
+}
+html body.notes-page-active #app > header > button.brand::before,
+html body.notes-page-active #app > header > button.brand::after,
+html body.notes-page-active #app > header > .brand#profileOpen::before,
+html body.notes-page-active #app > header > .brand#profileOpen::after {
+  content: none !important;
+  display: none !important;
+  box-shadow: none !important;
+}
+
+
+/* Global header brand wrapper cleanup: remove the large shared capsule
+   around the buddy and title pills on every tab, not only Notes. */
+html body #app > header > button.brand#profileOpen {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+html body #app > header > button.brand#profileOpen::before,
+html body #app > header > button.brand#profileOpen::after {
+  content: none !important;
+  display: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+
+/* Hard reset for the shared profile trigger. This is a layout-only wrapper,
+   not a third capsule: keep its children/layout and remove all button chrome
+   in every interaction state and on every tab. */
+html body #app > header > #profileOpen.brand,
+html body #app > header > #profileOpen.brand:hover,
+html body #app > header > #profileOpen.brand:active,
+html body #app > header > #profileOpen.brand:focus,
+html body #app > header > #profileOpen.brand:focus-visible {
+  all: unset !important;
+  display: flex !important;
+  flex: 0 1 auto !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 9px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  color: inherit !important;
+  font: inherit !important;
+  cursor: pointer !important;
+}
+html body #app > header > #profileOpen.brand::before,
+html body #app > header > #profileOpen.brand::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+html body #app > header > #profileOpen.brand:active {
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
