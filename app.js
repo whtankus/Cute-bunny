@@ -2349,10 +2349,17 @@ function profileSettingsMarkup() {
       <div><small>YOUR LITTLE CORNER</small><h3>Edit profile</h3></div>
       <button type="button" class="profile-settings-close" id="profileSettingsClose" aria-label="Close profile settings">×</button>
     </div>
-    <div class="profile-settings-section profile-editor-settings">
+    <div class="profile-settings-tabs" role="tablist" aria-label="Profile settings sections">
+      <button type="button" class="profile-settings-tab is-active" data-settings-tab="account" role="tab" aria-selected="true" aria-controls="profileSettingsAccount">Account</button>
+      <button type="button" class="profile-settings-tab" data-settings-tab="personal" role="tab" aria-selected="false" aria-controls="profileSettingsPersonal">Personal</button>
+    </div>
+    <div class="profile-settings-section profile-editor-settings" id="profileSettingsAccount" data-settings-section="account" role="tabpanel">
       <label class="profile-settings-field">Username
         <span class="profile-username-input"><span aria-hidden="true">@</span><input id="profileEditUsername" maxlength="24" autocomplete="username" spellcheck="false" placeholder="your_username"></span>
       </label>
+      <p class="profile-settings-hint">Your unique name in your little corner.</p>
+    </div>
+    <div class="profile-settings-section profile-editor-settings hidden" id="profileSettingsPersonal" data-settings-section="personal" role="tabpanel">
       <div class="profile-settings-gender">
         <label>Gender</label>
         <div class="profile-gender-options" role="group" aria-label="Choose your gender">
@@ -2360,6 +2367,7 @@ function profileSettingsMarkup() {
           <button type="button" data-profile-gender="female" aria-pressed="false">Female</button>
         </div>
       </div>
+      <p class="profile-settings-hint">This helps personalize your profile experience.</p>
     </div>
     <div class="profile-settings-actions">
       <p class="profile-settings-feedback" id="profileSettingsFeedback" role="status" aria-live="polite"></p>
