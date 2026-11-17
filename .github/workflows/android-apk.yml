@@ -81,16 +81,20 @@ jobs:
           await rm(`${root}/mipmap-anydpi-v26`, { recursive: true, force: true });
           NODE
 
-      - name: Prepare OTA bundle
+      - name: Prepare Capgo-compatible OTA bundle (offline CLI mode)
         env:
           OTA_VERSION: 1.0.${{ github.run_number }}
         run: |
-          cd dist
-          zip -qr ../cute-bunny-ota.zip .
-          cd ..
-          sha256sum cute-bunny-ota.zip | awk '{print $1}' > cute-bunny-ota.sha256
+          set -euo pipefail
+          # The CLI zip command is local-only: it formats the bundle and
+          # computes its checksum without logging in to or uploading to Capgo.
+          npx --yes @capgo/cli@latest bundle zip com.cutebunny.app \
+            --path ./dist -b "$OTA_VERSION" -n cute-bunny-ota.zip -j > bundle-info.json
+          cat bundle-info.json
+          test -s cute-bunny-ota.zip
+          OTA_CHECKSUM="$(jq -er '.checksum' bundle-info.json)"
           echo "OTA_VERSION=$OTA_VERSION" >> "$GITHUB_ENV"
-          echo "OTA_CHECKSUM=$(cat cute-bunny-ota.sha256)" >> "$GITHUB_ENV"
+          echo "OTA_CHECKSUM=$OTA_CHECKSUM" >> "$GITHUB_ENV"
 
       - name: Build debug APK
         run: |
