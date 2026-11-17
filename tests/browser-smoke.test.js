@@ -57,10 +57,7 @@ async function newTestPage({ authenticated = false, viewport } = {}) {
   });
   contexts.add(context);
   const page = await context.newPage();
-  await page.addInitScript({ content: fixture });
-  await page.addInitScript(isAuthenticated => {
-    if (isAuthenticated) localStorage.setItem('cuteBunnyTestAuth', 'true');
-  }, authenticated);
+  await page.addInitScript({ content: fixture + `\n;(() => {\n  const authenticated = ${JSON.stringify(authenticated)};\n  if (authenticated) localStorage.setItem('cuteBunnyTestAuth', 'true');\n})();` });
   await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', route => route.abort());
   await page.route('https://fonts.googleapis.com/**', route => route.abort());
   await page.route('https://fonts.gstatic.com/**', route => route.abort());
@@ -83,12 +80,8 @@ test('welcome screen renders and opens registration', async () => {
   await page.locator('#enter').click();
   await page.locator('#authGate').waitFor({ state: 'visible' });
   assert.match(await page.locator('#authTitle').innerText(), /Create your account/);
-  await page.locator('#authDisplay').evaluate(el => el.closest('label')).then(async label => {
-    assert.equal(await label.isVisible(), true);
-  });
-  await page.locator('#authUser').evaluate(el => el.closest('label')).then(async label => {
-    assert.equal(await label.isVisible(), true);
-  });
+  assert.equal(await page.locator('#authDisplay').evaluate(el => !el.closest('label').classList.contains('hidden')), true);
+  assert.equal(await page.locator('#authUser').evaluate(el => !el.closest('label').classList.contains('hidden')), true);
 
   assert.deepEqual(errors, [], 'browser runtime should not throw uncaught errors');
 });
