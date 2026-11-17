@@ -61,6 +61,7 @@ const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
   : null;
 const messagePressState = { timer:null, bubble:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false, suppressTimer:null };
 const photoPressState = { timer:null, image:null, pointerId:null, startX:0, startY:0, suppressClick:false, suppressTimer:null, clickTimer:null, pendingPhotoId:null };
+const classicProfilePressState = { timer:null, suppressTimer:null, button:null, pointerId:null, startX:0, startY:0, longPressed:false, suppressClick:false };
 const bubbleTapState = { timer:null, bubble:null };
 let lastTouchMemoryTap = { id: '', time: 0, tile: null };
 let suppressNativeMemoryDblclickUntil = 0;
@@ -781,7 +782,8 @@ function noteDayLabel(value) {
 function formatJoinDate(value) {
   if (!value) return 'A little while ago';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'A little while ago' : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+  if (Number.isNaN(date.getTime()) || date.getTime() > Date.now()) return 'A little while ago';
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 }
 
 function formatLastActive(value) {
@@ -921,12 +923,151 @@ function readStreakDailyQuests(dateKey) {
       hearts: Array.isArray(saved.hearts) ? [...new Set(saved.hearts.map(String))] : [],
       photo: saved.photo === true,
       kissNote: saved.kissNote === true,
+      note: Math.max(0, Number(saved.note) || 0),
+      song: saved.song === true,
+      login: saved.login === true,
       badge: saved.badge === true
     };
-  } catch { return {hearts:[], photo:false, kissNote:false, badge:false}; }
+  } catch { return {hearts:[], photo:false, kissNote:false, note:0, song:false, login:false, badge:false}; }
 }
 function writeStreakDailyQuests(dateKey, state) {
   try { localStorage.setItem(streakStorageKey('daily-quests:' + dateKey), JSON.stringify(state)); } catch {}
+}
+function getDailyQuestRotation(dateKey) {
+  const pool = [
+    {id:'hearts', title:'Spread 3 hearts', description:'Like three different memories.', target:3, icon:'💗', progress:state => Math.min(3,state.hearts.length), done:state => state.hearts.length >= 3},
+    {id:'photo', title:'Share a photo', description:'Add one photo to your garden.', target:1, icon:'🌷', progress:state => state.photo ? 1 : 0, done:state => state.photo},
+    {id:'kissNote', title:'Send a kiss', description:'Send a Notes message with a kiss emoji.', target:1, icon:'💋', progress:state => state.kissNote ? 1 : 0, done:state => state.kissNote},
+    {id:'note', title:'Write a little note', description:'Send one message in Notes.', target:1, icon:'💌', progress:state => Math.min(1,state.note), done:state => state.note >= 1},
+    {id:'song', title:'Add to the soundtrack', description:'Share one song in your cozy playlist.', target:1, icon:'🎵', progress:state => state.song ? 1 : 0, done:state => state.song},
+    {id:'login', title:'Visit your garden', description:'Check in to Cute Bunny today.', target:1, icon:'🐰', progress:state => state.login ? 1 : 0, done:state => state.login}
+  ];
+  // Stable per account and local calendar day: the same three quests remain all day.
+  const seedText = String(me?.id || me?.username || 'guest') + ':' + dateKey;
+  let seed = 2166136261;
+  for (let i=0;i<seedText.length;i++) seed = Math.imul(seed ^ seedText.charCodeAt(i),16777619);
+  const shuffled = pool.slice();
+  for (let i=shuffled.length-1;i>0;i--) {
+    seed = (Math.imul(seed,1664525)+1013904223) >>> 0;
+    const j = seed % (i+1);
+    [shuffled[i],shuffled[j]] = [shuffled[j],shuffled[i]];
+  }
+  return shuffled.slice(0,3);
+}
+/* Preview-only Petal Points: local, per-account reward ledger. */
+function readPetalRewards() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(streakStorageKey('petal-rewards')) || '{}');
+    return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+  } catch { return {}; }
+}
+function petalRewardBalance(rewards = readPetalRewards()) {
+  return Object.values(rewards).reduce((sum, amount) => sum + (Number.isFinite(amount) ? Math.max(-1000, Math.min(100, amount)) : 0), 0);
+}
+function awardPetalReward(key, amount) {
+  if (!me || !key) return false;
+  const rewards = readPetalRewards();
+  if (Object.prototype.hasOwnProperty.call(rewards, key)) return false;
+  rewards[key] = amount;
+  try { localStorage.setItem(streakStorageKey('petal-rewards'), JSON.stringify(rewards)); }
+  catch { return false; }
+  return true;
+}
+function readGardenCollection() {
+  try {
+    const value = JSON.parse(localStorage.getItem(streakStorageKey('garden-collection')) || '{}');
+    return { owned: Array.isArray(value.owned) ? value.owned : [], equipped: value.equipped || 'none', bunny: value.bunny || 'none' };
+  } catch { return { owned: [], equipped: 'none', bunny: 'none' }; }
+}
+function saveGardenCollection(value) {
+  try { localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(value)); return true; } catch { return false; }
+}
+
+function gardenIllustration(kind) {
+  const art = {
+    'pink-tulips':'<path d="M32 53V34m0 12c-12-13-20-5-15 2 5 5 11 3 15-2Zm0-8c12-13 20-5 15 2-5 5-11 3-15-2Z" fill="#91ad83" stroke="#718f70" stroke-width="2"/><path d="M32 34c-13-3-13-18-3-20 0-9 13-9 14 0 10 3 8 18-5 20Z" fill="#e9a1b8" stroke="#bd7895" stroke-width="2"/><path d="M32 34c-7-8-5-16 1-20 7 5 7 13-1 20Z" fill="#f7c7d5"/>',
+    'moon-lantern':'<path d="M32 8v8m-12-2h24M23 18h18l-2 29H25Z" fill="#f4d9a5" stroke="#b68d59" stroke-width="2.5"/><path d="M27 23c-3 8 1 15 8 17-8 3-15-3-15-10 0-5 3-8 7-10Z" fill="#fff4ce"/><path d="M22 48h20m-15 5h10" stroke="#b68d59" stroke-width="2" stroke-linecap="round"/>',
+    'tiny-mushroom':'<path d="M17 34c0-13 8-23 17-23s17 10 17 23Z" fill="#e99aac" stroke="#b9798e" stroke-width="2.5"/><path d="M29 34v17c0 5 12 5 12 0V34Z" fill="#fff0df" stroke="#c8a98d" stroke-width="2"/><circle cx="26" cy="24" r="3" fill="#fff2e8"/><circle cx="41" cy="18" r="2.5" fill="#fff2e8"/><circle cx="44" cy="29" r="2" fill="#fff2e8"/>',
+    'golden-bell':'<path d="M19 43c5-6 3-23 13-23s8 17 13 23Z" fill="#f2d17d" stroke="#b9954f" stroke-width="2.5"/><path d="M16 44h32m-18-27a2 2 0 1 1 4 0" stroke="#b9954f" stroke-width="2.5" stroke-linecap="round"/><circle cx="32" cy="48" r="4" fill="#d6a95b"/><path d="m14 17 4 3m32-3-4 3" stroke="#e0bd71" stroke-width="2.5" stroke-linecap="round"/>',
+    'bunny-bow':'<path d="M31 32C14 9 7 24 22 36L31 32Zm2 0c17-23 24-8 9 4l-9-4Z" fill="#e99bb7" stroke="#b97896" stroke-width="2.5"/><circle cx="32" cy="33" r="5" fill="#f6d4df" stroke="#b97896" stroke-width="2"/>',
+    'flower-crown':'<path d="M12 42c5-22 35-22 40 0" fill="none" stroke="#8eaa7d" stroke-width="4" stroke-linecap="round"/><g stroke="#b97998" stroke-width="1.5"><circle cx="17" cy="32" r="6" fill="#f2b2c5"/><circle cx="28" cy="25" r="7" fill="#f6d9a4"/><circle cx="42" cy="31" r="6" fill="#d9c8ee"/></g><g fill="#fff3e6"><circle cx="17" cy="32" r="2"/><circle cx="28" cy="25" r="2.2"/><circle cx="42" cy="31" r="2"/></g>',
+    'starry-hat':'<path d="M15 42 27 12c2-5 8-5 10 0l12 30Z" fill="#b7a3d7" stroke="#8873ad" stroke-width="2.5"/><path d="M12 43h40" stroke="#8873ad" stroke-width="4" stroke-linecap="round"/><path d="m31 20 2 4 4 1-4 2-2 4-2-4-4-2 4-1Z" fill="#ffe6a6"/><circle cx="40" cy="34" r="2" fill="#fff1cf"/>',
+    'hearts':'<path d="M32 49S12 37 12 24c0-10 14-13 20-2 6-11 20-8 20 2 0 13-20 25-20 25Z" fill="#e99bb7" stroke="#b97896" stroke-width="2.5"/><path d="m19 20 3-4m23 4-3-4" stroke="#fff0e6" stroke-width="2.5" stroke-linecap="round"/>',
+    'photo':'<rect x="12" y="17" width="40" height="31" rx="6" fill="#f8e5d6" stroke="#b98b78" stroke-width="2.5"/><circle cx="24" cy="27" r="4" fill="#efc879"/><path d="m15 43 12-12 8 8 6-6 8 10" fill="#a9c49b" stroke="#789477" stroke-width="2"/>',
+    'kissNote':'<path d="M13 19h38v29H13Z" fill="#fff1e8" stroke="#c98da8" stroke-width="2.5"/><path d="m14 21 18 14 18-14" fill="none" stroke="#c98da8" stroke-width="2.5"/><path d="M32 30c-7-9-16 0 0 12 16-12 7-21 0-12Z" fill="#e99bb7"/>',
+    'note':'<path d="M17 12h30v39H17Z" fill="#fff8ec" stroke="#c5a98b" stroke-width="2.5"/><path d="M23 23h18m-18 7h18m-18 7h12" stroke="#c98da8" stroke-width="2.5" stroke-linecap="round"/>',
+    'song':'<path d="M35 12v29a7 7 0 1 1-5-6V18l20-4v23a7 7 0 1 1-5-6V10Z" fill="#c9b8e4" stroke="#8d79ae" stroke-width="2.5"/>',
+    'login':'<path d="M32 50V27m0 14c-17-19-25-7-16 1 5 4 11 2 16-1Zm0-11c14-16 23-5 15 2-5 4-10 2-15-2Z" fill="#a8c49a" stroke="#789477" stroke-width="2"/><path d="M32 27c-13-3-13-17-3-19 0-8 13-8 14 0 10 3 8 16-5 19Z" fill="#e9a1b8" stroke="#bd7895" stroke-width="2"/>',
+    'bloom-3':'<path d="M32 51V35m0 9c-12-12-18-4-13 2 4 4 9 2 13-2Z" stroke="#789477" stroke-width="2.5" fill="#b6cba9"/><g fill="#e9a1b8"><ellipse cx="32" cy="22" rx="6" ry="11"/><ellipse cx="32" cy="22" rx="6" ry="11" transform="rotate(72 32 22)"/><ellipse cx="32" cy="22" rx="6" ry="11" transform="rotate(144 32 22)"/></g><circle cx="32" cy="22" r="5" fill="#f4d17d"/>',
+    'bloom-5':'<path d="M32 54V32m0 13c-14-13-22-5-15 3 5 4 11 2 15-3Z" stroke="#789477" stroke-width="2.5" fill="#b6cba9"/><g fill="#e9a1b8"><ellipse cx="32" cy="20" rx="6" ry="12"/><ellipse cx="32" cy="20" rx="6" ry="12" transform="rotate(60 32 20)"/><ellipse cx="32" cy="20" rx="6" ry="12" transform="rotate(120 32 20)"/></g><circle cx="32" cy="20" r="5" fill="#f4d17d"/><path d="M14 14 17 9m30 5-3-5" stroke="#d5b16b" stroke-width="2"/>',
+    'bloom-7':'<path d="M32 55V32m0 15c-14-14-22-5-15 3 5 4 11 2 15-3Z" stroke="#789477" stroke-width="2.5" fill="#b6cba9"/><g fill="#e99bb7" stroke="#c47e9c" stroke-width="1"><ellipse cx="32" cy="19" rx="6" ry="13"/><ellipse cx="32" cy="19" rx="6" ry="13" transform="rotate(45 32 19)"/><ellipse cx="32" cy="19" rx="6" ry="13" transform="rotate(90 32 19)"/><ellipse cx="32" cy="19" rx="6" ry="13" transform="rotate(135 32 19)"/></g><circle cx="32" cy="19" r="6" fill="#f4d17d"/><path d="m13 17 3-5m35 5-3-5" stroke="#d5b16b" stroke-width="2"/>'
+  };
+  return '<svg viewBox="0 0 64 64" role="img" focusable="false" aria-hidden="true">' + (art[kind] || art['pink-tulips']) + '</svg>';
+}
+
+const GARDEN_COLLECTIBLES = [
+  {id:'pink-tulips',name:'Pink Tulip Patch',art:gardenIllustration('pink-tulips'),cost:30,type:'garden'},
+  {id:'moon-lantern',name:'Moon Lantern',art:gardenIllustration('moon-lantern'),cost:45,type:'garden'},
+  {id:'tiny-mushroom',name:'Tiny Mushroom',art:gardenIllustration('tiny-mushroom'),cost:60,type:'garden'},
+  {id:'golden-bell',name:'Golden Garden Bell',art:gardenIllustration('golden-bell'),cost:80,type:'garden'},
+  {id:'bunny-bow',name:'Blush Bunny Bow',art:gardenIllustration('bunny-bow'),cost:35,type:'bunny'},
+  {id:'flower-crown',name:'Flower Crown',art:gardenIllustration('flower-crown'),cost:65,type:'bunny'},
+  {id:'starry-hat',name:'Starry Night Hat',art:gardenIllustration('starry-hat'),cost:90,type:'bunny'}
+];
+function buyGardenCollectible(id) {
+  const item = GARDEN_COLLECTIBLES.find(entry => entry.id === id);
+  if (!item || !me) return;
+  const collection = readGardenCollection();
+  if (collection.owned.includes(id)) {
+    if (item.type === 'garden') collection.equipped = collection.equipped === id ? 'none' : id;
+    else collection.bunny = collection.bunny === id ? 'none' : id;
+    saveGardenCollection(collection);
+    renderStreakPage();
+    return;
+  }
+  const cost = item.cost;
+  const rewards = readPetalRewards();
+  if (petalRewardBalance(rewards) < cost) { toast('You need ' + (cost - petalRewardBalance(rewards)) + ' more Petal Points.'); return; }
+  const purchaseKey = 'purchase:' + id;
+  if (!awardPetalReward(purchaseKey, -cost)) return;
+  collection.owned.push(id);
+  if (item.type === 'garden') collection.equipped = id;
+  else collection.bunny = id;
+  saveGardenCollection(collection);
+  toast(item.name + ' added to your collection!');
+  renderStreakPage();
+}
+function getWeeklyBloomProgress(todayKey) {
+  const date = new Date(todayKey + 'T00:00:00.000Z');
+  const monday = shiftStreakDate(todayKey, -((date.getUTCDay() + 6) % 7));
+  const completedDays = [];
+  for (let i=0;i<7;i++) {
+    const key = shiftStreakDate(monday, i);
+    if (key > todayKey) continue;
+    const state = readStreakDailyQuests(key);
+    if (state.badge || getDailyQuestRotation(key).every(quest => quest.done(state))) completedDays.push(key);
+  }
+  return { monday, completedDays };
+}
+function claimWeeklyBloomReward(days, todayKey) {
+  const progress = getWeeklyBloomProgress(todayKey);
+  if (progress.completedDays.length < days) { toast('Complete ' + days + ' daily quest sets to unlock this weekly bloom.'); return; }
+  const rewardKey = 'weekly:' + progress.monday + ':' + days;
+  if (awardPetalReward(rewardKey, days === 3 ? 30 : days === 5 ? 50 : 100)) toast('Weekly Bloom reward collected! ✿');
+  else toast('This weekly reward has already been collected.');
+  renderStreakPage();
+}
+function claimDailyPetalChest() {
+  if (!me) return;
+  const dateKey = streakDateInTimeZone(normalizeStreakTimeZone(me.streak_timezone || getBrowserStreakTimeZone()));
+  const state = readStreakDailyQuests(dateKey);
+  if (!getDailyQuestRotation(dateKey).every(quest => quest.done(state))) {
+    toast('Complete all three daily quests to open your reward chest.');
+    return;
+  }
+  if (awardPetalReward('chest:' + dateKey, 25)) toast('Your daily chest opened! +25 Petal Points ✿');
+  else toast('Today’s reward chest has already been claimed.');
+  if (page === 'streak') renderStreakPage();
 }
 function recordStreakDailyQuest(kind, value = '') {
   if (!me) return;
@@ -936,10 +1077,17 @@ function recordStreakDailyQuest(kind, value = '') {
   if (kind === 'heart' && value && !state.hearts.includes(String(value))) state.hearts.push(String(value));
   if (kind === 'photo') state.photo = true;
   if (kind === 'kiss-note') state.kissNote = true;
-  const newlyCompleted = !state.badge && state.hearts.length >= 3 && state.photo && state.kissNote;
+  if (kind === 'note') state.note = Math.min(99,state.note + 1);
+  if (kind === 'song') state.song = true;
+  if (kind === 'login') state.login = true;
+  const quests = getDailyQuestRotation(dateKey);
+  const newlyCompleted = !state.badge && quests.every(quest => quest.done(state));
   if (newlyCompleted) state.badge = true;
   writeStreakDailyQuests(dateKey, state);
-  if (newlyCompleted) toast('Daily Bloom badge unlocked! You completed all three quests ♡');
+  quests.forEach(quest => {
+    if (quest.done(state)) awardPetalReward('quest:' + dateKey + ':' + quest.id, 10);
+  });
+  if (newlyCompleted) toast('Daily Bloom earned! You completed today’s three quests ♡');
   if (page === 'streak') renderStreakPage();
 }
 function streakDateKey(date) {
@@ -1007,6 +1155,7 @@ function updateStreakCountdownLabels() {
   if (streakCountdownDayKey && todayKey !== streakCountdownDayKey) {
     streakCountdownDayKey = todayKey;
     void recordLoginStreak();
+    recordStreakDailyQuest('login');
     if (page === 'streak') renderStreakPage();
   }
   const remaining = streakTimeRemaining(timezone);
@@ -1301,6 +1450,71 @@ function streakFriendsMarkup() {
   return '<div class="sg-friend-list" aria-label="' + friends.length + ' followed friends">' + rows + '</div>';
 }
 
+
+/* Preview-only virtual buddy: a gentle, per-account care loop stored locally. */
+function readVirtualPet() {
+  const key = streakStorageKey('virtual-pet');
+  const now = Date.now();
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch {}
+  const elapsedHours = Math.max(0, Math.min(24 * 30, (now - (Number(saved.updatedAt) || now)) / 3600000));
+  const pet = {
+    hunger: Math.max(0, Math.min(100, (Number.isFinite(Number(saved.hunger)) && saved.hunger !== undefined ? Number(saved.hunger) : 82) - elapsedHours * 3)),
+    joy: Math.max(0, Math.min(100, (Number.isFinite(Number(saved.joy)) && saved.joy !== undefined ? Number(saved.joy) : 78) - elapsedHours * 2)),
+    energy: Math.max(0, Math.min(100, (Number.isFinite(Number(saved.energy)) && saved.energy !== undefined ? Number(saved.energy) : 88) - elapsedHours * 1.5)),
+    updatedAt: now,
+    lastAction: saved.lastAction || ''
+  };
+  try { localStorage.setItem(key, JSON.stringify(pet)); } catch {}
+  return pet;
+}
+function careForVirtualPet(action) {
+  const pet = readVirtualPet();
+  const changes = {
+    feed: { hunger: 26, joy: 5, energy: 1, lastAction: 'A crunchy carrot made your buddy very happy.' },
+    play: { hunger: -6, joy: 24, energy: -14, lastAction: 'You had a lovely playtime together.' },
+    cuddle: { hunger: 0, joy: 14, energy: 7, lastAction: 'A warm cuddle made your buddy feel safe.' }
+  }[action];
+  if (!changes) return;
+  ['hunger', 'joy', 'energy'].forEach(stat => {
+    pet[stat] = Math.max(0, Math.min(100, pet[stat] + changes[stat]));
+  });
+  pet.lastAction = changes.lastAction;
+  pet.updatedAt = Date.now();
+  try { localStorage.setItem(streakStorageKey('virtual-pet'), JSON.stringify(pet)); } catch {}
+  renderStreakPage();
+  toast(changes.lastAction + ' ♡');
+}
+function renderVirtualPet() {
+  const pet = readVirtualPet();
+  const mood = pet.joy >= 70 && pet.hunger >= 35 ? 'Feeling loved' : pet.hunger < 25 ? 'A little hungry' : pet.energy < 25 ? 'Ready for a nap' : 'Could use a little love';
+  const meter = (label, icon, value, tone) =>
+    '<div class="sg-pet-meter"><div><span>' + icon + ' ' + label + '</span><b>' + Math.round(value) + '%</b></div>' +
+    '<span class="sg-pet-meter-track"><i class="sg-pet-meter-' + tone + '" style="width:' + value + '%"></i></span></div>';
+  return '<section class="sg-virtual-pet" aria-label="Care for your virtual buddy">' +
+    '<div class="sg-pet-heading"><div><span class="sg-pet-kicker">A LITTLE COMPANION</span><h3>Your virtual buddy</h3><p>Small moments of care make a happy little friend.</p></div><span class="sg-pet-sparkle" aria-hidden="true">✧</span></div>' +
+    '<div class="sg-pet-playground"><span class="sg-pet-cloud sg-pet-cloud-one">☁</span><span class="sg-pet-cloud sg-pet-cloud-two">☁</span>' +
+    '<span class="sg-pet-flower sg-pet-flower-one">✿</span><span class="sg-pet-flower sg-pet-flower-two">✿</span>' +
+    '<div class="sg-pet-character" aria-label="' + esc(me?.mascot || 'Bunny') + '">' + esc(me?.mascot || '🐰') + '</div>' +
+    '<span class="sg-pet-mood">' + mood + '</span></div>' +
+    '<div class="sg-pet-meters">' + meter('Fullness', '🥕', pet.hunger, 'hunger') + meter('Happiness', '♡', pet.joy, 'joy') + meter('Energy', '☀', pet.energy, 'energy') + '</div>' +
+    '<div class="sg-pet-actions"><button type="button" data-care-pet="feed"><span>🥕</span><b>Feed</b><small>Give a carrot</small></button>' +
+    '<button type="button" data-care-pet="play"><span>🧶</span><b>Play</b><small>Have some fun</small></button>' +
+    '<button type="button" data-care-pet="cuddle"><span>♡</span><b>Cuddle</b><small>Share some love</small></button></div>' +
+    '<p class="sg-pet-footnote">' + esc(pet.lastAction || 'Your buddy is happy you are here.') + '</p></section>';
+}
+
+const STREAK_MILESTONE_ILLUSTRATIONS = [
+    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79V44" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M50 61C29 39 18 51 25 62c8 10 18 5 25-1Z" fill="#a9c49d"/><path d="M50 53C69 31 82 42 75 54c-7 9-17 5-25-1Z" fill="#789e79"/><path d="M50 44C39 29 43 17 50 11c9 9 11 21 0 33Z" fill="#9db98d"/><path d="M50 79H26M50 79h25" stroke="#c49a76" stroke-width="3" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79V44" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M49 64c-16-13-24-4-18 4 6 6 12 2 18-4Z" fill="#9db98d"/><g fill="#e8a2bc"><ellipse cx="50" cy="23" rx="8" ry="16"/><ellipse cx="50" cy="23" rx="8" ry="16" transform="rotate(60 50 23)"/><ellipse cx="50" cy="23" rx="8" ry="16" transform="rotate(120 50 23)"/></g><circle cx="50" cy="23" r="8" fill="#f4d17f"/><path d="M50 79H28h44" stroke="#c49a76" stroke-width="3" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M12 76c20-12 53-12 76 0" fill="#d9e6cd"/><path d="M21 76V48m0 13c-13-14-19-5-13 3 5 5 10 2 13-3Zm0-10c11-12 18-6 13 2-4 5-9 3-13-2Z" fill="#91ad83"/><path d="M49 76V38m0 24c-18-16-24-5-17 4 6 5 12 2 17-4Zm0-13c15-18 24-7 17 2-6 7-12 4-17-2Z" fill="#789d78"/><path d="M77 76V50m0 13c-12-12-18-4-12 3 5 4 9 2 12-3Z" fill="#a8bd8d"/><circle cx="21" cy="45" r="6" fill="#e7a4bd"/><circle cx="49" cy="34" r="7" fill="#d9b6e2"/><circle cx="77" cy="46" r="6" fill="#edc77d"/></svg>',
+    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79V37" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M50 65C27 41 19 56 29 66c7 7 14 3 21-1Zm0-14c20-24 31-9 21 1-7 7-14 3-21-1Z" fill="#85a47d"/><g fill="#e7a2bd"><circle cx="50" cy="25" r="13"/><circle cx="37" cy="29" r="10"/><circle cx="63" cy="29" r="10"/><circle cx="50" cy="13" r="10"/></g><circle cx="50" cy="25" r="6" fill="#f4d17f"/></svg>',
+    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79 28 37m22 42 22-42M50 79V27" stroke="#7b9b75" stroke-width="3.5" stroke-linecap="round"/><path d="M39 58c-18-13-23-1-14 7 6 4 11 0 14-7Zm22 0c18-13 23-1 14 7-6 4-11 0-14-7Z" fill="#9db98d"/><g fill="#e9a7bf"><circle cx="28" cy="31" r="9"/><circle cx="22" cy="24" r="7"/><circle cx="34" cy="24" r="7"/></g><g fill="#d7b4e4"><circle cx="72" cy="31" r="9"/><circle cx="66" cy="24" r="7"/><circle cx="78" cy="24" r="7"/></g><g fill="#e4bd72"><circle cx="50" cy="20" r="10"/><circle cx="43" cy="13" r="7"/><circle cx="57" cy="13" r="7"/></g><circle cx="28" cy="31" r="3" fill="#f2d17d"/><circle cx="72" cy="31" r="3" fill="#f2d17d"/></svg>',
+    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M10 76c18-20 62-20 80 0" fill="#dce8d1"/><path d="M25 76V42m0 15c-15-14-22-3-14 6 5 5 10 2 14-6Zm0-12c12-16 21-7 14 1-5 6-10 5-14-1Z" fill="#789c77"/><path d="M50 76V27m0 35c-21-20-30-6-19 4 7 6 14 2 19-4Zm0-17c18-20 29-8 18 2-7 6-13 4-18-2Z" fill="#8eae82"/><path d="M76 76V44m0 15c-15-14-21-4-14 4 5 5 10 2 14-4Z" fill="#a5bd91"/><g fill="#e8a1bb"><circle cx="25" cy="37" r="7"/><circle cx="50" cy="22" r="9"/><circle cx="76" cy="39" r="7"/></g><g fill="#f1d17f"><circle cx="25" cy="37" r="3"/><circle cx="50" cy="22" r="4"/><circle cx="76" cy="39" r="3"/></g></svg>',
+    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 78V39" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M50 62C26 43 20 57 30 67c7 6 14 1 20-5Zm0-12c19-24 31-9 21 1-7 7-14 3-21-1Z" fill="#789e79"/><g fill="#dcb7e7"><circle cx="50" cy="24" r="11"/><circle cx="37" cy="26" r="8"/><circle cx="63" cy="26" r="8"/><circle cx="50" cy="11" r="8"/></g><circle cx="50" cy="24" r="5" fill="#f4d17f"/><path d="M15 20 18 9l3 11 10 3-10 3-3 10-3-10-10-3Z" fill="#e8c77d"/><path d="m82 13 2-7 2 7 7 2-7 2-2 7-2-7-7-2Z" fill="#dcb7e7"/><circle cx="25" cy="66" r="3" fill="#edc77d"/><circle cx="80" cy="57" r="4" fill="#e7a2bd"/></svg>',
+    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 80V40" stroke="#688b6c" stroke-width="5" stroke-linecap="round"/><path d="M50 67C22 48 17 63 29 73c8 6 15 1 21-6Zm0-14c23-25 37-8 24 4-8 7-16 2-24-4Z" fill="#83a47a"/><path d="M50 45C26 24 33 8 50 3c18 8 26 26 0 42Z" fill="#87a978"/><g fill="#e9a4bd"><circle cx="37" cy="22" r="8"/><circle cx="63" cy="24" r="9"/><circle cx="49" cy="11" r="9"/><circle cx="50" cy="34" r="9"/></g><g fill="#f1d17f"><circle cx="37" cy="22" r="3"/><circle cx="63" cy="24" r="3"/><circle cx="49" cy="11" r="3"/><circle cx="50" cy="34" r="3"/></g><path d="M20 80h60" stroke="#bd9a74" stroke-width="3" stroke-linecap="round"/></svg>'
+  ];
+
 function renderStreakPage() {
   const content = $('#content');
   if (!content || !me) return;
@@ -1356,7 +1570,7 @@ function renderStreakPage() {
   ];
   const earnedHearts = readStreakHeartMilestones();
   const heartBadges = heartMilestones.map(item => {
-    const unlocked = earnedHearts.has(item.hearts);
+    const unlocked = heartCount >= item.hearts;
     const percentage = unlocked ? 100 : Math.min(100, heartCount / item.hearts * 100);
     const status = unlocked ? 'Heart unlocked' : (item.hearts - heartCount) + ' hearts to go';
     return '<article class="streak-milestone sg-milestone' + (unlocked ? ' is-earned' : ' is-locked') + '">' +
@@ -1368,20 +1582,44 @@ function renderStreakPage() {
       '<small class="sg-milestone-progress-copy">' + Math.min(heartCount, item.hearts) + ' / ' + item.hearts + ' hearts</small></article>';
   }).join('');
   const dailyQuestState = readStreakDailyQuests(todayKey);
-  const dailyQuestItems = [
-    {id:'hearts', title:'Like 3 friends’ photos', description:'Tap ♥ on three different friends’ photos.', progress:Math.min(3, dailyQuestState.hearts.length), target:3, icon:'<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 32S6 23 6 14c0-7 9-10 14-2 5-8 14-5 14 2 0 9-14 18-14 18Z" fill="#df91ad" stroke="#b86f8d" stroke-width="1.8"/><path d="m12 15 4 4 7-8" fill="none" stroke="#fff8f4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>', done:dailyQuestState.hearts.length >= 3},
-    {id:'photo', title:'Share 1 photo', description:'Add a photo to your scrapbook.', progress:dailyQuestState.photo ? 1 : 0, target:1, icon:'<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="8" width="30" height="25" rx="6" fill="#f4dfbd" stroke="#c49b65" stroke-width="1.8"/><circle cx="14" cy="16" r="3" fill="#fff8e9"/><path d="m8 29 9-9 5 5 4-4 7 8" fill="none" stroke="#91a77e" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M27 5v7m-3.5-3.5h7" stroke="#c49b65" stroke-width="1.8" stroke-linecap="round"/></svg>', done:dailyQuestState.photo},
-    {id:'kissNote', title:'Send a kiss in Notes', description:'Send a Notes message with 💋.', progress:dailyQuestState.kissNote ? 1 : 0, target:1, icon:'<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 9h30v21H19l-8 5v-5H5Z" fill="#e9e2f4" stroke="#a28bbd" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 19c0-5 6-6 6-1 1-5 7-4 7 1-1 4-7 8-7 8s-6-4-6-8Z" fill="#d77e9e"/></svg>', done:dailyQuestState.kissNote}
-  ];
+  const dailyQuestItems = getDailyQuestRotation(todayKey).map(quest => {
+    const progress = Math.min(quest.target,quest.progress(dailyQuestState));
+    const done = quest.done(dailyQuestState);
+    return {...quest,progress,done};
+  });
   const completedQuests = dailyQuestItems.filter(item => item.done).length;
+  const petalRewards = readPetalRewards();
+  const chestClaimed = Object.prototype.hasOwnProperty.call(petalRewards, 'chest:' + todayKey);
+  const petalRewardsMarkup = '<div class="sg-petal-rewards" aria-label="Petal Points rewards">' +
+    '<div class="sg-petal-balance"><span class="sg-petal-balance-art">' + gardenIllustration('bloom-5') + '</span><div><b>' + petalRewardBalance(petalRewards) + ' Petal Points</b><small>Earn 10 per daily quest · 25 from the daily chest</small></div></div>' +
+    '<button type="button" class="sg-petal-chest" data-claim-petal-chest' + (completedQuests !== 3 || chestClaimed ? ' disabled' : '') + '>' +
+    '<span class="sg-chest-art">' + gardenIllustration('golden-bell') + '</span> ' + (chestClaimed ? 'Chest collected today' : completedQuests === 3 ? 'Open daily chest · +25' : 'Complete 3 quests to unlock chest') + '</button>' +
+    '<small class="sg-petal-note">Rewards are saved in this browser for your account; they do not sync between devices.</small></div>';
+  const collection = readGardenCollection();
+  const collectibleMarkup = '<section class="sg-collectibles"><div class="sg-section-heading"><div><h3>Little Garden Shop</h3><p>Spend your Petal Points on tiny treasures</p></div></div><div class="sg-collectible-grid">' +
+    GARDEN_COLLECTIBLES.map(item => {
+      const owned = collection.owned.includes(item.id);
+      const equipped = (item.type === 'garden' ? collection.equipped : collection.bunny) === item.id;
+      const affordable = petalRewardBalance(petalRewards) >= item.cost;
+      return '<article class="sg-collectible-card' + (equipped ? ' is-equipped' : '') + '"><span class="sg-collectible-art">' + item.art + '</span><b>' + item.name + '</b><small>' + (item.type === 'bunny' ? 'Bunny style' : 'Garden decor') + '</small><button type="button" data-buy-collectible="' + item.id + '"' + (!owned && !affordable ? ' disabled' : '') + '>' + (equipped ? 'Equipped ✓' : owned ? 'Equip' : item.cost + ' petals · Collect') + '</button></article>';
+    }).join('') + '</div><div class="sg-equipped-summary">Garden: ' + (GARDEN_COLLECTIBLES.find(item => item.id === collection.equipped)?.name || 'Original look') + ' · Bunny: ' + (GARDEN_COLLECTIBLES.find(item => item.id === collection.bunny)?.name || 'Original look') + '</div></section>';
+  const weeklyProgress = getWeeklyBloomProgress(todayKey);
+  const weeklyTiers = [{days:3,points:30,title:'Little Bloom',art:gardenIllustration('bloom-3')},{days:5,points:50,title:'Garden Glow',art:gardenIllustration('bloom-5')},{days:7,points:100,title:'Full Bloom',art:gardenIllustration('bloom-7')}];
+  const weeklyMarkup = '<section class="sg-weekly-rewards"><div class="sg-section-heading"><div><h3>Weekly Bloom Rewards</h3><p>Complete daily quests on different days</p></div><span class="sg-goal-count">' + weeklyProgress.completedDays.length + ' / 7 days</span></div><div class="sg-weekly-tier-list">' +
+    weeklyTiers.map(tier => {
+      const key = 'weekly:' + weeklyProgress.monday + ':' + tier.days;
+      const claimed = Object.prototype.hasOwnProperty.call(petalRewards, key);
+      const unlocked = weeklyProgress.completedDays.length >= tier.days;
+      return '<article class="sg-weekly-tier' + (unlocked ? ' is-unlocked' : '') + '"><span class="sg-weekly-art">' + tier.art + '</span><div><b>' + tier.title + '</b><small>' + tier.days + ' completed days · +' + tier.points + ' petals</small></div><button type="button" data-claim-weekly="' + tier.days + '"' + (!unlocked || claimed ? ' disabled' : '') + '>' + (claimed ? 'Claimed ✓' : unlocked ? 'Collect' : 'Locked') + '</button></article>';
+    }).join('') + '</div></section>';
   const dailyQuestMarkup = '<div class="sg-daily-quest-list">' +
     dailyQuestItems.map(item => '<article class="sg-daily-quest-card' + (item.done ? ' is-done' : '') + '">' +
-      '<span class="sg-daily-quest-icon" aria-hidden="true">' + item.icon + '</span>' +
+      '<span class="sg-daily-quest-icon">' + gardenIllustration(item.id === 'hearts' ? 'hearts' : item.id) + '</span>' +
       '<div class="sg-daily-quest-copy"><div class="sg-daily-quest-title-row"><b>' + item.title + '</b>' +
       '<span class="sg-daily-quest-status' + (item.done ? ' is-done' : '') + '">' + (item.done ? 'Done ✓' : item.progress + ' / ' + item.target) + '</span></div>' +
       '<p>' + item.description + '</p><div class="sg-daily-quest-progress"><span style="width:' + (item.progress / item.target * 100) + '%"></span></div></div></article>').join('') +
     '</div><div class="sg-daily-quest-footer"><span>' + completedQuests + ' / 3 quests complete</span>' +
-    (dailyQuestState.badge ? '<b class="sg-daily-bloom-badge">✿ Daily Bloom earned</b>' : '<small>Complete all 3 to earn your Daily Bloom</small>') + '</div>';
+    (dailyQuestState.badge ? '<b class="sg-daily-bloom-badge">✿ Daily Bloom earned</b>' : '<small>Complete today’s 3 quests to earn your Daily Bloom</small>') + '</div>';
 
   const todayDate = new Date(todayKey + 'T00:00:00Z');
   const mondayOffset = (todayDate.getUTCDay() + 6) % 7;
@@ -1424,18 +1662,9 @@ function renderStreakPage() {
     '" aria-label="Remove ' + esc(goal.label) + '">×</button></div>'
   ).join('') || '<div class="streak-empty-goals">Your journal is ready for a little promise. ♡</div>';
 
-  const milestoneIllustrations = [
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79V44" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M50 61C29 39 18 51 25 62c8 10 18 5 25-1Z" fill="#a9c49d"/><path d="M50 53C69 31 82 42 75 54c-7 9-17 5-25-1Z" fill="#789e79"/><path d="M50 44C39 29 43 17 50 11c9 9 11 21 0 33Z" fill="#9db98d"/><path d="M50 79H26M50 79h25" stroke="#c49a76" stroke-width="3" stroke-linecap="round"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79V44" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M49 64c-16-13-24-4-18 4 6 6 12 2 18-4Z" fill="#9db98d"/><g fill="#e8a2bc"><ellipse cx="50" cy="23" rx="8" ry="16"/><ellipse cx="50" cy="23" rx="8" ry="16" transform="rotate(60 50 23)"/><ellipse cx="50" cy="23" rx="8" ry="16" transform="rotate(120 50 23)"/></g><circle cx="50" cy="23" r="8" fill="#f4d17f"/><path d="M50 79H28h44" stroke="#c49a76" stroke-width="3" stroke-linecap="round"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M12 76c20-12 53-12 76 0" fill="#d9e6cd"/><path d="M21 76V48m0 13c-13-14-19-5-13 3 5 5 10 2 13-3Zm0-10c11-12 18-6 13 2-4 5-9 3-13-2Z" fill="#91ad83"/><path d="M49 76V38m0 24c-18-16-24-5-17 4 6 5 12 2 17-4Zm0-13c15-18 24-7 17 2-6 7-12 4-17-2Z" fill="#789d78"/><path d="M77 76V50m0 13c-12-12-18-4-12 3 5 4 9 2 12-3Z" fill="#a8bd8d"/><circle cx="21" cy="45" r="6" fill="#e7a4bd"/><circle cx="49" cy="34" r="7" fill="#d9b6e2"/><circle cx="77" cy="46" r="6" fill="#edc77d"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79V37" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M50 65C27 41 19 56 29 66c7 7 14 3 21-1Zm0-14c20-24 31-9 21 1-7 7-14 3-21-1Z" fill="#85a47d"/><g fill="#e7a2bd"><circle cx="50" cy="25" r="13"/><circle cx="37" cy="29" r="10"/><circle cx="63" cy="29" r="10"/><circle cx="50" cy="13" r="10"/></g><circle cx="50" cy="25" r="6" fill="#f4d17f"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79 28 37m22 42 22-42M50 79V27" stroke="#7b9b75" stroke-width="3.5" stroke-linecap="round"/><path d="M39 58c-18-13-23-1-14 7 6 4 11 0 14-7Zm22 0c18-13 23-1 14 7-6 4-11 0-14-7Z" fill="#9db98d"/><g fill="#e9a7bf"><circle cx="28" cy="31" r="9"/><circle cx="22" cy="24" r="7"/><circle cx="34" cy="24" r="7"/></g><g fill="#d7b4e4"><circle cx="72" cy="31" r="9"/><circle cx="66" cy="24" r="7"/><circle cx="78" cy="24" r="7"/></g><g fill="#e4bd72"><circle cx="50" cy="20" r="10"/><circle cx="43" cy="13" r="7"/><circle cx="57" cy="13" r="7"/></g><circle cx="28" cy="31" r="3" fill="#f2d17d"/><circle cx="72" cy="31" r="3" fill="#f2d17d"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M10 76c18-20 62-20 80 0" fill="#dce8d1"/><path d="M25 76V42m0 15c-15-14-22-3-14 6 5 5 10 2 14-6Zm0-12c12-16 21-7 14 1-5 6-10 5-14-1Z" fill="#789c77"/><path d="M50 76V27m0 35c-21-20-30-6-19 4 7 6 14 2 19-4Zm0-17c18-20 29-8 18 2-7 6-13 4-18-2Z" fill="#8eae82"/><path d="M76 76V44m0 15c-15-14-21-4-14 4 5 5 10 2 14-4Z" fill="#a5bd91"/><g fill="#e8a1bb"><circle cx="25" cy="37" r="7"/><circle cx="50" cy="22" r="9"/><circle cx="76" cy="39" r="7"/></g><g fill="#f1d17f"><circle cx="25" cy="37" r="3"/><circle cx="50" cy="22" r="4"/><circle cx="76" cy="39" r="3"/></g></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 78V39" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M50 62C26 43 20 57 30 67c7 6 14 1 20-5Zm0-12c19-24 31-9 21 1-7 7-14 3-21-1Z" fill="#789e79"/><g fill="#dcb7e7"><circle cx="50" cy="24" r="11"/><circle cx="37" cy="26" r="8"/><circle cx="63" cy="26" r="8"/><circle cx="50" cy="11" r="8"/></g><circle cx="50" cy="24" r="5" fill="#f4d17f"/><path d="M15 20 18 9l3 11 10 3-10 3-3 10-3-10-10-3Z" fill="#e8c77d"/><path d="m82 13 2-7 2 7 7 2-7 2-2 7-2-7-7-2Z" fill="#dcb7e7"/><circle cx="25" cy="66" r="3" fill="#edc77d"/><circle cx="80" cy="57" r="4" fill="#e7a2bd"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 80V40" stroke="#688b6c" stroke-width="5" stroke-linecap="round"/><path d="M50 67C22 48 17 63 29 73c8 6 15 1 21-6Zm0-14c23-25 37-8 24 4-8 7-16 2-24-4Z" fill="#83a47a"/><path d="M50 45C26 24 33 8 50 3c18 8 26 26 0 42Z" fill="#87a978"/><g fill="#e9a4bd"><circle cx="37" cy="22" r="8"/><circle cx="63" cy="24" r="9"/><circle cx="49" cy="11" r="9"/><circle cx="50" cy="34" r="9"/></g><g fill="#f1d17f"><circle cx="37" cy="22" r="3"/><circle cx="63" cy="24" r="3"/><circle cx="49" cy="11" r="3"/><circle cx="50" cy="34" r="3"/></g><path d="M20 80h60" stroke="#bd9a74" stroke-width="3" stroke-linecap="round"/></svg>'
-  ];
+  const milestoneIllustrations = STREAK_MILESTONE_ILLUSTRATIONS;
   const badges = milestones.map((item, index) => {
-    const unlocked = earned.has(item.days);
+    const unlocked = count >= item.days;
     const daysLeft = Math.max(0, item.days - count);
     const milestoneProgress = unlocked ? 100 : Math.min(100, Math.max(0, count / item.days * 100));
     const status = unlocked ? 'Bloom unlocked' : daysLeft === 1 ? '1 day to go' : daysLeft + ' days to go';
@@ -1655,20 +1884,21 @@ function renderStreakPage() {
     '<section class="sg-week-section"><div class="sg-section-heading"><div><h3>Weekly blooms</h3></div></div>' +
       '<div class="sg-week-row">' + week.join('') + '</div></section>',
     '</div>',
+    renderVirtualPet(),
 
     '<div class="sg-garden-switcher" role="tablist" aria-label="Your garden details">' +
       '<button type="button" class="sg-garden-switch' + (streakGardenActiveTab === 'daily' ? ' is-active' : '') + '" data-streak-garden-tab="daily" role="tab" aria-selected="' + (streakGardenActiveTab === 'daily') + '"><span class="sg-switch-icon sg-switch-daily" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="8" y="6" width="16" height="21" rx="3" fill="#fffaf4" stroke="currentColor" stroke-width="1.8"/><path d="M12 5.5h8a2 2 0 0 1 2 2V9H10V7.5a2 2 0 0 1 2-2Z" fill="#f6e4c5" stroke="currentColor" stroke-width="1.5"/><path d="m12 14 1.8 1.8 3-3.2M12 21l1.8 1.8 3-3.2M19 14h2M19 21h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="sg-switch-label"><b>Daily Quest</b></span></button>' +
       '<button type="button" class="sg-garden-switch' + (streakGardenActiveTab === 'hearts' ? ' is-active' : '') + '" data-streak-garden-tab="hearts" role="tab" aria-selected="' + (streakGardenActiveTab === 'hearts') + '"><span class="sg-switch-icon sg-switch-hearts" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 27S4.5 19.5 4.5 11.5c0-6 7.5-8 11.5-.8 4-7.2 11.5-5.2 11.5.8C27.5 19.5 16 27 16 27Z" fill="currentColor"/><path d="m11 15 3.5 3.5 7-8" fill="none" stroke="#fffaf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="sg-switch-label"><b>Your Hearts</b></span></button>' +
       '<button type="button" class="sg-garden-switch' + (streakGardenActiveTab === 'flowers' ? ' is-active' : '') + '" data-streak-garden-tab="flowers" role="tab" aria-selected="' + (streakGardenActiveTab === 'flowers') + '"><span class="sg-switch-icon sg-switch-flowers" aria-hidden="true"><svg viewBox="0 0 32 32"><g fill="currentColor"><ellipse cx="16" cy="7" rx="4" ry="6"/><ellipse cx="16" cy="7" rx="4" ry="6" transform="rotate(60 16 16)"/><ellipse cx="16" cy="7" rx="4" ry="6" transform="rotate(120 16 16)"/></g><circle cx="16" cy="16" r="4" fill="#f2c875"/><path d="M16 21v7" stroke="#78966f" stroke-width="2" stroke-linecap="round"/></svg></span><span class="sg-switch-label"><b>Your Flowers</b></span></button></div>',
     '<section class="sg-tab-panel' + (streakGardenActiveTab === 'flowers' ? ' is-active' : '') + '" id="sgFlowersPanel" role="tabpanel"' + (streakGardenActiveTab === 'flowers' ? '' : ' hidden') + '>' +
-      '<section class="sg-milestones-section"><div class="sg-section-heading"><div><h3>Your Flowers</h3><p>' + earned.size + ' of ' + milestones.length + ' garden milestones unlocked</p></div></div>' +
+      '<section class="sg-milestones-section"><div class="sg-section-heading"><div><h3>Your Flowers</h3><p>' + milestones.filter(item => count >= item.days).length + ' of ' + milestones.length + ' garden milestones unlocked</p></div></div>' +
       '<div class="sg-milestone-route">' + badges + '</div></section></section>',
     '<section class="sg-tab-panel' + (streakGardenActiveTab === 'hearts' ? ' is-active' : '') + '" id="sgHeartsPanel" role="tabpanel"' + (streakGardenActiveTab === 'hearts' ? '' : ' hidden') + '>' +
-      '<section class="sg-milestones-section sg-hearts-section"><div class="sg-section-heading"><div><h3>Your Hearts</h3><p>' + heartCount + ' hearts received · ' + earnedHearts.size + ' of ' + heartMilestones.length + ' milestones unlocked</p></div></div>' +
+      '<section class="sg-milestones-section sg-hearts-section"><div class="sg-section-heading"><div><h3>Your Hearts</h3><p>' + heartCount + ' hearts received · ' + heartMilestones.filter(item => heartCount >= item.hearts).length + ' of ' + heartMilestones.length + ' milestones unlocked</p></div></div>' +
       '<div class="sg-milestone-route">' + heartBadges + '</div></section></section>',
     '<section class="sg-tab-panel' + (streakGardenActiveTab === 'daily' ? ' is-active' : '') + '" id="sgDailyPanel" role="tabpanel"' + (streakGardenActiveTab === 'daily' ? '' : ' hidden') + '>' +
       '<section class="sg-daily-quests-section"><div class="sg-section-heading"><div><h3>Daily Quest</h3><p>A little kindness makes the garden bloom</p></div><span class="sg-goal-count">' + completedQuests + ' / 3</span></div>' +
-      dailyQuestMarkup + '</section></section>',
+      dailyQuestMarkup + petalRewardsMarkup + weeklyMarkup + collectibleMarkup + '</section></section>',
     '</div>',
     '</div>',
   ].join('');
@@ -2183,6 +2413,64 @@ function renderNotesPage(options = {}) {
     observeNoteSeenMessages();
   });
 }
+
+/* Achievement Garden — milestones are derived from the signed-in user's real app activity. */
+function achievementGardenMarkup(items) {
+  const stats = {
+    memories: items.length,
+    photos: items.filter(item => item.kind === 'photo').length,
+    notes: items.filter(item => item.kind === 'note').length,
+    songs: items.filter(item => item.kind === 'song').length,
+    streak: Math.max(0, Number(me?.login_streak) || 0),
+    hearts: Math.max(0, Number(me?.heartCount) || 0)
+  };
+  const achievements = [
+    { id:'first-memory', icon:'📖', title:'First Little Memory', detail:'Save your first shared moment', value:stats.memories, goal:1, unit:'memory' },
+    { id:'photo-collector', icon:'🌷', title:'Photo Collector', detail:'Keep five photos in your garden', value:stats.photos, goal:5, unit:'photos' },
+    { id:'love-letter', icon:'💌', title:'Little Correspondent', detail:'Share five notes together', value:stats.notes, goal:5, unit:'notes' },
+    { id:'playlist-curator', icon:'🎶', title:'Playlist Curator', detail:'Add three songs to your playlist', value:stats.songs, goal:3, unit:'songs' },
+    { id:'week-of-wonder', icon:'🌼', title:'Week of Wonder', detail:'Reach a seven-day login streak', value:stats.streak, goal:7, unit:'days' },
+    { id:'heart-keeper', icon:'💗', title:'Heart Keeper', detail:'Collect one hundred hearts on your memories', value:stats.hearts, goal:100, unit:'hearts' }
+  ];
+  const key = 'cuteBunnyAchievements:' + String(me?.id || me?.username || 'guest');
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch {}
+  let changed = false;
+  achievements.forEach(item => {
+    if (item.value >= item.goal && !saved[item.id]) {
+      saved[item.id] = new Date().toISOString();
+      changed = true;
+    }
+  });
+  if (changed) {
+    try { localStorage.setItem(key, JSON.stringify(saved)); } catch {}
+  }
+  const earnedCount = achievements.filter(item => !!saved[item.id]).length;
+  const remaining = achievements.filter(item => !saved[item.id]);
+  if (!remaining.length) return '';
+  return `
+    <section class="achievement-garden" aria-labelledby="achievementGardenTitle">
+      <div class="achievement-garden-heading">
+        <div><small>A FEW LITTLE GOALS</small><h3 id="achievementGardenTitle">Growing together <span aria-hidden="true">✿</span></h3><p>Small moments, lovely milestones.</p></div>
+        <div class="achievement-count"><strong>${earnedCount}/${achievements.length}</strong><span>unlocked</span></div>
+      </div>
+      <div class="achievement-grid">
+        ${remaining.map(item => {
+          const progress = Math.min(100, Math.round((item.value / item.goal) * 100));
+          const amount = Math.min(item.value, item.goal);
+          const art = item.id === 'first-memory' ? 'note' : item.id === 'photo-collector' ? 'photo' : item.id === 'love-letter' ? 'kissNote' : item.id === 'playlist-curator' ? 'song' : item.id === 'week-of-wonder' ? 'bloom-7' : 'hearts';
+          return `<article class="achievement-card">
+            <div class="achievement-medallion achievement-art" aria-hidden="true">${gardenIllustration(art)}</div>
+            <div class="achievement-copy"><strong>${esc(item.title)}</strong><p>${esc(item.detail)}</p>
+              <div class="achievement-progress" role="progressbar" aria-label="${esc(item.title)} progress" aria-valuemin="0" aria-valuemax="${item.goal}" aria-valuenow="${amount}"><span style="width:${progress}%"></span></div>
+              <small>${amount} / ${item.goal} ${esc(item.unit)}</small>
+            </div>
+          </article>`;
+        }).join('')}
+      </div>
+    </section>`;
+}
+
 function render(options = {}) {
   const c = $('#content');
   if (!c) return;
@@ -2206,7 +2494,6 @@ function render(options = {}) {
 
   if (page === 'home') {
     c.innerHTML = `
-      <div class="heading home-welcome"><h2>Welcome, ${esc(me?.displayName || 'friend')} ♡</h2><p>Your little shared corner for favorite things.</p></div>
       <div class="hero home-hero">
         <div>
           <small>✿ MADE FOR LITTLE MOMENTS</small>
@@ -2223,6 +2510,7 @@ function render(options = {}) {
       <div class="daily" id="dailyCard" role="button" tabindex="0" aria-label="A little kindness for today. Tap for another reminder">
         <span class="daily-icon">🌼</span><div><small>A LITTLE KINDNESS FOR TODAY</small><p id="compliment">${esc(getKindness())}</p></div>
       </div>
+      ${achievementGardenMarkup(visibleFeed)}
       <div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div>
       <div class="grid happy-things-grid">
         ${streakWidget()}
@@ -2292,10 +2580,45 @@ function formatFriendProfileActivity(value) {
   return 'Last active ' + weeks + 'week ago';
 }
 
+function openClassicProfileEditor() {
+  if (!me) return;
+  const gate = $('#profileGate');
+  if (!gate) return;
+  $('#profileName').textContent = me.displayName || me.display_name || me.username || 'Your profile';
+  $('#profileHandle').textContent = '@' + (me.username || '');
+  $('#profileCreated').textContent = formatProfileDate(me.created_at || me.createdAt);
+  $('#profileDisplay').value = me.displayName || me.display_name || '';
+  $('#profileUsername').value = me.username || '';
+  $('#profileBio').value = me.bio || '';
+  $('#profileTheme').value = me.theme || 'rose';
+  $('#profileMascot').value = me.mascot || '🐰';
+  updateThemePreview(me.theme || 'rose');
+  updateBuddyChoices(me.mascot || '🐰');
+  document.querySelectorAll('[data-classic-gender]').forEach(button => {
+    const selected = button.dataset.classicGender === (me.gender || '');
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  gate.dataset.returnToOwnProfile = 'true';
+  $('#friendProfileGate')?.classList.add('hidden');
+  gate.classList.remove('hidden');
+  document.body.classList.add('classic-profile-open');
+  gate.scrollTop = 0;
+}
+function closeClassicProfileEditor() {
+  const gate = $('#profileGate');
+  if (!gate) return;
+  const returnToProfile = gate.dataset.returnToOwnProfile === 'true';
+  gate.classList.add('hidden');
+  gate.dataset.returnToOwnProfile = 'false';
+  document.body.classList.remove('classic-profile-open');
+  if (returnToProfile && me) showFriendProfile(me);
+}
+
 function showFriendProfile(user) {
   if (!user) return;
   const gate = $('#friendProfileGate');
-  const isOwnProfile = String(user.id) === String(me?.id);
+  const isOwnProfile = !!(me?.id && user?.id && String(user.id) === String(me.id)) || (!!me?.username && String(user?.username || '').toLowerCase() === String(me.username).toLowerCase());
   gate.dataset.username = user.username;
   gate.dataset.following = String(!!user.isFollowing);
   gate.dataset.ownProfile = String(isOwnProfile);
@@ -2334,9 +2657,71 @@ function showFriendProfile(user) {
   $('#friendProfileStreakCount').textContent = friendGarden.count === null
     ? '— flower'
     : Number(friendGarden.count).toLocaleString() + ' flower';
-  $('#friendProfileFollow').textContent = isOwnProfile ? 'Themes' : (user.isFollowing ? 'Following' : 'Follow ♡');
-  $('#friendProfileFollow').disabled = false;
+  const highlights = $('#friendProfileHighlights');
+  const collectionPanel = $('#friendProfileCollection');
+  const badgesPanel = $('#friendProfileBadges');
+  if (highlights) highlights.hidden = false;
+  if (collectionPanel) collectionPanel.hidden = !isOwnProfile;
+  if (badgesPanel) badgesPanel.hidden = false;
+  {
+    const profileFeed = isOwnProfile ? (Array.isArray(feed) ? feed : []) : [];
+    const photosPublic = Number(user.photo_count ?? user.photos_count ?? 0) || profileFeed.filter(item => item.kind === 'photo').length;
+    const notesPublic = Number(user.note_count ?? user.notes_count ?? 0) || profileFeed.filter(item => item.kind === 'note').length;
+    const songsPublic = Number(user.song_count ?? user.songs_count ?? 0) || profileFeed.filter(item => item.kind === 'song').length;
+    const petalsPublic = isOwnProfile && typeof petalRewardBalance === 'function' ? petalRewardBalance() : Number(user.petals ?? user.petal_points ?? 0);
+    [['friendProfilePhotos',photosPublic],['friendProfileNotes',notesPublic],['friendProfileSongs',songsPublic],['friendProfilePetals',petalsPublic]].forEach(([id,value]) => { const node=$('#'+id); if(node) node.textContent=Number(value).toLocaleString(); });
+  }
+  {
+    const ownFeed = isOwnProfile && Array.isArray(feed) ? feed : [];
+    const photos = isOwnProfile ? ownFeed.filter(item => item.kind === 'photo').length : Number(user.photo_count ?? user.photos_count ?? 0);
+    const notes = isOwnProfile ? ownFeed.filter(item => item.kind === 'note').length : Number(user.note_count ?? user.notes_count ?? 0);
+    const songs = isOwnProfile ? ownFeed.filter(item => item.kind === 'song').length : Number(user.song_count ?? user.songs_count ?? 0);
+    if (isOwnProfile) {
+      const collection = typeof readGardenCollection === 'function' ? readGardenCollection() : {owned:[],equipped:'none',bunny:'none'};
+      const catalog = typeof GARDEN_COLLECTIBLES !== 'undefined' ? GARDEN_COLLECTIBLES : [];
+      const ownedItems = catalog.filter(item => collection.owned.includes(item.id));
+      const collectionCount = $('#friendProfileCollectionCount');
+      if (collectionCount) collectionCount.textContent = ownedItems.length + (ownedItems.length === 1 ? ' treasure' : ' treasures');
+      const collectionItems = $('#friendProfileCollectionItems');
+      if (collectionItems) collectionItems.innerHTML = ownedItems.length ? ownedItems.slice(0,6).map(item => '<span class="friend-profile-collection-item' + ((item.type === 'garden' ? collection.equipped : collection.bunny) === item.id ? ' is-equipped' : '') + '" title="' + esc(item.name) + '"><span>' + item.icon + '</span><small>' + esc(item.name) + '</small></span>').join('') : '<p class="friend-profile-empty">Your first little treasure is waiting in the Garden Shop ♡</p>';
+    }
+    const streak = Math.max(0, Number(user.login_streak) || 0);
+    const heartTotal = Math.max(0, Number(user.heartCount) || 0);
+  const flowerMilestones = [
+    {goal:3, icon:'🌱', title:'Tiny sprout'},
+    {goal:7, icon:'🌼', title:'First flower'},
+    {goal:14, icon:'🌷', title:'Little garden'},
+    {goal:30, icon:'🌸', title:'Growing plant'},
+    {goal:50, icon:'💐', title:'Golden bouquet'},
+    {goal:100, icon:'🌟', title:'Blooming garden'},
+    {goal:180, icon:'🏵️', title:'Magical garden'},
+    {goal:365, icon:'💮', title:'Eternal garden'}
+  ];
+    const heartMilestones = [
+    {goal:10, title:'Little Keepsake', icon:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="M13 25 36 13l23 12v27H13Z" fill="#f5d9e4" stroke="#c98da8" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 24h52v8H10z" fill="#e8b9cb" stroke="#c98da8" stroke-width="2"/><path d="M29 23c0-8 14-8 14 0-1 5-7 8-7 8s-6-3-7-8Z" fill="#d77e9e"/><path d="M36 32v20" stroke="#c98da8" stroke-width="2"/><path d="m23 18 5-5m16 5 5-5" stroke="#fff8f4" stroke-width="2" stroke-linecap="round"/></svg>'},
+    {goal:100, title:'Sweet Letter', icon:'<svg viewBox="0 0 72 64" aria-hidden="true"><rect x="10" y="17" width="52" height="36" rx="7" fill="#fff0e8" stroke="#c98da8" stroke-width="2.2"/><path d="m12 22 24 19 24-19" fill="none" stroke="#d89bb2" stroke-width="2.5" stroke-linecap="round"/><path d="M28 13c0-6 9-7 9 0 0-7 10-6 9 0-1 5-9 10-9 10s-8-5-9-10Z" fill="#d77e9e"/><path d="M19 47h15m-15-5h9" stroke="#d8b4c2" stroke-width="2" stroke-linecap="round"/></svg>'},
+    {goal:250, title:'Blushing Bouquet', icon:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="M22 30 36 55 50 30" fill="#d9e7ce" stroke="#91aa82" stroke-width="2"/><path d="M36 53V29M36 43 24 34M36 40l12-10" stroke="#91aa82" stroke-width="2.5" stroke-linecap="round"/><g fill="#f4c5d5" stroke="#c98da8" stroke-width="1.5"><circle cx="23" cy="20" r="7"/><circle cx="36" cy="13" r="7"/><circle cx="49" cy="20" r="7"/></g><g fill="#e6a1b9"><circle cx="23" cy="20" r="2.5"/><circle cx="36" cy="13" r="2.5"/><circle cx="49" cy="20" r="2.5"/></g><path d="m22 45 14 10 14-10" fill="none" stroke="#c98da8" stroke-width="3" stroke-linecap="round"/></svg>'},
+    {goal:500, title:'Golden Treasure', icon:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="m36 8 7 8 12-1-2 12 8 9-10 7-3 12-12-4-12 4-3-12-10-7 8-9-2-12 12 1Z" fill="#f7e8b8" stroke="#c7a45f" stroke-width="2"/><path d="m36 19 12 11-12 17-12-17Z" fill="#e8a4ba" stroke="#bd7895" stroke-width="2"/><path d="m24 30 12 4 12-4M36 34v13" fill="none" stroke="#fff4e7" stroke-width="2"/><circle cx="36" cy="28" r="3" fill="#fff5d9"/></svg>'},
+    {goal:750, title:'Love Guardian', icon:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="m13 27 6-14 12 8 5-12 5 12 12-8 6 14-9 24H22Z" fill="#e9dff4" stroke="#a58bb8" stroke-width="2" stroke-linejoin="round"/><path d="M25 31c0-7 10-8 11 0 2-8 12-7 12 0-1 7-12 15-12 15S26 38 25 31Z" fill="#d77e9e" stroke="#bd7895" stroke-width="1.4"/><circle cx="19" cy="17" r="2" fill="#d7b56e"/><circle cx="53" cy="17" r="2" fill="#d7b56e"/><path d="M18 48q-5 5-1 9m37-9q5 5 1 9" fill="none" stroke="#a58bb8" stroke-width="2" stroke-linecap="round"/></svg>'},
+    {goal:1000, title:'Everlasting Love', icon:'<svg viewBox="0 0 72 64" aria-hidden="true"><circle cx="36" cy="32" r="25" fill="#fff0e7" stroke="#d5a2b5" stroke-width="2"/><circle cx="36" cy="32" r="20" fill="none" stroke="#e6c1ce" stroke-width="1.5" stroke-dasharray="2 3"/><path d="M24 29c0-9 12-10 12 0 1-10 13-9 13 0-1 9-13 18-13 18S25 38 24 29Z" fill="#d77e9e" stroke="#bd7895" stroke-width="1.5"/><path d="m16 12 3 4 5 1-5 2-3 5-2-5-5-2 5-1Zm40-2 2 4 4 2-4 1-2 4-2-4-4-1 4-2Z" fill="#d6b66f"/><path d="M15 39q-5-5-7 0m49 0q5-5 7 0" fill="none" stroke="#91aa82" stroke-width="2" stroke-linecap="round"/></svg>'}
+  ];
+    const milestoneBadges = (items,total,unit) => items.filter(item => total >= item.goal).map(item => {
+      const art = unit === 'days' ? STREAK_MILESTONE_ILLUSTRATIONS[items.indexOf(item)] : item.icon;
+      return '<span class="friend-profile-milestone-badge is-unlocked" title="'+esc(item.title+' · '+item.goal.toLocaleString()+' '+unit)+'" aria-label="'+esc(item.title+' · '+item.goal.toLocaleString()+' '+unit+' · Unlocked')+'">'+(typeof art === 'string' && art.trim().startsWith('<svg') ? '<span class="friend-profile-milestone-svg">'+art+'</span>' : art)+'</span>';
+    }).join('');
+    const badgeList = $('#friendProfileBadgeList');
+    if (badgeList) badgeList.innerHTML =
+      '<div class="friend-profile-milestone-icons" aria-label="Achievement badge collection">'+
+      milestoneBadges(flowerMilestones,streak,'days')+
+      milestoneBadges(heartMilestones,heartTotal,'hearts')+
+      '</div>';
+  }
+  $('#friendProfileFollow').innerHTML = '<span aria-hidden="true">✿</span>';
+  $('#friendProfileFollow').disabled = !isOwnProfile;
+  $('#friendProfileFollow').setAttribute('aria-label', isOwnProfile ? 'Change profile wallpaper' : 'Decorative flower');
+  $('#friendProfileFollow').title = isOwnProfile ? 'Change profile wallpaper' : '';
   $('#friendProfileFollow').dataset.themeAction = isOwnProfile ? 'true' : 'false';
+  $('#friendProfileFollow').dataset.decorative = isOwnProfile ? 'false' : 'true';
   $('#friendProfileFollow').classList.toggle('is-following', !!user.isFollowing);
   $('#friendProfileFollow').classList.toggle('is-own-profile', isOwnProfile);
   gate.classList.remove('hidden');
@@ -2367,6 +2752,13 @@ function profileSettingsMarkup() {
         <span class="profile-username-input"><span aria-hidden="true">@</span><input id="profileEditUsername" maxlength="24" autocomplete="username" spellcheck="false" placeholder="your_username"></span>
       </label>
       <p class="profile-settings-hint">Use 3–24 letters, numbers or underscores.</p>
+      <label class="profile-settings-field">Display name
+        <input id="profileEditDisplayName" maxlength="40" autocomplete="name" placeholder="Your display name">
+      </label>
+      <label class="profile-settings-field">A little about you
+        <textarea id="profileEditBio" maxlength="180" rows="3" placeholder="Write a little introduction..."></textarea>
+        <small class="profile-bio-count" id="profileBioCount">0 / 180</small>
+      </label>
     </div>
     <div class="profile-settings-section profile-editor-settings hidden" id="profileSettingsPersonal" data-settings-section="personal" role="tabpanel">
       <div class="settings-section-intro"><span class="settings-section-icon">✿</span><div><b>About you</b><small>Personalize how your profile is represented.</small></div></div>
@@ -2383,12 +2775,17 @@ function profileSettingsMarkup() {
       <input id="settingsThemeValue" type="hidden" value="rose">
       <div class="settings-choice-heading">Colour theme</div>
       <div class="settings-theme-grid" role="radiogroup" aria-label="Choose a colour theme">
-        ${themeOptions.map(([value,emoji,label]) => `<button type="button" class="settings-theme-choice" data-settings-theme-choice="${value}" role="radio" aria-checked="false"><span>${emoji}</span><small>${label}</small></button>`).join('')}
+        ${themeOptions.map(([value,emoji,label]) => `<button type="button" class="settings-theme-choice theme-${value}" data-settings-theme-choice="${value}" role="radio" aria-checked="false"><span class="theme-illustration" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 5c3 0 4 5 4 8 3-3 7-5 9-3s0 7-3 9c4 0 8 2 8 5s-5 4-8 4c3 3 4 7 2 9s-7 0-9-3c0 4-2 7-5 7s-4-5-4-8c-3 3-7 4-9 2s0-7 3-9c-4 0-7-2-7-5s5-4 8-4c-3-3-4-7-2-9s7 0 9 3c0-4 2-6 4-6Z" fill="currentColor" opacity=".78"/><circle cx="20" cy="22" r="5" fill="#fff6e9" stroke="currentColor" stroke-width="1.5"/></svg></span><small>${label}</small></button>`).join('')}
       </div>
       <input id="settingsBuddyValue" type="hidden" value="🐰">
+      <div class="profile-live-preview" id="profileLivePreview" aria-live="polite">
+        <span class="profile-live-avatar" id="profileLiveAvatar">🐰</span>
+        <span><b id="profileLiveName">Your name</b><small id="profileLiveHandle">@your_username</small></span>
+        <em>Live preview</em>
+      </div>
       <div class="settings-choice-heading">Little buddy</div>
       <div class="settings-buddy-row" role="radiogroup" aria-label="Choose your little buddy">
-        ${buddyOptions.map(([value,label]) => `<button type="button" class="settings-buddy-choice" data-settings-buddy-choice="${value}" role="radio" aria-checked="false"><span>${value}</span><small>${label}</small></button>`).join('')}
+        ${buddyOptions.map(([value,label]) => `<button type="button" class="settings-buddy-choice" data-settings-buddy-choice="${value}" role="radio" aria-checked="false"><span class="buddy-choice-art">${buddyIllustration(value)}</span><small>${label}</small></button>`).join('')}
       </div>
       <button type="button" class="settings-wallpaper-action" id="profileSettingsWallpaper">Change profile wallpaper <span>→</span></button>
     </div>
@@ -2403,9 +2800,31 @@ function profileSettingsMarkup() {
     </div>
   </section>`;
 }
+function buddyIllustration(value) {
+  const icons = { '🐰':'bunny', '🐱':'kitty', '🐻':'bear', '🐸':'frog' };
+  const icon = icons[value] || 'bunny';
+  return '<svg class="cb-buddy-illustration" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#cb-icon-' + icon + '"></use></svg>';
+}
+
+function updateProfileLivePreview() {
+  const username = String($('#profileEditUsername')?.value || me?.username || 'your_username').trim();
+  const displayName = String($('#profileEditDisplayName')?.value || me?.displayName || me?.display_name || username).trim();
+  const mascot = $('#settingsBuddyValue')?.value || me?.mascot || '🐰';
+  const name = $('#profileLiveName'), handle = $('#profileLiveHandle'), avatar = $('#profileLiveAvatar');
+  if (name) name.textContent = displayName || 'Your name';
+  if (handle) handle.textContent = '@' + (username || 'your_username');
+  if (avatar) avatar.innerHTML = buddyIllustration(mascot);
+  const count = $('#profileBioCount'), bio = $('#profileEditBio');
+  if (count) count.textContent = (bio?.value || '').length + ' / 180';
+}
 function renderProfileSettings() {
   const usernameField = $('#profileEditUsername');
   if (usernameField) usernameField.value = me?.username || '';
+  const displayNameField = $('#profileEditDisplayName');
+  if (displayNameField) displayNameField.value = me?.displayName || me?.display_name || '';
+  const bioField = $('#profileEditBio');
+  if (bioField) bioField.value = me?.bio || '';
+  updateProfileLivePreview();
   const gender = me?.gender || '';
   const theme = me?.theme || 'rose';
   const buddy = me?.mascot || '🐰';
@@ -2443,8 +2862,10 @@ async function saveProfileSettings() {
   try {
     const theme = $('#settingsThemeValue')?.value || me.theme || 'rose';
     const mascot = $('#settingsBuddyValue')?.value || me.mascot || '🐰';
-    const saved = await api('/me', { method: 'PUT', body: JSON.stringify({ username, gender, theme, mascot }) });
-    me = { ...me, ...saved, username: saved.username || username, gender, theme, mascot };
+    const displayName = String($('#profileEditDisplayName')?.value || '').trim().slice(0,40);
+    const bio = String($('#profileEditBio')?.value || '').trim().slice(0,180);
+    const saved = await api('/me', { method: 'PUT', body: JSON.stringify({ username, gender, theme, mascot, displayName, bio }) });
+    me = { ...me, ...saved, username: saved.username || username, gender, theme, mascot, displayName: saved.displayName ?? displayName, display_name: saved.display_name ?? displayName, bio };
     setTheme(theme);
     const topMascot = $('#topMascot');
     if (topMascot) topMascot.textContent = mascot;
@@ -2453,8 +2874,7 @@ async function saveProfileSettings() {
     renderProfileSettings();
     if (feedback) feedback.textContent = 'Your profile is updated ♡';
     toast('Profile updated ♡');
-    $('#profileSettingsPanel')?.classList.add('hidden');
-    $('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false');
+    restoreProfileSettingsToMain();
     render();
   } catch (error) {
     if (feedback) feedback.textContent = error.message || 'Could not save your profile.';
@@ -2480,7 +2900,7 @@ async function cycleProfileWallpaper() {
     if (card) card.dataset.wallpaper = me.profile_wallpaper;
     const ownRow = document.querySelector('#content .own-profile-row');
     if (ownRow) ownRow.dataset.wallpaper = me.profile_wallpaper;
-    if (button) button.textContent = 'Themes';
+    if (button) button.innerHTML = '<span aria-hidden="true">✿</span>';
     toast('Wallpaper: ' + (PROFILE_WALLPAPER_LABELS[me.profile_wallpaper] || 'Normal') + ' ♡');
   } catch (error) {
     toast(error.message || 'Could not save wallpaper.');
@@ -3037,6 +3457,7 @@ async function sendChatMessage() {
       .select('id,owner_id,kind,text,created_at')
       .single();
     if (sendError) throw sendError;
+    recordStreakDailyQuest('note');
     if (/💋|😘|😗|😙|😚|😽/u.test(text)) recordStreakDailyQuest('kiss-note');
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
     feed = feed.map(m => String(m.id) === tempId ? record : m);
@@ -4064,6 +4485,7 @@ function hydrateMedia() {
 function formatProfileDate(value) {
   const date = new Date(value || Date.now());
   if (Number.isNaN(date.getTime())) return '';
+  if (date.getTime() > Date.now()) return 'Just joined';
   const month = new Intl.DateTimeFormat('en', { month: 'short' }).format(date);
   return `${date.getDate()} ${month}, ${date.getFullYear()}`;
 }
@@ -4443,6 +4865,54 @@ document.addEventListener('click', event => {
   });
 }, true);
 
+// Long-press the flower on your own open profile to enter the classic profile editor.
+// A normal tap remains the existing wallpaper action.
+document.addEventListener('pointerdown', event => {
+  const button = event.target?.closest?.('#friendProfileFollow[data-theme-action="true"]');
+  if (!button || button.disabled) return;
+  clearTimeout(classicProfilePressState.timer);
+  classicProfilePressState.button = button;
+  classicProfilePressState.pointerId = event.pointerId;
+  classicProfilePressState.startX = event.clientX;
+  classicProfilePressState.startY = event.clientY;
+  classicProfilePressState.longPressed = false;
+  classicProfilePressState.timer = setTimeout(() => {
+    if (classicProfilePressState.button !== button) return;
+    classicProfilePressState.longPressed = true;
+    classicProfilePressState.suppressClick = true;
+    clearTimeout(classicProfilePressState.suppressTimer);
+    classicProfilePressState.suppressTimer = setTimeout(() => { classicProfilePressState.suppressClick = false; }, 900);
+    openClassicProfileEditor();
+  }, 560);
+}, true);
+document.addEventListener('pointermove', event => {
+  if (!classicProfilePressState.button || event.pointerId !== classicProfilePressState.pointerId) return;
+  if (Math.hypot(event.clientX - classicProfilePressState.startX, event.clientY - classicProfilePressState.startY) > 12) {
+    clearTimeout(classicProfilePressState.timer);
+    classicProfilePressState.timer = null;
+  }
+}, true);
+const finishClassicProfilePress = event => {
+  if (!classicProfilePressState.button) return;
+  if (event && event.pointerId !== classicProfilePressState.pointerId) return;
+  clearTimeout(classicProfilePressState.timer);
+  classicProfilePressState.timer = null;
+  classicProfilePressState.button = null;
+  classicProfilePressState.pointerId = null;
+};
+document.addEventListener('pointerup', finishClassicProfilePress, true);
+document.addEventListener('pointercancel', finishClassicProfilePress, true);
+document.addEventListener('click', event => {
+  if (!classicProfilePressState.suppressClick) return;
+  const button = event.target?.closest?.('#friendProfileFollow');
+  if (!button) return;
+  classicProfilePressState.suppressClick = false;
+  clearTimeout(classicProfilePressState.suppressTimer);
+  classicProfilePressState.suppressTimer = null;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}, true);
+
 // Profile settings: the flower is a true toggle; taps outside close it,
 // while taps inside the panel never dismiss it.
 document.addEventListener('click', event => {
@@ -4452,8 +4922,7 @@ document.addEventListener('click', event => {
   const panel = document.querySelector('#profileSettingsPanel');
   if (!trigger && panel && !panel.classList.contains('hidden') &&
       !target?.closest?.('#profileSettingsPanel')) {
-    panel.classList.add('hidden');
-    document.querySelector('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false');
+    restoreProfileSettingsToMain();
     return;
   }
   if (!trigger) return;
@@ -4475,11 +4944,14 @@ document.addEventListener('click', event => {
 }, true);
 
 document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !$('#profileGate')?.classList.contains('hidden')) {
+    closeClassicProfileEditor();
+    return;
+  }
   if (event.key !== 'Escape') return;
   const panel = document.querySelector('#profileSettingsPanel');
   if (!panel || panel.classList.contains('hidden')) return;
-  panel.classList.add('hidden');
-  document.querySelector('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false');
+  restoreProfileSettingsToMain();
 });
 
 
@@ -4648,6 +5120,12 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  const petCareButton = e.target.closest('[data-care-pet]');
+  if (petCareButton) {
+    careForVirtualPet(petCareButton.dataset.carePet);
+    return;
+  }
+
   const gardenTabButton = e.target.closest('[data-streak-garden-tab]');
   if (gardenTabButton) {
     const tabName = gardenTabButton.dataset.streakGardenTab;
@@ -4669,6 +5147,19 @@ document.addEventListener('click', async e => {
         panel.classList.add('is-active');
       }
     });
+    return;
+  }
+
+  if (e.target.closest('[data-claim-petal-chest]')) {
+    claimDailyPetalChest();
+    return;
+  }
+  const collectibleButton = e.target.closest('[data-buy-collectible]');
+  if (collectibleButton) { buyGardenCollectible(collectibleButton.dataset.buyCollectible); return; }
+  const weeklyClaimButton = e.target.closest('[data-claim-weekly]');
+  if (weeklyClaimButton) {
+    const days = Number(weeklyClaimButton.dataset.claimWeekly);
+    if ([3,5,7].includes(days)) claimWeeklyBloomReward(days, streakDateInTimeZone(normalizeStreakTimeZone(me?.streak_timezone || getBrowserStreakTimeZone())));
     return;
   }
 
@@ -4742,17 +5233,7 @@ document.addEventListener('click', async e => {
   }
   if (e.target.closest('#profileOpen, [data-open-profile]')) {
     if (!me) return;
-    $('#profileName').textContent = me.displayName || me.username;
-    $('#profileHandle').textContent = '@' + me.username;
-    $('#profileCreated').textContent = formatProfileDate(me.created_at || me.createdAt);
-    $('#profileDisplay').value = me.displayName || '';
-    $('#profileUsername').value = me.username || '';
-    $('#profileBio').value = me.bio || '';
-    $('#profileTheme').value = me.theme || 'rose';
-    $('#profileMascot').value = me.mascot || '🐰';
-    updateThemePreview(me.theme || 'rose');
-    updateBuddyChoices(me.mascot || '🐰');
-    $('#profileGate').classList.remove('hidden');
+    showFriendProfile(me);
     return;
   }
 
@@ -4768,7 +5249,8 @@ document.addEventListener('click', async e => {
           displayName: $('#profileDisplay').value.trim(),
           bio: $('#profileBio').value.trim(),
           theme: $('#profileTheme').value,
-          mascot: $('#profileMascot').value
+          mascot: $('#profileMascot').value,
+          gender: document.querySelector('[data-classic-gender].is-selected')?.dataset.classicGender || null
         })
       });
       me = { ...me, ...updated };
@@ -4776,8 +5258,13 @@ document.addEventListener('click', async e => {
       $('#profileHandle').textContent = '@' + username;
       $('#topMascot').textContent = me.mascot || '🐰';
       $('#profileGate').classList.add('hidden');
+      document.body.classList.remove('classic-profile-open');
       await refresh();
       syncPlayer();
+      if ($('#profileGate').dataset.returnToOwnProfile === 'true') {
+        $('#profileGate').dataset.returnToOwnProfile = 'false';
+        showFriendProfile(me);
+      }
       toast('Profile saved ♡');
     } catch (error) {
       toast(error.message);
@@ -4808,20 +5295,36 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  if (e.target.closest('#profileSettingsClose')) { $('#profileSettingsPanel')?.classList.add('hidden'); $('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false'); return; }
+  if (e.target.closest('#profileSettingsClose')) { restoreProfileSettingsToMain(); return; }
   const settingsTab = e.target.closest('[data-settings-tab]');
   if (settingsTab) { const selected = settingsTab.dataset.settingsTab; document.querySelectorAll('[data-settings-tab]').forEach(button => { const active = button === settingsTab; button.classList.toggle('is-active', active); button.setAttribute('aria-pressed', String(active)); }); document.querySelectorAll('[data-settings-section]').forEach(section => { const key = section.dataset.settingsSection; const visible = selected === 'other' ? ['other', 'accessibility', 'account'].includes(key) : key === selected; section.classList.toggle('hidden', !visible); }); return; }
+  const liveBuddyChoice = e.target.closest('[data-settings-buddy-choice]');
+  if (liveBuddyChoice) { $('#settingsBuddyValue').value = liveBuddyChoice.dataset.settingsBuddyChoice; document.querySelectorAll('[data-settings-buddy-choice]').forEach(button => { const selected=button===liveBuddyChoice; button.classList.toggle('is-selected',selected); button.setAttribute('aria-checked',String(selected)); }); updateProfileLivePreview(); return; }
+  const classicGenderChoice = e.target.closest('[data-classic-gender]');
+  if (classicGenderChoice) {
+    document.querySelectorAll('[data-classic-gender]').forEach(button => {
+      const selected = button === classicGenderChoice;
+      button.classList.toggle('is-selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    return;
+  }
+  if (e.target.closest('#profileEditorClose')) { closeClassicProfileEditor(); return; }
   const genderChoice = e.target.closest('[data-profile-gender]');
   if (genderChoice) { document.querySelectorAll('[data-profile-gender]').forEach(button => button.classList.toggle('is-selected', button === genderChoice)); const preview = $('#profileGenderPreview'); if (preview) preview.textContent = genderChoice.dataset.profileGender === 'male' ? 'Preview: 👑 King' : 'Preview: 👑 Queen'; return; }
   if (e.target.closest('#profileSettingsSave')) { void saveProfileSettings(); return; }
   if (e.target.closest('#profileSettingsWallpaper')) { void cycleProfileWallpaper(); return; }
   if (e.target.closest('#profileSettingsOpenNotifications, [data-open-notification-settings]')) {
-    $('#profileSettingsPanel')?.classList.add('hidden');
-    $('#profileSettingsTrigger')?.setAttribute('aria-expanded', 'false');
+    restoreProfileSettingsToMain();
     $('#notificationGate')?.classList.remove('hidden');
     return;
   }
 
+  if (e.target.closest('#friendProfileClose')) {
+    restoreProfileSettingsToMain();
+    $('#friendProfileGate')?.classList.add('hidden');
+    return;
+  }
   // Friend search & profile & follow
   // Friend search is handled by the form's submit event so typing/clicking
   // inside the input never triggers a premature empty search.
@@ -4834,6 +5337,7 @@ document.addEventListener('click', async e => {
     return;
   }
   const followBtn = e.target.closest('#friendProfileFollow, [data-follow]');
+  if (followBtn?.dataset.decorative === 'true') return;
   if (followBtn?.dataset.themeAction === 'true') {
     void cycleProfileWallpaper();
     return;
@@ -5039,6 +5543,7 @@ function isTouchNotesViewport() {
 }
 
 document.addEventListener('input', event => {
+  if (['profileEditUsername','profileEditDisplayName','profileEditBio'].includes(event.target.id)) updateProfileLivePreview();
   if (event.target.id !== 'chatInput') return;
   const field = event.target;
   if (field.value.trim()) startNotesTyping();
@@ -5334,6 +5839,7 @@ document.addEventListener('change', async e => {
     };
     feed = feed.map(m => String(m.id) === tempId ? item : m);
     if (kind === 'photo') recordStreakDailyQuest('photo');
+    if (kind === 'song') recordStreakDailyQuest('song');
     render();
     toast('Added to your shared scrapbook ♡');
   } catch (err) {
@@ -5369,6 +5875,7 @@ async function restoreSession() {
         await refresh();
         setUser(me);
         void recordLoginStreak();
+        recordStreakDailyQuest('login');
       }
     }
   } catch (e) {
