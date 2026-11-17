@@ -8,16 +8,31 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="bunny-app-icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <meta name="theme-color" content="#fdf1ea">
+  <meta name="theme-color" content="#fff1f5">
   <meta name="description" content="Cute Bunny — a tiny scrapbook of happy things.">
   <title>Cute Bunny ♡</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=preview-20261116">
-  <link rel="stylesheet" href="polish.css?v=ui-smooth-20261117">
+  <link rel="stylesheet" href="style.css?v=statusbar-match-20261117">
+  <link rel="stylesheet" href="polish.css?v=profile-trigger-hard-reset-20261117">
+  <link rel="stylesheet" href="button-interactions.css?v=button-feedback-20261117">
 </head>
 <body class="is-restoring">
+  <svg class="cb-icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <symbol id="cb-icon-home" viewBox="0 0 48 48"><path d="M7 22.5 24 8l17 14.5v17H28V28h-8v11.5H7Z" fill="#f6d9e5" stroke="#b97998" stroke-width="2.3" stroke-linejoin="round"/><path d="m4 23 20-17 20 17" fill="none" stroke="#b97998" stroke-width="3.2" stroke-linecap="round"/></symbol>
+    <symbol id="cb-icon-photo" viewBox="0 0 48 48"><rect x="6" y="9" width="36" height="30" rx="7" fill="#f8e4d5" stroke="#bd8b72" stroke-width="2.3"/><circle cx="17" cy="19" r="4" fill="#e8b86e"/><path d="m9 34 10-10 7 7 6-6 8 9" fill="#b7c99e" stroke="#789477" stroke-width="2.2"/></symbol>
+    <symbol id="cb-icon-music" viewBox="0 0 48 48"><path d="M29 9v23.5a6 6 0 1 1-4-5.7V15l15-3v17a6 6 0 1 1-4-5.7V9Z" fill="#e7dff5" stroke="#9077ae" stroke-width="2.4"/></symbol>
+    <symbol id="cb-icon-note" viewBox="0 0 48 48"><rect x="7" y="10" width="34" height="28" rx="7" fill="#fff0e8" stroke="#c98ca5" stroke-width="2.2"/><path d="m9 15 15 12 15-12" fill="none" stroke="#c98ca5" stroke-width="2.4"/></symbol>
+    <symbol id="cb-icon-friends" viewBox="0 0 48 48"><ellipse cx="24" cy="29" rx="15" ry="13" fill="#fff0e8" stroke="#b97998" stroke-width="2.2"/><path d="M14 19c-2-8 1-14 5-14s6 6 5 14M25 19c-1-8 1-14 5-14s7 7 5 15" fill="#f6dce7" stroke="#b97998" stroke-width="2.2"/></symbol>
+    <symbol id="cb-icon-bunny" viewBox="0 0 48 48"><path d="M15 19C9 4 14 2 18 5c4 3 4 10 4 15M26 20c0-11 3-17 7-16 5 1 4 10-1 18" fill="#f6dce7" stroke="#b97998" stroke-width="2.2"/><ellipse cx="24" cy="29" rx="15" ry="13" fill="#fff4ee" stroke="#b97998" stroke-width="2.2"/><circle cx="19" cy="28" r="1.7"/><circle cx="29" cy="28" r="1.7"/></symbol>
+    <symbol id="cb-icon-kitty" viewBox="0 0 48 48"><path d="m10 22 1-15 12 9 13-9 2 16" fill="#f5e4d8" stroke="#b97998" stroke-width="2.2"/><circle cx="24" cy="29" r="15" fill="#fff4ee" stroke="#b97998" stroke-width="2.2"/><circle cx="19" cy="28" r="1.7"/><circle cx="29" cy="28" r="1.7"/></symbol>
+    <symbol id="cb-icon-bear" viewBox="0 0 48 48"><circle cx="13" cy="16" r="7" fill="#e8c9aa" stroke="#ad8468" stroke-width="2"/><circle cx="35" cy="16" r="7" fill="#e8c9aa" stroke="#ad8468" stroke-width="2"/><circle cx="24" cy="28" r="16" fill="#f0d8bd" stroke="#ad8468" stroke-width="2.2"/></symbol>
+    <symbol id="cb-icon-frog" viewBox="0 0 48 48"><path d="M9 23c0-10 7-15 15-15s15 5 15 15v9c0 7-7 11-15 11S9 39 9 32Z" fill="#dcebd2" stroke="#7d9d78" stroke-width="2.2"/><circle cx="16" cy="14" r="7" fill="#dcebd2" stroke="#7d9d78" stroke-width="2.2"/><circle cx="32" cy="14" r="7" fill="#dcebd2" stroke="#7d9d78" stroke-width="2.2"/></symbol>
+  </svg>
+
+  <a class="skip-link" href="#mainContent">Skip to main content</a>
+
   <div id="sessionRestore" class="session-restore" role="status">
     <span>🐰</span>
     
@@ -95,8 +110,8 @@
       </div>
     </header>
 
-    <main>
-      <section id="content"></section>
+    <main id="mainContent" tabindex="-1">
+      <section id="content" aria-label="Page content"></section>
     </main>
 
     <audio id="globalAudio" preload="auto" hidden></audio>
@@ -104,11 +119,11 @@
 
 
     <nav id="nav" aria-label="Main navigation">
-      <button type="button" class="active" data-page="home" aria-current="page"><i aria-hidden="true">🏡</i><span>Home</span></button>
-      <button type="button" data-page="gallery"><i aria-hidden="true">🌷</i><span>Photos</span></button>
-      <button type="button" data-page="music"><i aria-hidden="true">🎵</i><span>Music</span></button>
-      <button type="button" data-page="notes"><i aria-hidden="true">💌</i><span>Notes</span></button>
-      <button type="button" data-page="friends"><i aria-hidden="true">🐰</i><span>Friends</span></button>
+      <button type="button" class="active" data-page="home" aria-current="page"><i aria-hidden="true"><svg><use href="#cb-icon-home"/></svg></i><span>Home</span></button>
+      <button type="button" data-page="gallery"><i aria-hidden="true"><svg><use href="#cb-icon-photo"/></svg></i><span>Photos</span></button>
+      <button type="button" data-page="music"><i aria-hidden="true"><svg><use href="#cb-icon-music"/></svg></i><span>Music</span></button>
+      <button type="button" data-page="notes"><i aria-hidden="true"><svg><use href="#cb-icon-note"/></svg></i><span>Notes</span></button>
+      <button type="button" data-page="friends"><i aria-hidden="true"><svg><use href="#cb-icon-friends"/></svg></i><span>Friends</span></button>
     </nav>
   </div>
 
@@ -151,7 +166,7 @@
 
   <div id="profileGate" class="auth-gate hidden">
     <div class="auth-card profile-card">
-      <button type="button" class="profile-settings-trigger" id="profileSettingsTrigger" aria-label="Open profile settings" aria-expanded="false" aria-controls="profileSettingsPanel" title="Profile settings" style="--flower-speed:18s;--flower-delay:-5.2s">✿</button>
+      <button type="button" class="profile-editor-close" id="profileEditorClose" aria-label="Close profile editor">×</button>
       <small id="profileCreated" class="profile-date"></small>
       <div class="auth-bunny">🐰</div>
       <div class="profile-title-row">
@@ -164,6 +179,13 @@
         <label>Username<input id="profileUsername" maxlength="24" autocomplete="username"></label>
       </div>
       <label>About you<input id="profileBio" maxlength="300" placeholder="A little hello..."></label>
+      <div class="classic-profile-gender">
+        <span class="theme-picker-label">Gender</span>
+        <div class="classic-gender-choices" role="group" aria-label="Choose your gender">
+          <button type="button" data-classic-gender="male" aria-pressed="false">♂️ Male</button>
+          <button type="button" data-classic-gender="female" aria-pressed="false">♀️ Female</button>
+        </div>
+      </div>
       <label class="theme-picker-label">Your colors</label>
       <input id="profileTheme" class="hidden" type="hidden" value="rose">
       <div id="profileThemeChoices" class="theme-choice-grid" role="radiogroup" aria-label="Pick your profile colors">
@@ -179,10 +201,10 @@
       <label class="theme-picker-label">Your little buddy</label>
       <input id="profileMascot" class="hidden" type="hidden" value="🐰">
       <div id="profileBuddyChoices" class="theme-choice-grid buddy-choice-grid" role="radiogroup" aria-label="Choose your little buddy">
-        <button type="button" class="theme-choice buddy-choice is-selected" data-buddy-choice="🐰" role="radio" aria-checked="true"><span class="theme-swatch buddy-swatch">🐰</span><span>Bunny</span></button>
-        <button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐱" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch">🐱</span><span>Kitty</span></button>
-        <button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐻" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch">🐻</span><span>Bear</span></button>
-        <button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐸" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch">🐸</span><span>Frog</span></button>
+        <button type="button" class="theme-choice buddy-choice is-selected" data-buddy-choice="🐰" role="radio" aria-checked="true"><span class="theme-swatch buddy-swatch buddy-emoji" aria-hidden="true">🐰</span><span>Bunny</span></button>
+        <button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐱" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch buddy-emoji" aria-hidden="true">🐱</span><span>Kitty</span></button>
+        <button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐻" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch buddy-emoji" aria-hidden="true">🐻</span><span>Bear</span></button>
+        <button type="button" class="theme-choice buddy-choice" data-buddy-choice="🐸" role="radio" aria-checked="false"><span class="theme-swatch buddy-swatch buddy-emoji" aria-hidden="true">🐸</span><span>Frog</span></button>
       </div>
       <button class="primary auth-submit" id="profileSave">Save profile</button>
       <button class="auth-switch" id="signOut">Sign out</button>
@@ -191,7 +213,8 @@
 
   <div id="friendProfileGate" class="auth-gate hidden">
     <section class="auth-card friend-profile-card" role="dialog" aria-modal="true" aria-labelledby="friendProfileName">
-      <p class="eyebrow friend-profile-eyebrow">A BUNNY FRIEND</p>
+      <button type="button" class="friend-profile-close" id="friendProfileClose" aria-label="Close profile">×</button>
+      <p class="eyebrow friend-profile-eyebrow">A LITTLE FRIEND</p>
       <div class="friend-profile-main-row">
         <div class="friend-profile-avatar-wrap">
           <div id="friendProfileBuddy" class="friend-profile-avatar">🐰</div>
@@ -204,9 +227,11 @@
           <span>Joined</span>
           <time id="friendProfileJoined">—</time>
         </div>
-        <button type="button" class="primary friend-profile-follow" id="friendProfileFollow">Following</button>
       </div>
-      <p id="friendProfileBio" class="friend-profile-bio"></p>
+      <div class="friend-profile-bio-row">
+        <p id="friendProfileBio" class="friend-profile-bio"></p>
+        <button type="button" class="primary friend-profile-follow friend-profile-theme-button" id="friendProfileFollow" aria-label="Change profile theme" title="Change profile theme"><span aria-hidden="true">✿</span></button>
+      </div>
       <div class="friend-profile-activity-line">
         <span class="friend-profile-activity-status"><i id="friendProfilePresenceDot" class="friend-profile-presence-dot is-offline" aria-label="Offline"></i><span id="friendProfilePresence">5m ago</span></span>
         <div id="friendProfileGarden" class="friend-profile-stat-plates">
@@ -215,6 +240,16 @@
           <small class="friend-profile-heart">💖 <b id="friendProfileHearts">— heart</b></small>
         </div>
       </div>
+
+      <section class="friend-profile-collection" id="friendProfileCollection" aria-label="Profile collection">
+        <div class="friend-profile-section-heading"><span>✧</span><b>Little collection</b><small id="friendProfileCollectionCount">0 treasures</small></div>
+        <div class="friend-profile-collection-items" id="friendProfileCollectionItems"></div>
+      </section>
+      <section class="friend-profile-badges" id="friendProfileBadges" aria-label="Profile achievements">
+        <div class="friend-profile-section-heading"><span>🏅</span><b>Little achievements</b></div>
+        <div class="friend-profile-badge-list" id="friendProfileBadgeList"></div>
+      </section>
+      <div id="friendProfileSettingsMount"></div>
 
     </section>
   </div>
@@ -296,7 +331,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="app.js?v=ui-smooth-20261117"></script>
-  <script type="module" src="android-updater.js"></script>
   <script>
 (() => {
   let deferredInstallPrompt = null;
