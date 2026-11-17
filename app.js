@@ -4821,7 +4821,6 @@ document.addEventListener('click', async e => {
     $('#notificationGate')?.classList.remove('hidden');
     return;
   }
-  if (e.target.closest('#profileSettingsWallpaper')) { void cycleProfileWallpaper(); return; }
 
   // Friend search & profile & follow
   // Friend search is handled by the form's submit event so typing/clicking
