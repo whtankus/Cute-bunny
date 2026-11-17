@@ -25,7 +25,7 @@ test.before(async () => {
   browser = await chromium.launch({ headless: true });
   server = http.createServer((req, res) => {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
-    const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\\/+/, '');
+    const relative = pathname === '/' ? 'index.html' : pathname.slice(1);
     const file = path.resolve(dist, relative);
     if (!file.startsWith(dist + path.sep) && file !== path.join(dist, 'index.html')) {
       res.writeHead(403).end('Forbidden');
