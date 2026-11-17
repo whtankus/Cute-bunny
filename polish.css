@@ -2091,3 +2091,39 @@ body[data-mode="dark"] .auth-card.profile-card .profile-settings-hint {color:#c3
   .auth-card.profile-card .profile-editor-settings,
   .auth-card.profile-card .profile-settings-tab {animation:none!important;transition:none!important}
 }
+
+
+/* Cute Bunny settings hub — four clear sections with tactile pastel controls. */
+.auth-card.profile-card .profile-settings-panel{width:min(100%,450px)!important;max-height:min(78dvh,690px)!important;overflow-y:auto!important;padding:20px!important;gap:15px!important;border-radius:27px!important;background:radial-gradient(circle at 100% 0%,rgba(239,196,216,.25),transparent 34%),linear-gradient(150deg,#fffdfd,#fff4f8 58%,#f5f0ff)!important}
+.auth-card.profile-card .profile-settings-heading p{margin:5px 0 0!important;color:#a88b9f!important;font-size:.75rem!important}
+.auth-card.profile-card .profile-settings-tabs{display:flex!important;gap:5px!important;overflow-x:auto!important;padding:5px!important;border-radius:17px!important;background:#f4e8ef!important;scrollbar-width:none!important}
+.auth-card.profile-card .profile-settings-tabs::-webkit-scrollbar{display:none}
+.auth-card.profile-card .profile-settings-tab{flex:1 0 72px!important;min-height:42px!important;padding:8px 9px!important;border-radius:12px!important;font-size:.76rem!important;white-space:nowrap!important}
+.auth-card.profile-card .profile-settings-section{min-height:170px!important;gap:14px!important}
+.auth-card.profile-card .settings-section-intro{display:flex!important;align-items:center!important;gap:11px!important;padding:3px 0 7px!important}
+.auth-card.profile-card .settings-section-icon{display:grid!important;place-items:center!important;flex:0 0 39px!important;height:39px!important;border-radius:14px!important;background:linear-gradient(145deg,#ffe8f0,#eee7fb)!important;color:#bd7d9e!important;font-size:1.15rem!important}
+.auth-card.profile-card .settings-section-intro b{display:block!important;color:#765c72!important;font-size:.88rem!important;font-weight:900!important}
+.auth-card.profile-card .settings-section-intro small{display:block!important;margin-top:3px!important;color:#aa8fa2!important;font-size:.68rem!important;line-height:1.35!important}
+.auth-card.profile-card .settings-choice-heading{color:#856c80!important;font-size:.76rem!important;font-weight:900!important}
+.auth-card.profile-card .settings-theme-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+.auth-card.profile-card .settings-theme-choice{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;min-height:66px!important;padding:8px 4px!important;border:1px solid #eddae5!important;border-radius:15px!important;background:rgba(255,255,255,.85)!important;color:#8d7186!important}
+.auth-card.profile-card .settings-theme-choice>span{font-size:1.25rem!important;line-height:1!important}
+.auth-card.profile-card .settings-theme-choice small{font-size:.61rem!important;font-weight:800!important;text-align:center!important}
+.auth-card.profile-card .settings-theme-choice.is-selected{border-color:#d58eae!important;background:linear-gradient(145deg,#fff0f5,#f2edff)!important;box-shadow:0 0 0 2px rgba(213,142,174,.16)!important;color:#995c7d!important}
+.auth-card.profile-card .settings-buddy-row{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+.auth-card.profile-card .settings-buddy-choice{display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important;min-height:65px!important;padding:8px 3px!important;border:1px solid #eddae5!important;border-radius:15px!important;background:#fff!important;color:#8d7186!important}
+.auth-card.profile-card .settings-buddy-choice>span{font-size:1.45rem!important}
+.auth-card.profile-card .settings-buddy-choice small{font-size:.62rem!important;font-weight:800!important}
+.auth-card.profile-card .settings-buddy-choice.is-selected{border-color:#d58eae!important;background:linear-gradient(145deg,#fff0f5,#f2edff)!important;box-shadow:0 0 0 2px rgba(213,142,174,.16)!important}
+.auth-card.profile-card .settings-wallpaper-action,.auth-card.profile-card .settings-notification-card{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;width:100%!important;padding:12px 13px!important;border:1px solid #eddae5!important;border-radius:15px!important;background:rgba(255,255,255,.82)!important;color:#856a80!important;font-size:.76rem!important;font-weight:850!important;text-align:left!important}
+.auth-card.profile-card .settings-wallpaper-action span{color:#c27f9f!important;font-size:1.1rem!important}
+.auth-card.profile-card .settings-notification-card{display:grid!important;grid-template-columns:1fr auto!important}
+.auth-card.profile-card .settings-notification-card>span{font-size:.75rem!important}
+.auth-card.profile-card .settings-notification-card>small{grid-column:1!important;color:#aa8fa2!important;font-size:.64rem!important;font-weight:600!important}
+.auth-card.profile-card .settings-open-notifications{grid-column:2!important;grid-row:1/span 2!important;border:0!important;background:#f8edf3!important;border-radius:10px!important;padding:8px!important;color:#a66c8a!important;font-size:.65rem!important;font-weight:900!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-panel{background:radial-gradient(circle at 100% 0%,rgba(112,81,126,.2),transparent 34%),linear-gradient(150deg,#342b3d,#302737 68%,#352d43)!important}
+body[data-mode="dark"] .auth-card.profile-card .settings-section-intro b,body[data-mode="dark"] .auth-card.profile-card .settings-choice-heading{color:#f0e1ed!important}
+body[data-mode="dark"] .auth-card.profile-card .settings-section-intro small{color:#c3a9bd!important}
+body[data-mode="dark"] .auth-card.profile-card .settings-theme-choice,body[data-mode="dark"] .auth-card.profile-card .settings-buddy-choice,body[data-mode="dark"] .auth-card.profile-card .settings-wallpaper-action,body[data-mode="dark"] .auth-card.profile-card .settings-notification-card{background:#2b2433!important;border-color:#5d4a63!important;color:#f2e4ef!important}
+body[data-mode="dark"] .auth-card.profile-card .settings-open-notifications{background:#47364b!important;color:#efbfd5!important}
+@media(max-width:430px){.auth-card.profile-card .profile-settings-panel{padding:15px!important;max-height:80dvh!important}.auth-card.profile-card .settings-theme-grid{gap:6px!important}.auth-card.profile-card .settings-theme-choice{min-height:62px!important}}
