@@ -1,4 +1,4 @@
--- Tighten Data API and Storage grants to match the application's RLS access model.
+-- Tighten Data API grants to match the application's RLS access model.
 -- RLS remains the row-level boundary; these grants remove unnecessary table-wide capabilities.
 
 revoke all privileges on table
@@ -40,9 +40,8 @@ grant update (read_at) on table public.notifications to authenticated;
 -- Private preferences support the app's per-user upsert flow.
 grant select, insert, update on table public.profile_private_settings to authenticated;
 
--- Private media: uploads, signed reads/downloads, and deletion only.
-revoke all privileges on table storage.objects from anon, authenticated;
-grant select, insert, delete on table storage.objects to authenticated;
+-- storage.objects is owned and ACL-managed by Supabase's storage administrator.
+-- Its existing RLS policies remain the authorization boundary for private media.
 
 -- Cover the referenced memory id during parent deletes and FK checks.
 create index if not exists note_read_cursors_last_read_message_id_idx
