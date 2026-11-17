@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const esbuild = require('esbuild');
 const path = require('node:path');
 
 const root = process.cwd();
@@ -39,5 +40,16 @@ const config = 'window.CUTE_BUNNY_CONFIG = ' + JSON.stringify({
 }) + ';\n';
 
 fs.writeFileSync(path.join(output, 'supabase-config.js'), config, 'utf8');
+esbuild.buildSync({
+  entryPoints: [path.join(root, 'scripts', 'android-updater-entry.js')],
+  outfile: path.join(output, 'android-updater.js'),
+  bundle: true,
+  platform: 'browser',
+  format: 'esm',
+  target: ['es2020'],
+  sourcemap: false,
+  minify: true
+});
+
 fs.writeFileSync(path.join(output, '.nojekyll'), '', 'utf8');
 console.log('Cute Bunny preview built in dist/.');
