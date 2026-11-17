@@ -1,10 +1,11 @@
-const CACHE_NAME = "cute-bunny-shell-v274";
+const CACHE_NAME = "cute-bunny-shell-v285";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=preview-20261116",
-  "./polish.css?v=ui-smooth-20261117",
-  "./app.js?v=ui-smooth-20261117",
+  "./style.css?v=statusbar-match-20261117",
+  "./polish.css?v=profile-trigger-hard-reset-20261117",
+  "./button-interactions.css?v=button-feedback-20261117",
+  "./app.js?v=preview-sync-20261117",
   "./manifest.webmanifest",
   "./supabase-config.js",
   "./bunny-app-icon-192.png",
@@ -16,6 +17,7 @@ const SHELL_FILES = new Set([
   "index.html",
   "style.css",
   "polish.css",
+  "button-interactions.css",
   "app.js",
   "sw.js",
   "manifest.webmanifest",
