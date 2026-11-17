@@ -13,7 +13,7 @@ async function checkForCuteBunnyUpdate() {
     await CapacitorUpdater.notifyAppReady();
 
     const [manifestResponse, currentBundle] = await Promise.all([
-      fetch(MANIFEST_URL, { cache: 'no-store' }),
+      fetch(`${MANIFEST_URL}?t=${Date.now()}`, { cache: 'no-store' }),
       CapacitorUpdater.current()
     ]);
 
@@ -29,7 +29,7 @@ async function checkForCuteBunnyUpdate() {
       !/^[a-f0-9]{64}$/i.test(manifest.checksum)
     ) return;
 
-    if (currentBundle?.version === manifest.version) return;
+    if (currentBundle?.bundle?.version === manifest.version) return;
 
     const downloaded = await CapacitorUpdater.download({
       version: manifest.version,
