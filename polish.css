@@ -1967,3 +1967,20 @@ body[data-mode="dark"] .auth-card.profile-card .profile-settings-feedback {color
   .hero-art.bunny-button .doodle-bouquet {left:43px!important;bottom:12px!important;width:64px!important;height:52px!important}
   .hero-art.bunny-button>span:nth-child(3) {left:calc(50% + 10px)!important;bottom:24px!important;width:28px!important;height:36px!important}
 }
+
+
+/* Preserve the new SVG petal and leaf fills against the legacy stem-path rule. */
+.hero-art .doodle-bouquet g[fill] path {
+  fill:inherit!important;
+  stroke:inherit!important;
+}
+.hero-art .doodle-bouquet .stems path {
+  fill:none!important;
+  stroke:#78977d!important;
+}
+.hero-art .doodle-bouquet {
+  filter:drop-shadow(0 3px 2px rgba(117,83,103,.16))!important;
+}
+.hero-art .hero-side-flower svg {
+  filter:drop-shadow(0 1px 1px rgba(117,83,103,.12));
+}
