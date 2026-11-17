@@ -1984,3 +1984,110 @@ body[data-mode="dark"] .auth-card.profile-card .profile-settings-feedback {color
 .hero-art .hero-side-flower svg {
   filter:drop-shadow(0 1px 1px rgba(117,83,103,.12));
 }
+
+
+/* 2026 profile settings: compact horizontal segmented navigation. */
+.auth-card.profile-card .profile-settings-panel {
+  width:min(100%,430px)!important;
+  padding:20px!important;
+  gap:16px!important;
+  border-radius:25px!important;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(234,190,211,.18),transparent 38%),
+    linear-gradient(150deg,#fffdfd 0%,#fff5f8 58%,#f6f1ff 100%)!important;
+  border:1px solid rgba(225,190,210,.78)!important;
+  box-shadow:0 22px 58px rgba(126,78,108,.2),inset 0 1px 0 #fff!important;
+}
+.auth-card.profile-card .profile-settings-tabs {
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:5px!important;
+  width:100%!important;
+  padding:5px!important;
+  border:1px solid #f0dce7!important;
+  border-radius:17px!important;
+  background:rgba(246,233,241,.78)!important;
+}
+.auth-card.profile-card .profile-settings-tab {
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:43px!important;
+  padding:9px 12px!important;
+  border:1px solid transparent!important;
+  border-radius:12px!important;
+  background:transparent!important;
+  color:#9b8194!important;
+  font:850 .82rem Nunito,sans-serif!important;
+  letter-spacing:.01em!important;
+  cursor:pointer!important;
+  transition:background .2s ease,color .2s ease,box-shadow .2s ease,transform .2s ease!important;
+}
+.auth-card.profile-card .profile-settings-tab.is-active {
+  color:#985b7c!important;
+  background:linear-gradient(135deg,#fff,#fff8fb)!important;
+  border-color:#efd7e3!important;
+  box-shadow:0 3px 9px rgba(151,104,132,.12),inset 0 1px 0 #fff!important;
+}
+.auth-card.profile-card .profile-settings-tab:active {transform:scale(.98)!important}
+.auth-card.profile-card .profile-editor-settings {
+  min-height:128px!important;
+  align-content:start!important;
+  gap:12px!important;
+  padding:4px 1px!important;
+  animation:settings-section-in .22s ease both;
+}
+@keyframes settings-section-in {
+  from {opacity:0;transform:translateY(5px)}
+  to {opacity:1;transform:translateY(0)}
+}
+.auth-card.profile-card .profile-settings-hint {
+  margin:0!important;
+  color:#ad91a5!important;
+  font-size:.72rem!important;
+  line-height:1.45!important;
+}
+.auth-card.profile-card .profile-settings-gender {gap:11px!important}
+.auth-card.profile-card .profile-gender-options {
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:9px!important;
+}
+.auth-card.profile-card .profile-gender-options button {
+  min-height:49px!important;
+  border-radius:14px!important;
+  font-size:.86rem!important;
+}
+.auth-card.profile-card .profile-settings-heading {
+  align-items:center!important;
+  padding-bottom:14px!important;
+}
+.auth-card.profile-card .profile-settings-heading h3 {
+  margin:3px 0 0!important;
+  font-size:1.24rem!important;
+  letter-spacing:-.025em!important;
+}
+.auth-card.profile-card .profile-settings-close {
+  width:35px!important;height:35px!important;
+  border-radius:12px!important;
+  background:#fff!important;
+  border:1px solid #efdce6!important;
+  color:#a97894!important;
+  box-shadow:0 2px 6px rgba(155,105,135,.08)!important;
+}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-tabs {
+  background:#292331!important;border-color:#58465e!important;
+}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-tab {color:#c2aabd!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-tab.is-active {
+  background:linear-gradient(135deg,#493747,#40364d)!important;
+  border-color:#70576c!important;color:#ffe5f1!important;
+}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-hint {color:#c3a9bd!important}
+@media(max-width:430px) {
+  .auth-card.profile-card .profile-settings-panel {padding:16px!important;border-radius:22px!important}
+  .auth-card.profile-card .profile-settings-tab {min-height:41px!important}
+}
+@media(prefers-reduced-motion:reduce) {
+  .auth-card.profile-card .profile-editor-settings,
+  .auth-card.profile-card .profile-settings-tab {animation:none!important;transition:none!important}
+}
