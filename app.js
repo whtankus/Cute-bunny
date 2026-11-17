@@ -4382,6 +4382,7 @@ document.addEventListener('click', event => {
   panel.querySelectorAll('[data-settings-tab]').forEach(button => {
     const active = button === tab;
     button.classList.toggle('is-active', active);
+    button.setAttribute('aria-selected', String(active));
     button.setAttribute('aria-pressed', String(active));
   });
   panel.querySelectorAll('[data-settings-section]').forEach(section => {
