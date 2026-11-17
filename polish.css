@@ -1951,3 +1951,18 @@ body[data-mode="dark"] .auth-card.profile-card .profile-settings-feedback {color
   .hero-art.bunny-button.bunny-happy>span:nth-child(2),
   .hero-art.bunny-button.bunny-happy::after {animation:none!important}
 }
+
+
+/* Hero layering: let the bouquet sit in front of the buddy, with a rose tucked beside it. */
+.hero-art.bunny-button {isolation:isolate;overflow:visible!important}
+.hero-art.bunny-button>span:nth-child(2) {position:absolute!important;z-index:1!important}
+.hero-art.bunny-button .doodle-bouquet {position:absolute!important;z-index:3!important;left:48px!important;bottom:15px!important}
+.hero-art.bunny-button>span:nth-child(3) {
+  position:absolute!important;z-index:4!important;left:calc(50% + 20px)!important;right:auto!important;
+  top:auto!important;bottom:34px!important;font-size:1.8rem!important;
+  filter:drop-shadow(0 3px 3px #8e688033);transform:rotate(9deg);
+}
+@media(max-width:520px) {
+  .hero-art.bunny-button .doodle-bouquet {left:43px!important;bottom:12px!important;width:64px!important;height:52px!important}
+  .hero-art.bunny-button>span:nth-child(3) {left:calc(50% + 10px)!important;bottom:27px!important;font-size:1.45rem!important}
+}
