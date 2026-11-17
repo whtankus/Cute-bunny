@@ -1,0 +1,47 @@
+name: Cute Bunny Browser Smoke Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cute-bunny-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromium:
+    name: Chromium interaction and responsive checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install pinned Playwright browser runner
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Build test app
+        env:
+          SUPABASE_URL: https://cute-bunny-test.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: browser-smoke-test-publishable-key
+        run: npm run build
+
+      - name: Run Chromium smoke tests
+        run: node --test tests/browser-smoke.test.js
