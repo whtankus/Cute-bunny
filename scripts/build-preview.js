@@ -13,7 +13,6 @@ const assets = [
   'style.css',
   'polish.css',
   'button-interactions.css',
-  'streak-garden-banner.svg',
   'sw.js',
   'manifest.webmanifest',
   'bunny-app-icon-192.png',
