@@ -1771,3 +1771,183 @@ body[data-mode="dark"] .auth-card.profile-card .profile-settings-actions {backgr
 
 /* Warm red accents for the expanded seven-flower bunny bouquet. */
 .doodle-bouquet .bloom.red{fill:#df8294!important;stroke:#fff8f2!important}
+
+
+/* 2026 refresh: calm, compact profile settings and a properly animated buddy. */
+.auth-card.profile-card .profile-settings-panel {
+  display:flex!important;
+  flex-direction:column!important;
+  gap:17px!important;
+  width:100%!important;
+  max-width:420px!important;
+  max-height:none!important;
+  margin:14px auto 8px!important;
+  padding:19px!important;
+  overflow:visible!important;
+  border:1px solid #efd8e4!important;
+  border-radius:25px!important;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(239,222,250,.56),transparent 34%),
+    linear-gradient(150deg,#fffdfd 0%,#fff5f8 62%,#fbf7ff 100%)!important;
+  box-shadow:0 12px 30px rgba(133,88,116,.12),inset 0 1px 0 #fff!important;
+}
+.auth-card.profile-card .profile-settings-heading {
+  align-items:center!important;
+  padding:0 0 14px!important;
+  border-bottom:1px solid #f0e1e9!important;
+}
+.auth-card.profile-card .profile-settings-heading small {
+  margin:0 0 5px!important;
+  color:#b77d9b!important;
+  font-size:.62rem!important;
+  letter-spacing:.15em!important;
+}
+.auth-card.profile-card .profile-settings-heading h3 {
+  color:#684d63!important;
+  font:800 1.32rem/1.15 Quicksand,sans-serif!important;
+}
+.auth-card.profile-card .profile-settings-close {
+  width:38px!important;height:38px!important;flex-basis:38px!important;
+  border:1px solid #f0dce6!important;border-radius:14px!important;
+  background:linear-gradient(145deg,#fff,#fff0f6)!important;
+  color:#a66f8c!important;font-size:1.45rem!important;
+  transition:transform .18s ease,background .18s ease!important;
+}
+.auth-card.profile-card .profile-settings-close:hover { transform:rotate(90deg)!important;background:#fce8f1!important; }
+.auth-card.profile-card .profile-editor-settings {
+  display:grid!important;gap:19px!important;padding:2px 0!important;
+}
+.auth-card.profile-card .profile-settings-field,
+.auth-card.profile-card .profile-settings-gender>label {
+  display:grid!important;gap:8px!important;margin:0!important;
+  color:#765e73!important;font-size:.82rem!important;font-weight:900!important;
+}
+.auth-card.profile-card .profile-settings-field::after {
+  content:"3–24 characters · letters, numbers or underscores";
+  color:#aa91a4;font-size:.68rem;font-weight:600;letter-spacing:.01em;
+}
+.auth-card.profile-card .profile-username-input {
+  display:flex!important;align-items:center!important;gap:10px!important;
+  min-height:52px!important;padding:0 15px!important;
+  border:1px solid #ead7e2!important;border-radius:16px!important;
+  background:rgba(255,255,255,.92)!important;color:#bd789a!important;
+  box-shadow:inset 0 1px 2px rgba(116,76,101,.04)!important;
+  transition:border-color .18s ease,box-shadow .18s ease!important;
+}
+.auth-card.profile-card .profile-username-input:focus-within {
+  border-color:#d99ab6!important;box-shadow:0 0 0 4px rgba(217,154,182,.16)!important;
+}
+.auth-card.profile-card .profile-username-input>span {
+  display:grid;place-items:center;width:26px;height:26px;border-radius:9px;
+  background:#fbedf3;color:#b77596;font-weight:900;
+}
+.auth-card.profile-card .profile-username-input input {
+  flex:1!important;min-width:0!important;height:48px!important;padding:0!important;
+  border:0!important;outline:0!important;background:transparent!important;
+  color:#59465b!important;font:800 .96rem Nunito,sans-serif!important;
+  box-shadow:none!important;
+}
+.auth-card.profile-card .profile-settings-gender {display:grid!important;gap:9px!important;margin:0!important}
+.auth-card.profile-card .profile-gender-options {
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;
+}
+.auth-card.profile-card .profile-gender-options button {
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;
+  min-height:50px!important;padding:10px!important;
+  border:1px solid #ead9e4!important;border-radius:15px!important;
+  background:rgba(255,255,255,.9)!important;color:#8e7488!important;
+  font:800 .84rem Nunito,sans-serif!important;box-shadow:0 2px 0 rgba(145,105,130,.05)!important;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease!important;
+}
+.auth-card.profile-card .profile-gender-options button::before {
+  display:grid;place-items:center;width:25px;height:25px;border-radius:9px;
+  background:#f9edf3;color:#b77a99;font-size:1rem;line-height:1;
+}
+.auth-card.profile-card .profile-gender-options [data-profile-gender="male"]::before {content:"♂"}
+.auth-card.profile-card .profile-gender-options [data-profile-gender="female"]::before {content:"♀"}
+.auth-card.profile-card .profile-gender-options button:hover {transform:translateY(-1px)!important;border-color:#e2b8cc!important}
+.auth-card.profile-card .profile-gender-options button.is-selected {
+  border:1.5px solid #d78eae!important;
+  background:linear-gradient(135deg,#fff0f5,#f4efff)!important;
+  color:#995c7d!important;
+  box-shadow:0 0 0 3px rgba(215,142,174,.13),0 3px 8px rgba(160,103,137,.08)!important;
+}
+.auth-card.profile-card .profile-settings-actions {
+  position:static!important;bottom:auto!important;z-index:auto!important;
+  display:flex!important;flex-direction:column!important;gap:9px!important;
+  margin:0!important;padding:14px 0 0!important;
+  border-top:1px solid #f0e1e9!important;background:transparent!important;
+  backdrop-filter:none!important;
+}
+.auth-card.profile-card .profile-settings-feedback {
+  min-height:1em!important;margin:0!important;text-align:center!important;
+  color:#98758e!important;font-size:.73rem!important;line-height:1.35!important;
+}
+.auth-card.profile-card .profile-settings-save {
+  width:100%!important;min-height:49px!important;margin:0!important;
+  border:1px solid #c982a2!important;border-radius:16px!important;
+  background:linear-gradient(135deg,#dfa2bb,#c77f9f)!important;color:#fff!important;
+  font:900 .88rem Nunito,sans-serif!important;letter-spacing:.01em;
+  box-shadow:0 4px 0 #ad6b8b,0 8px 16px rgba(173,107,139,.16)!important;
+  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease!important;
+}
+.auth-card.profile-card .profile-settings-save:hover {filter:brightness(1.035);transform:translateY(-1px)!important}
+.auth-card.profile-card .profile-settings-save:active {transform:translateY(2px)!important;box-shadow:0 2px 0 #ad6b8b!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-panel {
+  background:radial-gradient(circle at 100% 0%,rgba(112,81,126,.22),transparent 36%),linear-gradient(150deg,#342b3d,#302737 68%,#352d43)!important;
+  border-color:#59465e!important;
+}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-heading {border-color:#59465e!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-heading h3,
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-field,
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-gender>label {color:#f0e1ed!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-close,
+body[data-mode="dark"] .auth-card.profile-card .profile-username-input,
+body[data-mode="dark"] .auth-card.profile-card .profile-gender-options button {
+  background:#2b2433!important;border-color:#5d4a63!important;color:#f2e4ef!important;
+}
+body[data-mode="dark"] .auth-card.profile-card .profile-username-input input {color:#fff0f8!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-username-input>span,
+body[data-mode="dark"] .auth-card.profile-card .profile-gender-options button::before {background:#47364b;color:#efbfd5}
+body[data-mode="dark"] .auth-card.profile-card .profile-gender-options button.is-selected {
+  background:linear-gradient(135deg,#503849,#453b58)!important;border-color:#bd83a4!important;color:#ffe5f1!important;
+}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-actions {background:transparent!important;border-color:#59465e!important}
+body[data-mode="dark"] .auth-card.profile-card .profile-settings-feedback {color:#d8b9cf!important}
+
+/* The mascot span is inline in the hero markup; make it transformable so the hop works. */
+.hero-art.bunny-button {isolation:isolate;overflow:visible}
+.hero-art.bunny-button>span:nth-child(2) {
+  position:relative;z-index:2;display:inline-block;
+  transform-origin:50% 92%;will-change:transform;
+}
+.hero-art.bunny-button.bunny-happy>span:nth-child(2) {
+  animation:buddy-garden-hop .82s cubic-bezier(.22,.72,.28,1) 2!important;
+}
+@keyframes buddy-garden-hop {
+  0%,100% {transform:translateY(0) rotate(0) scale(1)}
+  18% {transform:translateY(2px) rotate(5deg) scale(1.12,.86)}
+  43% {transform:translateY(-25px) rotate(-11deg) scale(.98,1.08)}
+  62% {transform:translateY(-8px) rotate(7deg) scale(1.04,.97)}
+  78% {transform:translateY(1px) rotate(-3deg) scale(1.1,.9)}
+}
+.hero-art.bunny-button.bunny-happy::after {
+  content:"";position:absolute;z-index:3;left:50%;top:24%;
+  width:7px;height:7px;border-radius:50%;pointer-events:none;
+  background:#fff;box-shadow:-30px 13px 0 1px #f3a9c4,24px -8px 0 0 #e8c9f3,35px 15px 0 -1px #fff;
+  animation:buddy-garden-sparkle .8s ease-out both!important;
+}
+@keyframes buddy-garden-sparkle {
+  0% {opacity:0;transform:translate(-50%,12px) scale(.35)}
+  35% {opacity:1;transform:translate(-50%,-3px) scale(1)}
+  100% {opacity:0;transform:translate(-50%,-24px) scale(.55)}
+}
+@media(max-width:520px) {
+  .auth-card.profile-card .profile-settings-panel {max-width:100%!important;padding:16px!important;gap:15px!important}
+  .auth-card.profile-card .profile-settings-actions {padding-top:12px!important}
+  .hero-art.bunny-button.bunny-happy>span:nth-child(2) {animation-duration:.76s!important}
+}
+@media(prefers-reduced-motion:reduce) {
+  .hero-art.bunny-button.bunny-happy>span:nth-child(2),
+  .hero-art.bunny-button.bunny-happy::after {animation:none!important}
+}
