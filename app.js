@@ -2601,42 +2601,68 @@ function renderNotesPage(options = {}) {
     return;
   }
 
-  // Update the existing scrollport in place and preserve a visible message anchor.
+  // Reconcile message nodes by ID instead of replacing the whole thread.
+  // Existing bubbles keep their DOM identity, so incoming messages and receipts
+  // cannot restart entrance effects or make the conversation blink.
   if (existingThread) {
-    existingThread.classList.add('is-refreshing');
-    const threadRect = existingThread.getBoundingClientRect();
-    const visibleTop = threadRect.top + existingThread.clientTop;
     const wasNearBottom =
       existingThread.scrollHeight - existingThread.scrollTop - existingThread.clientHeight < 72;
-    const anchor = [...existingThread.querySelectorAll('.chat-message[data-memory]')]
-      .find(message => message.getBoundingClientRect().bottom > visibleTop);
-    const anchorId = anchor?.dataset.memory || '';
-    const anchorOffset = anchor
-      ? anchor.getBoundingClientRect().top - visibleTop
-      : 0;
     const previousScrollTop = existingThread.scrollTop;
+    const desiredRoot = document.createElement('div');
+    desiredRoot.innerHTML = desiredThreadMarkup;
+    const currentById = new Map(
+      [...existingThread.querySelectorAll(':scope > .chat-message[data-memory]')]
+        .map(node => [String(node.dataset.memory), node])
+    );
+    const currentDividers = [...existingThread.querySelectorAll(':scope > .chat-day-divider')];
+    const usedDividers = new Set();
+    const nextNodes = [];
 
-    existingThread.innerHTML = desiredThreadMarkup;
+    [...desiredRoot.children].forEach(desiredNode => {
+      if (desiredNode.matches('.chat-message[data-memory]')) {
+        const id = String(desiredNode.dataset.memory);
+        const current = currentById.get(id);
+        if (current && current.outerHTML === desiredNode.outerHTML) {
+          nextNodes.push(current);
+        } else if (current) {
+          current.replaceWith(desiredNode);
+          nextNodes.push(desiredNode);
+        } else {
+          nextNodes.push(desiredNode);
+        }
+      } else if (desiredNode.matches('.chat-day-divider')) {
+        const match = currentDividers.find(node =>
+          !usedDividers.has(node) && node.textContent === desiredNode.textContent
+        );
+        if (match) {
+          usedDividers.add(match);
+          nextNodes.push(match);
+        } else {
+          nextNodes.push(desiredNode);
+        }
+      } else {
+        const match = [...existingThread.children].find(node =>
+          !nextNodes.includes(node) &&
+          node.className === desiredNode.className &&
+          node.outerHTML === desiredNode.outerHTML
+        );
+        nextNodes.push(match || desiredNode);
+      }
+    });
+
+    // append() moves retained nodes without recreating them; only genuinely
+    // new, changed, or removed message elements are touched.
+    nextNodes.forEach(node => existingThread.append(node));
+    [...existingThread.children].forEach(node => {
+      if (!nextNodes.includes(node) && node.id !== 'chatTypingIndicator') node.remove();
+    });
     existingThread.__cbNotesMarkup = desiredThreadMarkup;
     syncNotesTypingIndicator();
 
     requestAnimationFrame(() => {
       if (!existingThread.isConnected) return;
-      existingThread.classList.remove('is-refreshing');
       if (options.followLatest || wasNearBottom) {
         existingThread.scrollTop = existingThread.scrollHeight;
-      } else if (anchorId) {
-        const nextAnchor = existingThread.querySelector(`[data-memory="${CSS.escape(anchorId)}"]`);
-        if (nextAnchor) {
-          const nextVisibleTop = existingThread.getBoundingClientRect().top + existingThread.clientTop;
-          const nextOffset = nextAnchor.getBoundingClientRect().top - nextVisibleTop;
-          existingThread.scrollTop += nextOffset - anchorOffset;
-        } else {
-          existingThread.scrollTop = Math.min(
-            previousScrollTop,
-            Math.max(0, existingThread.scrollHeight - existingThread.clientHeight)
-          );
-        }
       } else {
         existingThread.scrollTop = Math.min(
           previousScrollTop,
