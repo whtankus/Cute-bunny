@@ -111,3 +111,172 @@
     transition: none !important;
   }
 }
+
+/* Hard reset for Little Collection item wrappers: no vertical tile behind art or caption. */
+#friendProfileGate #friendProfileCollectionItems > .friend-profile-collection-item,
+#friendProfileGate #friendProfileCollectionItems > span.friend-profile-collection-item,
+#friendProfileGate #friendProfileCollectionItems > .friend-profile-collection-item.is-equipped{
+  appearance:none!important;-webkit-appearance:none!important;
+  display:inline-flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+  flex:0 0 auto!important;width:max-content!important;min-width:0!important;max-width:100%!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  margin:0!important;padding:0!important;gap:6px!important;
+  border:0!important;border-width:0!important;border-style:none!important;border-radius:0!important;outline:0!important;
+  background:transparent!important;background-color:transparent!important;background-image:none!important;
+  box-shadow:none!important;filter:none!important;-webkit-filter:none!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  overflow:visible!important;
+}
+#friendProfileGate #friendProfileCollectionItems > .friend-profile-collection-item::before,
+#friendProfileGate #friendProfileCollectionItems > .friend-profile-collection-item::after{
+  content:none!important;display:none!important;opacity:0!important;background:transparent!important;box-shadow:none!important;
+}
+#friendProfileGate #friendProfileCollectionItems > .friend-profile-collection-item > .friend-profile-collection-name,
+#friendProfileGate #friendProfileCollectionItems > .friend-profile-collection-item > small{
+  display:block!important;width:auto!important;min-width:0!important;max-width:84px!important;
+  margin:0!important;padding:0!important;border:0!important;border-radius:0!important;outline:0!important;
+  background:transparent!important;background-image:none!important;box-shadow:none!important;
+  filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+
+
+/* 2026-11-18 — refined, consistent button feedback across mouse and touch. */
+.app .primary,.welcome .primary,.auth-gate .primary{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  box-shadow:0 4px 12px rgba(var(--cb-shadow-color,137,76,105),.17),inset 0 1px 0 rgba(255,255,255,.34)!important;
+  transition:transform .22s cubic-bezier(.2,.85,.25,1.18),background .3s ease,border-color .25s ease,
+  box-shadow .25s ease,filter .22s ease!important;
+}
+.app .primary::after,.welcome .primary::after,.auth-gate .primary::after{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 18%,rgba(255,255,255,.22) 48%,transparent 76%);
+  transform:translateX(-115%);transition:transform .55s cubic-bezier(.2,.75,.25,1);
+}
+.app .primary:hover::after,.welcome .primary:hover::after,.auth-gate .primary:hover::after{transform:translateX(115%)}
+.app .primary:active,.welcome .primary:active,.auth-gate .primary:active{
+  transform:translateY(2px) scale(.985)!important;
+  box-shadow:0 1px 5px rgba(var(--cb-shadow-color,137,76,105),.13),inset 0 2px 4px rgba(80,45,65,.12)!important;
+}
+.app #nav button{transition:transform .22s cubic-bezier(.2,.85,.25,1.18),background .28s ease,border-color .25s ease,color .22s ease,box-shadow .25s ease!important}
+.app #nav button.active{position:relative}
+.app #nav button.active::before{content:"";position:absolute;top:4px;left:50%;width:18px;height:2px;border-radius:9px;background:currentColor;opacity:.55;transform:translateX(-50%)}
+.app #nav button:active{transform:translateY(1px) scale(.97)!important}
+.app .round,.app .header-actions button{transition:transform .22s cubic-bezier(.2,.85,.25,1.18),background .25s ease,color .2s ease,box-shadow .25s ease!important}
+.app .round:hover,.app .header-actions button:hover{transform:translateY(-2px);box-shadow:0 5px 13px rgba(var(--cb-shadow-color,91,62,88),.12)}
+.app .round:active,.app .header-actions button:active{transform:scale(.94)!important}
+@media(hover:none){.app .primary:hover::after,.welcome .primary:hover::after,.auth-gate .primary:hover::after{transform:translateX(-115%)}}
+@media(prefers-reduced-motion:reduce){
+ .app .primary::after,.welcome .primary::after,.auth-gate .primary::after{display:none}
+}
+
+
+/* 2026-11-18 — restore a soft, tactile 3D finish to the bottom navigation. */
+.app #nav{
+  perspective:900px;
+}
+.app #nav button[data-page]{
+  position:relative!important;
+  isolation:isolate;
+  transform:translateY(0)!important;
+  border:1px solid color-mix(in srgb,var(--cb-border) 82%,white)!important;
+  border-radius:15px!important;
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--cb-surface) 96%,white) 0%,
+    color-mix(in srgb,var(--cb-surface-soft) 52%,var(--cb-surface)) 100%)!important;
+  box-shadow:
+    0 4px 0 color-mix(in srgb,var(--cb-border) 88%,var(--cb-text-muted)),
+    0 6px 11px rgba(var(--cb-shadow-color,91,62,88),.12),
+    inset 0 1px 0 rgba(255,255,255,.92),
+    inset 0 -1px 0 color-mix(in srgb,var(--cb-border) 36%,transparent)!important;
+  transition:transform .2s cubic-bezier(.2,.8,.25,1),background .24s ease,
+    border-color .24s ease,box-shadow .24s ease,color .2s ease!important;
+}
+.app #nav button[data-page]::after{
+  content:"";
+  position:absolute;
+  inset:1px 2px auto;
+  height:44%;
+  border-radius:12px 12px 7px 7px;
+  background:linear-gradient(180deg,rgba(255,255,255,.42),transparent);
+  opacity:.72;
+  pointer-events:none;
+  z-index:-1;
+}
+.app #nav button[data-page] i,
+.app #nav button[data-page] span{
+  position:relative;
+  z-index:1;
+  transition:transform .22s cubic-bezier(.2,.8,.25,1),filter .22s ease;
+}
+.app #nav button[data-page].active{
+  transform:translateY(-2px)!important;
+  border-color:color-mix(in srgb,var(--cb-accent) 42%,var(--cb-border))!important;
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--cb-accent-soft) 72%,white) 0%,
+    color-mix(in srgb,var(--cb-accent-soft) 94%,var(--cb-accent)) 100%)!important;
+  color:var(--cb-accent-strong)!important;
+  box-shadow:
+    0 5px 0 color-mix(in srgb,var(--cb-accent) 42%,var(--cb-border)),
+    0 8px 15px color-mix(in srgb,var(--cb-accent) 19%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.94),
+    inset 0 -1px 0 color-mix(in srgb,var(--cb-accent) 16%,transparent)!important;
+}
+.app #nav button[data-page].active i{
+  transform:translateY(-1px);
+  filter:drop-shadow(0 2px 1px color-mix(in srgb,var(--cb-accent) 22%,transparent));
+}
+.app #nav button[data-page]:active{
+  transform:translateY(3px)!important;
+  box-shadow:
+    0 1px 0 color-mix(in srgb,var(--cb-border) 88%,var(--cb-text-muted)),
+    0 2px 5px rgba(var(--cb-shadow-color,91,62,88),.09),
+    inset 0 2px 4px rgba(70,45,65,.1)!important;
+}
+.app #nav button[data-page].active:active{
+  transform:translateY(2px)!important;
+  box-shadow:
+    0 2px 0 color-mix(in srgb,var(--cb-accent) 42%,var(--cb-border)),
+    0 3px 7px color-mix(in srgb,var(--cb-accent) 12%,transparent),
+    inset 0 2px 4px rgba(70,45,65,.1)!important;
+}
+@media(hover:hover){
+  .app #nav button[data-page]:hover:not(:active){
+    transform:translateY(-2px)!important;
+    box-shadow:
+      0 6px 0 color-mix(in srgb,var(--cb-border) 88%,var(--cb-text-muted)),
+      0 9px 15px rgba(var(--cb-shadow-color,91,62,88),.14),
+      inset 0 1px 0 rgba(255,255,255,.94)!important;
+  }
+  .app #nav button[data-page].active:hover:not(:active){
+    transform:translateY(-3px)!important;
+    box-shadow:
+      0 6px 0 color-mix(in srgb,var(--cb-accent) 42%,var(--cb-border)),
+      0 10px 17px color-mix(in srgb,var(--cb-accent) 21%,transparent),
+      inset 0 1px 0 rgba(255,255,255,.96)!important;
+  }
+}
+body[data-mode="dark"] .app #nav button[data-page]{
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--cb-surface-raised) 94%,white 6%),
+    color-mix(in srgb,var(--cb-surface-soft) 76%,var(--cb-surface)))!important;
+  box-shadow:
+    0 4px 0 color-mix(in srgb,var(--cb-border) 80%,black),
+    0 7px 13px rgba(0,0,0,.22),
+    inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+body[data-mode="dark"] .app #nav button[data-page].active{
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--cb-accent-soft) 82%,white 5%),
+    color-mix(in srgb,var(--cb-accent) 48%,var(--cb-surface)))!important;
+  box-shadow:
+    0 5px 0 color-mix(in srgb,var(--cb-accent) 45%,black),
+    0 8px 15px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.2)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .app #nav button[data-page],.app #nav button[data-page] i,.app #nav button[data-page] span{
+    transition:none!important;
+  }
+}
