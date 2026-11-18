@@ -3830,10 +3830,9 @@ async function clearIgNote() {
    The typing hint is attached to the conversation thread, never the composer,
    and heartbeat/expiry timings are short enough to feel live without flicker. */
 let notesTypingChannel = null;
-const NOTES_TYPING_HEARTBEAT_MS = 1000;
-const NOTES_TYPING_EXPIRY_MS = 4000;
-// Keep the indicator active through natural pauses between keystrokes.
-const NOTES_TYPING_IDLE_MS = 1600;
+const NOTES_TYPING_HEARTBEAT_MS = 500;
+const NOTES_TYPING_EXPIRY_MS = 2500;
+const NOTES_TYPING_IDLE_MS = 1000;
 
 async function sendNotesTyping(isTyping) {
   const nextState = !!isTyping && page === 'notes' && !document.hidden;
@@ -3865,9 +3864,6 @@ async function sendNotesTyping(isTyping) {
 }
 
 function receiveNotesTyping(payload) {
-  // Supabase Broadcast callbacks normally wrap data in { payload }, but
-  // tolerate the direct payload shape too.
-  payload = payload?.payload || payload?.data || payload;
   const userId = String(payload?.user_id || '');
   if (!userId || userId === String(me?.id || '')) return;
 
@@ -3957,39 +3953,9 @@ function stopNotesTyping() {
   void updateNotesTypingPresence();
 }
 
-function syncNotesTypingFromPresence(state = {}) {
-  // Presence is a second delivery path: it keeps friend typing visible when a
-  // transient Broadcast packet is dropped or a tab reconnects.
-  const active = new Map();
-  Object.values(state || {}).forEach(sessions => {
-    (Array.isArray(sessions) ? sessions : []).forEach(session => {
-      const userId = String(session?.user_id || '');
-      const typingAt = Number(session?.typing_at || 0);
-      if (!userId || userId === String(me?.id || '') || !session?.is_typing ||
-          !typingAt || Date.now() - typingAt > NOTES_TYPING_EXPIRY_MS) return;
-      active.set(userId, session);
-    });
-  });
-  active.forEach((session, userId) => {
-    const existing = remoteTypingUsers.get(userId);
-    if (existing?.timer) clearTimeout(existing.timer);
-    remoteTypingUsers.set(userId, {
-      username: session.username || 'Friend',
-      displayName: session.display_name || session.username || 'Friend',
-      presenceOnly: true,
-      timer: setTimeout(() => {
-        remoteTypingUsers.delete(userId);
-        syncNotesTypingIndicator();
-      }, NOTES_TYPING_EXPIRY_MS)
-    });
-  });
-  remoteTypingUsers.forEach((entry, userId) => {
-    if (!active.has(userId) && entry.presenceOnly) {
-      clearTimeout(entry.timer);
-      remoteTypingUsers.delete(userId);
-    }
-  });
-  syncNotesTypingIndicator();
+function syncNotesTypingFromPresence() {
+  // Presence is reserved for online status. Typing is received only through
+  // the dedicated Broadcast channel so Presence syncs cannot overwrite it.
 }
 
 function syncNotesTypingIndicator() {
@@ -4279,7 +4245,7 @@ function startRealtime() {
     const presence = sb.channel('cute-bunny-presence', { config: { presence: { key: clientPresenceKey } } });
     presenceChannel = presence;
     notesTypingChannel = sb.channel('cute-bunny-notes-typing')
-      .on('broadcast', { event: 'typing' }, event => receiveNotesTyping(event))
+      .on('broadcast', { event: 'typing' }, ({ payload }) => receiveNotesTyping(payload))
       .subscribe(status => {
         if (status === 'SUBSCRIBED') {
           notesTypingChannelReady = true;
