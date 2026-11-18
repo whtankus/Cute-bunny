@@ -820,7 +820,7 @@ function friendRow(user, isOwnProfile = false) {
     : '💖 ' + Number(user.heartCount).toLocaleString() + ' heart';
   let liveState = {};
   try { liveState = presenceChannel?.presenceState?.() || {}; } catch {}
-  const online = isPresenceUserOnline(user.id, liveState);
+  const online = isPresenceUserOnline(user, liveState);
   const presenceLabel = '';
   const wallpaper = ['normal', 'blossom', 'clouds', 'starlight', 'hearts'].includes(user.profile_wallpaper) ? user.profile_wallpaper : 'normal';
   const action = isOwnProfile
@@ -4452,10 +4452,21 @@ function closeRealtime() {
   }
 }
 
-function isPresenceUserOnline(userId, state) {
-  if (!userId || !state || typeof state !== 'object') return false;
+function isPresenceUserOnline(userOrId, state) {
+  if (!userOrId || !state || typeof state !== 'object') return false;
+  const targetId = typeof userOrId === 'object'
+    ? String(userOrId.id || userOrId.user_id || '')
+    : String(userOrId);
+  const targetUsername = typeof userOrId === 'object'
+    ? String(userOrId.username || '').trim().toLowerCase()
+    : '';
   return Object.values(state).some(sessions =>
-    Array.isArray(sessions) && sessions.some(session => String(session?.user_id || '') === String(userId))
+    Array.isArray(sessions) && sessions.some(session => {
+      const sessionId = String(session?.user_id || session?.profile_id || session?.id || '');
+      const sessionUsername = String(session?.username || '').trim().toLowerCase();
+      return (!!targetId && sessionId === targetId) ||
+        (!!targetUsername && sessionUsername === targetUsername);
+    })
   );
 }
 
@@ -4467,7 +4478,7 @@ function syncPresenceUI() {
   if (profileGate && !profileGate.classList.contains('hidden') && profileGate.dataset.username) {
     const profileUser = profileGate.dataset.ownProfile === 'true' ? me : [...friends, ...friendResults].find(user => user.username === profileGate.dataset.username);
     if (profileUser) {
-      const online = isPresenceUserOnline(profileUser.id, state);
+      const online = isPresenceUserOnline(profileUser, state);
       const status = $('#friendProfilePresence');
       const dot = $('#friendProfilePresenceDot');
       if (status) status.textContent = online ? 'Active now' : formatFriendProfileActivity(profileUser.last_active_at);
@@ -4477,7 +4488,11 @@ function syncPresenceUI() {
     }
   }
   document.querySelectorAll('.sg-friend-card[data-friend-id], .friend-row[data-friend-id]').forEach(node => {
-    const online = isPresenceUserOnline(node.dataset.friendId, state);
+    const nodeUser = [...friends, ...friendResults, ...(me ? [me] : [])].find(user =>
+      String(user.id) === String(node.dataset.friendId) ||
+      (node.dataset.profile && String(user.username || '').toLowerCase() === String(node.dataset.profile).toLowerCase())
+    );
+    const online = isPresenceUserOnline(nodeUser || node.dataset.friendId, state);
     node.classList.toggle('is-online', online);
     node.classList.toggle('is-offline', !online);
     const presenceLabel = node.querySelector('.sg-friend-presence');
