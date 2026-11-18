@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=statusbar-match-20261117">
-  <link rel="stylesheet" href="polish.css?v=profile-trigger-hard-reset-20261117">
-  <link rel="stylesheet" href="button-interactions.css?v=button-feedback-20261117">
+  <link rel="stylesheet" href="polish.css?v=media-loading-style-20261118">
+  <link rel="stylesheet" href="button-interactions.css?v=nav-3d-depth-20261118">
 </head>
 <body class="is-restoring">
   <svg class="cb-icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -166,13 +166,7 @@
 
   <div id="profileGate" class="auth-gate hidden">
     <div class="auth-card profile-card">
-      <button type="button" class="profile-editor-close" id="profileEditorClose" aria-label="Close profile editor">×</button>
-      <small id="profileCreated" class="profile-date"></small>
-      <div class="auth-bunny">🐰</div>
-      <div class="profile-title-row">
-        <h2 id="profileName">Your profile</h2>
-        <span id="profileHandle" class="profile-handle"></span>
-      </div>
+      <h2 class="settings-page-title">Settings</h2>
       <div id="profileSettingsMount"></div>
       <div class="profile-name-row">
         <label>Display name<input id="profileDisplay" maxlength="60"></label>
@@ -330,7 +324,7 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=preview-sync-20261117"></script>
+  <script src="app.js?v=settings-qa-fix-20261118"></script>
   <script>
 (() => {
   let deferredInstallPrompt = null;
