@@ -3907,20 +3907,9 @@ function receiveNotesTyping(payload) {
   syncNotesTypingIndicator();
 }
 
-async function updateNotesTypingPresence() {
-  if (!presenceChannel || presenceStatus !== 'ready' || !me) return;
-  try {
-    await presenceChannel.track({
-      user_id: me.id,
-      username: me.username,
-      display_name: me.displayName || me.display_name || me.username,
-      online_at: new Date().toISOString(),
-      is_typing: typingActive && page === 'notes' && !document.hidden,
-      typing_at: Date.now()
-    });
-  } catch (error) {
-    console.warn('Notes typing presence could not sync:', error?.message || error);
-  }
+function updateNotesTypingPresence() {
+  // Typing is Broadcast-only. Never call Presence.track() from typing handlers:
+  // Supabase rate-limits Presence updates and closes the shared online channel.
 }
 
 function startNotesTyping() {
@@ -4268,6 +4257,7 @@ function startRealtime() {
           try {
             await presence.track({
               user_id: me.id,
+              userId: me.id,
               username: me.username,
               display_name: me.displayName || me.display_name || me.username,
               online_at: new Date().toISOString(),
@@ -4462,7 +4452,7 @@ function isPresenceUserOnline(userOrId, state) {
     : '';
   return Object.values(state).some(sessions =>
     Array.isArray(sessions) && sessions.some(session => {
-      const sessionId = String(session?.user_id || session?.profile_id || session?.id || '');
+      const sessionId = String(session?.user_id || session?.userId || session?.profile_id || session?.id || '');
       const sessionUsername = String(session?.username || '').trim().toLowerCase();
       return (!!targetId && sessionId === targetId) ||
         (!!targetUsername && sessionUsername === targetUsername);
