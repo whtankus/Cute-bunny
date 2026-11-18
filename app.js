@@ -4149,9 +4149,9 @@ async function checkForIncomingFriendNote() {
       hideSeenReceiptImmediately();
       // Fetch the conversation in the background; the old Seen is already gone.
       const freshFeed = await api('/feed');
-      const pending = feed.filter(item => item.isPending);
-      const pendingIds = new Set(pending.map(item => String(item.id)));
-      feed = [...freshFeed.filter(item => !pendingIds.has(String(item.id))), ...pending];
+      // Merge the latest server rows into the in-memory feed. Replacing the
+      // array here discards already-loaded photo/song pages and older history.
+      mergeFeedRows(freshFeed);
       if (page === 'notes') renderNotesPage();
     }
   } catch (error) {
@@ -4400,9 +4400,9 @@ function startRealtime() {
         window.cuteMemoryRefresh = setTimeout(async () => {
           try {
             const freshFeed = await api('/feed');
-            const pending = feed.filter(item => item.isPending);
-            const pendingIds = new Set(pending.map(item => String(item.id)));
-            feed = [...freshFeed.filter(item => !pendingIds.has(String(item.id))), ...pending];
+            // Keep previously loaded photos, songs and older pages while
+            // refreshing the newest records after a Realtime insert.
+            mergeFeedRows(freshFeed);
             if (page === 'notes') {
               renderNotesPage();
               void refreshOwnNoteSeenStatus();
