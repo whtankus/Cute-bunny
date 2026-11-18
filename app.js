@@ -3893,6 +3893,7 @@ function receiveNotesTyping(payload) {
     displayName: friend?.displayName || friend?.display_name ||
       knownAuthor?.displayName || knownAuthor?.display_name ||
       payload.display_name || username,
+    presenceOnly: false,
     timer: setTimeout(() => {
       remoteTypingUsers.delete(userId);
       syncNotesTypingIndicator();
@@ -3964,6 +3965,7 @@ function syncNotesTypingFromPresence(state = {}) {
     remoteTypingUsers.set(userId, {
       username: session.username || 'Friend',
       displayName: session.display_name || session.username || 'Friend',
+      presenceOnly: true,
       timer: setTimeout(() => {
         remoteTypingUsers.delete(userId);
         syncNotesTypingIndicator();
