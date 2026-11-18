@@ -2593,9 +2593,17 @@ function renderNotesPage(options = {}) {
   };
   updateSeenStatus();
 
-  // Update the existing scrollport in place so realtime refreshes never rebuild
-  // the page or reset the reader's position in a long conversation.
+  // Do not rebuild an unchanged conversation on every realtime/status tick.
+  // Keeping its message nodes mounted prevents scroll, focus and CSS animation jumps.
+  const desiredThreadMarkup = olderControl + (messagesHtml || emptyMarkup);
+  if (existingThread && existingThread.__cbNotesMarkup === desiredThreadMarkup) {
+    syncNotesTypingIndicator();
+    return;
+  }
+
+  // Update the existing scrollport in place and preserve a visible message anchor.
   if (existingThread) {
+    existingThread.classList.add('is-refreshing');
     const threadRect = existingThread.getBoundingClientRect();
     const visibleTop = threadRect.top + existingThread.clientTop;
     const wasNearBottom =
@@ -2608,10 +2616,13 @@ function renderNotesPage(options = {}) {
       : 0;
     const previousScrollTop = existingThread.scrollTop;
 
-    existingThread.innerHTML = olderControl + (messagesHtml || emptyMarkup);
+    existingThread.innerHTML = desiredThreadMarkup;
+    existingThread.__cbNotesMarkup = desiredThreadMarkup;
+    syncNotesTypingIndicator();
 
     requestAnimationFrame(() => {
       if (!existingThread.isConnected) return;
+      existingThread.classList.remove('is-refreshing');
       if (options.followLatest || wasNearBottom) {
         existingThread.scrollTop = existingThread.scrollHeight;
       } else if (anchorId) {
@@ -2656,7 +2667,11 @@ function renderNotesPage(options = {}) {
   requestAnimationFrame(() => {
     syncNotesKeyboardLayout();
     const thread = $('#chatThread');
-    if (thread) thread.scrollTop = thread.scrollHeight;
+    if (thread) {
+      thread.__cbNotesMarkup = olderControl + (messagesHtml || emptyMarkup);
+      thread.scrollTop = thread.scrollHeight;
+      syncNotesTypingIndicator();
+    }
     syncNotesSeenReceiptVisibility(thread);
     observeNoteSeenMessages();
   });
@@ -3801,15 +3816,14 @@ function receiveNotesTyping(payload) {
   const userId = String(payload?.user_id || '');
   if (!userId || userId === String(me?.id || '')) return;
 
-  // A conversation participant can be present in the followed-friends list or
-  // already represented by a message in this Notes thread. The latter keeps
-  // typing visible when the follow list has not refreshed yet.
+  // Broadcast membership is the source of truth here. A friend may not yet
+  // exist in the local follow/feed cache, so filtering against those stale
+  // lists can silently discard a valid typing event.
   const friend = friends.find(item => String(item.id || item.user_id || '') === userId);
   const knownAuthor = feed.find(item =>
     item.kind === 'note' &&
     String(item.author?.id || item.owner_id || '') === userId
   )?.author;
-  if (!friend && !knownAuthor) return;
 
   const sentAt = Number(payload?.sent_at || 0);
   if (sentAt && Date.now() - sentAt > NOTES_TYPING_EXPIRY_MS + 1000) return;
