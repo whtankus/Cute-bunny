@@ -3864,7 +3864,7 @@ async function sendNotesTyping(isTyping) {
 }
 
 function receiveNotesTyping(payload) {
-  const userId = String(payload?.user_id || '');
+  const userId = String(payload?.user_id || payload?.userId || payload?.profile_id || payload?.id || '');
   if (!userId || userId === String(me?.id || '')) return;
 
   // Broadcast membership is the source of truth here. A friend may not yet
@@ -3876,8 +3876,10 @@ function receiveNotesTyping(payload) {
     String(item.author?.id || item.owner_id || '') === userId
   )?.author;
 
+  // Do not compare a sender's wall clock with this device's clock.
+  // Clock drift can make a valid friend's typing event look expired only to
+  // one recipient. Expiry is handled locally from the moment the event arrives.
   const sentAt = Number(payload?.sent_at || 0);
-  if (sentAt && Date.now() - sentAt > NOTES_TYPING_EXPIRY_MS + 1000) return;
   const existing = remoteTypingUsers.get(userId);
   // Ignore delayed packets so an older "stopped typing" event cannot erase
   // a newer active state after network jitter.
