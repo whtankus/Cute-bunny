@@ -2622,11 +2622,33 @@ function renderNotesPage(options = {}) {
       if (desiredNode.matches('.chat-message[data-memory]')) {
         const id = String(desiredNode.dataset.memory);
         const current = currentById.get(id);
-        if (current && current.outerHTML === desiredNode.outerHTML) {
+        if (current) {
+          // Message rows are immutable after delivery; live Seen/pending metadata
+          // must not replace the bubble node or replay its entrance animation.
+          const desiredReceipt = desiredNode.querySelector('.chat-seen-receipt');
+          const currentReceipt = current.querySelector('.chat-seen-receipt');
+          if (desiredReceipt && currentReceipt) {
+            currentReceipt.textContent = desiredReceipt.textContent;
+            currentReceipt.setAttribute('aria-label', desiredReceipt.getAttribute('aria-label') || 'Seen');
+            if (desiredReceipt.dataset.seenAt) currentReceipt.dataset.seenAt = desiredReceipt.dataset.seenAt;
+            else delete currentReceipt.dataset.seenAt;
+          } else if (desiredReceipt && !currentReceipt) {
+            current.append(desiredReceipt);
+          } else if (!desiredReceipt && currentReceipt) {
+            currentReceipt.remove();
+          }
+          const desiredText = desiredNode.querySelector('.chat-message-text')?.textContent;
+          const currentText = current.querySelector('.chat-message-text');
+          if (currentText && desiredText != null && currentText.textContent !== desiredText) currentText.textContent = desiredText;
+          const desiredTime = desiredNode.querySelector('.chat-message-time');
+          const currentTime = current.querySelector('.chat-message-time');
+          if (desiredTime && currentTime && currentTime.dateTime !== desiredTime.dateTime) {
+            currentTime.dateTime = desiredTime.dateTime;
+            currentTime.textContent = desiredTime.textContent;
+          }
+          current.classList.toggle('is-uploading', desiredNode.classList.contains('is-uploading'));
+          current.classList.toggle('is-loved', desiredNode.classList.contains('is-loved'));
           nextNodes.push(current);
-        } else if (current) {
-          current.replaceWith(desiredNode);
-          nextNodes.push(desiredNode);
         } else {
           nextNodes.push(desiredNode);
         }
@@ -3808,8 +3830,8 @@ async function clearIgNote() {
    The typing hint is attached to the conversation thread, never the composer,
    and heartbeat/expiry timings are short enough to feel live without flicker. */
 let notesTypingChannel = null;
-const NOTES_TYPING_HEARTBEAT_MS = 450;
-const NOTES_TYPING_EXPIRY_MS = 1600;
+const NOTES_TYPING_HEARTBEAT_MS = 1200;
+const NOTES_TYPING_EXPIRY_MS = 4200;
 const NOTES_TYPING_IDLE_MS = 700;
 
 async function sendNotesTyping(isTyping) {
@@ -3871,6 +3893,7 @@ function receiveNotesTyping(payload) {
     displayName: friend?.displayName || friend?.display_name ||
       knownAuthor?.displayName || knownAuthor?.display_name ||
       payload.display_name || username,
+    presenceOnly: false,
     timer: setTimeout(() => {
       remoteTypingUsers.delete(userId);
       syncNotesTypingIndicator();
@@ -3880,6 +3903,22 @@ function receiveNotesTyping(payload) {
   syncNotesTypingIndicator();
 }
 
+async function updateNotesTypingPresence() {
+  if (!presenceChannel || presenceStatus !== 'ready' || !me) return;
+  try {
+    await presenceChannel.track({
+      user_id: me.id,
+      username: me.username,
+      display_name: me.displayName || me.display_name || me.username,
+      online_at: new Date().toISOString(),
+      is_typing: typingActive && page === 'notes' && !document.hidden,
+      typing_at: Date.now()
+    });
+  } catch (error) {
+    console.warn('Notes typing presence could not sync:', error?.message || error);
+  }
+}
+
 function startNotesTyping() {
   if (!me || page !== 'notes' || document.hidden) return;
   const now = Date.now();
@@ -3887,10 +3926,12 @@ function startNotesTyping() {
     typingActive = true;
     typingLastSentAt = now;
     void sendNotesTyping(true);
+    void updateNotesTypingPresence();
     typingHeartbeatTimer = setInterval(() => {
       if (!typingActive || page !== 'notes' || document.hidden) return;
       typingLastSentAt = Date.now();
       void sendNotesTyping(true);
+      void updateNotesTypingPresence();
     }, NOTES_TYPING_HEARTBEAT_MS);
   }
   clearTimeout(typingStopTimer);
@@ -3905,10 +3946,42 @@ function stopNotesTyping() {
   if (!typingActive) return;
   typingActive = false;
   void sendNotesTyping(false);
+  void updateNotesTypingPresence();
 }
 
-function syncNotesTypingFromPresence() {
-  // Typing is handled by the dedicated Broadcast channel, not Presence.
+function syncNotesTypingFromPresence(state = {}) {
+  // Presence is a second delivery path: it keeps friend typing visible when a
+  // transient Broadcast packet is dropped or a tab reconnects.
+  const active = new Map();
+  Object.values(state || {}).forEach(sessions => {
+    (Array.isArray(sessions) ? sessions : []).forEach(session => {
+      const userId = String(session?.user_id || '');
+      const typingAt = Number(session?.typing_at || 0);
+      if (!userId || userId === String(me?.id || '') || !session?.is_typing ||
+          !typingAt || Date.now() - typingAt > NOTES_TYPING_EXPIRY_MS) return;
+      active.set(userId, session);
+    });
+  });
+  active.forEach((session, userId) => {
+    const existing = remoteTypingUsers.get(userId);
+    if (existing?.timer) clearTimeout(existing.timer);
+    remoteTypingUsers.set(userId, {
+      username: session.username || 'Friend',
+      displayName: session.display_name || session.username || 'Friend',
+      presenceOnly: true,
+      timer: setTimeout(() => {
+        remoteTypingUsers.delete(userId);
+        syncNotesTypingIndicator();
+      }, NOTES_TYPING_EXPIRY_MS)
+    });
+  });
+  remoteTypingUsers.forEach((entry, userId) => {
+    if (!active.has(userId) && entry.presenceOnly) {
+      clearTimeout(entry.timer);
+      remoteTypingUsers.delete(userId);
+    }
+  });
+  syncNotesTypingIndicator();
 }
 
 function syncNotesTypingIndicator() {
@@ -4076,9 +4149,9 @@ async function checkForIncomingFriendNote() {
       hideSeenReceiptImmediately();
       // Fetch the conversation in the background; the old Seen is already gone.
       const freshFeed = await api('/feed');
-      const pending = feed.filter(item => item.isPending);
-      const pendingIds = new Set(pending.map(item => String(item.id)));
-      feed = [...freshFeed.filter(item => !pendingIds.has(String(item.id))), ...pending];
+      // Merge the latest server rows into the in-memory feed. Replacing the
+      // array here discards already-loaded photo/song pages and older history.
+      mergeFeedRows(freshFeed);
       if (page === 'notes') renderNotesPage();
     }
   } catch (error) {
@@ -4093,7 +4166,7 @@ function startNotesIncomingPoll() {
   void checkForIncomingFriendNote();
   notesIncomingPollTimer = setInterval(() => {
     if (page === 'notes' && !document.hidden) void checkForIncomingFriendNote();
-  }, 500);
+  }, 5000);
 }
 
 async function refreshOwnNoteSeenStatus() {
@@ -4327,9 +4400,9 @@ function startRealtime() {
         window.cuteMemoryRefresh = setTimeout(async () => {
           try {
             const freshFeed = await api('/feed');
-            const pending = feed.filter(item => item.isPending);
-            const pendingIds = new Set(pending.map(item => String(item.id)));
-            feed = [...freshFeed.filter(item => !pendingIds.has(String(item.id))), ...pending];
+            // Keep previously loaded photos, songs and older pages while
+            // refreshing the newest records after a Realtime insert.
+            mergeFeedRows(freshFeed);
             if (page === 'notes') {
               renderNotesPage();
               void refreshOwnNoteSeenStatus();
