@@ -3830,9 +3830,10 @@ async function clearIgNote() {
    The typing hint is attached to the conversation thread, never the composer,
    and heartbeat/expiry timings are short enough to feel live without flicker. */
 let notesTypingChannel = null;
-const NOTES_TYPING_HEARTBEAT_MS = 1200;
-const NOTES_TYPING_EXPIRY_MS = 4200;
-const NOTES_TYPING_IDLE_MS = 700;
+const NOTES_TYPING_HEARTBEAT_MS = 1000;
+const NOTES_TYPING_EXPIRY_MS = 4000;
+// Keep the indicator active through natural pauses between keystrokes.
+const NOTES_TYPING_IDLE_MS = 1600;
 
 async function sendNotesTyping(isTyping) {
   const nextState = !!isTyping && page === 'notes' && !document.hidden;
@@ -3864,6 +3865,9 @@ async function sendNotesTyping(isTyping) {
 }
 
 function receiveNotesTyping(payload) {
+  // Supabase Broadcast callbacks normally wrap data in { payload }, but
+  // tolerate the direct payload shape too.
+  payload = payload?.payload || payload?.data || payload;
   const userId = String(payload?.user_id || '');
   if (!userId || userId === String(me?.id || '')) return;
 
@@ -3879,6 +3883,9 @@ function receiveNotesTyping(payload) {
   const sentAt = Number(payload?.sent_at || 0);
   if (sentAt && Date.now() - sentAt > NOTES_TYPING_EXPIRY_MS + 1000) return;
   const existing = remoteTypingUsers.get(userId);
+  // Ignore delayed packets so an older "stopped typing" event cannot erase
+  // a newer active state after network jitter.
+  if (existing?.lastSentAt && sentAt && sentAt < existing.lastSentAt) return;
   if (existing?.timer) clearTimeout(existing.timer);
 
   if (!payload.is_typing || page !== 'notes' || document.hidden) {
@@ -3894,6 +3901,7 @@ function receiveNotesTyping(payload) {
       knownAuthor?.displayName || knownAuthor?.display_name ||
       payload.display_name || username,
     presenceOnly: false,
+    lastSentAt: sentAt || Date.now(),
     timer: setTimeout(() => {
       remoteTypingUsers.delete(userId);
       syncNotesTypingIndicator();
@@ -4271,7 +4279,7 @@ function startRealtime() {
     const presence = sb.channel('cute-bunny-presence', { config: { presence: { key: clientPresenceKey } } });
     presenceChannel = presence;
     notesTypingChannel = sb.channel('cute-bunny-notes-typing')
-      .on('broadcast', { event: 'typing' }, ({ payload }) => receiveNotesTyping(payload))
+      .on('broadcast', { event: 'typing' }, event => receiveNotesTyping(event))
       .subscribe(status => {
         if (status === 'SUBSCRIBED') {
           notesTypingChannelReady = true;
