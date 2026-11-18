@@ -3931,25 +3931,6 @@ body[data-theme] .app button:focus-visible,body[data-theme] .auth-gate button:fo
 }
 
 
-/* 2026-11-18 — keep Little Collection and achievement icons free of tall tile backplates. */
-#friendProfileGate #friendProfileCollectionItems .friend-profile-collection-art,
-#friendProfileGate #friendProfileCollectionItems .friend-profile-collection-item.is-equipped .friend-profile-collection-art {
-  border:0!important; border-radius:0!important; background:transparent!important; background-image:none!important;
-  box-shadow:none!important; filter:none!important;
-}
-#friendProfileGate #friendProfileCollectionItems .friend-profile-collection-art svg {
-  filter:drop-shadow(0 3px 4px rgba(89,66,98,.16))!important;
-}
-#friendProfileGate .friend-profile-milestone-badge,
-#friendProfileGate .friend-profile-milestone-badge.is-unlocked,
-#friendProfileGate .friend-profile-milestone-badge.is-locked {
-  width:42px!important; height:42px!important; min-width:42px!important; min-height:42px!important;
-  padding:0!important; border:0!important; border-radius:0!important; outline:0!important;
-  background:transparent!important; background-image:none!important; box-shadow:none!important; filter:none!important;
-}
-#friendProfileGate .friend-profile-milestone-badge.is-locked { opacity:.4!important; }
-#friendProfileGate .friend-profile-milestone-svg svg { filter:drop-shadow(0 3px 4px rgba(89,66,98,.16))!important; }
-
 /* Notes refreshes retain scroll anchoring and never replay message entrance effects. */
 #content .chat-page .chat-thread { overflow-anchor:none; scroll-behavior:auto!important; }
 #content .chat-page .chat-thread.is-refreshing .chat-message,
