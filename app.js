@@ -2650,9 +2650,12 @@ function renderNotesPage(options = {}) {
       }
     });
 
-    // append() moves retained nodes without recreating them; only genuinely
-    // new, changed, or removed message elements are touched.
-    nextNodes.forEach(node => existingThread.append(node));
+    // Keep nodes already in the correct position completely untouched.
+    // Move only nodes whose order actually changed, then remove stale children.
+    nextNodes.forEach((node, index) => {
+      const atPosition = existingThread.children[index];
+      if (atPosition !== node) existingThread.insertBefore(node, atPosition || null);
+    });
     [...existingThread.children].forEach(node => {
       if (!nextNodes.includes(node) && node.id !== 'chatTypingIndicator') node.remove();
     });
