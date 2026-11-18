@@ -2622,11 +2622,33 @@ function renderNotesPage(options = {}) {
       if (desiredNode.matches('.chat-message[data-memory]')) {
         const id = String(desiredNode.dataset.memory);
         const current = currentById.get(id);
-        if (current && current.outerHTML === desiredNode.outerHTML) {
+        if (current) {
+          // Message rows are immutable after delivery; live Seen/pending metadata
+          // must not replace the bubble node or replay its entrance animation.
+          const desiredReceipt = desiredNode.querySelector('.chat-seen-receipt');
+          const currentReceipt = current.querySelector('.chat-seen-receipt');
+          if (desiredReceipt && currentReceipt) {
+            currentReceipt.textContent = desiredReceipt.textContent;
+            currentReceipt.setAttribute('aria-label', desiredReceipt.getAttribute('aria-label') || 'Seen');
+            if (desiredReceipt.dataset.seenAt) currentReceipt.dataset.seenAt = desiredReceipt.dataset.seenAt;
+            else delete currentReceipt.dataset.seenAt;
+          } else if (desiredReceipt && !currentReceipt) {
+            current.append(desiredReceipt);
+          } else if (!desiredReceipt && currentReceipt) {
+            currentReceipt.remove();
+          }
+          const desiredText = desiredNode.querySelector('.chat-message-text')?.textContent;
+          const currentText = current.querySelector('.chat-message-text');
+          if (currentText && desiredText != null && currentText.textContent !== desiredText) currentText.textContent = desiredText;
+          const desiredTime = desiredNode.querySelector('.chat-message-time');
+          const currentTime = current.querySelector('.chat-message-time');
+          if (desiredTime && currentTime && currentTime.dateTime !== desiredTime.dateTime) {
+            currentTime.dateTime = desiredTime.dateTime;
+            currentTime.textContent = desiredTime.textContent;
+          }
+          current.classList.toggle('is-uploading', desiredNode.classList.contains('is-uploading'));
+          current.classList.toggle('is-loved', desiredNode.classList.contains('is-loved'));
           nextNodes.push(current);
-        } else if (current) {
-          current.replaceWith(desiredNode);
-          nextNodes.push(desiredNode);
         } else {
           nextNodes.push(desiredNode);
         }
@@ -3880,6 +3902,22 @@ function receiveNotesTyping(payload) {
   syncNotesTypingIndicator();
 }
 
+async function updateNotesTypingPresence() {
+  if (!presenceChannel || presenceStatus !== 'ready' || !me) return;
+  try {
+    await presenceChannel.track({
+      user_id: me.id,
+      username: me.username,
+      display_name: me.displayName || me.display_name || me.username,
+      online_at: new Date().toISOString(),
+      is_typing: typingActive && page === 'notes' && !document.hidden,
+      typing_at: Date.now()
+    });
+  } catch (error) {
+    console.warn('Notes typing presence could not sync:', error?.message || error);
+  }
+}
+
 function startNotesTyping() {
   if (!me || page !== 'notes' || document.hidden) return;
   const now = Date.now();
@@ -3907,8 +3945,38 @@ function stopNotesTyping() {
   void sendNotesTyping(false);
 }
 
-function syncNotesTypingFromPresence() {
-  // Typing is handled by the dedicated Broadcast channel, not Presence.
+function syncNotesTypingFromPresence(state = {}) {
+  // Presence is a second delivery path: it keeps friend typing visible when a
+  // transient Broadcast packet is dropped or a tab reconnects.
+  const active = new Map();
+  Object.values(state || {}).forEach(sessions => {
+    (Array.isArray(sessions) ? sessions : []).forEach(session => {
+      const userId = String(session?.user_id || '');
+      const typingAt = Number(session?.typing_at || 0);
+      if (!userId || userId === String(me?.id || '') || !session?.is_typing ||
+          !typingAt || Date.now() - typingAt > NOTES_TYPING_EXPIRY_MS) return;
+      active.set(userId, session);
+    });
+  });
+  active.forEach((session, userId) => {
+    const existing = remoteTypingUsers.get(userId);
+    if (existing?.timer) clearTimeout(existing.timer);
+    remoteTypingUsers.set(userId, {
+      username: session.username || 'Friend',
+      displayName: session.display_name || session.username || 'Friend',
+      timer: setTimeout(() => {
+        remoteTypingUsers.delete(userId);
+        syncNotesTypingIndicator();
+      }, NOTES_TYPING_EXPIRY_MS)
+    });
+  });
+  remoteTypingUsers.forEach((entry, userId) => {
+    if (!active.has(userId) && entry.presenceOnly) {
+      clearTimeout(entry.timer);
+      remoteTypingUsers.delete(userId);
+    }
+  });
+  syncNotesTypingIndicator();
 }
 
 function syncNotesTypingIndicator() {
