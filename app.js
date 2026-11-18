@@ -571,6 +571,8 @@ function setUser(u) {
     notificationLoading = false;
   }
   me = u;
+  // Publish any existing local collection so friends can see it on their profiles.
+  void syncGardenCollectionToCloud(readGardenCollection());
   try {
     const savedHiddenNotes = JSON.parse(localStorage.getItem('cuteBunnyHiddenNotes:' + u.id) || '[]');
     hiddenNoteIds = new Set(Array.isArray(savedHiddenNotes) ? savedHiddenNotes.map(String) : []);
@@ -593,44 +595,52 @@ function setUser(u) {
 }
 
 async function refresh() {
-  const results = await Promise.all([
-    api('/me'),
-    api('/feed'),
-    api('/following'),
-    api('/feed?kind=photo&limit=8').catch(error => { console.warn('Photo warm cache skipped:', error?.message || error); return null; }),
-    api('/feed?kind=song&limit=8').catch(error => { console.warn('Music warm cache skipped:', error?.message || error); return null; }),
-    api('/notes/my-read-cursors').catch(error => { console.warn('Note read cursors could not be loaded:', error?.message || error); return [] })
-  ]);
-  me = results[0];
-  // The database profile is the source of truth for the colour palette.
-  // Re-apply it on every refresh, not only during the initial session restore.
-  setTheme(me?.theme);
-  const feedById = new Map();
-  [...results[1], ...(results[3] || []), ...(results[4] || [])].forEach(item => feedById.set(String(item.id), item));
-  feed = [...feedById.values()].sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
-  feedPageOffsets.all = results[1].length;
-  feedPageHasMore.all = results[1].length === FEED_PAGE_SIZE;
-  feedHasMore = feedPageHasMore.all;
-  feedPageOffsets.photo = (results[3] || []).length;
-  feedPageOffsets.song = (results[4] || []).length;
-  mediaInitialLoaded.photo = Array.isArray(results[3]);
-  mediaInitialLoaded.song = Array.isArray(results[4]);
-  mediaVisibleCount.photo = mediaVisibleCount.song = 8;
-  feedPageHasMore.photo = (results[3] || []).length === 8;
-  feedPageHasMore.song = (results[4] || []).length === 8;
-  friends = results[2];
-  noteSeenLastAck = new Map((results[5] || []).map(cursor => [String(cursor.owner_id), Number(cursor.last_read_message_id) || 0]));
-  render();
-  // Warm the first gallery photos in the background while the user is on Home.
-  // This means opening Photo Garden usually displays cached image bytes immediately.
-  void prewarmPhotoSources(feed.filter(item => item.kind === 'photo').slice(0, 16));
-  if (page === 'gallery' && !mediaInitialLoaded.photo) void loadLatestMedia('photo');
-  else if (page === 'music' && !mediaInitialLoaded.song) void loadLatestMedia('song');
-  syncStreakWidget();
-  syncPresenceUI();
-  if (!$('#friendProfileGate').classList.contains('hidden')) {
-    const profile = $('#friendProfileGate').dataset.ownProfile === 'true' ? me : [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
-    if (profile) showFriendProfile(profile);
+  const appRoot = $('#app');
+  appRoot?.classList.add('app-refreshing');
+  appRoot?.setAttribute('aria-busy', 'true');
+  try {
+    const results = await Promise.all([
+      api('/me'),
+      api('/feed'),
+      api('/following'),
+      api('/feed?kind=photo&limit=8').catch(error => { console.warn('Photo warm cache skipped:', error?.message || error); return null; }),
+      api('/feed?kind=song&limit=8').catch(error => { console.warn('Music warm cache skipped:', error?.message || error); return null; }),
+      api('/notes/my-read-cursors').catch(error => { console.warn('Note read cursors could not be loaded:', error?.message || error); return [] })
+    ]);
+    me = results[0];
+    // The database profile is the source of truth for the colour palette.
+    // Re-apply it on every refresh, not only during the initial session restore.
+    setTheme(me?.theme);
+    const feedById = new Map();
+    [...results[1], ...(results[3] || []), ...(results[4] || [])].forEach(item => feedById.set(String(item.id), item));
+    feed = [...feedById.values()].sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
+    feedPageOffsets.all = results[1].length;
+    feedPageHasMore.all = results[1].length === FEED_PAGE_SIZE;
+    feedHasMore = feedPageHasMore.all;
+    feedPageOffsets.photo = (results[3] || []).length;
+    feedPageOffsets.song = (results[4] || []).length;
+    mediaInitialLoaded.photo = Array.isArray(results[3]);
+    mediaInitialLoaded.song = Array.isArray(results[4]);
+    mediaVisibleCount.photo = mediaVisibleCount.song = 8;
+    feedPageHasMore.photo = (results[3] || []).length === 8;
+    feedPageHasMore.song = (results[4] || []).length === 8;
+    friends = results[2];
+    noteSeenLastAck = new Map((results[5] || []).map(cursor => [String(cursor.owner_id), Number(cursor.last_read_message_id) || 0]));
+    render();
+    // Warm the first gallery photos in the background while the user is on Home.
+    // This means opening Photo Garden usually displays cached image bytes immediately.
+    void prewarmPhotoSources(feed.filter(item => item.kind === 'photo').slice(0, 16));
+    if (page === 'gallery' && !mediaInitialLoaded.photo) void loadLatestMedia('photo');
+    else if (page === 'music' && !mediaInitialLoaded.song) void loadLatestMedia('song');
+    syncStreakWidget();
+    syncPresenceUI();
+    if (!$('#friendProfileGate').classList.contains('hidden')) {
+      const profile = $('#friendProfileGate').dataset.ownProfile === 'true' ? me : [...friends, ...friendResults].find(user => user.username === $('#friendProfileGate').dataset.username);
+      if (profile) showFriendProfile(profile);
+    }
+  } finally {
+    appRoot?.classList.remove('app-refreshing');
+    appRoot?.removeAttribute('aria-busy');
   }
 }
 
@@ -922,37 +932,153 @@ function readStreakDailyQuests(dateKey) {
     return {
       hearts: Array.isArray(saved.hearts) ? [...new Set(saved.hearts.map(String))] : [],
       photo: saved.photo === true,
+      photoCount: Math.max(saved.photo === true ? 1 : 0, Number(saved.photoCount) || 0),
       kissNote: saved.kissNote === true,
+      kissNotes: Math.max(saved.kissNote === true ? 1 : 0, Number(saved.kissNotes) || 0),
       note: Math.max(0, Number(saved.note) || 0),
+      noteTexts: Array.isArray(saved.noteTexts) ? saved.noteTexts.slice(-80).map(String) : [],
       song: saved.song === true,
+      songCount: Math.max(saved.song === true ? 1 : 0, Number(saved.songCount) || 0),
       login: saved.login === true,
       badge: saved.badge === true
     };
-  } catch { return {hearts:[], photo:false, kissNote:false, note:0, song:false, login:false, badge:false}; }
+  } catch { return {hearts:[], photo:false, photoCount:0, kissNote:false, kissNotes:0, note:0, noteTexts:[], song:false, songCount:0, login:false, badge:false}; }
 }
 function writeStreakDailyQuests(dateKey, state) {
   try { localStorage.setItem(streakStorageKey('daily-quests:' + dateKey), JSON.stringify(state)); } catch {}
 }
 function getDailyQuestRotation(dateKey) {
-  const pool = [
-    {id:'hearts', title:'Spread 3 hearts', description:'Like three different memories.', target:3, icon:'💗', progress:state => Math.min(3,state.hearts.length), done:state => state.hearts.length >= 3},
-    {id:'photo', title:'Share a photo', description:'Add one photo to your garden.', target:1, icon:'🌷', progress:state => state.photo ? 1 : 0, done:state => state.photo},
-    {id:'kissNote', title:'Send a kiss', description:'Send a Notes message with a kiss emoji.', target:1, icon:'💋', progress:state => state.kissNote ? 1 : 0, done:state => state.kissNote},
-    {id:'note', title:'Write a little note', description:'Send one message in Notes.', target:1, icon:'💌', progress:state => Math.min(1,state.note), done:state => state.note >= 1},
-    {id:'song', title:'Add to the soundtrack', description:'Share one song in your cozy playlist.', target:1, icon:'🎵', progress:state => state.song ? 1 : 0, done:state => state.song},
-    {id:'login', title:'Visit your garden', description:'Check in to Cute Bunny today.', target:1, icon:'🐰', progress:state => state.login ? 1 : 0, done:state => state.login}
+  // 20-day guided journey: three hand-picked quests per day, in a fixed order.
+  const journey = [
+    [
+      ['Cloud watcher','Share a photo of the clouds drifting above you.','photo','photo'],
+      ['A note to the sky','Write a little Notes message about the clouds you saw.','note','note','cloud'],
+      ['Leave three hearts','Send love to three different memories.','heart','hearts',null,3]
+    ],
+    [
+      ['Pocket-sized soundtrack','Share a song that feels like a peaceful morning.','song','song'],
+      ['Blue above','Share a photo of something blue in the sky or around you.','photo','photo'],
+      ['A color you love','Write a Notes message about your favourite color.','note','note','color']
+    ],
+    [
+      ['A tiny kindness','Leave hearts on three memories that make you smile.','heart','hearts',null,3],
+      ['Send a little kiss','Send a Notes message with a kiss or heart-kiss emoji.','kiss-note','kissNote'],
+      ['One good thing','Write one small thing that made today better.','note','note','today']
+    ],
+    [
+      ['Nature postcard','Share a photo of a tree, leaf, flower, or garden.','photo','photo'],
+      ['Your current soundtrack','Share a song you would play on a slow evening.','song','song'],
+      ['A warm hello','Like three memories shared by someone else.','heart','hearts',null,3]
+    ],
+    [
+      ['A memory in a frame','Share a photo of a place you want to remember.','photo','photo'],
+      ['A note of gratitude','Write a Notes message thanking someone or something.','note','note','thank'],
+      ['Visit your little garden','Check in today and let your streak flower.','login','login']
+    ],
+    [
+      ['Soundtrack for the stars','Share a song that belongs under a night sky.','song','song'],
+      ['A little daydream','Write a Notes message about somewhere you wish to visit.','note','note','wish'],
+      ['Spread the softest love','Send hearts to three different memories.','heart','hearts',null,3]
+    ],
+    [
+      ['Golden-hour moment','Share a photo with a warm, sunny, or golden feeling.','photo','photo'],
+      ['A sweet surprise','Send a Notes message with a kiss emoji.','kiss-note','kissNote'],
+      ['A tiny poem','Write two short lines in Notes about something beautiful.','note','note','beautiful']
+    ],
+    [
+      ['Find a little wonder','Share a photo of something small and lovely.','photo','photo'],
+      ['Music that feels like home','Share a song that makes you feel at home.','song','song'],
+      ['Three smiles sent','Like three memories that brighten your day.','heart','hearts',null,3]
+    ],
+    [
+      ['A note to future you','Write a Notes message to your future self.','note','note','future'],
+      ['Kindness in the garden','Send three hearts to memories from other people.','heart','hearts',null,3],
+      ['A kiss in the margins','Send a little kiss through Notes.','kiss-note','kissNote']
+    ],
+    [
+      ['The view outside','Share a photo of the view from where you are.','photo','photo'],
+      ['A song for the journey','Share a song you would take on a long trip.','song','song'],
+      ['Today in three words','Write a Notes message describing today in three words.','note','note','today']
+    ],
+    [
+      ['Cloud shapes','Share a photo of clouds that look like something.','photo','photo'],
+      ['Three little appreciations','Leave hearts on three memories you appreciate.','heart','hearts',null,3],
+      ['A moment worth keeping','Write a Notes message about a moment you want to remember.','note','note','remember']
+    ],
+    [
+      ['A melody to share','Share a song that matches your mood right now.','song','song'],
+      ['A little love note','Send a Notes message with a kiss or affectionate emoji.','kiss-note','kissNote'],
+      ['A new perspective','Write one thing you noticed today that you usually overlook.','note','note','noticed']
+    ],
+    [
+      ['Nature, up close','Share a photo of a leaf, petal, raindrop, or tiny detail.','photo','photo'],
+      ['Three bright spots','Like three memories that deserve a little love.','heart','hearts',null,3],
+      ['A hopeful thought','Write a Notes message about something you are looking forward to.','note','note','forward']
+    ],
+    [
+      ['A song for the moon','Share a calm song for a quiet night.','song','song'],
+      ['A little piece of color','Share a photo with your favourite color in it.','photo','photo'],
+      ['Send kindness around','Leave hearts on three different memories.','heart','hearts',null,3]
+    ],
+    [
+      ['A photo with a story','Share a photo that has a small story behind it.','photo','photo'],
+      ['A note of encouragement','Write a Notes message to encourage someone.','note','note','encourage'],
+      ['A kiss for the day','Send a sweet kiss in Notes.','kiss-note','kissNote']
+    ],
+    [
+      ['A sound you love','Share a song whose sound you never get tired of.','song','song'],
+      ['A small victory','Write a Notes message about one thing you did well.','note','note','did'],
+      ['Three hearts of joy','Like three memories that make you happy.','heart','hearts',null,3]
+    ],
+    [
+      ['A quiet corner','Share a photo of a peaceful corner or cosy spot.','photo','photo'],
+      ['A thought worth sharing','Write a Notes message about an idea on your mind.','note','note','idea'],
+      ['Back to the garden','Check in and give your streak a little care.','login','login']
+    ],
+    [
+      ['A song to remember','Share a song connected to a special memory.','song','song'],
+      ['A little affection','Send a kiss or heart-kiss through Notes.','kiss-note','kissNote'],
+      ['Three thoughtful hearts','Leave hearts on three memories from others.','heart','hearts',null,3]
+    ],
+    [
+      ['A sky worth saving','Share a photo of the sky at any time of day.','photo','photo'],
+      ['A note about wonder','Write a Notes message about something that still amazes you.','note','note','wonder'],
+      ['Share the love','Like three different memories in the garden.','heart','hearts',null,3]
+    ],
+    [
+      ['The final soundtrack','Share one song that sums up these 20 days.','song','song'],
+      ['A postcard to yourself','Share a photo of something you want to carry into tomorrow.','photo','photo'],
+      ['Your 20-day reflection','Write a Notes message about your favourite moment from this journey.','note','note','favourite']
+    ]
   ];
-  // Stable per account and local calendar day: the same three quests remain all day.
-  const seedText = String(me?.id || me?.username || 'guest') + ':' + dateKey;
-  let seed = 2166136261;
-  for (let i=0;i<seedText.length;i++) seed = Math.imul(seed ^ seedText.charCodeAt(i),16777619);
-  const shuffled = pool.slice();
-  for (let i=shuffled.length-1;i>0;i--) {
-    seed = (Math.imul(seed,1664525)+1013904223) >>> 0;
-    const j = seed % (i+1);
-    [shuffled[i],shuffled[j]] = [shuffled[j],shuffled[i]];
-  }
-  return shuffled.slice(0,3);
+  const campaignKey = streakStorageKey('daily-quest-campaign-start');
+  let campaignStart = '';
+  try {
+    campaignStart = localStorage.getItem(campaignKey) || '';
+    if (!campaignStart) {
+      campaignStart = dateKey;
+      localStorage.setItem(campaignKey, campaignStart);
+    }
+  } catch { campaignStart = dateKey; }
+  const startDate = new Date(campaignStart + 'T00:00:00Z');
+  const currentDate = new Date(dateKey + 'T00:00:00Z');
+  const elapsedDays = Number.isFinite(startDate.getTime()) && Number.isFinite(currentDate.getTime())
+    ? Math.max(0, Math.floor((currentDate - startDate) / 86400000)) : 0;
+  const dayIndex = elapsedDays % journey.length;
+  return journey[dayIndex].map((entry, slot) => {
+    const [title, description, kind, art, match, target = 1] = entry;
+    const id = 'day-' + (dayIndex + 1) + '-quest-' + (slot + 1);
+    const progress = state => {
+      if (kind === 'heart') return Math.min(target, state.hearts.length);
+      if (kind === 'photo') return Math.min(target, state.photoCount);
+      if (kind === 'song') return Math.min(target, state.songCount);
+      if (kind === 'kiss-note') return Math.min(target, state.kissNotes);
+      if (kind === 'login') return state.login ? 1 : 0;
+      if (kind === 'note' && match) return Math.min(target, state.noteTexts.filter(text => text.toLowerCase().includes(match)).length);
+      return Math.min(target, state.note);
+    };
+    return {id,title,description,target,art,kind,match,progress,done:state => progress(state) >= target};
+  });
 }
 /* Preview-only Petal Points: local, per-account reward ledger. */
 function readPetalRewards() {
@@ -983,6 +1109,107 @@ function saveGardenCollection(value) {
   try { localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(value)); return true; } catch { return false; }
 }
 
+let friendGardenRequestSequence = 0;
+let gardenCollectionHydratedUserId = '';
+function normalizeGardenCollection(value = {}) {
+  const validIds = new Set(GARDEN_COLLECTIBLES.map(item => item.id));
+  const owned = Array.isArray(value.owned) ? [...new Set(value.owned.filter(id => validIds.has(id)))] : [];
+  return {
+    owned,
+    equipped: owned.includes(value.equipped) && GARDEN_COLLECTIBLES.find(item => item.id === value.equipped)?.type === 'garden' ? value.equipped : 'none',
+    bunny: owned.includes(value.bunny) && GARDEN_COLLECTIBLES.find(item => item.id === value.bunny)?.type === 'bunny' ? value.bunny : 'none'
+  };
+}
+async function syncGardenCollectionToCloud(value = readGardenCollection()) {
+  if (!sb || !me?.id) return false;
+  const normalized = normalizeGardenCollection(value);
+  const { error } = await sb.from('profile_garden_collections').upsert({
+    user_id: me.id,
+    owned: normalized.owned,
+    equipped: normalized.equipped,
+    bunny: normalized.bunny,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'user_id' });
+  if (error) {
+    console.warn('Garden collection sync failed:', error.message || error);
+    return false;
+  }
+  try { localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(normalized)); } catch {}
+  return true;
+}
+async function hydrateGardenCollectionFromCloud() {
+  if (!sb || !me?.id) return readGardenCollection();
+  const { data, error } = await sb.from('profile_garden_collections')
+    .select('owned,equipped,bunny')
+    .eq('user_id', me.id)
+    .maybeSingle();
+  if (error) {
+    console.warn('Garden collection could not be loaded:', error.message || error);
+    return readGardenCollection();
+  }
+  if (data) {
+    const normalized = normalizeGardenCollection(data);
+    try { localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(normalized)); } catch {}
+    return normalized;
+  }
+  const legacy = normalizeGardenCollection(readGardenCollection());
+  await syncGardenCollectionToCloud(legacy);
+  return legacy;
+}
+function friendGardenCollectionCacheKey(userId) {
+  return 'cuteBunnyFriendGarden:' + String(userId);
+}
+function renderFriendGardenCollection(collection, userId, isOwnProfile = false) {
+  const gate = $('#friendProfileGate');
+  if (!gate || gate.dataset.collectionUserId !== String(userId)) return;
+  const section = $('#friendProfileCollection');
+  const catalog = typeof GARDEN_COLLECTIBLES !== 'undefined' ? GARDEN_COLLECTIBLES : [];
+  const ownedItems = catalog.filter(item => collection.owned.includes(item.id));
+  const count = $('#friendProfileCollectionCount');
+  if (count) {
+    count.textContent = ownedItems.length + (ownedItems.length === 1 ? ' treasure' : ' treasures');
+    count.hidden = false;
+  }
+  const list = $('#friendProfileCollectionItems');
+  if (!list) return;
+  if (!ownedItems.length) {
+    if (section) section.hidden = !isOwnProfile;
+    list.innerHTML = isOwnProfile ? '<p class="friend-profile-empty">Collect your treasures in the shop ♡</p>' : '';
+    return;
+  }
+  if (section) section.hidden = false;
+  list.innerHTML = ownedItems.slice(0, 12).map(item => {
+    const equipped = (item.type === 'garden' ? collection.equipped : collection.bunny) === item.id;
+    return '<span class="friend-profile-collection-item garden-rarity-' + esc(item.rarity || 'common') + (equipped ? ' is-equipped' : '') + '" title="' + esc(item.name) + '" aria-label="' + esc(item.name + (equipped ? ', equipped' : '')) + '"><span class="friend-profile-collection-art">' + item.art + '<i class="sg-art-glint" aria-hidden="true">✧</i></span><small class="friend-profile-collection-name">' + esc(item.name) + '</small>' + (equipped ? '<i class="friend-profile-equipped-mark" aria-label="Equipped">✦</i>' : '') + '</span>';
+  }).join('');
+}
+async function loadFriendGardenCollection(user, isOwnProfile) {
+  const sequence = ++friendGardenRequestSequence;
+  const gate = $('#friendProfileGate');
+  if (!gate || !user?.id) return;
+  gate.dataset.collectionUserId = String(user.id);
+  let collection;
+  if (isOwnProfile) {
+    collection = await hydrateGardenCollectionFromCloud();
+  } else {
+    if (!sb) return;
+    try {
+      const { data, error } = await sb.from('profile_garden_collections')
+        .select('owned,equipped,bunny')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) throw error;
+      collection = normalizeGardenCollection(data || {});
+      try { localStorage.setItem(friendGardenCollectionCacheKey(user.id), JSON.stringify(collection)); } catch {}
+    } catch (error) {
+      console.warn('Friend garden collection could not be loaded:', error?.message || error);
+      return;
+    }
+  }
+  if (sequence !== friendGardenRequestSequence || gate.dataset.collectionUserId !== String(user.id)) return;
+  renderFriendGardenCollection(collection, user.id, isOwnProfile);
+}
+
 function gardenIllustration(kind) {
   const art = {
     'pink-tulips':'<path d="M32 53V34m0 12c-12-13-20-5-15 2 5 5 11 3 15-2Zm0-8c12-13 20-5 15 2-5 5-11 3-15-2Z" fill="#91ad83" stroke="#718f70" stroke-width="2"/><path d="M32 34c-13-3-13-18-3-20 0-9 13-9 14 0 10 3 8 18-5 20Z" fill="#e9a1b8" stroke="#bd7895" stroke-width="2"/><path d="M32 34c-7-8-5-16 1-20 7 5 7 13-1 20Z" fill="#f7c7d5"/>',
@@ -1000,28 +1227,38 @@ function gardenIllustration(kind) {
     'login':'<path d="M32 50V27m0 14c-17-19-25-7-16 1 5 4 11 2 16-1Zm0-11c14-16 23-5 15 2-5 4-10 2-15-2Z" fill="#a8c49a" stroke="#789477" stroke-width="2"/><path d="M32 27c-13-3-13-17-3-19 0-8 13-8 14 0 10 3 8 16-5 19Z" fill="#e9a1b8" stroke="#bd7895" stroke-width="2"/>',
     'bloom-3':'<path d="M32 51V35m0 9c-12-12-18-4-13 2 4 4 9 2 13-2Z" stroke="#789477" stroke-width="2.5" fill="#b6cba9"/><g fill="#e9a1b8"><ellipse cx="32" cy="22" rx="6" ry="11"/><ellipse cx="32" cy="22" rx="6" ry="11" transform="rotate(72 32 22)"/><ellipse cx="32" cy="22" rx="6" ry="11" transform="rotate(144 32 22)"/></g><circle cx="32" cy="22" r="5" fill="#f4d17d"/>',
     'bloom-5':'<path d="M32 54V32m0 13c-14-13-22-5-15 3 5 4 11 2 15-3Z" stroke="#789477" stroke-width="2.5" fill="#b6cba9"/><g fill="#e9a1b8"><ellipse cx="32" cy="20" rx="6" ry="12"/><ellipse cx="32" cy="20" rx="6" ry="12" transform="rotate(60 32 20)"/><ellipse cx="32" cy="20" rx="6" ry="12" transform="rotate(120 32 20)"/></g><circle cx="32" cy="20" r="5" fill="#f4d17d"/><path d="M14 14 17 9m30 5-3-5" stroke="#d5b16b" stroke-width="2"/>',
-    'bloom-7':'<path d="M32 55V32m0 15c-14-14-22-5-15 3 5 4 11 2 15-3Z" stroke="#789477" stroke-width="2.5" fill="#b6cba9"/><g fill="#e99bb7" stroke="#c47e9c" stroke-width="1"><ellipse cx="32" cy="19" rx="6" ry="13"/><ellipse cx="32" cy="19" rx="6" ry="13" transform="rotate(45 32 19)"/><ellipse cx="32" cy="19" rx="6" ry="13" transform="rotate(90 32 19)"/><ellipse cx="32" cy="19" rx="6" ry="13" transform="rotate(135 32 19)"/></g><circle cx="32" cy="19" r="6" fill="#f4d17d"/><path d="m13 17 3-5m35 5-3-5" stroke="#d5b16b" stroke-width="2"/>'
+    'bloom-7':'<path d="M32 55V32m0 15c-14-14-22-5-15 3 5 4 11 2 15-3Z" stroke="#789477" stroke-width="2.5" fill="#b6cba9"/><g fill="#e99bb7" stroke="#c47e9c" stroke-width="1"><ellipse cx="32" cy="19" rx="6" ry="13"/><ellipse cx="32" cy="19" rx="6" ry="13" transform="rotate(45 32 19)"/><ellipse cx="32" cy="19" rx="6" ry="13" transform="rotate(90 32 19)"/><ellipse cx="32" cy="19" rx="6" ry="13" transform="rotate(135 32 19)"/></g><circle cx="32" cy="19" r="6" fill="#f4d17d"/><path d="m13 17 3-5m35 5-3-5" stroke="#d5b16b" stroke-width="2"/>',
+    'crystal-dew':'<path d="M32 8 49 28 32 56 15 28Z" fill="#c9e9f4" stroke="#78b6c9" stroke-width="2.5"/><path d="m32 8 1 48M15 28h34M32 8 23 28l9 28 9-28Z" fill="#f6ffff" fill-opacity=".48" stroke="#fff" stroke-width="1.4"/><path d="m12 13 3-6 3 6 6 3-6 3-3 6-3-6-6-3Zm39 31 2-4 2 4 4 2-4 2-2 4-2-4-4-2Z" fill="#fff0b8"/>',
+    'aurora-fountain':'<path d="M13 43h38l-5 12H18Z" fill="#b9a5dc" stroke="#8874b5" stroke-width="2.5"/><path d="M19 42c-7-11 1-19 7-10 2-16 13-17 14-1 8-7 13 3 5 11" fill="none" stroke="#8ed8d0" stroke-width="4" stroke-linecap="round"/><path d="M26 40c-4-10 2-17 7-10 2-11 9-10 10 0" fill="none" stroke="#d4b7f4" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="18" r="4" fill="#fff0b8"/><path d="m12 18 2-5 2 5 5 2-5 2-2 5-2-5-5-2Zm38 4 2-4 2 4 4 2-4 2-2 4-2-4-4-2Z" fill="#fff"/>',
+    'moon-bunny-hood':'<path d="M20 43 15 13c-1-8 8-10 12-2l5 12 5-12c4-8 13-6 12 2l-5 30Z" fill="#b9a9e5" stroke="#8977b5" stroke-width="2.5"/><path d="M22 39c4-10 16-14 25-3l-4 12H24Z" fill="#f7eafa" stroke="#b49bcf" stroke-width="2"/><path d="M28 39q4-4 8 0m-8 5h8" fill="none" stroke="#a47eaa" stroke-width="2" stroke-linecap="round"/><path d="m35 12 2 4 4 1-4 2-2 4-2-4-4-2 4-1Z" fill="#fff0b8"/>',
+    'celestial-rose':'<path d="M32 54V32m0 15c-13-12-20-4-14 3 5 4 10 2 14-3Z" fill="#8eae88" stroke="#688d72" stroke-width="2"/><g fill="#e9a8ce" stroke="#b77fa8" stroke-width="1.8"><ellipse cx="32" cy="20" rx="7" ry="15"/><ellipse cx="32" cy="20" rx="7" ry="15" transform="rotate(60 32 20)"/><ellipse cx="32" cy="20" rx="7" ry="15" transform="rotate(120 32 20)"/></g><circle cx="32" cy="20" r="7" fill="#ffe6a6" stroke="#c9a45e" stroke-width="1.5"/><path d="m10 19 2-5 2 5 5 2-5 2-2 5-2-5-5-2Zm42 13 2-4 2 4 4 2-4 2-2 4-2-4-4-2Z" fill="#fff"/>'
   };
   return '<svg viewBox="0 0 64 64" role="img" focusable="false" aria-hidden="true">' + (art[kind] || art['pink-tulips']) + '</svg>';
 }
 
 const GARDEN_COLLECTIBLES = [
-  {id:'pink-tulips',name:'Pink Tulip Patch',art:gardenIllustration('pink-tulips'),cost:30,type:'garden'},
-  {id:'moon-lantern',name:'Moon Lantern',art:gardenIllustration('moon-lantern'),cost:45,type:'garden'},
-  {id:'tiny-mushroom',name:'Tiny Mushroom',art:gardenIllustration('tiny-mushroom'),cost:60,type:'garden'},
-  {id:'golden-bell',name:'Golden Garden Bell',art:gardenIllustration('golden-bell'),cost:80,type:'garden'},
-  {id:'bunny-bow',name:'Blush Bunny Bow',art:gardenIllustration('bunny-bow'),cost:35,type:'bunny'},
-  {id:'flower-crown',name:'Flower Crown',art:gardenIllustration('flower-crown'),cost:65,type:'bunny'},
-  {id:'starry-hat',name:'Starry Night Hat',art:gardenIllustration('starry-hat'),cost:90,type:'bunny'}
+  {id:'pink-tulips',name:'Pink Tulip Patch',art:gardenIllustration('pink-tulips'),cost:30,type:'garden',rarity:'common'},
+  {id:'moon-lantern',name:'Moon Lantern',art:gardenIllustration('moon-lantern'),cost:45,type:'garden',rarity:'common'},
+  {id:'tiny-mushroom',name:'Tiny Mushroom',art:gardenIllustration('tiny-mushroom'),cost:60,type:'garden',rarity:'common'},
+  {id:'golden-bell',name:'Golden Garden Bell',art:gardenIllustration('golden-bell'),cost:80,type:'garden',rarity:'rare'},
+  {id:'bunny-bow',name:'Blush Bunny Bow',art:gardenIllustration('bunny-bow'),cost:35,type:'bunny',rarity:'common'},
+  {id:'flower-crown',name:'Flower Crown',art:gardenIllustration('flower-crown'),cost:65,type:'bunny',rarity:'rare'},
+  {id:'starry-hat',name:'Starry Night Hat',art:gardenIllustration('starry-hat'),cost:90,type:'bunny',rarity:'rare'},
+  {id:'crystal-dew',name:'Crystal Dew',art:gardenIllustration('crystal-dew'),cost:120,type:'garden',rarity:'rare'},
+  {id:'aurora-fountain',name:'Aurora Fountain',art:gardenIllustration('aurora-fountain'),cost:180,type:'garden',rarity:'epic'},
+  {id:'moon-bunny-hood',name:'Moon Bunny Hood',art:gardenIllustration('moon-bunny-hood'),cost:220,type:'bunny',rarity:'epic'},
+  {id:'celestial-rose',name:'Celestial Rose',art:gardenIllustration('celestial-rose'),cost:300,type:'garden',rarity:'legendary'}
 ];
-function buyGardenCollectible(id) {
+async function buyGardenCollectible(id) {
   const item = GARDEN_COLLECTIBLES.find(entry => entry.id === id);
   if (!item || !me) return;
+  await hydrateGardenCollectionFromCloud();
   const collection = readGardenCollection();
   if (collection.owned.includes(id)) {
     if (item.type === 'garden') collection.equipped = collection.equipped === id ? 'none' : id;
     else collection.bunny = collection.bunny === id ? 'none' : id;
     saveGardenCollection(collection);
+    await syncGardenCollectionToCloud(collection);
     renderStreakPage();
     return;
   }
@@ -1034,6 +1271,7 @@ function buyGardenCollectible(id) {
   if (item.type === 'garden') collection.equipped = id;
   else collection.bunny = id;
   saveGardenCollection(collection);
+  await syncGardenCollectionToCloud(collection);
   toast(item.name + ' added to your collection!');
   renderStreakPage();
 }
@@ -1075,11 +1313,12 @@ function recordStreakDailyQuest(kind, value = '') {
   const dateKey = streakDateInTimeZone(timezone);
   const state = readStreakDailyQuests(dateKey);
   if (kind === 'heart' && value && !state.hearts.includes(String(value))) state.hearts.push(String(value));
-  if (kind === 'photo') state.photo = true;
-  if (kind === 'kiss-note') state.kissNote = true;
-  if (kind === 'note') state.note = Math.min(99,state.note + 1);
-  if (kind === 'song') state.song = true;
+  if (kind === 'photo') { state.photo = true; state.photoCount = Math.min(99,state.photoCount + 1); }
+  if (kind === 'kiss-note') { state.kissNote = true; state.kissNotes = Math.min(99,state.kissNotes + 1); if (value) state.noteTexts.push(String(value)); }
+  if (kind === 'note') { state.note = Math.min(99,state.note + 1); if (value) state.noteTexts.push(String(value)); }
+  if (kind === 'song') { state.song = true; state.songCount = Math.min(99,state.songCount + 1); }
   if (kind === 'login') state.login = true;
+  state.noteTexts = state.noteTexts.slice(-80);
   const quests = getDailyQuestRotation(dateKey);
   const newlyCompleted = !state.badge && quests.every(quest => quest.done(state));
   if (newlyCompleted) state.badge = true;
@@ -1518,6 +1757,10 @@ const STREAK_MILESTONE_ILLUSTRATIONS = [
 function renderStreakPage() {
   const content = $('#content');
   if (!content || !me) return;
+  if (gardenCollectionHydratedUserId !== String(me.id)) {
+    gardenCollectionHydratedUserId = String(me.id);
+    hydrateGardenCollectionFromCloud().then(() => { if (page === 'streak') renderStreakPage(); });
+  }
   const timezone = normalizeStreakTimeZone(me.streak_timezone || getBrowserStreakTimeZone());
   const todayKey = streakDateInTimeZone(timezone);
   const lastDate = String(me.last_login_date || '').slice(0, 10);
@@ -1594,14 +1837,14 @@ function renderStreakPage() {
     '<div class="sg-petal-balance"><span class="sg-petal-balance-art">' + gardenIllustration('bloom-5') + '</span><div><b>' + petalRewardBalance(petalRewards) + ' Petal Points</b><small>Earn 10 per daily quest · 25 from the daily chest</small></div></div>' +
     '<button type="button" class="sg-petal-chest" data-claim-petal-chest' + (completedQuests !== 3 || chestClaimed ? ' disabled' : '') + '>' +
     '<span class="sg-chest-art">' + gardenIllustration('golden-bell') + '</span> ' + (chestClaimed ? 'Chest collected today' : completedQuests === 3 ? 'Open daily chest · +25' : 'Complete 3 quests to unlock chest') + '</button>' +
-    '<small class="sg-petal-note">Rewards are saved in this browser for your account; they do not sync between devices.</small></div>';
+    '<small class="sg-petal-note">Your Petal Points stay on this device; your collected treasures sync to your profile for friends to see.</small></div>';
   const collection = readGardenCollection();
-  const collectibleMarkup = '<section class="sg-collectibles"><div class="sg-section-heading"><div><h3>Little Garden Shop</h3><p>Spend your Petal Points on tiny treasures</p></div></div><div class="sg-collectible-grid">' +
-    GARDEN_COLLECTIBLES.map(item => {
+  const collectibleMarkup = '<section class="sg-collectibles"><div class="sg-section-heading"><div><h3>Little Garden Shop</h3><p>Find a tiny treasure, from everyday blooms to magical keepsakes</p></div><span class="sg-shop-sparkle" aria-hidden="true">✧</span></div><div class="sg-collectible-grid">' +
+    [...GARDEN_COLLECTIBLES].sort((a, b) => a.cost - b.cost).map(item => {
       const owned = collection.owned.includes(item.id);
       const equipped = (item.type === 'garden' ? collection.equipped : collection.bunny) === item.id;
       const affordable = petalRewardBalance(petalRewards) >= item.cost;
-      return '<article class="sg-collectible-card' + (equipped ? ' is-equipped' : '') + '"><span class="sg-collectible-art">' + item.art + '</span><b>' + item.name + '</b><small>' + (item.type === 'bunny' ? 'Bunny style' : 'Garden decor') + '</small><button type="button" data-buy-collectible="' + item.id + '"' + (!owned && !affordable ? ' disabled' : '') + '>' + (equipped ? 'Equipped ✓' : owned ? 'Equip' : item.cost + ' petals · Collect') + '</button></article>';
+      return '<article class="sg-collectible-card rarity-' + item.rarity + (equipped ? ' is-equipped' : '') + '" data-rarity="' + item.rarity + '"><span class="sg-collectible-art">' + item.art + '<i class="sg-art-glint" aria-hidden="true">✧</i></span><b>' + item.name + '</b><small>' + (item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1)) + ' · ' + (item.type === 'bunny' ? 'Bunny style' : 'Garden decor') + '</small><button type="button" data-buy-collectible="' + item.id + '"' + (!owned && !affordable ? ' disabled' : '') + '>' + (equipped ? 'Equipped ✓' : owned ? 'Equip' : item.cost + ' petals · Collect') + '</button></article>';
     }).join('') + '</div><div class="sg-equipped-summary">Garden: ' + (GARDEN_COLLECTIBLES.find(item => item.id === collection.equipped)?.name || 'Original look') + ' · Bunny: ' + (GARDEN_COLLECTIBLES.find(item => item.id === collection.bunny)?.name || 'Original look') + '</div></section>';
   const weeklyProgress = getWeeklyBloomProgress(todayKey);
   const weeklyTiers = [{days:3,points:30,title:'Little Bloom',art:gardenIllustration('bloom-3')},{days:5,points:50,title:'Garden Glow',art:gardenIllustration('bloom-5')},{days:7,points:100,title:'Full Bloom',art:gardenIllustration('bloom-7')}];
@@ -1613,11 +1856,16 @@ function renderStreakPage() {
       return '<article class="sg-weekly-tier' + (unlocked ? ' is-unlocked' : '') + '"><span class="sg-weekly-art">' + tier.art + '</span><div><b>' + tier.title + '</b><small>' + tier.days + ' completed days · +' + tier.points + ' petals</small></div><button type="button" data-claim-weekly="' + tier.days + '"' + (!unlocked || claimed ? ' disabled' : '') + '>' + (claimed ? 'Claimed ✓' : unlocked ? 'Collect' : 'Locked') + '</button></article>';
     }).join('') + '</div></section>';
   const dailyQuestMarkup = '<div class="sg-daily-quest-list">' +
-    dailyQuestItems.map(item => '<article class="sg-daily-quest-card' + (item.done ? ' is-done' : '') + '">' +
-      '<span class="sg-daily-quest-icon">' + gardenIllustration(item.id === 'hearts' ? 'hearts' : item.id) + '</span>' +
-      '<div class="sg-daily-quest-copy"><div class="sg-daily-quest-title-row"><b>' + item.title + '</b>' +
-      '<span class="sg-daily-quest-status' + (item.done ? ' is-done' : '') + '">' + (item.done ? 'Done ✓' : item.progress + ' / ' + item.target) + '</span></div>' +
-      '<p>' + item.description + '</p><div class="sg-daily-quest-progress"><span style="width:' + (item.progress / item.target * 100) + '%"></span></div></div></article>').join('') +
+    dailyQuestItems.map(item => {
+      const action = item.kind === 'photo' ? 'gallery' : item.kind === 'song' ? 'music' :
+        (item.kind === 'note' || item.kind === 'kiss-note') ? 'notes' :
+        item.kind === 'heart' ? 'gallery' : 'streak';
+      return '<article class="sg-daily-quest-card' + (item.done ? ' is-done' : '') + '" data-daily-quest-action="' + action + '" role="button" tabindex="0" aria-label="' + esc(item.title + '. ' + item.description + (item.done ? ' Completed.' : ' Open quest activity.')) + '">' +
+        '<span class="sg-daily-quest-icon">' + gardenIllustration(item.art || item.kind || item.id) + '</span>' +
+        '<div class="sg-daily-quest-copy"><div class="sg-daily-quest-title-row"><b>' + item.title + '</b>' +
+        '<span class="sg-daily-quest-status' + (item.done ? ' is-done' : '') + '">' + (item.done ? 'Done ✓' : item.progress + ' / ' + item.target) + '</span></div>' +
+        '<p>' + item.description + '</p><div class="sg-daily-quest-progress"><span style="width:' + (item.progress / item.target * 100) + '%"></span></div></div></article>';
+    }).join('') +
     '</div><div class="sg-daily-quest-footer"><span>' + completedQuests + ' / 3 quests complete</span>' +
     (dailyQuestState.badge ? '<b class="sg-daily-bloom-badge">✿ Daily Bloom earned</b>' : '<small>Complete today’s 3 quests to earn your Daily Bloom</small>') + '</div>';
 
@@ -1897,7 +2145,7 @@ function renderStreakPage() {
       '<section class="sg-milestones-section sg-hearts-section"><div class="sg-section-heading"><div><h3>Your Hearts</h3><p>' + heartCount + ' hearts received · ' + heartMilestones.filter(item => heartCount >= item.hearts).length + ' of ' + heartMilestones.length + ' milestones unlocked</p></div></div>' +
       '<div class="sg-milestone-route">' + heartBadges + '</div></section></section>',
     '<section class="sg-tab-panel' + (streakGardenActiveTab === 'daily' ? ' is-active' : '') + '" id="sgDailyPanel" role="tabpanel"' + (streakGardenActiveTab === 'daily' ? '' : ' hidden') + '>' +
-      '<section class="sg-daily-quests-section"><div class="sg-section-heading"><div><h3>Daily Quest</h3><p>A little kindness makes the garden bloom</p></div><span class="sg-goal-count">' + completedQuests + ' / 3</span></div>' +
+      '<section class="sg-daily-quests-section"><div class="sg-section-heading"><div><h3>Daily Quest</h3><p>20-day garden adventure · Day ' + (Math.floor(Math.max(0,(new Date(todayKey + 'T00:00:00Z') - new Date((localStorage.getItem(streakStorageKey('daily-quest-campaign-start')) || todayKey) + 'T00:00:00Z')) / 86400000) % 20) + 1) + ' of 20 · 60 little challenges</p></div><span class="sg-goal-count">' + completedQuests + ' / 3</span></div>' +
       dailyQuestMarkup + petalRewardsMarkup + weeklyMarkup + collectibleMarkup + '</section></section>',
     '</div>',
     '</div>',
@@ -2268,7 +2516,7 @@ function memoryCard(m, options = {}) {
 
   let body = '';
   if (m.kind === 'photo') {
-    body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo" loading="lazy" decoding="async" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
+    body = `<div class="tile${liked}">${heartButton}<div class="photo-frame"><img class="feed-photo is-loading" loading="lazy" decoding="async" data-media="${esc(m.id)}" ${m.previewUrl ? `src="${esc(m.previewUrl)}"` : ""} alt="Shared photo" role="button" tabindex="0" aria-label="Open full photo" draggable="false"></div></div>`;
   } else if (m.kind === 'song') {
     const songAction = m.isPending ? '' : mine
       ? `<button class="song-download card-song-save card-song-delete" type="button" data-memory-delete="${esc(m.id)}" aria-label="Delete song">Delete</button>`
@@ -2510,7 +2758,6 @@ function render(options = {}) {
       <div class="daily" id="dailyCard" role="button" tabindex="0" aria-label="A little kindness for today. Tap for another reminder">
         <span class="daily-icon">🌼</span><div><small>A LITTLE KINDNESS FOR TODAY</small><p id="compliment">${esc(getKindness())}</p></div>
       </div>
-      ${achievementGardenMarkup(visibleFeed)}
       <div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div>
       <div class="grid happy-things-grid">
         ${streakWidget()}
@@ -2584,14 +2831,12 @@ function openClassicProfileEditor() {
   if (!me) return;
   const gate = $('#profileGate');
   if (!gate) return;
-  $('#profileName').textContent = me.displayName || me.display_name || me.username || 'Your profile';
-  $('#profileHandle').textContent = '@' + (me.username || '');
-  $('#profileCreated').textContent = formatProfileDate(me.created_at || me.createdAt);
   $('#profileDisplay').value = me.displayName || me.display_name || '';
   $('#profileUsername').value = me.username || '';
   $('#profileBio').value = me.bio || '';
   $('#profileTheme').value = me.theme || 'rose';
   $('#profileMascot').value = me.mascot || '🐰';
+  setTheme(me.theme || 'rose');
   updateThemePreview(me.theme || 'rose');
   updateBuddyChoices(me.mascot || '🐰');
   document.querySelectorAll('[data-classic-gender]').forEach(button => {
@@ -2618,6 +2863,8 @@ function closeClassicProfileEditor() {
 function showFriendProfile(user) {
   if (!user) return;
   const gate = $('#friendProfileGate');
+  gate.dataset.collectionUserId = String(user.id || '');
+  friendGardenRequestSequence += 1;
   const isOwnProfile = !!(me?.id && user?.id && String(user.id) === String(me.id)) || (!!me?.username && String(user?.username || '').toLowerCase() === String(me.username).toLowerCase());
   gate.dataset.username = user.username;
   gate.dataset.following = String(!!user.isFollowing);
@@ -2661,7 +2908,7 @@ function showFriendProfile(user) {
   const collectionPanel = $('#friendProfileCollection');
   const badgesPanel = $('#friendProfileBadges');
   if (highlights) highlights.hidden = false;
-  if (collectionPanel) collectionPanel.hidden = !isOwnProfile;
+  if (collectionPanel) collectionPanel.hidden = false;
   if (badgesPanel) badgesPanel.hidden = false;
   {
     const profileFeed = isOwnProfile ? (Array.isArray(feed) ? feed : []) : [];
@@ -2677,13 +2924,26 @@ function showFriendProfile(user) {
     const notes = isOwnProfile ? ownFeed.filter(item => item.kind === 'note').length : Number(user.note_count ?? user.notes_count ?? 0);
     const songs = isOwnProfile ? ownFeed.filter(item => item.kind === 'song').length : Number(user.song_count ?? user.songs_count ?? 0);
     if (isOwnProfile) {
-      const collection = typeof readGardenCollection === 'function' ? readGardenCollection() : {owned:[],equipped:'none',bunny:'none'};
-      const catalog = typeof GARDEN_COLLECTIBLES !== 'undefined' ? GARDEN_COLLECTIBLES : [];
-      const ownedItems = catalog.filter(item => collection.owned.includes(item.id));
-      const collectionCount = $('#friendProfileCollectionCount');
-      if (collectionCount) collectionCount.textContent = ownedItems.length + (ownedItems.length === 1 ? ' treasure' : ' treasures');
+      const collection = normalizeGardenCollection(readGardenCollection());
+      renderFriendGardenCollection(collection, user.id, true);
+      syncGardenCollectionToCloud(collection);
+    } else {
+      const collectionSection = $('#friendProfileCollection');
       const collectionItems = $('#friendProfileCollectionItems');
-      if (collectionItems) collectionItems.innerHTML = ownedItems.length ? ownedItems.slice(0,6).map(item => '<span class="friend-profile-collection-item' + ((item.type === 'garden' ? collection.equipped : collection.bunny) === item.id ? ' is-equipped' : '') + '" title="' + esc(item.name) + '"><span>' + item.icon + '</span><small>' + esc(item.name) + '</small></span>').join('') : '<p class="friend-profile-empty">Your first little treasure is waiting in the Garden Shop ♡</p>';
+      const collectionCount = $('#friendProfileCollectionCount');
+      let cachedCollection = null;
+      try {
+        const cached = localStorage.getItem(friendGardenCollectionCacheKey(user.id));
+        if (cached) cachedCollection = normalizeGardenCollection(JSON.parse(cached));
+      } catch {}
+      if (cachedCollection) {
+        renderFriendGardenCollection(cachedCollection, user.id, false);
+      } else {
+        if (collectionSection) collectionSection.hidden = false;
+        if (collectionItems) collectionItems.innerHTML = '';
+        if (collectionCount) collectionCount.hidden = true;
+      }
+      loadFriendGardenCollection(user, false);
     }
     const streak = Math.max(0, Number(user.login_streak) || 0);
     const heartTotal = Math.max(0, Number(user.heartCount) || 0);
@@ -2707,7 +2967,7 @@ function showFriendProfile(user) {
   ];
     const milestoneBadges = (items,total,unit) => items.filter(item => total >= item.goal).map(item => {
       const art = unit === 'days' ? STREAK_MILESTONE_ILLUSTRATIONS[items.indexOf(item)] : item.icon;
-      return '<span class="friend-profile-milestone-badge is-unlocked" title="'+esc(item.title+' · '+item.goal.toLocaleString()+' '+unit)+'" aria-label="'+esc(item.title+' · '+item.goal.toLocaleString()+' '+unit+' · Unlocked')+'">'+(typeof art === 'string' && art.trim().startsWith('<svg') ? '<span class="friend-profile-milestone-svg">'+art+'</span>' : art)+'</span>';
+      return '<span class="friend-profile-milestone-badge is-unlocked" title="'+esc(item.title+' · '+item.goal.toLocaleString()+' '+unit)+'" aria-label="'+esc(item.title+' · '+item.goal.toLocaleString()+' '+unit+' · Unlocked')+'">'+(typeof art === 'string' && art.trim().startsWith('<svg') ? '<span class="friend-profile-milestone-svg">'+art+'</span>' : '<span class="friend-profile-milestone-emoji">'+art+'</span>')+'</span>';
     }).join('');
     const badgeList = $('#friendProfileBadgeList');
     if (badgeList) badgeList.innerHTML =
@@ -2728,6 +2988,14 @@ function showFriendProfile(user) {
 }
 
 
+// Keep the Settings panel and its flower trigger in sync when dismissed.
+function restoreProfileSettingsToMain() {
+  const panel = $('#profileSettingsPanel');
+  if (panel) panel.classList.add('hidden');
+  const trigger = $('#profileSettingsTrigger');
+  if (trigger) trigger.setAttribute('aria-expanded', 'false');
+}
+
 function profileSettingsMarkup() {
   const themeOptions = [
     ['rose','🌷','Rose garden'],['lavender','☁️','Lavender skies'],['mint','🍃','Mint meadow'],
@@ -2735,7 +3003,7 @@ function profileSettingsMarkup() {
     ['midnight','🌙','Midnight lilac'],['sage','🌿','Sage garden'],['buttercup','🌼','Buttercup']
   ];
   const buddyOptions = [['🐰','Bunny'],['🐱','Kitty'],['🐻','Bear'],['🐸','Frog']];
-  return `<section class="profile-settings-panel hidden" id="profileSettingsPanel" aria-label="Profile settings" aria-modal="false">
+  return `<section class="profile-settings-panel hidden" id="profileSettingsPanel" aria-label="Settings" aria-modal="false">
     <div class="profile-settings-heading">
       <div><small>YOUR LITTLE CORNER</small><h3>Settings</h3><p>Make this space feel like yours.</p></div>
       <button type="button" class="profile-settings-close" id="profileSettingsClose" aria-label="Close profile settings">×</button>
@@ -2747,14 +3015,7 @@ function profileSettingsMarkup() {
       <button type="button" class="profile-settings-tab" data-settings-tab="notifications" role="tab" aria-selected="false" aria-controls="profileSettingsNotifications">Alerts</button>
     </div>
     <div class="profile-settings-section profile-editor-settings" id="profileSettingsAccount" data-settings-section="account" role="tabpanel">
-      <div class="settings-section-intro"><span class="settings-section-icon">♡</span><div><b>Account details</b><small>Your unique identity in Cute Bunny.</small></div></div>
-      <label class="profile-settings-field">Username
-        <span class="profile-username-input"><span aria-hidden="true">@</span><input id="profileEditUsername" maxlength="24" autocomplete="username" spellcheck="false" placeholder="your_username"></span>
-      </label>
-      <p class="profile-settings-hint">Use 3–24 letters, numbers or underscores.</p>
-      <label class="profile-settings-field">Display name
-        <input id="profileEditDisplayName" maxlength="40" autocomplete="name" placeholder="Your display name">
-      </label>
+      <div class="settings-section-intro"><span class="settings-section-icon">♡</span><div><b>About you</b><small>Write a little introduction.</small></div></div>
       <label class="profile-settings-field">A little about you
         <textarea id="profileEditBio" maxlength="180" rows="3" placeholder="Write a little introduction..."></textarea>
         <small class="profile-bio-count" id="profileBioCount">0 / 180</small>
@@ -2778,11 +3039,6 @@ function profileSettingsMarkup() {
         ${themeOptions.map(([value,emoji,label]) => `<button type="button" class="settings-theme-choice theme-${value}" data-settings-theme-choice="${value}" role="radio" aria-checked="false"><span class="theme-illustration" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 5c3 0 4 5 4 8 3-3 7-5 9-3s0 7-3 9c4 0 8 2 8 5s-5 4-8 4c3 3 4 7 2 9s-7 0-9-3c0 4-2 7-5 7s-4-5-4-8c-3 3-7 4-9 2s0-7 3-9c-4 0-7-2-7-5s5-4 8-4c-3-3-4-7-2-9s7 0 9 3c0-4 2-6 4-6Z" fill="currentColor" opacity=".78"/><circle cx="20" cy="22" r="5" fill="#fff6e9" stroke="currentColor" stroke-width="1.5"/></svg></span><small>${label}</small></button>`).join('')}
       </div>
       <input id="settingsBuddyValue" type="hidden" value="🐰">
-      <div class="profile-live-preview" id="profileLivePreview" aria-live="polite">
-        <span class="profile-live-avatar" id="profileLiveAvatar">🐰</span>
-        <span><b id="profileLiveName">Your name</b><small id="profileLiveHandle">@your_username</small></span>
-        <em>Live preview</em>
-      </div>
       <div class="settings-choice-heading">Little buddy</div>
       <div class="settings-buddy-row" role="radiogroup" aria-label="Choose your little buddy">
         ${buddyOptions.map(([value,label]) => `<button type="button" class="settings-buddy-choice" data-settings-buddy-choice="${value}" role="radio" aria-checked="false"><span class="buddy-choice-art">${buddyIllustration(value)}</span><small>${label}</small></button>`).join('')}
@@ -2807,21 +3063,10 @@ function buddyIllustration(value) {
 }
 
 function updateProfileLivePreview() {
-  const username = String($('#profileEditUsername')?.value || me?.username || 'your_username').trim();
-  const displayName = String($('#profileEditDisplayName')?.value || me?.displayName || me?.display_name || username).trim();
-  const mascot = $('#settingsBuddyValue')?.value || me?.mascot || '🐰';
-  const name = $('#profileLiveName'), handle = $('#profileLiveHandle'), avatar = $('#profileLiveAvatar');
-  if (name) name.textContent = displayName || 'Your name';
-  if (handle) handle.textContent = '@' + (username || 'your_username');
-  if (avatar) avatar.innerHTML = buddyIllustration(mascot);
   const count = $('#profileBioCount'), bio = $('#profileEditBio');
   if (count) count.textContent = (bio?.value || '').length + ' / 180';
 }
 function renderProfileSettings() {
-  const usernameField = $('#profileEditUsername');
-  if (usernameField) usernameField.value = me?.username || '';
-  const displayNameField = $('#profileEditDisplayName');
-  if (displayNameField) displayNameField.value = me?.displayName || me?.display_name || '';
   const bioField = $('#profileEditBio');
   if (bioField) bioField.value = me?.bio || '';
   updateProfileLivePreview();
@@ -2851,18 +3096,13 @@ async function saveProfileSettings() {
   if (!me?.id) return;
   const save = $('#profileSettingsSave'), feedback = $('#profileSettingsFeedback');
   const gender = document.querySelector('[data-profile-gender].is-selected')?.dataset.profileGender || null;
-  const username = String($('#profileEditUsername')?.value || '').trim().toLowerCase();
-  if (!/^[a-z0-9_]{3,24}$/.test(username)) {
-    if (feedback) feedback.textContent = 'Username must be 3–24 letters, numbers, or underscores.';
-    toast('Check your username ♡');
-    return;
-  }
+  const username = me.username || '';
   if (save) save.disabled = true;
   if (feedback) feedback.textContent = 'Saving your changes…';
   try {
     const theme = $('#settingsThemeValue')?.value || me.theme || 'rose';
     const mascot = $('#settingsBuddyValue')?.value || me.mascot || '🐰';
-    const displayName = String($('#profileEditDisplayName')?.value || '').trim().slice(0,40);
+    const displayName = me.displayName || me.display_name || '';
     const bio = String($('#profileEditBio')?.value || '').trim().slice(0,180);
     const saved = await api('/me', { method: 'PUT', body: JSON.stringify({ username, gender, theme, mascot, displayName, bio }) });
     me = { ...me, ...saved, username: saved.username || username, gender, theme, mascot, displayName: saved.displayName ?? displayName, display_name: saved.display_name ?? displayName, bio };
@@ -2872,8 +3112,8 @@ async function saveProfileSettings() {
     const gate = $('#friendProfileGate');
     if (gate && !gate.classList.contains('hidden') && gate.dataset.ownProfile === 'true') showFriendProfile(me);
     renderProfileSettings();
-    if (feedback) feedback.textContent = 'Your profile is updated ♡';
-    toast('Profile updated ♡');
+    if (feedback) feedback.textContent = 'Settings saved ♡';
+    toast('Settings saved ♡');
     restoreProfileSettingsToMain();
     render();
   } catch (error) {
@@ -2949,6 +3189,8 @@ function updateBuddyChoices(value = $('#profileMascot')?.value || '🐰') {
 }
 
 function updateThemePreview(theme = $('#profileTheme')?.value || 'rose') {
+  // Apply the selected palette to the entire app immediately while Settings is open.
+  setTheme(theme);
   const preview = $('#profileThemePreview');
   if (preview) preview.dataset.themePreview = theme;
   document.querySelectorAll('[data-theme-choice]').forEach(button => {
@@ -3068,6 +3310,9 @@ async function playSong(id) {
   playlist = songs;
   playlistIndex = index;
   const track = songs[index];
+  const playButton = [...document.querySelectorAll("[data-play-song]")].find(button => String(button.dataset.playSong) === String(id));
+  playButton?.classList.add("is-loading");
+  playButton?.classList.remove("is-buffering");
   // Keep the current player and audio element alive while the next signed URL
   // is resolved; the previous song continues instead of flashing to empty.
   syncPlayer();
@@ -3076,13 +3321,17 @@ async function playSong(id) {
     if (requestId !== songLoadSequence) return;
     audio.src = url;
     audio.preload = 'auto';
+    playButton?.classList.remove("is-loading");
+    playButton?.classList.add("is-buffering");
     const playback = audio.play();
     syncPlayer();
     await playback;
     if (requestId !== songLoadSequence) return;
     syncPlayer();
+    playButton?.classList.remove("is-loading", "is-buffering");
   } catch (error) {
     if (requestId !== songLoadSequence) return;
+    playButton?.classList.remove("is-loading", "is-buffering");
     syncPlayer();
     toast(error?.message || 'Could not play this song right now ♡');
   }
@@ -3457,8 +3706,8 @@ async function sendChatMessage() {
       .select('id,owner_id,kind,text,created_at')
       .single();
     if (sendError) throw sendError;
-    recordStreakDailyQuest('note');
-    if (/💋|😘|😗|😙|😚|😽/u.test(text)) recordStreakDailyQuest('kiss-note');
+    recordStreakDailyQuest('note', text);
+    if (/💋|😘|😗|😙|😚|😽/u.test(text)) recordStreakDailyQuest('kiss-note', text);
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
     feed = feed.map(m => String(m.id) === tempId ? record : m);
     renderNotesPage({ followLatest: true });
@@ -4603,7 +4852,7 @@ document.addEventListener('pointerdown', e => {
     photoPressState.suppressTimer = setTimeout(() => {
       photoPressState.suppressClick = false;
     }, 900);
-  }, 420);
+  }, 550);
 });
 
 function cancelPhotoPress(e) {
@@ -4761,7 +5010,7 @@ document.addEventListener('pointerdown', e => {
   const id = String(item?.dataset.memory || '');
   if (!id) return;
   // Cancel the pending single-photo open as soon as the second tap begins.
-  if (lastTouchMemoryTap.id === id && performance.now() - lastTouchMemoryTap.time <= 100) {
+  if (lastTouchMemoryTap.id === id && performance.now() - lastTouchMemoryTap.time <= 320) {
     clearTimeout(photoPressState.clickTimer);
     photoPressState.clickTimer = null;
     photoPressState.pendingPhotoId = null;
@@ -4779,7 +5028,7 @@ document.addEventListener('pointerup', e => {
   if (!isPhotoOrMusic) return;
   const id = String(item?.dataset.memory || '');
   const now = performance.now();
-  if (id && lastTouchMemoryTap.id === id && now - lastTouchMemoryTap.time <= 100) {
+  if (id && lastTouchMemoryTap.id === id && now - lastTouchMemoryTap.time <= 320) {
     lastTouchMemoryTap = { id: '', time: 0, tile: null };
     suppressNativeMemoryDblclickUntil = now + 500;
     if (e.target.closest('.feed-photo')) {
@@ -4961,6 +5210,14 @@ document.addEventListener('submit', e => {
   e.preventDefault();
   void searchFriends();
 });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const questCard = e.target.closest?.('.sg-daily-quest-card[data-daily-quest-action]');
+  if (!questCard) return;
+  e.preventDefault();
+  questCard.click();
+});
+
 document.addEventListener('click', async e => {
   // Kindness card
   if (e.target.closest('#dailyCard')) {
@@ -5110,6 +5367,24 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  const dailyQuestAction = e.target.closest('[data-daily-quest-action]');
+  if (dailyQuestAction) {
+    const destination = dailyQuestAction.dataset.dailyQuestAction;
+    if (destination === 'gallery' || destination === 'music' || destination === 'notes') {
+      go(destination);
+      if (destination === 'notes') {
+        requestAnimationFrame(() => {
+          const composer = $('#chatInput');
+          composer?.focus();
+          if (composer) composer.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        });
+      }
+    } else if (destination === 'streak') {
+      openStreakGarden();
+    }
+    return;
+  }
+
   const questChoice = e.target.closest('[data-streak-quest-select]');
   if (questChoice) {
     const nextQuest = Number(questChoice.dataset.streakQuestSelect);
@@ -5254,8 +5529,6 @@ document.addEventListener('click', async e => {
         })
       });
       me = { ...me, ...updated };
-      $('#profileName').textContent = me.displayName || username;
-      $('#profileHandle').textContent = '@' + username;
       $('#topMascot').textContent = me.mascot || '🐰';
       $('#profileGate').classList.add('hidden');
       document.body.classList.remove('classic-profile-open');
@@ -5421,7 +5694,7 @@ document.addEventListener('click', async e => {
       photoPressState.clickTimer = null;
       photoPressState.pendingPhotoId = null;
       if (pendingId) void openPhotoLightbox(pendingId);
-    }, 100);
+    }, 320);
     return;
   }
   if (e.target.closest('#photoLightboxSave')) {
@@ -5838,8 +6111,8 @@ document.addEventListener('change', async e => {
       previewUrl
     };
     feed = feed.map(m => String(m.id) === tempId ? item : m);
-    if (kind === 'photo') recordStreakDailyQuest('photo');
-    if (kind === 'song') recordStreakDailyQuest('song');
+    if (kind === 'photo') recordStreakDailyQuest('photo', file.name);
+    if (kind === 'song') recordStreakDailyQuest('song', file.name);
     render();
     toast('Added to your shared scrapbook ♡');
   } catch (err) {
@@ -5888,3 +6161,37 @@ async function restoreSession() {
 
 restoreSession();
 render();
+
+
+// Photo and song media loading feedback. These listeners are delegated so
+// cards rendered later receive the same polished loading and error states.
+document.addEventListener('load', event => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement) || !image.classList.contains('feed-photo')) return;
+  image.classList.remove('is-loading', 'has-load-error');
+  image.classList.add('is-loaded');
+}, true);
+document.addEventListener('error', event => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement) || !image.classList.contains('feed-photo')) return;
+  image.classList.remove('is-loading', 'is-loaded');
+  image.classList.add('has-load-error');
+}, true);
+
+const sharedAudioElement = document.querySelector('#globalAudio');
+sharedAudioElement?.addEventListener('playing', () => {
+  document.querySelectorAll('[data-play-song].is-buffering').forEach(button => button.classList.remove('is-buffering', 'is-loading'));
+});
+sharedAudioElement?.addEventListener('canplay', () => {
+  document.querySelectorAll('[data-play-song].is-buffering').forEach(button => button.classList.remove('is-buffering'));
+});
+sharedAudioElement?.addEventListener('waiting', () => {
+  const activeId = playlist[playlistIndex]?.id;
+  const button = [...document.querySelectorAll('[data-play-song]')].find(item => String(item.dataset.playSong) === String(activeId));
+  button?.classList.add('is-buffering');
+});
+sharedAudioElement?.addEventListener('playing', () => {
+  const activeId = playlist[playlistIndex]?.id;
+  const button = [...document.querySelectorAll('[data-play-song]')].find(item => String(item.dataset.playSong) === String(activeId));
+  button?.classList.remove('is-buffering', 'is-loading');
+});
