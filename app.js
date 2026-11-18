@@ -3830,8 +3830,8 @@ async function clearIgNote() {
    The typing hint is attached to the conversation thread, never the composer,
    and heartbeat/expiry timings are short enough to feel live without flicker. */
 let notesTypingChannel = null;
-const NOTES_TYPING_HEARTBEAT_MS = 450;
-const NOTES_TYPING_EXPIRY_MS = 1600;
+const NOTES_TYPING_HEARTBEAT_MS = 1200;
+const NOTES_TYPING_EXPIRY_MS = 4200;
 const NOTES_TYPING_IDLE_MS = 700;
 
 async function sendNotesTyping(isTyping) {
@@ -3926,10 +3926,12 @@ function startNotesTyping() {
     typingActive = true;
     typingLastSentAt = now;
     void sendNotesTyping(true);
+    void updateNotesTypingPresence();
     typingHeartbeatTimer = setInterval(() => {
       if (!typingActive || page !== 'notes' || document.hidden) return;
       typingLastSentAt = Date.now();
       void sendNotesTyping(true);
+      void updateNotesTypingPresence();
     }, NOTES_TYPING_HEARTBEAT_MS);
   }
   clearTimeout(typingStopTimer);
@@ -3944,6 +3946,7 @@ function stopNotesTyping() {
   if (!typingActive) return;
   typingActive = false;
   void sendNotesTyping(false);
+  void updateNotesTypingPresence();
 }
 
 function syncNotesTypingFromPresence(state = {}) {
@@ -4163,7 +4166,7 @@ function startNotesIncomingPoll() {
   void checkForIncomingFriendNote();
   notesIncomingPollTimer = setInterval(() => {
     if (page === 'notes' && !document.hidden) void checkForIncomingFriendNote();
-  }, 500);
+  }, 5000);
 }
 
 async function refreshOwnNoteSeenStatus() {
