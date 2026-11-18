@@ -1,7 +1,7 @@
 {
   "appId": "com.cutebunny.app",
-  "version": "1.0.121",
-  "url": "https://github.com/whtankus/Cute-bunny/releases/download/ota-v1.0.121/cute-bunny-ota.zip",
-  "checksum": "c3ced3192693f6e7433da9357807222f29b825a71be5cda4729af9f953dfc4e4",
-  "publishedAt": "2026-11-18T14:32:43Z"
+  "version": "1.0.122",
+  "url": "https://github.com/whtankus/Cute-bunny/releases/download/ota-v1.0.122/cute-bunny-ota.zip",
+  "checksum": "68608d8a631bf02c96f6c821997f85d02c50907938e611a012dde1ddf246d0c5",
+  "publishedAt": "2026-11-18T15:16:51Z"
 }
