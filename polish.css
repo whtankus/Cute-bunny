@@ -2762,3 +2762,1170 @@ html body #app > header > #profileOpen.brand:active {
   filter: none !important;
 }
 
+
+
+/* Profile keepsakes + petite achievement garden */
+.friend-profile-section-heading{gap:8px;margin-bottom:11px;color:#80647d}
+.friend-profile-section-heading>span{display:grid;place-items:center;width:27px;height:27px;border-radius:10px;background:linear-gradient(145deg,#fff0f5,#f4eafa);color:#bd83a1;font-size:15px}
+.friend-profile-section-heading>b{font:800 .88rem Quicksand,sans-serif;letter-spacing:.01em}
+.friend-profile-section-heading>small{padding:4px 8px;border:1px solid #f0dce7;border-radius:999px;background:#fff8fb;color:#a47f97;font-size:.64rem;font-weight:800}
+.friend-profile-collection,.friend-profile-badges{padding:13px 14px;border-color:rgba(226,197,211,.8);background:linear-gradient(145deg,rgba(255,255,255,.76),rgba(255,246,250,.72))}
+.friend-profile-collection-items{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.friend-profile-collection-item{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:0;max-width:none;padding:0;border:0;border-radius:0;background:transparent;transition:transform .18s ease}
+.friend-profile-collection-item:has(.friend-profile-collection-art svg){ }
+.friend-profile-collection-art{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:radial-gradient(circle at 35% 25%,#fff 0 18%,#fff0f5 72%);box-shadow:inset 0 0 0 1px rgba(221,178,198,.28)}
+.friend-profile-collection-art svg{display:block;width:39px;height:39px;overflow:visible}
+.friend-profile-collection-item.is-equipped{border-color:#dfa5bd;background:linear-gradient(155deg,#fff4f8,#f9eaf2);box-shadow:0 0 0 2px rgba(239,204,220,.55)}
+.friend-profile-equipped-mark{position:absolute;top:4px;right:6px;color:#bd83a1;font-size:11px;font-style:normal}
+.friend-profile-milestone-icons{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.friend-profile-milestone-badge{display:inline-flex;align-items:center;justify-content:center;min-width:0;min-height:0;padding:0;border:0;background:transparent;text-align:center}
+.friend-profile-milestone-svg,.friend-profile-milestone-emoji{display:grid;place-items:center;width:38px;height:38px;border-radius:0;background:transparent;color:#bd83a1}
+.friend-profile-milestone-svg svg{display:block;width:36px;height:36px}
+.friend-profile-milestone-emoji{font-size:22px}
+
+@media(max-width:390px){.friend-profile-collection-items{gap:6px}.friend-profile-collection-items{gap:8px}.friend-profile-collection-art{width:40px;height:40px}.friend-profile-collection-art svg{width:35px;height:35px}.friend-profile-milestone-icons{gap:8px}.friend-profile-milestone-svg,.friend-profile-milestone-emoji{width:34px;height:34px}.friend-profile-milestone-svg svg{width:32px;height:32px}}
+@media(prefers-reduced-motion:no-preference){.friend-profile-collection-item:hover{transform:translateY(-2px)}}
+
+
+/* Little Garden Shop — rarity glow, jewel-like SVGs and soft animated shine. */
+#content .sg-collectible-card{position:relative;isolation:isolate;overflow:hidden;gap:8px;padding:13px 10px 11px;border-color:rgba(213,183,201,.48);background:linear-gradient(155deg,rgba(255,255,255,.92),rgba(255,246,250,.82));box-shadow:0 7px 20px rgba(135,91,119,.055);transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+#content .sg-collectible-card:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.22;background:radial-gradient(circle at 50% 18%,var(--rarity-glow),transparent 62%)}
+#content .sg-collectible-card.rarity-common{--rarity-glow:rgba(226,178,197,.5)}
+#content .sg-collectible-card.rarity-rare{--rarity-glow:rgba(129,205,207,.58);border-color:rgba(143,201,205,.58)}
+#content .sg-collectible-card.rarity-epic{--rarity-glow:rgba(183,151,229,.62);border-color:rgba(178,151,221,.65)}
+#content .sg-collectible-card.rarity-legendary{--rarity-glow:rgba(244,197,112,.72);border-color:rgba(218,177,101,.72);box-shadow:0 8px 24px rgba(195,151,75,.12)}
+#content .sg-collectible-art{position:relative;display:grid;place-items:center;width:76px;height:76px;margin:0 auto 3px;border:1px solid rgba(255,255,255,.88);border-radius:24px;background:radial-gradient(circle at 50% 42%,#fff 0 8%,var(--rarity-glow),rgba(255,249,252,.82) 72%);box-shadow:0 0 0 1px rgba(255,255,255,.72),0 0 18px var(--rarity-glow),inset 0 0 17px rgba(255,255,255,.88)}
+#content .sg-collectible-art svg{width:66px;height:66px;overflow:visible;filter:drop-shadow(0 3px 3px rgba(89,66,98,.18)) drop-shadow(0 0 5px var(--rarity-glow))}
+#content .sg-collectible-art .sg-art-glint{position:absolute;top:7px;right:9px;color:#fff;font-size:17px;font-style:normal;text-shadow:0 0 5px #fff,0 0 12px var(--rarity-glow);animation:sg-art-twinkle 2.8s ease-in-out infinite}
+#content .sg-collectible-card.rarity-rare .sg-collectible-art{box-shadow:0 0 0 1px rgba(255,255,255,.85),0 0 22px rgba(105,202,211,.3),inset 0 0 20px rgba(255,255,255,.92)}
+#content .sg-collectible-card.rarity-epic .sg-collectible-art{box-shadow:0 0 0 1px rgba(255,255,255,.85),0 0 25px rgba(172,135,226,.38),inset 0 0 22px rgba(255,255,255,.94)}
+#content .sg-collectible-card.rarity-legendary .sg-collectible-art{box-shadow:0 0 0 1px rgba(255,255,255,.9),0 0 30px rgba(239,190,91,.48),inset 0 0 25px rgba(255,255,255,.98)}
+#content .sg-collectible-card.is-equipped{border-color:#d7a1ba;background:linear-gradient(155deg,#fff5fa,#fff0f6);box-shadow:0 0 0 2px rgba(213,142,172,.17),0 9px 24px rgba(178,119,151,.12)}
+#content .sg-collectible-card>b{font-size:.9rem;line-height:1.25}
+#content .sg-collectible-card>small{font-size:.68rem;font-weight:800;letter-spacing:.045em;opacity:.72}
+#content .sg-collectible-card.rarity-rare>small{color:#448e98;opacity:1}
+#content .sg-collectible-card.rarity-epic>small{color:#8465b4;opacity:1}
+#content .sg-collectible-card.rarity-legendary>small{color:#a87928;opacity:1}
+#content .sg-collectible-card>button{margin-top:2px}
+#content .sg-shop-sparkle{display:grid;place-items:center;width:35px;height:35px;border-radius:50%;color:#c18cae;background:radial-gradient(circle,#fff,#f9e8f1);font-size:24px;box-shadow:0 0 17px rgba(225,175,203,.45)}
+@keyframes sg-art-twinkle{0%,100%{opacity:.55;transform:scale(.82) rotate(-12deg)}50%{opacity:1;transform:scale(1.16) rotate(12deg)}}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){#content .sg-collectible-card:hover{transform:translateY(-4px);box-shadow:0 13px 28px rgba(135,91,119,.13)}}
+@media(prefers-reduced-motion:reduce){#content .sg-collectible-art .sg-art-glint{animation:none}}
+/* Friends can see the same glowing collection art on each profile. */
+.friend-profile-collection-art{position:relative;display:grid;place-items:center;width:48px;height:48px;border-radius:16px;background:radial-gradient(circle at 50% 40%,#fff,var(--rarity-glow,rgba(232,192,211,.4)) 75%);box-shadow:0 0 14px var(--rarity-glow,rgba(232,192,211,.25))}
+.friend-profile-collection-item.garden-rarity-rare{--rarity-glow:rgba(111,197,207,.5)}
+.friend-profile-collection-item.garden-rarity-epic{--rarity-glow:rgba(177,142,225,.58)}
+.friend-profile-collection-item.garden-rarity-legendary{--rarity-glow:rgba(237,187,91,.66)}
+.friend-profile-collection-art svg{width:43px;height:43px;filter:drop-shadow(0 0 4px var(--rarity-glow,rgba(232,192,211,.3)))}
+.friend-profile-collection-item.is-equipped .friend-profile-collection-art{box-shadow:0 0 0 1px rgba(220,159,189,.6),0 0 18px var(--rarity-glow,rgba(232,192,211,.4))}
+
+
+/* Profile collection: one integrated four-column keepsake grid, including on phones. */
+#friendProfileGate .friend-profile-collection-items{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  justify-items:stretch!important;
+  gap:10px!important;
+  width:100%!important;
+}
+#friendProfileGate .friend-profile-collection-item{
+  position:relative!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  flex:initial!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:98px!important;
+  max-width:none!important;
+  padding:9px 4px 8px!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.62)!important;
+  border-radius:17px!important;
+  background:rgba(255,255,255,.20)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 10px rgba(111,79,103,.045)!important;
+}
+#friendProfileGate .friend-profile-collection-art{
+  position:relative!important;
+  display:grid!important;
+  place-items:center!important;
+  flex:none!important;
+  width:64px!important;
+  height:64px!important;
+  border-radius:20px!important;
+  background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.96),var(--rarity-glow,rgba(232,192,211,.42)) 78%)!important;
+  box-shadow:0 0 17px var(--rarity-glow,rgba(232,192,211,.28)),inset 0 0 12px rgba(255,255,255,.7)!important;
+}
+#friendProfileGate .friend-profile-collection-art svg{
+  display:block!important;
+  width:58px!important;
+  height:58px!important;
+  filter:drop-shadow(0 0 5px var(--rarity-glow,rgba(232,192,211,.34)))!important;
+}
+#friendProfileGate .friend-profile-collection-name{
+  display:block!important;
+  width:100%!important;
+  overflow:hidden!important;
+  color:#856b80!important;
+  font-size:.62rem!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+  text-align:center!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#friendProfileGate .friend-profile-collection-item.garden-rarity-rare{--rarity-glow:rgba(111,197,207,.5)}
+#friendProfileGate .friend-profile-collection-item.garden-rarity-epic{--rarity-glow:rgba(177,142,225,.58)}
+#friendProfileGate .friend-profile-collection-item.garden-rarity-legendary{--rarity-glow:rgba(237,187,91,.66)}
+#friendProfileGate .friend-profile-equipped-mark{
+  top:5px!important;
+  right:7px!important;
+  color:#b77c9c!important;
+  font-size:13px!important;
+  text-shadow:0 0 7px #fff,0 0 9px currentColor!important;
+}
+#friendProfileGate .friend-profile-collection-item.is-equipped{
+  border-color:rgba(225,164,193,.8)!important;
+  box-shadow:inset 0 0 0 1px rgba(225,164,193,.28),0 0 16px var(--rarity-glow,rgba(232,192,211,.25))!important;
+}
+@media(max-width:430px){
+  #friendProfileGate .friend-profile-collection-items{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}
+  #friendProfileGate .friend-profile-collection-item{min-height:92px!important;padding:7px 2px!important;border-radius:15px!important}
+  #friendProfileGate .friend-profile-collection-art{width:58px!important;height:58px!important;border-radius:18px!important}
+  #friendProfileGate .friend-profile-collection-art svg{width:53px!important;height:53px!important}
+  #friendProfileGate .friend-profile-collection-name{font-size:.57rem!important}
+}
+@media(max-width:350px){
+  #friendProfileGate .friend-profile-collection-items{gap:5px!important}
+  #friendProfileGate .friend-profile-collection-art{width:52px!important;height:52px!important}
+  #friendProfileGate .friend-profile-collection-art svg{width:48px!important;height:48px!important}
+}
+
+
+/* Keep the own-profile empty collection prompt on one line on every phone. */
+#friendProfileGate #friendProfileCollectionItems > .friend-profile-empty{
+  grid-column:1 / -1!important;
+  display:block!important;
+  width:max-content!important;
+  max-width:none!important;
+  justify-self:center!important;
+  margin:2px auto!important;
+  padding:0!important;
+  white-space:nowrap!important;
+  word-break:keep-all!important;
+  overflow-wrap:normal!important;
+  text-align:center!important;
+  font-size:clamp(10px,3.1vw,13px)!important;
+  line-height:1.35!important;
+}
+
+
+/* Give quest and weekly reward artwork clear breathing room beside text. */
+.streak-garden-page .sg-daily-quest-card{
+  grid-template-columns:32px minmax(0,1fr)!important;
+  gap:10px!important;
+}
+.streak-garden-page .sg-daily-quest-icon{
+  width:30px!important;height:30px!important;
+  border-radius:10px!important;
+}
+.streak-garden-page .sg-daily-quest-icon svg{
+  width:25px!important;height:25px!important;
+}
+.streak-garden-page .sg-weekly-tier{
+  grid-template-columns:34px minmax(0,1fr) minmax(72px,auto)!important;
+  gap:9px!important;
+}
+.streak-garden-page .sg-weekly-art{
+  width:34px!important;height:34px!important;
+  border-radius:11px!important;
+}
+.streak-garden-page .sg-weekly-art svg{
+  width:30px!important;height:30px!important;
+}
+@media(max-width:380px){
+  .streak-garden-page .sg-weekly-tier{
+    grid-template-columns:30px minmax(0,1fr) 68px!important;
+    gap:7px!important;
+  }
+  .streak-garden-page .sg-weekly-art{
+    width:30px!important;height:30px!important;
+  }
+  .streak-garden-page .sg-weekly-art svg{
+    width:26px!important;height:26px!important;
+  }
+}
+
+
+/* Little Collection: remove the mini-card framing and mirror the Garden Shop artwork. */
+#friendProfileGate .friend-profile-collection-item{
+  min-height:0!important;
+  padding:2px 0 4px!important;
+  gap:5px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+#friendProfileGate .friend-profile-collection-item.is-equipped{
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#friendProfileGate .friend-profile-collection-art{
+  width:48px!important;
+  height:48px!important;
+  border-radius:16px!important;
+  background:linear-gradient(145deg,#fff8f1,#f8e7ef)!important;
+  box-shadow:inset 0 1px 0 #fff,0 5px 14px rgba(151,103,126,.08)!important;
+}
+#friendProfileGate .friend-profile-collection-art svg{
+  width:44px!important;
+  height:44px!important;
+  filter:drop-shadow(0 3px 2px rgba(110,78,92,.10))!important;
+}
+#friendProfileGate .friend-profile-collection-name{
+  color:#856b80!important;
+  font-size:.62rem!important;
+  font-weight:800!important;
+  line-height:1.25!important;
+  text-align:center!important;
+}
+#friendProfileGate .friend-profile-equipped-mark{
+  top:-2px!important;
+  right:calc(50% - 28px)!important;
+}
+@media(max-width:430px){
+  #friendProfileGate .friend-profile-collection-items{gap:9px 7px!important}
+  #friendProfileGate .friend-profile-collection-item{min-height:0!important;padding:2px 0 4px!important}
+  #friendProfileGate .friend-profile-collection-art{width:46px!important;height:46px!important;border-radius:15px!important}
+  #friendProfileGate .friend-profile-collection-art svg{width:42px!important;height:42px!important}
+  #friendProfileGate .friend-profile-collection-name{font-size:.57rem!important}
+}
+@media(max-width:350px){
+  #friendProfileGate .friend-profile-collection-art{width:42px!important;height:42px!important;border-radius:14px!important}
+  #friendProfileGate .friend-profile-collection-art svg{width:38px!important;height:38px!important}
+}
+
+/* Little Collection uses the exact Garden Shop collectible art treatment. */
+#friendProfileGate .friend-profile-collection-art{
+  position:relative!important;
+  width:76px!important;height:76px!important;
+  border:1px solid rgba(255,255,255,.88)!important;
+  border-radius:24px!important;
+  background:radial-gradient(circle at 50% 42%,#fff 0 8%,var(--rarity-glow,rgba(226,178,197,.5)),rgba(255,249,252,.82) 72%)!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.72),0 0 18px var(--rarity-glow,rgba(226,178,197,.5)),inset 0 0 17px rgba(255,255,255,.88)!important;
+}
+#friendProfileGate .friend-profile-collection-art svg{
+  width:66px!important;height:66px!important;overflow:visible!important;
+  filter:drop-shadow(0 3px 3px rgba(89,66,98,.18)) drop-shadow(0 0 5px var(--rarity-glow,rgba(226,178,197,.5)))!important;
+}
+#friendProfileGate .friend-profile-collection-art .sg-art-glint{
+  position:absolute;top:7px;right:9px;color:#fff;font-size:17px;font-style:normal;
+  text-shadow:0 0 5px #fff,0 0 12px var(--rarity-glow,rgba(226,178,197,.5));
+  animation:sg-art-twinkle 2.8s ease-in-out infinite;
+}
+#friendProfileGate .friend-profile-collection-item.garden-rarity-common{--rarity-glow:rgba(226,178,197,.5)}
+#friendProfileGate .friend-profile-collection-item.garden-rarity-rare{--rarity-glow:rgba(129,205,207,.58)}
+#friendProfileGate .friend-profile-collection-item.garden-rarity-epic{--rarity-glow:rgba(183,151,229,.62)}
+#friendProfileGate .friend-profile-collection-item.garden-rarity-legendary{--rarity-glow:rgba(244,197,112,.72)}
+@media(max-width:430px){
+  #friendProfileGate .friend-profile-collection-art{width:68px!important;height:68px!important;border-radius:22px!important}
+  #friendProfileGate .friend-profile-collection-art svg{width:60px!important;height:60px!important}
+}
+@media(max-width:350px){
+  #friendProfileGate .friend-profile-collection-art{width:62px!important;height:62px!important;border-radius:20px!important}
+  #friendProfileGate .friend-profile-collection-art svg{width:54px!important;height:54px!important}
+}
+@media(prefers-reduced-motion:reduce){#friendProfileGate .friend-profile-collection-art .sg-art-glint{animation:none}}
+
+/* Final override: remove the individual tile around each Little Collection treasure. */
+#friendProfileGate #friendProfileCollectionItems .friend-profile-collection-item,
+#friendProfileGate #friendProfileCollectionItems .friend-profile-collection-item.is-equipped{
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+  justify-self:center!important;align-self:start!important;flex:0 0 auto!important;
+  width:max-content!important;min-width:0!important;max-width:100%!important;min-height:0!important;height:auto!important;
+  margin:0!important;padding:0!important;gap:6px!important;
+  border:0!important;border-radius:0!important;outline:0!important;
+  background:transparent!important;box-shadow:none!important;
+  overflow:visible!important;
+}
+#friendProfileGate #friendProfileCollectionItems .friend-profile-collection-item::before,
+#friendProfileGate #friendProfileCollectionItems .friend-profile-collection-item::after{content:none!important;display:none!important}
+#friendProfileGate #friendProfileCollectionItems .friend-profile-collection-name{
+  display:block!important;width:auto!important;max-width:84px!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
+  overflow:visible!important;text-overflow:clip!important;white-space:normal!important;text-align:center!important;
+}
+@media(max-width:430px){
+  #friendProfileGate #friendProfileCollectionItems .friend-profile-collection-items{justify-items:center!important;align-items:start!important}
+  #friendProfileGate #friendProfileCollectionItems .friend-profile-collection-item{min-height:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+}
+
+/* Starlight profile: keep Little Collection items completely unboxed and readable. */
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileCollectionItems .friend-profile-collection-item,
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileCollectionItems .friend-profile-collection-item.is-equipped{
+  border:0!important;outline:0!important;border-radius:0!important;
+  background:transparent!important;background-image:none!important;
+  box-shadow:none!important;filter:none!important;
+  padding:0!important;margin:0!important;min-height:0!important;height:auto!important;
+  overflow:visible!important;
+}
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileCollectionItems .friend-profile-collection-item::before,
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileCollectionItems .friend-profile-collection-item::after{
+  content:none!important;display:none!important;background:none!important;box-shadow:none!important;
+}
+.auth-card.friend-profile-card[data-wallpaper="starlight"] #friendProfileCollectionItems .friend-profile-collection-name{
+  color:#fff!important;background:transparent!important;border:0!important;box-shadow:none!important;
+  text-shadow:0 1px 4px rgba(22,17,58,.72)!important;
+}
+/* The two achievement/collection headings and their count chips need contrast on dark wallpapers. */
+.auth-card.friend-profile-card[data-wallpaper="starlight"] .friend-profile-section-heading,
+.auth-card.friend-profile-card[data-wallpaper="starlight"] .friend-profile-section-heading>b,
+.auth-card.friend-profile-card[data-wallpaper="starlight"] .friend-profile-section-heading>small{
+  color:#fff!important;text-shadow:0 1px 4px rgba(22,17,58,.72)!important;
+}
+.auth-card.friend-profile-card[data-wallpaper="starlight"] .friend-profile-section-heading>small{
+  background:rgba(35,31,73,.52)!important;
+  border-color:rgba(255,255,255,.38)!important;
+}
+.auth-card.friend-profile-card[data-wallpaper="starlight"] .friend-profile-section-heading>span{
+  color:#fff!important;
+  background:rgba(255,255,255,.16)!important;
+  border:1px solid rgba(255,255,255,.3)!important;
+}
+
+
+/* Daily Quest cards: clear, touch-friendly shortcuts into the matching activity. */
+.sg-daily-quest-card .sg-daily-quest-copy{min-width:0}
+.sg-daily-quest-action{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:32px;margin-top:10px;padding:6px 13px;border:1px solid rgba(191,133,157,.28);
+  border-radius:999px;background:linear-gradient(135deg,#fff5f7,#f5edf8);
+  color:#87566f;font:600 12px/1.2 inherit;letter-spacing:.01em;
+  box-shadow:0 2px 8px rgba(151,105,129,.08);cursor:pointer;
+  transition:transform .18s ease,background .18s ease,box-shadow .18s ease;
+}
+.sg-daily-quest-action:active{transform:scale(.97)}
+.sg-daily-quest-action:focus-visible{outline:2px solid #bd86a3;outline-offset:3px}
+.sg-daily-quest-action:disabled{opacity:.58;cursor:default;box-shadow:none}
+.sg-daily-quest-card.is-done .sg-daily-quest-action{background:#f3f0eb;border-color:#e8e1d9;color:#8d8a83}
+@media(hover:hover){.sg-daily-quest-action:not(:disabled):hover{background:linear-gradient(135deg,#ffeaf1,#eee5f6);box-shadow:0 4px 12px rgba(151,105,129,.14)}}
+
+
+/* Daily Quest cards are the action surface: remove the separate CTA and soften all three cards. */
+.streak-garden-page .sg-daily-quest-list .sg-daily-quest-card{
+  border-radius:24px!important;
+  overflow:hidden;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:border-radius .2s ease,transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.streak-garden-page .sg-daily-quest-list .sg-daily-quest-card:focus-visible{
+  outline:2px solid #bd86a3;
+  outline-offset:3px;
+}
+@media(hover:hover){
+  .streak-garden-page .sg-daily-quest-list .sg-daily-quest-card:hover{
+    border-radius:24px!important;
+    box-shadow:0 7px 20px rgba(151,105,129,.13);
+    transform:translateY(-1px);
+  }
+}
+.streak-garden-page .sg-daily-quest-list .sg-daily-quest-card:active{
+  transform:scale(.992);
+}
+
+
+/* Cute Bunny visual consistency pass — shared layout, color, spacing and responsive rules. */
+:root{
+  --cb-ink:#554456;--cb-ink-soft:#705d70;--cb-muted:#8d7a8d;
+  --cb-rose:#c77f9d;--cb-rose-deep:#a95f80;--cb-rose-wash:#f8e8ee;
+  --cb-lavender-wash:#f0ebf8;--cb-sage-wash:#edf3e9;--cb-cream:#fcf8f3;
+  --cb-surface:#fffdfa;--cb-border:#eadfe5;
+  --cb-card-shadow:0 8px 24px rgba(94,67,88,.075);
+}
+body{color:var(--cb-ink);background:var(--cb-cream)}
+.app{background-color:var(--cb-cream)}
+#content{width:min(100%,960px);padding:clamp(16px,3vw,30px) clamp(14px,3.5vw,30px) calc(38px + env(safe-area-inset-bottom,0px))}
+#content>*{min-width:0}
+#content .heading{margin:8px 0 22px}
+#content .heading h2{letter-spacing:-.035em;line-height:1.18}
+#content .heading p{line-height:1.6}
+#content .toolbar{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:26px 2px 12px}
+#content .tile,#content .empty,#content .daily,#content .daily-quest-card{
+  border-color:var(--cb-border);box-shadow:var(--cb-card-shadow)
+}
+#content button:not(.brand):not(.round):not(.sg-garden-switch):not(.sg-week-day){
+  transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease,border-color .18s ease
+}
+#content :is(h2,h3,h4){overflow-wrap:anywhere}
+#content :is(.tile,.panel,.section-card,.settings-card){border-radius:22px}
+
+/* Own profile positioning restored to the original centered auth-gate layout. */
+
+/* Streak Garden: align every section to one grid and reduce the oversized hero. */
+.streak-garden-page{gap:20px!important;padding-bottom:24px!important}
+.streak-garden-page .sg-page-heading{align-items:center!important;margin:0 2px 2px!important}
+.streak-garden-page .sg-page-heading h2{font-size:clamp(1.55rem,4vw,2rem)!important;letter-spacing:-.035em!important}
+.streak-garden-page .sg-hero-paper{
+  grid-template-columns:minmax(0,1fr) minmax(0,.9fr)!important;min-height:270px!important;
+  border-radius:26px!important;box-shadow:0 10px 28px rgba(107,77,93,.08)!important;
+}
+.streak-garden-page .sg-hero-copy{padding:clamp(18px,3vw,28px)!important}
+.streak-garden-page .sg-hero-scene{min-width:0!important;display:grid!important;place-items:center!important}
+.streak-garden-page .sg-week-section,
+.streak-garden-page .sg-daily-quests-section,
+.streak-garden-page .sg-hearts-section,
+.streak-garden-page .sg-calendar-section{
+  border:1px solid var(--cb-border)!important;border-radius:22px!important;
+  box-shadow:0 7px 22px rgba(94,67,88,.055)!important;
+}
+.streak-garden-page .sg-week-section{padding:17px!important}
+.streak-garden-page .sg-week-row{gap:clamp(2px,1vw,8px)!important}
+.streak-garden-page .sg-week-day{min-width:0!important;padding:8px 2px!important;border-radius:15px!important}
+.streak-garden-page .sg-week-flower{width:clamp(30px,5vw,38px)!important;height:clamp(30px,5vw,38px)!important}
+.streak-garden-page .sg-garden-switcher{
+  position:sticky;top:8px;z-index:4;gap:7px!important;padding:6px!important;
+  border-radius:19px!important;background:rgba(255,250,248,.92)!important;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:0 8px 22px rgba(94,67,88,.09)!important;
+}
+.streak-garden-page .sg-garden-switch{min-height:54px!important;gap:7px!important;border-radius:14px!important}
+.streak-garden-page .sg-garden-switch.is-active{box-shadow:0 3px 10px rgba(169,95,128,.12)!important}
+.streak-garden-page .sg-daily-quests-section{padding:clamp(14px,2.5vw,20px)!important}
+.streak-garden-page .sg-daily-quest-list{gap:11px!important}
+.streak-garden-page .sg-daily-quest-card{grid-template-columns:44px minmax(0,1fr)!important;gap:12px!important;padding:13px!important}
+.streak-garden-page .sg-daily-quest-card p{font-size:.78rem!important;line-height:1.48!important}
+.streak-garden-page .sg-daily-quest-card .sg-daily-quest-title-row{flex-wrap:wrap!important}
+.streak-garden-page .sg-daily-quest-status{flex:none!important}
+.streak-garden-page .sg-section-heading{gap:10px!important}
+.streak-garden-page .sg-section-heading h3{line-height:1.25!important}
+.streak-garden-page .sg-calendar-grid{gap:5px!important}
+
+/* Dark mode receives matching surfaces and readable muted text instead of mixed light cards. */
+body[data-mode="dark"]{
+  --cb-ink:#f0e5ef;--cb-ink-soft:#d7c6d8;--cb-muted:#b9a9bb;
+  --cb-surface:#302936;--cb-border:#514354;--cb-card-shadow:0 10px 28px rgba(0,0,0,.2);
+  background:#211d27!important;color:var(--cb-ink)!important;
+}
+body[data-mode="dark"] .app{background-color:#211d27!important}
+body[data-mode="dark"] #content .tile,
+body[data-mode="dark"] #content .empty,
+body[data-mode="dark"] #content input,
+body[data-mode="dark"] #content textarea,
+body[data-mode="dark"] #content select{background:#302936!important;border-color:#514354!important;color:#f0e5ef!important}
+body[data-mode="dark"] .streak-garden-page .sg-garden-switcher{background:rgba(48,41,54,.94)!important;border-color:#514354!important}
+body[data-mode="dark"] .streak-garden-page .sg-week-section,
+body[data-mode="dark"] .streak-garden-page .sg-daily-quests-section,
+body[data-mode="dark"] .streak-garden-page .sg-hearts-section,
+body[data-mode="dark"] .streak-garden-page .sg-calendar-section{border-color:#514354!important}
+body[data-mode="dark"] #friendProfileGate .auth-card.friend-profile-card{border-color:#514354!important}
+
+/* Narrow screens: prevent clipped labels, squeezed controls and accidental horizontal scroll. */
+@media(max-width:600px){
+  #content{padding-inline:13px!important}
+  .streak-garden-page .sg-hero-paper{grid-template-columns:minmax(0,1fr)!important;min-height:0!important}
+  .streak-garden-page .sg-hero-copy{padding:20px 20px 8px!important}
+  .streak-garden-page .sg-hero-scene{min-height:190px!important;padding:0 10px 12px!important}
+  .streak-garden-page .sg-garden-switcher{top:4px!important;gap:4px!important;padding:5px!important}
+  .streak-garden-page .sg-garden-switch{min-height:54px!important;flex-direction:column!important;gap:4px!important;padding:7px 3px!important}
+  .streak-garden-page .sg-garden-switch .sg-switch-label b{font-size:.68rem!important;white-space:normal!important;text-align:center!important}
+  .streak-garden-page .sg-week-section{padding:12px 8px!important}
+  .streak-garden-page .sg-week-day .sg-week-name{font-size:.58rem!important}
+  .streak-garden-page .sg-week-day .sg-week-date{font-size:.63rem!important}
+  .streak-garden-page .sg-daily-quest-card{grid-template-columns:38px minmax(0,1fr)!important;padding:11px!important;gap:10px!important}
+  .streak-garden-page .sg-daily-quest-icon{width:36px!important;height:36px!important}
+}
+@media(max-width:360px){
+  #friendProfileGate .friend-profile-collection-items{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .streak-garden-page .sg-garden-switch .sg-switch-label b{font-size:.62rem!important}
+  .streak-garden-page .sg-week-row{gap:0!important}
+}
+
+
+/* Settings refresh: clean title, paired account fields, and a live palette preview. */
+#profileGate{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))!important;
+  background:rgba(53,39,57,.48)!important;
+  -webkit-backdrop-filter:blur(9px)!important;
+  backdrop-filter:blur(9px)!important;
+}
+#profileGate .auth-card.profile-card{
+  display:block!important;
+  width:min(460px,100%)!important;
+  max-width:460px!important;
+  max-height:calc(100dvh - 24px)!important;
+  height:auto!important;
+  min-height:0!important;
+  margin:0 auto!important;
+  padding:26px clamp(17px,4vw,30px) 23px!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  border:1px solid var(--settings-panel-border,#ead9e1)!important;
+  border-radius:27px!important;
+  background:var(--settings-panel-bg,linear-gradient(145deg,#fffdfb,#fff1f6 58%,#f5efff))!important;
+  box-shadow:0 22px 70px rgba(58,38,61,.24),inset 0 1px 0 rgba(255,255,255,.86)!important;
+  text-align:left!important;
+  transition:background .28s ease,border-color .28s ease,box-shadow .28s ease!important;
+}
+#profileGate .settings-page-title{
+  display:block!important;
+  margin:0 0 19px!important;
+  padding:0!important;
+  color:var(--settings-heading,#76566f)!important;
+  font:900 1.55rem/1.2 Quicksand,Nunito,sans-serif!important;
+  letter-spacing:-.025em!important;
+  text-align:left!important;
+}
+#profileGate #profileSettingsMount{display:block!important;margin:0!important}
+#profileGate .profile-name-row{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:start!important;
+  margin:0 0 12px!important;
+}
+#profileGate .profile-card>label,
+#profileGate .profile-name-row>label{
+  display:block!important;
+  min-width:0!important;
+  margin:12px 0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:var(--settings-label,#80677e)!important;
+  font-size:.79rem!important;
+  font-weight:850!important;
+  text-align:left!important;
+}
+#profileGate .profile-name-row>label{margin:0!important}
+#profileGate .profile-card label input{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:43px!important;
+  margin-top:7px!important;
+  padding:10px 12px!important;
+  border:1px solid var(--settings-input-border,#ead9e1)!important;
+  border-radius:13px!important;
+  background:rgba(255,255,255,.86)!important;
+  color:#59465b!important;
+  font:700 .86rem Nunito,sans-serif!important;
+  box-shadow:inset 0 1px 2px rgba(80,50,75,.035)!important;
+  transition:border-color .2s ease,box-shadow .2s ease,background .2s ease!important;
+}
+#profileGate .profile-card label input:focus{
+  outline:0!important;
+  border-color:var(--settings-accent,#d58eae)!important;
+  box-shadow:0 0 0 3px var(--settings-accent-soft,rgba(213,142,174,.16))!important;
+}
+#profileGate .classic-profile-gender{margin:16px 0!important}
+#profileGate .theme-picker-label{
+  display:block!important;
+  margin:18px 0 9px!important;
+  color:var(--settings-label,#80677e)!important;
+  font-size:.8rem!important;
+  font-weight:900!important;
+  text-align:left!important;
+}
+#profileGate .classic-gender-choices{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:9px!important;
+}
+#profileGate .classic-gender-choices button{
+  min-height:42px!important;
+  border:1px solid var(--settings-input-border,#ead9e1)!important;
+  border-radius:13px!important;
+  background:rgba(255,255,255,.78)!important;
+  color:var(--settings-label,#80677e)!important;
+  font-weight:850!important;
+}
+#profileGate .classic-gender-choices button.is-selected{
+  border-color:var(--settings-accent,#d58eae)!important;
+  background:var(--settings-accent-soft,rgba(213,142,174,.16))!important;
+  color:var(--settings-heading,#76566f)!important;
+}
+#profileGate .theme-choice-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:9px!important;
+  margin:8px 0 13px!important;
+}
+#profileGate .buddy-choice-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+#profileGate .theme-choice{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  min-width:0!important;
+  min-height:75px!important;
+  padding:9px 5px!important;
+  border:1px solid var(--settings-input-border,#ead9e1)!important;
+  border-radius:16px!important;
+  background:rgba(255,255,255,.78)!important;
+  color:var(--settings-label,#80677e)!important;
+  font-size:.68rem!important;
+  text-align:center!important;
+  transition:background .22s ease,border-color .22s ease,transform .18s ease,box-shadow .22s ease!important;
+}
+#profileGate .theme-choice.is-selected{
+  border-color:var(--settings-accent,#d58eae)!important;
+  background:var(--settings-accent-soft,rgba(213,142,174,.16))!important;
+  box-shadow:0 0 0 2px var(--settings-accent-soft,rgba(213,142,174,.16)),0 5px 14px rgba(110,70,100,.08)!important;
+  color:var(--settings-heading,#76566f)!important;
+}
+#profileGate .theme-choice .theme-swatch{
+  width:32px!important;height:32px!important;flex:0 0 32px!important;margin:0!important;
+  display:grid!important;place-items:center!important;border-radius:11px!important;
+  font-size:1.15rem!important;
+}
+#profileGate #profileSave{
+  display:block!important;
+  width:100%!important;
+  min-height:48px!important;
+  margin:18px 0 0!important;
+  border-radius:15px!important;
+}
+#profileGate #signOut{
+  display:block!important;
+  width:max-content!important;
+  min-height:40px!important;
+  margin:7px auto 0!important;
+  padding:8px 18px!important;
+  color:var(--settings-label,#80677e)!important;
+  font-size:.78rem!important;
+  font-weight:850!important;
+}
+#profileGate #signOut:hover{color:var(--settings-heading,#76566f)!important}
+body[data-theme="rose"]{--settings-panel-bg:linear-gradient(145deg,#fffdfb,#fff0f5 60%,#f8e6ee);--settings-panel-border:#efd6e1;--settings-heading:#87516d;--settings-label:#85677a;--settings-input-border:#ead3df;--settings-accent:#d58eae;--settings-accent-soft:rgba(213,142,174,.18)}
+body[data-theme="lavender"]{--settings-panel-bg:linear-gradient(145deg,#fffdfd,#f2ecfc 60%,#e9e0f7);--settings-panel-border:#ded1ed;--settings-heading:#6d5887;--settings-label:#786b8a;--settings-input-border:#dcd0eb;--settings-accent:#a88bc9;--settings-accent-soft:rgba(168,139,201,.18)}
+body[data-theme="mint"]{--settings-panel-bg:linear-gradient(145deg,#fcfffc,#eaf5ec 60%,#dceee1);--settings-panel-border:#cfe3d3;--settings-heading:#52745b;--settings-label:#66816c;--settings-input-border:#cfe1d2;--settings-accent:#83b492;--settings-accent-soft:rgba(131,180,146,.2)}
+body[data-theme="sky"]{--settings-panel-bg:linear-gradient(145deg,#fcfeff,#eaf5fa 60%,#dcecf5);--settings-panel-border:#ccdfeb;--settings-heading:#52758b;--settings-label:#688596;--settings-input-border:#cbdfea;--settings-accent:#80b2cb;--settings-accent-soft:rgba(128,178,203,.2)}
+body[data-theme="peach"]{--settings-panel-bg:linear-gradient(145deg,#fffdfa,#fff1e6 60%,#f9e3d5);--settings-panel-border:#f0d7c7;--settings-heading:#95664e;--settings-label:#967763;--settings-input-border:#efd9ca;--settings-accent:#d99b78;--settings-accent-soft:rgba(217,155,120,.2)}
+body[data-theme="berry"]{--settings-panel-bg:linear-gradient(145deg,#fffdfd,#fbeaf2 60%,#f2dce9);--settings-panel-border:#eccddd;--settings-heading:#8a4e72;--settings-label:#916d83;--settings-input-border:#e9ccdc;--settings-accent:#c77fa6;--settings-accent-soft:rgba(199,127,166,.2)}
+body[data-theme="midnight"]{--settings-panel-bg:linear-gradient(145deg,#fbfaff,#eee8f8 60%,#e1d9f0);--settings-panel-border:#d7cbe8;--settings-heading:#625176;--settings-label:#796d8d;--settings-input-border:#d8cde8;--settings-accent:#9a85ba;--settings-accent-soft:rgba(154,133,186,.2)}
+body[data-theme="sage"]{--settings-panel-bg:linear-gradient(145deg,#fcfef9,#eef3e8 60%,#e0ead7);--settings-panel-border:#d5e0c9;--settings-heading:#61744e;--settings-label:#778568;--settings-input-border:#d6e0cb;--settings-accent:#94aa79;--settings-accent-soft:rgba(148,170,121,.2)}
+body[data-theme="buttercup"]{--settings-panel-bg:linear-gradient(145deg,#fffef8,#fbf5df 60%,#f3e9c4);--settings-panel-border:#eadfb8;--settings-heading:#88703c;--settings-label:#8d7b55;--settings-input-border:#e9dfc0;--settings-accent:#c9aa5c;--settings-accent-soft:rgba(201,170,92,.2)}
+body[data-mode="dark"] #profileGate .auth-card.profile-card{
+  --settings-panel-bg:linear-gradient(145deg,#352c3e,#302838 60%,#3b3045);
+  --settings-panel-border:#5b4963;
+  --settings-heading:#f1ddeb;
+  --settings-label:#d8c3d6;
+  --settings-input-border:#5b4963;
+  --settings-accent-soft:rgba(213,142,174,.2);
+  background:var(--settings-panel-bg)!important;
+  color:#f4eaf2!important;
+}
+body[data-mode="dark"] #profileGate .profile-card label input,
+body[data-mode="dark"] #profileGate .classic-gender-choices button,
+body[data-mode="dark"] #profileGate .theme-choice{
+  background:rgba(39,32,47,.82)!important;
+  color:#f2e7f0!important;
+  border-color:var(--settings-input-border)!important;
+}
+@media(max-width:430px){
+  #profileGate{padding:8px!important}
+  #profileGate .auth-card.profile-card{max-height:calc(100dvh - 16px)!important;padding:22px 14px 18px!important;border-radius:23px!important}
+  #profileGate .settings-page-title{font-size:1.4rem!important;margin-bottom:15px!important}
+  #profileGate .profile-name-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  #profileGate .profile-name-row>label{font-size:.7rem!important}
+  #profileGate .profile-name-row input{padding:9px 8px!important;font-size:.78rem!important}
+  #profileGate .theme-choice-grid{gap:6px!important}
+  #profileGate .theme-choice{min-height:67px!important;padding:7px 3px!important;font-size:.61rem!important}
+  #profileGate .theme-choice .theme-swatch{width:28px!important;height:28px!important;flex-basis:28px!important}
+}
+@media(max-width:340px){
+  #profileGate .profile-name-row{gap:5px!important}
+  #profileGate .profile-name-row>label{font-size:.65rem!important}
+  #profileGate .profile-name-row input{font-size:.72rem!important}
+  #profileGate .theme-choice{font-size:.56rem!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #profileGate .theme-choice,#profileGate .profile-card label input{transition:none!important}
+}
+
+
+/* Center the Settings heading at the top of the panel. */
+#profileGate .settings-page-title{
+  width:100%!important;
+  text-align:center!important;
+}
+
+
+/* Profile readability pass: calm the wallpaper effects and give every text
+   group a stable contrast surface without removing the user's chosen art. */
+#friendProfileGate .friend-profile-card[data-wallpaper]{
+  --profile-ink:#453847;
+  --profile-secondary:#705f72;
+  --profile-surface:rgba(255,252,254,.94);
+  --profile-border:rgba(117,83,109,.16);
+  color:var(--profile-ink)!important;
+  text-shadow:none!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper]:not([data-wallpaper="starlight"]) :is(h2,p,small,time,span,b,strong){
+  text-shadow:none!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper]:not([data-wallpaper="starlight"]) :is(.friend-profile-identity h2,#friendProfileHandle,.friend-profile-bio,.friend-profile-eyebrow,.friend-profile-section-heading,.friend-profile-section-heading>b,.friend-profile-activity-status){
+  color:var(--profile-ink)!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper]:not([data-wallpaper="starlight"]) #friendProfileHandle,
+#friendProfileGate .friend-profile-card[data-wallpaper]:not([data-wallpaper="starlight"]) .friend-profile-bio,
+#friendProfileGate .friend-profile-card[data-wallpaper]:not([data-wallpaper="starlight"]) .friend-profile-eyebrow,
+#friendProfileGate .friend-profile-card[data-wallpaper]:not([data-wallpaper="starlight"]) .friend-profile-activity-status{
+  color:var(--profile-secondary)!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-bio{
+  padding:11px 13px!important;
+  border:1px solid var(--profile-border)!important;
+  border-radius:15px!important;
+  background:var(--profile-surface)!important;
+  line-height:1.6!important;
+  text-shadow:none!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-collection,
+#friendProfileGate .friend-profile-card .friend-profile-badges{
+  border:1px solid var(--profile-border)!important;
+  border-radius:18px!important;
+  background:var(--profile-surface)!important;
+  box-shadow:0 5px 16px rgba(61,43,62,.045)!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-section-heading,
+#friendProfileGate .friend-profile-card .friend-profile-section-heading>b{
+  color:var(--profile-ink)!important;
+  text-shadow:none!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-section-heading>small{
+  color:#72596e!important;
+  background:#fff!important;
+  border-color:rgba(117,83,109,.16)!important;
+  text-shadow:none!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-section-heading>span{
+  color:#a66d89!important;
+  background:#f9edf3!important;
+  border:1px solid #f0dce7!important;
+  box-shadow:none!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-joined>time{
+  color:#5b4a5c!important;
+  background:rgba(255,255,255,.96)!important;
+  border:1px solid rgba(117,83,109,.16)!important;
+  text-shadow:none!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-stat-plates>*{
+  box-shadow:none!important;
+  text-shadow:none!important;
+  border:1px solid rgba(117,83,109,.14)!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-follow{
+  box-shadow:0 3px 9px rgba(92,55,79,.12)!important;
+  text-shadow:none!important;
+  filter:none!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-collection-item,
+#friendProfileGate .friend-profile-card .friend-profile-collection-art{
+  filter:none!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-collection-art{
+  background:linear-gradient(145deg,#fff,#fbf3f7)!important;
+  box-shadow:inset 0 0 0 1px rgba(117,83,109,.12)!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-collection-item.is-equipped{
+  background:rgba(247,232,240,.7)!important;
+  box-shadow:0 0 0 2px rgba(191,130,160,.18)!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-milestone-svg,
+#friendProfileGate .friend-profile-card .friend-profile-milestone-emoji{
+  filter:none!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"]{
+  --profile-ink:#fffaff;
+  --profile-secondary:#eee7f7;
+  --profile-surface:rgba(35,31,58,.88);
+  --profile-border:rgba(239,229,255,.2);
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] :is(.friend-profile-identity h2,#friendProfileHandle,.friend-profile-bio,.friend-profile-eyebrow,.friend-profile-section-heading,.friend-profile-section-heading>b,.friend-profile-activity-status){
+  color:var(--profile-ink)!important;
+  text-shadow:0 1px 2px rgba(15,12,35,.25)!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-bio,
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-collection,
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-badges{
+  background:var(--profile-surface)!important;
+  border-color:var(--profile-border)!important;
+  box-shadow:0 5px 18px rgba(10,8,28,.12)!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-section-heading>small{
+  color:#fff!important;
+  background:rgba(35,31,58,.82)!important;
+  border-color:rgba(239,229,255,.25)!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-section-heading>span{
+  color:#fff!important;
+  background:rgba(255,255,255,.13)!important;
+  border-color:rgba(255,255,255,.22)!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-activity-status{
+  color:#9de0b7!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-collection-art{
+  background:rgba(255,255,255,.94)!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-collection-item.is-equipped{
+  background:rgba(255,255,255,.1)!important;
+}
+#friendProfileGate .friend-profile-card :is(.friend-profile-bio,.friend-profile-collection,.friend-profile-badges){
+  transition:background-color .22s ease,border-color .22s ease,box-shadow .22s ease!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #friendProfileGate .friend-profile-card :is(.friend-profile-bio,.friend-profile-collection,.friend-profile-badges){transition:none!important}
+}
+
+
+/* Let the selected profile wallpaper show through the bio and lower panels.
+   Use a soft tinted glass treatment instead of opaque white cards. */
+#friendProfileGate .friend-profile-card[data-wallpaper]{
+  --profile-surface:rgba(255,246,250,.48);
+  --profile-surface-soft:rgba(255,246,250,.34);
+  --profile-border:rgba(255,255,255,.38);
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="normal"]{
+  --profile-surface:rgba(255,244,249,.48);
+  --profile-surface-soft:rgba(255,244,249,.32);
+  --profile-border:rgba(255,255,255,.42);
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="blossom"],
+#friendProfileGate .friend-profile-card[data-wallpaper="hearts"]{
+  --profile-surface:rgba(255,235,244,.48);
+  --profile-surface-soft:rgba(255,235,244,.32);
+  --profile-border:rgba(255,255,255,.4);
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="clouds"]{
+  --profile-surface:rgba(235,246,255,.5);
+  --profile-surface-soft:rgba(235,246,255,.34);
+  --profile-border:rgba(255,255,255,.44);
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"]{
+  --profile-surface:rgba(35,31,58,.48);
+  --profile-surface-soft:rgba(35,31,58,.32);
+  --profile-border:rgba(239,229,255,.24);
+}
+#friendProfileGate .friend-profile-card .friend-profile-bio,
+#friendProfileGate .friend-profile-card .friend-profile-collection,
+#friendProfileGate .friend-profile-card .friend-profile-badges{
+  background:var(--profile-surface)!important;
+  border-color:var(--profile-border)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(118%)!important;
+  backdrop-filter:blur(12px) saturate(118%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 5px 16px rgba(61,43,62,.035)!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-section-heading>small{
+  background:var(--profile-surface-soft)!important;
+  border-color:var(--profile-border)!important;
+  -webkit-backdrop-filter:blur(8px)!important;
+  backdrop-filter:blur(8px)!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-section-heading>span{
+  background:var(--profile-surface-soft)!important;
+  border-color:var(--profile-border)!important;
+  -webkit-backdrop-filter:blur(8px)!important;
+  backdrop-filter:blur(8px)!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-bio,
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-collection,
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-badges{
+  background:var(--profile-surface)!important;
+  border-color:var(--profile-border)!important;
+}
+#friendProfileGate .friend-profile-card .friend-profile-collection-art{
+  background:rgba(255,255,255,.24)!important;
+  -webkit-backdrop-filter:blur(8px)!important;
+  backdrop-filter:blur(8px)!important;
+}
+#friendProfileGate .friend-profile-card[data-wallpaper="starlight"] .friend-profile-collection-art{
+  background:rgba(255,255,255,.16)!important;
+}
+@media(prefers-reduced-transparency:reduce){
+  #friendProfileGate .friend-profile-card .friend-profile-bio,
+  #friendProfileGate .friend-profile-card .friend-profile-collection,
+  #friendProfileGate .friend-profile-card .friend-profile-badges{
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    background:var(--profile-surface)!important;
+  }
+}
+
+
+/* Little Collection: keep Garden Shop rarity colors fixed across profile wallpapers,
+   with a slow, visible glow extending beyond each collectible. */
+#friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-item{
+  --rarity-glow:rgba(226,178,197,.58)!important;
+}
+#friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-item.garden-rarity-common{
+  --rarity-glow:rgba(226,178,197,.58)!important;
+}
+#friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-item.garden-rarity-rare{
+  --rarity-glow:rgba(129,205,207,.66)!important;
+}
+#friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-item.garden-rarity-epic{
+  --rarity-glow:rgba(183,151,229,.68)!important;
+}
+#friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-item.garden-rarity-legendary{
+  --rarity-glow:rgba(244,197,112,.76)!important;
+}
+#friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-art{
+  position:relative!important;
+  border:1px solid rgba(255,255,255,.9)!important;
+  background:radial-gradient(circle at 50% 42%,#fff 0 8%,var(--rarity-glow) 58%,rgba(255,249,252,.88) 78%)!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.76),0 0 18px var(--rarity-glow),0 0 30px color-mix(in srgb,var(--rarity-glow) 68%,transparent),inset 0 0 17px rgba(255,255,255,.9)!important;
+  animation:friend-collection-aura 4.8s ease-in-out infinite!important;
+  will-change:box-shadow;
+}
+#friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-art svg{
+  filter:drop-shadow(0 3px 3px rgba(89,66,98,.18)) drop-shadow(0 0 5px var(--rarity-glow))!important;
+}
+#friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-art .sg-art-glint{
+  animation:sg-art-twinkle 4.2s ease-in-out infinite!important;
+}
+@keyframes friend-collection-aura{
+  0%,100%{
+    box-shadow:0 0 0 1px rgba(255,255,255,.76),0 0 14px var(--rarity-glow),0 0 24px color-mix(in srgb,var(--rarity-glow) 58%,transparent),inset 0 0 17px rgba(255,255,255,.9);
+  }
+  50%{
+    box-shadow:0 0 0 1px rgba(255,255,255,.88),0 0 23px var(--rarity-glow),0 0 40px color-mix(in srgb,var(--rarity-glow) 78%,transparent),inset 0 0 20px rgba(255,255,255,.96);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-art,
+  #friendProfileGate .friend-profile-card #friendProfileCollectionItems .friend-profile-collection-art .sg-art-glint{
+    animation:none!important;
+  }
+}
+
+
+/* 2026-11-18 — richer light palettes and expressive theme selection states. */
+body[data-mode="light"][data-theme="rose"]{--cb-bg:#fcf3f6;--cb-surface:#fffafd;--cb-surface-raised:#fff4f8;--cb-surface-soft:#f8e3eb;--cb-text:#533b49;--cb-text-soft:#76566a;--cb-text-muted:#927487;--cb-border:#ebcfdb;--cb-accent:#c96f96;--cb-accent-strong:#a94f79;--cb-accent-soft:#f5dce7;--cb-control:#fffdfd;--cb-shadow-color:137,76,105}
+body[data-mode="light"][data-theme="lavender"]{--cb-bg:#f6f2fc;--cb-surface:#fefbff;--cb-surface-raised:#f8f3ff;--cb-surface-soft:#eae0f7;--cb-text:#4d405d;--cb-text-soft:#6e5b82;--cb-text-muted:#88789a;--cb-border:#dcd0ed;--cb-accent:#9c7bc5;--cb-accent-strong:#7556a2;--cb-accent-soft:#e6daf5;--cb-control:#fff;--cb-shadow-color:91,70,128}
+body[data-mode="light"][data-theme="mint"]{--cb-bg:#f0f8f2;--cb-surface:#fbfffc;--cb-surface-raised:#f2faf4;--cb-surface-soft:#deefe3;--cb-text:#395343;--cb-text-soft:#55735f;--cb-text-muted:#789080;--cb-border:#cbe1d1;--cb-accent:#70a982;--cb-accent-strong:#477f5a;--cb-accent-soft:#d8ecde;--cb-control:#fcfffd;--cb-shadow-color:66,111,79}
+body[data-mode="light"][data-theme="sky"]{--cb-bg:#eff7fb;--cb-surface:#fbfeff;--cb-surface-raised:#f1f9fd;--cb-surface-soft:#dcecf5;--cb-text:#385265;--cb-text-soft:#557185;--cb-text-muted:#7890a0;--cb-border:#cbdfea;--cb-accent:#6ca7c5;--cb-accent-strong:#477f9d;--cb-accent-soft:#d7eaf4;--cb-control:#fcfeff;--cb-shadow-color:62,102,128}
+body[data-mode="light"][data-theme="peach"]{--cb-bg:#fff5ed;--cb-surface:#fffdfa;--cb-surface-raised:#fff7ef;--cb-surface-soft:#f8e5d6;--cb-text:#60463b;--cb-text-soft:#7d5c4e;--cb-text-muted:#98796b;--cb-border:#ecd5c3;--cb-accent:#d18a66;--cb-accent-strong:#a96647;--cb-accent-soft:#f6e0d1;--cb-control:#fffefd;--cb-shadow-color:128,83,61}
+body[data-mode="light"][data-theme="berry"]{--cb-bg:#fff1f6;--cb-surface:#fffafd;--cb-surface-raised:#fff3f8;--cb-surface-soft:#f5dce9;--cb-text:#5b3850;--cb-text-soft:#7c506a;--cb-text-muted:#966e85;--cb-border:#e9c9da;--cb-accent:#c45f91;--cb-accent-strong:#9e3e70;--cb-accent-soft:#f2d6e5;--cb-control:#fffdfd;--cb-shadow-color:125,57,92}
+body[data-mode="light"][data-theme="midnight"]{--cb-bg:#f4eef9;--cb-surface:#fdfaff;--cb-surface-raised:#f7f1fc;--cb-surface-soft:#e8dcf2;--cb-text:#4d405b;--cb-text-soft:#6c587d;--cb-text-muted:#877594;--cb-border:#dbcee8;--cb-accent:#9270aa;--cb-accent-strong:#6c4f85;--cb-accent-soft:#e5d8ef;--cb-control:#fff;--cb-shadow-color:91,69,111}
+body[data-mode="light"][data-theme="sage"]{--cb-bg:#f2f6ed;--cb-surface:#fcfff9;--cb-surface-raised:#f5f9ef;--cb-surface-soft:#e3ecd9;--cb-text:#45563d;--cb-text-soft:#60734f;--cb-text-muted:#809071;--cb-border:#d1dec4;--cb-accent:#829e6d;--cb-accent-strong:#597544;--cb-accent-soft:#dfead4;--cb-control:#fcfff9;--cb-shadow-color:76,98,68}
+body[data-mode="light"][data-theme="buttercup"]{--cb-bg:#faf7e8;--cb-surface:#fffef8;--cb-surface-raised:#fffbed;--cb-surface-soft:#f3edcc;--cb-text:#5a5035;--cb-text-soft:#756644;--cb-text-muted:#90815d;--cb-border:#e5d9ae;--cb-accent:#bd9b3e;--cb-accent-strong:#896b25;--cb-accent-soft:#f1e8c1;--cb-control:#fffef9;--cb-shadow-color:113,93,45}
+
+/* Theme changes now ease across the app instead of snapping between palettes. */
+body[data-theme],body[data-theme] .app,body[data-theme] .app>header,body[data-theme] .app>#nav,
+body[data-theme] #content .tile,body[data-theme] #content .daily,body[data-theme] #content .friend-row,
+body[data-theme] #content .home-feature-card,body[data-theme] #content .chat-page,
+body[data-theme] #content .chat-bubble,body[data-theme] .profile-settings-panel,
+body[data-theme] .notification-card,body[data-theme] .auth-card,body[data-theme] .music-player-card,
+body[data-theme] .photo-lightbox-card{
+  transition:background-color .38s cubic-bezier(.2,.75,.25,1),background .38s cubic-bezier(.2,.75,.25,1),
+  color .28s ease,border-color .32s ease,box-shadow .34s ease!important;
+}
+
+/* Theme tiles have a clear selected ring, a small check and a lively illustration response. */
+.profile-settings-panel .settings-theme-choice,
+#profileGate .theme-choice{
+  position:relative!important;
+  overflow:visible!important;
+  isolation:isolate;
+  transition:transform .24s cubic-bezier(.2,.85,.25,1.18),background .28s ease,border-color .28s ease,
+  box-shadow .28s ease,color .2s ease!important;
+}
+.profile-settings-panel .settings-theme-choice.is-selected,
+#profileGate .theme-choice.is-selected{
+  border-color:var(--cb-accent,#c87598)!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--cb-accent,#c87598) 22%,transparent),
+  0 7px 17px color-mix(in srgb,var(--cb-accent,#c87598) 17%,transparent),
+  inset 0 1px 0 rgba(255,255,255,.72)!important;
+  transform:translateY(-2px);
+}
+.profile-settings-panel .settings-theme-choice.is-selected::after,
+#profileGate .theme-choice.is-selected::after{
+  content:"✓";position:absolute;top:5px;right:6px;width:17px;height:17px;display:grid;place-items:center;
+  border-radius:50%;background:var(--cb-accent,#c87598);color:#fff;font:900 10px/1 Nunito,sans-serif;
+  box-shadow:0 2px 5px rgba(50,30,50,.16);animation:cb-theme-check-in .24s cubic-bezier(.2,.85,.25,1.25) both;
+}
+.profile-settings-panel .settings-theme-choice .theme-illustration,
+#profileGate .theme-choice .theme-swatch{transition:transform .3s cubic-bezier(.2,.85,.25,1.25),filter .28s ease}
+.profile-settings-panel .settings-theme-choice.is-selected .theme-illustration,
+#profileGate .theme-choice.is-selected .theme-swatch{transform:scale(1.1) rotate(-5deg);filter:drop-shadow(0 3px 5px color-mix(in srgb,var(--cb-accent,#c87598) 28%,transparent))}
+.profile-settings-panel .settings-theme-choice:active,
+.profile-settings-panel .settings-buddy-choice:active,
+#profileGate .theme-choice:active{transform:translateY(1px) scale(.97)!important}
+@keyframes cb-theme-check-in{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
+
+/* Buddy illustrations respond to selection with a gentle pop, not a jump. */
+.profile-settings-panel .settings-buddy-choice{transition:transform .24s cubic-bezier(.2,.85,.25,1.25),background .24s ease,border-color .24s ease,box-shadow .24s ease!important}
+.profile-settings-panel .settings-buddy-choice.is-selected{border-color:var(--cb-accent)!important;background:var(--cb-accent-soft)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--cb-accent) 17%,transparent),0 5px 13px rgba(var(--cb-shadow-color),.08)!important}
+.profile-settings-panel .settings-buddy-choice.is-selected .buddy-choice-art{animation:cb-buddy-pop .36s cubic-bezier(.2,.85,.25,1.25) both}
+@keyframes cb-buddy-pop{0%{transform:scale(.86)}65%{transform:scale(1.12) rotate(-4deg)}100%{transform:scale(1)}}
+
+/* Secondary controls and icon buttons receive the same palette-aware hover and focus language. */
+body[data-theme] .app button:not(.primary):not(#nav button):not(.settings-theme-choice):not(.settings-buddy-choice):not(.brand),
+body[data-theme] .auth-gate button:not(.primary):not(.settings-theme-choice){
+  transition:background-color .22s ease,border-color .22s ease,color .2s ease,box-shadow .22s ease,transform .2s cubic-bezier(.2,.75,.25,1)!important;
+}
+body[data-theme] .app button:not(.primary):not(#nav button):not(.settings-theme-choice):not(.settings-buddy-choice):hover,
+body[data-theme] .auth-gate button:not(.primary):not(.settings-theme-choice):hover{
+  border-color:color-mix(in srgb,var(--cb-accent) 38%,var(--cb-border));
+}
+body[data-theme] .app button:focus-visible,body[data-theme] .auth-gate button:focus-visible{
+  outline:2px solid color-mix(in srgb,var(--cb-accent) 62%,white)!important;outline-offset:3px;
+}
+@media(prefers-reduced-motion:reduce){
+  body[data-theme],body[data-theme] *,body[data-theme] *::before,body[data-theme] *::after{
+    scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;
+  }
+}
+
+
+/* 2026-11-18 — minimal, soft loading and refresh feedback. */
+#app.app-refreshing{position:relative}
+#app.app-refreshing::after{
+  content:"";position:fixed;z-index:1000;top:calc(env(safe-area-inset-top,0px) + 7px);left:50%;
+  width:34px;height:4px;border-radius:99px;transform:translateX(-50%);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--cb-accent,#c87598) 18%,transparent),var(--cb-accent,#c87598),color-mix(in srgb,var(--cb-accent,#c87598) 18%,transparent));
+  background-size:220% 100%;box-shadow:0 1px 5px color-mix(in srgb,var(--cb-accent,#c87598) 22%,transparent);
+  animation:cb-refresh-glide .9s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes cb-refresh-glide{0%{background-position:100% 0;opacity:.55}50%{opacity:1}100%{background-position:-120% 0;opacity:.55}}
+.notification-loading{min-height:34px!important;padding:6px!important}
+.notification-loader{
+  width:15px!important;height:15px!important;border-width:1.7px!important;
+  border-color:color-mix(in srgb,var(--cb-accent,#c87598) 20%,transparent)!important;
+  border-top-color:var(--cb-accent,#c87598)!important;
+  animation:cb-loader-turn .85s linear infinite!important;
+}
+.download-spinner{width:11px!important;height:11px!important;border-width:1.6px!important;opacity:.8}
+.memory-history-loader{min-height:40px!important;padding:7px!important;gap:7px!important;font-size:.78rem!important;opacity:.82}
+.memory-history-bunny{width:25px!important;height:25px!important;font-size:17px!important;background:var(--cb-accent-soft,#f8e7ed)!important;box-shadow:none!important;animation:cb-loader-bob 1s ease-in-out infinite alternate!important}
+.session-restore{gap:0!important}
+.session-restore span{font-size:2.2rem!important;animation:cb-loader-bob 1.05s ease-in-out infinite alternate!important}
+@keyframes cb-loader-turn{to{transform:rotate(360deg)}}
+@keyframes cb-loader-bob{from{transform:translateY(1px)}to{transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){
+ #app.app-refreshing::after,.notification-loader,.download-spinner,.memory-history-bunny,.session-restore span{animation:none!important}
+}
+
+
+/* 2026-11-18 — scrapbook-style media loading for photos and songs. */
+#content .photo-frame{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--cb-accent-soft) 78%,white),var(--cb-surface-soft,#f5e7ed));
+}
+#content .photo-frame::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  background:
+    radial-gradient(ellipse at 24% 26%,rgba(255,255,255,.72) 0 2px,transparent 3px),
+    radial-gradient(ellipse at 76% 70%,color-mix(in srgb,var(--cb-accent) 13%,transparent) 0 3px,transparent 4px),
+    linear-gradient(110deg,transparent 24%,rgba(255,255,255,.62) 46%,transparent 68%);
+  background-size:100% 100%,100% 100%,220% 100%;
+  animation:cb-photo-skeleton-shimmer 1.7s ease-in-out infinite;
+  pointer-events:none;
+}
+#content .photo-frame:has(.feed-photo.is-loaded)::before,
+#content .photo-frame:has(.feed-photo.has-load-error)::before{opacity:0;animation:none;transition:opacity .35s ease}
+#content .feed-photo{
+  position:relative;
+  z-index:1;
+  display:block;
+  opacity:0;
+  transform:scale(1.025);
+  transition:opacity .42s ease,transform .65s cubic-bezier(.2,.7,.25,1),filter .3s ease;
+}
+#content .feed-photo.is-loaded{opacity:1;transform:scale(1)}
+#content .feed-photo.has-load-error{
+  opacity:0;
+}
+#content .photo-frame:has(.feed-photo.has-load-error)::after{
+  content:"♡";
+  position:absolute;
+  inset:0;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  color:var(--cb-accent);
+  font:700 28px/1 Quicksand,sans-serif;
+  background:color-mix(in srgb,var(--cb-accent-soft) 48%,transparent);
+}
+@keyframes cb-photo-skeleton-shimmer{
+  0%{background-position:0 0,0 0,150% 0}
+  100%{background-position:0 0,0 0,-70% 0}
+}
+
+/* Song tiles feel like tiny keepsake records while a track is resolving. */
+#content .music-grid .album-art{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 50% 48%,rgba(255,255,255,.94) 0 9%,transparent 10%),
+    radial-gradient(circle at 50% 48%,color-mix(in srgb,var(--cb-accent) 30%,#bba5ce) 0 28%,transparent 29%),
+    radial-gradient(circle at 50% 48%,#6f607f 0 56%,#4d435b 57% 61%,transparent 62%),
+    linear-gradient(145deg,var(--cb-accent-soft),var(--cb-surface-soft));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.68),0 7px 17px rgba(75,55,85,.12);
+  transition:transform .28s ease,box-shadow .3s ease,filter .3s ease;
+}
+#content .music-grid .album-art::before{
+  content:"";
+  position:absolute;
+  inset:12%;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:50%;
+  box-shadow:0 0 0 5px rgba(255,255,255,.055),0 0 0 10px rgba(255,255,255,.045);
+  pointer-events:none;
+}
+#content .music-grid .album-art::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,.3) 48%,transparent 70%);
+  transform:translateX(-130%);
+  pointer-events:none;
+}
+#content .music-grid .album-art .song-glyph{
+  position:relative;
+  z-index:1;
+  display:grid;
+  place-items:center;
+  width:36px;height:36px;
+  border-radius:50%;
+  color:#6c557e;
+  background:radial-gradient(circle at 35% 28%,#fff 0 5%,#f9e4ed 65%,#e7c8dd);
+  box-shadow:0 2px 9px rgba(39,26,48,.2),inset 0 1px 2px rgba(255,255,255,.9);
+  transition:transform .3s ease;
+}
+#content .music-grid .album-art .song-note{z-index:1;text-shadow:0 2px 7px rgba(255,255,255,.55)}
+#content .music-grid .album-art:hover{transform:translateY(-2px) rotate(-1deg);box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 11px 22px rgba(75,55,85,.17)}
+#content .music-grid .album-art:hover::after{animation:cb-record-glint .8s ease}
+#content .music-grid .album-art.is-loading,
+#content .music-grid .album-art.is-buffering{animation:cb-record-wait 1.35s ease-in-out infinite}
+#content .music-grid .album-art.is-loading .song-glyph,
+#content .music-grid .album-art.is-buffering .song-glyph{animation:cb-record-pulse 1.05s ease-in-out infinite}
+#content .music-grid .album-art.is-playing .song-glyph{transform:scale(1.08)}
+@keyframes cb-record-glint{to{transform:translateX(130%)}}
+@keyframes cb-record-wait{0%,100%{filter:saturate(.88);box-shadow:0 5px 12px rgba(75,55,85,.1)}50%{filter:saturate(1.15);box-shadow:0 8px 21px color-mix(in srgb,var(--cb-accent) 25%,transparent)}}
+@keyframes cb-record-pulse{0%,100%{transform:scale(.94)}50%{transform:scale(1.08)}}
+@media(prefers-reduced-motion:reduce){
+ #content .photo-frame::before,#content .music-grid .album-art.is-loading,#content .music-grid .album-art.is-buffering,
+ #content .music-grid .album-art.is-loading .song-glyph,#content .music-grid .album-art.is-buffering .song-glyph{animation:none!important}
+ #content .feed-photo,#content .music-grid .album-art{transition:none!important}
+}
