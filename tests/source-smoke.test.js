@@ -52,3 +52,30 @@ test('build script copies the app shell and emits generated configuration', () =
   assert.match(build, /SUPABASE_URL/);
   assert.match(build, /SUPABASE_PUBLISHABLE_KEY/);
 });
+
+test('Notes typing uses the same shared Broadcast channel as the working Cute Bunny app', () => {
+  const app = read('app.js');
+  assert.match(app, /sb\.channel\(['"]cute-bunny-notes-typing['"]\)/);
+  assert.match(app, /\.on\(['"]broadcast['"], \{ event: ['"]typing['"] \}/);
+  assert.match(app, /notesTypingChannelReady = true/);
+  assert.match(app, /notesTypingQueuedState = null/);
+  assert.doesNotMatch(app, /config: \{ private: true \}/);
+  assert.doesNotMatch(app, /syncNotesTypingFriendChannels/);
+  assert.doesNotMatch(app, /notesTypingFriendChannels/);
+});
+
+test('Virtual Buddy feature and its 3D module are fully removed', () => {
+  const app = read('app.js');
+  const html = read('index.html');
+  const css = read('style.css');
+  const sw = read('sw.js');
+  const build = read('scripts/build-preview.js');
+  const workflow = read('.github/workflows/deploy-pages.yml');
+  assert.doesNotMatch(app, /renderVirtualPet|careForVirtualPet|readVirtualPet|data-care-pet|virtualBuddy3D/);
+  assert.doesNotMatch(html, /virtual-buddy-3d/);
+  assert.doesNotMatch(css, /sg-bunny-three|sg-virtual-pet|sg-pet-playground|Virtual Buddy/);
+  assert.doesNotMatch(sw, /virtual-buddy-3d/);
+  assert.doesNotMatch(build, /virtual-buddy-3d/);
+  assert.doesNotMatch(workflow, /virtual-buddy-3d/);
+  assert.ok(!fs.existsSync(path.join(root, 'virtual-buddy-3d.js')));
+});

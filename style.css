@@ -13406,72 +13406,6 @@ body[data-mode="dark"] .achievement-copy>small{color:#d3a5bd}
 [data-theme="midnight"] .profile-live-preview,.dark .profile-live-preview{background:linear-gradient(120deg,#382d40,#302c43);border-color:#5b485f}
 
 
-/* Virtual buddy — a small, cozy care corner inside Streak Garden. */
-.sg-virtual-pet {
-  position: relative; overflow: hidden; margin: 22px 0 26px; padding: clamp(17px, 3vw, 25px);
-  border: 1px solid rgba(190, 145, 164, .22); border-radius: 25px;
-  background: linear-gradient(145deg, #fff8f5 0%, #f8eff8 52%, #f1f6ec 100%);
-  box-shadow: 0 12px 34px rgba(151, 111, 132, .09);
-}
-.sg-pet-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-.sg-pet-kicker { color:#ad7891; font-size:.68rem; font-weight:800; letter-spacing:.13em; }
-.sg-pet-heading h3 { margin:5px 0 4px; color:#76566b; font-size:1.25rem; }
-.sg-pet-heading p { margin:0; color:#967c8c; font-size:.86rem; }
-.sg-pet-sparkle { color:#d7a7bc; font-size:2rem; }
-.sg-pet-playground {
-  position:relative; display:grid; place-items:center; min-height:170px; margin:18px 0 16px;
-  overflow:hidden; border-radius:20px;
-  background:radial-gradient(ellipse at 50% 82%, rgba(205,224,185,.72), transparent 46%),
-    linear-gradient(180deg, #f7eefa 0%, #fff4f1 68%, #edf4e7 100%);
-}
-.sg-pet-character { position:relative; z-index:1; font-size:clamp(4.5rem, 12vw, 6.3rem); line-height:1.2;
-  filter:drop-shadow(0 8px 5px rgba(115,89,103,.13)); animation:sg-pet-breathe 3.4s ease-in-out infinite; }
-.sg-pet-mood { position:absolute; z-index:2; bottom:12px; padding:5px 12px; border-radius:30px;
-  color:#87677b; background:rgba(255,255,255,.78); font-size:.75rem; font-weight:700; }
-.sg-pet-cloud,.sg-pet-flower { position:absolute; color:rgba(255,255,255,.9); }
-.sg-pet-cloud { font-size:2.1rem; animation:sg-pet-drift 8s ease-in-out infinite; }
-.sg-pet-cloud-one { left:12%; top:20px; }.sg-pet-cloud-two { right:13%; top:38px; animation-delay:-4s; }
-.sg-pet-flower { bottom:19px; color:#d99ab4; font-size:1.25rem; }
-.sg-pet-flower-one { left:17%; }.sg-pet-flower-two { right:18%; color:#a5b98f; }
-.sg-pet-meters { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-.sg-pet-meter { min-width:0; padding:11px 12px; border-radius:15px; background:rgba(255,255,255,.72); }
-.sg-pet-meter>div { display:flex; justify-content:space-between; gap:5px; margin-bottom:8px; color:#806779; font-size:.76rem; }
-.sg-pet-meter>div b { color:#98768a; font-variant-numeric:tabular-nums; }
-.sg-pet-meter-track { display:block; height:7px; overflow:hidden; border-radius:9px; background:#eee4e9; }
-.sg-pet-meter-track i { display:block; height:100%; border-radius:inherit; transition:width .35s ease; }
-.sg-pet-meter-hunger { background:linear-gradient(90deg,#e8bd85,#d9a66f); }
-.sg-pet-meter-joy { background:linear-gradient(90deg,#e9a8c1,#d889ac); }
-.sg-pet-meter-energy { background:linear-gradient(90deg,#b9cfa5,#91b27f); }
-.sg-pet-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:14px; }
-.sg-pet-actions button { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; padding:11px 6px;
-  border:1px solid rgba(188,145,165,.2); border-radius:15px; color:#806477; background:rgba(255,255,255,.8);
-  cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, background .18s ease; }
-.sg-pet-actions button:hover { transform:translateY(-2px); box-shadow:0 7px 16px rgba(151,111,132,.12); background:#fff; }
-.sg-pet-actions button:active { transform:scale(.97); }
-.sg-pet-actions button>span { font-size:1.35rem; }.sg-pet-actions button b { font-size:.82rem; }
-.sg-pet-actions button small { color:#a18a99; font-size:.68rem; }
-.sg-pet-footnote { margin:12px 0 0; text-align:center; color:#a08797; font-size:.75rem; }
-@keyframes sg-pet-breathe { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-6px) rotate(1deg)} }
-@keyframes sg-pet-drift { 0%,100%{transform:translateX(0)} 50%{transform:translateX(10px)} }
-@media (max-width:560px) {
-  .sg-pet-meters { grid-template-columns:1fr; gap:8px; }
-  .sg-pet-meter { padding:9px 11px; }
-  .sg-pet-meter>div { margin-bottom:6px; }
-  .sg-pet-actions { gap:7px; }
-  .sg-pet-actions button { padding:10px 3px; }
-  .sg-pet-actions button small { font-size:.62rem; }
-}
-body[data-mode="dark"] .sg-virtual-pet { border-color:rgba(206,165,190,.18); background:linear-gradient(145deg,#302735,#292b35 58%,#283329); }
-body[data-mode="dark"] .sg-pet-heading h3, body[data-mode="dark"] .sg-pet-meter>div,
-body[data-mode="dark"] .sg-pet-meter>div b { color:#ead6e2; }
-body[data-mode="dark"] .sg-pet-heading p, body[data-mode="dark"] .sg-pet-footnote,
-body[data-mode="dark"] .sg-pet-meter>div span { color:#c2aebe; }
-body[data-mode="dark"] .sg-pet-playground { background:radial-gradient(ellipse at 50% 82%,rgba(110,139,91,.32),transparent 46%),linear-gradient(180deg,#393044,#3a3038 68%,#303c32); }
-body[data-mode="dark"] .sg-pet-meter, body[data-mode="dark"] .sg-pet-actions button { background:rgba(255,255,255,.07); border-color:rgba(230,200,218,.12); color:#ead6e2; }
-body[data-mode="dark"] .sg-pet-meter-track { background:rgba(255,255,255,.13); }
-body[data-mode="dark"] .sg-pet-mood { color:#ead6e2; background:rgba(48,39,53,.82); }
-
-
 /* Open profile refinement: clearer hierarchy, resilient layout and reliable dismissal. */
 .friend-profile-card {
   position:relative!important;
@@ -14330,3 +14264,5 @@ body[data-mode="dark"].notes-page-active.notes-header-hidden .app > header {
   background: rgba(37, 29, 44, .68) !important;
   border-bottom-color: rgba(255, 255, 255, .10) !important;
 }
+
+
