@@ -147,6 +147,11 @@ test('profile edits save through the authenticated database client', async () =>
   const page = await newTestPage({ authenticated: true });
   await waitForSignedInApp(page);
   await page.locator('#profileOpen').click();
+  await page.locator('#friendProfileGate').waitFor({ state: 'visible' });
+  const flower = page.locator('#friendProfileFollow[data-theme-action="true"]');
+  await flower.dispatchEvent('pointerdown', { pointerId: 1, clientX: 20, clientY: 20 });
+  await page.waitForTimeout(650);
+  await flower.dispatchEvent('pointerup', { pointerId: 1, clientX: 20, clientY: 20 });
   await page.locator('#profileGate').waitFor({ state: 'visible' });
   await page.locator('#profileDisplay').fill('Ankush Updated');
   await page.locator('#profileBio').fill('Updated from the browser test');
