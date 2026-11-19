@@ -35,7 +35,8 @@ window.CUTE_BUNNY_CONFIG = { supabaseUrl: 'https://test.supabase.co', supabaseAn
       profile_private_settings: [{ user_id: me.id, notification_preferences: { memories: true, buddy: true } }]
     }
   };
-  window.__cuteBunnyTestState = state;\n  window.IntersectionObserver = class { constructor(callback) { this.callback = callback; } observe(target) { this.callback([{ target, isIntersecting: true, intersectionRatio: 1 }]); } unobserve() {} disconnect() {} };
+  window.__cuteBunnyTestState = state;
+  window.IntersectionObserver = class { constructor(callback) { this.callback = callback; } observe(target) { this.callback([{ target, isIntersecting: true, intersectionRatio: 1 }]); } unobserve() {} disconnect() {} };
 
   class Query {
     constructor(table) {
