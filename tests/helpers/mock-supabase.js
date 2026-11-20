@@ -16,6 +16,7 @@ window.CUTE_BUNNY_CONFIG = { supabaseUrl: 'https://test.supabase.co', supabaseAn
     user: me,
     friend,
     nextMemoryId: 103,
+    nextEditHistoryId: 1,
     uploads: [],
     calls: [],
     tables: {
@@ -27,6 +28,9 @@ window.CUTE_BUNNY_CONFIG = { supabaseUrl: 'https://test.supabase.co', supabaseAn
         { id: 100, owner_id: friend.id, kind: 'photo', text: 'Garden photo', created_at: now, file_name: 'garden.png', content_type: 'image/png', storage_path: friend.id + '/photo/garden.png' }
       ],
       memory_likes: [],
+      memory_reactions: [],
+      memory_edit_history: [],
+      note_delivery_receipts: [],
       notifications: [{
         id: 'notification-1', recipient_id: me.id, actor_id: friend.id, kind: 'photo',
         memory_id: 100, message: 'Bunny Friend liked your photo ♡', created_at: now, read_at: null
@@ -83,7 +87,13 @@ window.CUTE_BUNNY_CONFIG = { supabaseUrl: 'https://test.supabase.co', supabaseAn
         });
         matched = inserted;
       } else if (this.action === 'update') {
-        matched.forEach(row => Object.assign(row, this.payload));
+        matched.forEach(row => {
+          if (this.table === 'memories' && row.kind === 'note' && this.payload?.text != null && row.text !== this.payload.text) {
+            state.tables.memory_edit_history.push({ id: state.nextEditHistoryId++, memory_id: row.id, editor_id: row.owner_id, previous_text: row.text, edited_at: new Date().toISOString() });
+            row.edited_at = new Date().toISOString();
+          }
+          Object.assign(row, this.payload);
+        });
       } else if (this.action === 'delete') {
         const removed = new Set(matched);
         state.tables[this.table] = rows.filter(row => !removed.has(row));
@@ -133,6 +143,23 @@ window.CUTE_BUNNY_CONFIG = { supabaseUrl: 'https://test.supabase.co', supabaseAn
             const row = state.tables.note_read_cursors.find(item => item.reader_id === me.id && item.owner_id === args.p_owner_id);
             if (row) { row.last_read_message_id = Math.max(row.last_read_message_id, args.p_last_read_message_id); row.last_read_at = new Date().toISOString(); }
             else state.tables.note_read_cursors.push({ reader_id: me.id, owner_id: args.p_owner_id, last_read_message_id: args.p_last_read_message_id, last_read_at: new Date().toISOString() });
+          }
+          if (name === 'mark_notes_delivered') {
+            for (const id of args.p_message_ids || []) {
+              const memory = state.tables.memories.find(item => item.id === Number(id));
+              if (memory && memory.owner_id !== me.id && !state.tables.note_delivery_receipts.some(row => row.message_id === memory.id && row.reader_id === me.id)) {
+                state.tables.note_delivery_receipts.push({ message_id: memory.id, reader_id: me.id, owner_id: memory.owner_id, delivered_at: new Date().toISOString() });
+              }
+            }
+            return { data: (args.p_message_ids || []).length, error: null };
+          }
+          if (name === 'restore_note_edit') {
+            const history = state.tables.memory_edit_history.find(item => item.id === Number(args.p_history_id));
+            const memory = history && state.tables.memories.find(item => item.id === history.memory_id && item.owner_id === me.id);
+            if (!history || !memory) return { data: null, error: { message: 'This edit is no longer available.' } };
+            state.tables.memory_edit_history.push({ id: state.nextEditHistoryId++, memory_id: memory.id, editor_id: me.id, previous_text: memory.text, edited_at: new Date().toISOString() });
+            memory.text = history.previous_text; memory.edited_at = new Date().toISOString();
+            return { data: { ok: true, memory_id: memory.id, text: memory.text, edited_at: memory.edited_at }, error: null };
           }
           return { data: name === 'send_buddy_ping' ? true : true, error: null };
         },

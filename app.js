@@ -44,6 +44,9 @@ let typingHeartbeatTimer = null, typingStopTimer = null, typingActive = false, t
 let notesTypingChannelReady = false, notesTypingQueuedState = null;
 const remoteTypingUsers = new Map();
 let activeMessageActionsId = null;
+let replyingToMessageId = null;
+const noteDeliveryInFlight = new Set();
+const noteDeliveredLocally = new Set();
 let hiddenNoteIds = new Set();
 let homeNavRefreshInFlight = false;
 let notesHeaderLastScrollTop = null;
@@ -52,6 +55,7 @@ let streakSelectedWeekDate = '';
 let streakGardenActiveTab = 'daily';
 let streakSelectedDailyQuest = 0;
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
+let cloudPetalPoints = 0, petalPointsSyncInFlight = null;
 let streakCountdownInterval = null, streakCountdownDayKey = '';
 let presenceStatus = 'closed';
 let lastActiveWriteAt = 0, lastActiveWriteUserId = '';
@@ -571,8 +575,22 @@ function setUser(u) {
     notificationLoading = false;
   }
   me = u;
-  // Publish any existing local collection so friends can see it on their profiles.
-  void syncGardenCollectionToCloud(readGardenCollection());
+  // Hydrate the cloud collection before any shop action can read or write it.
+  gardenCollectionHydratedUserId = String(u.id);
+  gardenCollectionReadyUserId = '';
+  gardenCollectionHydration = hydrateGardenCollectionFromCloud().then(() => {
+    if (String(me?.id || '') !== String(u.id)) return;
+    gardenCollectionReadyUserId = String(u.id);
+    const ownPetals = $('#friendProfilePetals');
+    if (ownPetals && $('#friendProfileGate')?.dataset.ownProfile === 'true') ownPetals.textContent = petalRewardBalance().toLocaleString();
+    if (page === 'streak') renderStreakPage();
+  }).catch(error => {
+    console.error('Garden collection hydration failed:', error?.message || error);
+    if (String(me?.id || '') !== String(u.id)) return;
+    gardenCollectionReadyUserId = String(u.id);
+    toast('Your garden could not sync. Check your connection and retry.');
+    if (page === 'streak') renderStreakPage();
+  });
   try {
     const savedHiddenNotes = JSON.parse(localStorage.getItem('cuteBunnyHiddenNotes:' + u.id) || '[]');
     hiddenNoteIds = new Set(Array.isArray(savedHiddenNotes) ? savedHiddenNotes.map(String) : []);
@@ -628,6 +646,8 @@ async function refresh() {
 
     noteSeenLastAck = new Map((results[5] || []).map(cursor => [String(cursor.owner_id), Number(cursor.last_read_message_id) || 0]));
     render();
+    void markNotesDelivered(feed.filter(item => item.kind === 'note'));
+    void refreshOwnNoteSeenStatus();
     // Warm the first gallery photos in the background while the user is on Home.
     // This means opening Photo Garden usually displays cached image bytes immediately.
     void prewarmPhotoSources(feed.filter(item => item.kind === 'photo').slice(0, 16));
@@ -1089,71 +1109,143 @@ function readPetalRewards() {
   } catch { return {}; }
 }
 function petalRewardBalance(rewards = readPetalRewards()) {
-  return Object.values(rewards).reduce((sum, amount) => sum + (Number.isFinite(amount) ? Math.max(-1000, Math.min(100, amount)) : 0), 0);
+  return Math.max(0, cloudPetalPoints + Object.values(rewards).reduce((sum, amount) => sum + (Number.isFinite(amount) ? Math.max(-1000, Math.min(100, amount)) : 0), 0));
 }
-function awardPetalReward(key, amount) {
+async function syncPetalPointsToCloud() {
+  if (!sb || !me?.id) return false;
+  if (petalPointsSyncInFlight) await petalPointsSyncInFlight;
+  const rewards = readPetalRewards();
+  const total = petalRewardBalance(rewards);
+  petalPointsSyncInFlight = (async () => {
+    const { error } = await sb.from('profile_garden_collections').upsert({ user_id: me.id, petal_points: total, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) { console.warn('Petal Points sync failed:', error.message || error); return false; }
+    cloudPetalPoints = total;
+    const settled = Object.fromEntries(Object.keys(rewards).map(key => [key, 0]));
+    try { localStorage.setItem(streakStorageKey('petal-rewards'), JSON.stringify(settled)); } catch {}
+    return true;
+  })();
+  try { return await petalPointsSyncInFlight; } finally { petalPointsSyncInFlight = null; }
+}
+function awardPetalReward(key, amount, sync = true) {
   if (!me || !key) return false;
   const rewards = readPetalRewards();
   if (Object.prototype.hasOwnProperty.call(rewards, key)) return false;
   rewards[key] = amount;
   try { localStorage.setItem(streakStorageKey('petal-rewards'), JSON.stringify(rewards)); }
   catch { return false; }
+  if (sync) void syncPetalPointsToCloud();
   return true;
 }
 function readGardenCollection() {
   try {
     const value = JSON.parse(localStorage.getItem(streakStorageKey('garden-collection')) || '{}');
-    return { owned: Array.isArray(value.owned) ? value.owned : [], equipped: value.equipped || 'none', bunny: value.bunny || 'none' };
-  } catch { return { owned: [], equipped: 'none', bunny: 'none' }; }
+    return { owned: Array.isArray(value.owned) ? value.owned : [], equippedItems: Array.isArray(value.equippedItems) ? value.equippedItems : [value.equipped, value.bunny].filter(id => id && id !== 'none'), equipped: value.equipped || 'none', bunny: value.bunny || 'none' };
+  } catch { return { owned: [], equippedItems: [], equipped: 'none', bunny: 'none' }; }
 }
 function saveGardenCollection(value) {
-  try { localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(value)); return true; } catch { return false; }
+  try {
+    localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(value));
+    // Keep the local change marked until the cloud confirms it. A later hydration
+    // can safely retry instead of silently discarding an offline equip action.
+    localStorage.setItem(streakStorageKey('garden-collection-pending-sync'), '1');
+    return true;
+  } catch { return false; }
 }
 
 let friendGardenRequestSequence = 0;
 let gardenCollectionHydratedUserId = '';
+let gardenCollectionReadyUserId = '';
+let gardenCollectionHydration = Promise.resolve();
+let gardenPurchaseInFlight = false;
 function normalizeGardenCollection(value = {}) {
   const validIds = new Set(GARDEN_COLLECTIBLES.map(item => item.id));
   const owned = Array.isArray(value.owned) ? [...new Set(value.owned.filter(id => validIds.has(id)))] : [];
+  const legacyEquipped = [value.equipped, value.bunny].filter(id => id && id !== 'none');
+  const equippedItems = [...new Set((Array.isArray(value.equipped_items) ? value.equipped_items : Array.isArray(value.equippedItems) ? value.equippedItems : legacyEquipped).filter(id => owned.includes(id)))];
   return {
     owned,
-    equipped: owned.includes(value.equipped) && GARDEN_COLLECTIBLES.find(item => item.id === value.equipped)?.type === 'garden' ? value.equipped : 'none',
-    bunny: owned.includes(value.bunny) && GARDEN_COLLECTIBLES.find(item => item.id === value.bunny)?.type === 'bunny' ? value.bunny : 'none'
+    equippedItems,
+    equipped: equippedItems.find(id => GARDEN_COLLECTIBLES.find(item => item.id === id)?.type === 'garden') || 'none',
+    bunny: equippedItems.find(id => GARDEN_COLLECTIBLES.find(item => item.id === id)?.type === 'bunny') || 'none'
   };
 }
 async function syncGardenCollectionToCloud(value = readGardenCollection()) {
   if (!sb || !me?.id) return false;
+  const userId = String(me.id);
   const normalized = normalizeGardenCollection(value);
   const { error } = await sb.from('profile_garden_collections').upsert({
-    user_id: me.id,
+    user_id: userId,
     owned: normalized.owned,
     equipped: normalized.equipped,
     bunny: normalized.bunny,
+    equipped_items: normalized.equippedItems,
     updated_at: new Date().toISOString()
   }, { onConflict: 'user_id' });
   if (error) {
     console.warn('Garden collection sync failed:', error.message || error);
     return false;
   }
-  try { localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(normalized)); } catch {}
+  // Never write one account's response into another account's local cache.
+  if (String(me?.id || '') !== userId) return false;
+  try {
+    localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(normalized));
+    localStorage.setItem(streakStorageKey('garden-collection-reconciled'), '1');
+    localStorage.removeItem(streakStorageKey('garden-collection-pending-sync'));
+  } catch {}
   return true;
 }
 async function hydrateGardenCollectionFromCloud() {
   if (!sb || !me?.id) return readGardenCollection();
+  const userId = String(me.id);
   const { data, error } = await sb.from('profile_garden_collections')
-    .select('owned,equipped,bunny')
-    .eq('user_id', me.id)
+    .select('owned,equipped,bunny,equipped_items,petal_points')
+    .eq('user_id', userId)
     .maybeSingle();
+  if (String(me?.id || '') !== userId) return readGardenCollection();
   if (error) {
     console.warn('Garden collection could not be loaded:', error.message || error);
     return readGardenCollection();
   }
   if (data) {
-    const normalized = normalizeGardenCollection(data);
-    try { localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(normalized)); } catch {}
+    cloudPetalPoints = Math.max(0, Number(data.petal_points) || 0);
+    // Ownership is permanent once purchased: merge cloud and locally saved ownership
+    // so a stale/empty copy cannot make a paid-for item appear purchasable again.
+    const localCollection = normalizeGardenCollection(readGardenCollection());
+    const cloudCollection = normalizeGardenCollection(data);
+    const purchaseLedger = readPetalRewards();
+    const ledgerOwned = GARDEN_COLLECTIBLES
+      .filter(item => Object.prototype.hasOwnProperty.call(purchaseLedger, 'purchase:' + item.id))
+      .map(item => item.id);
+    // Import equipped selections from older local caches once, and whenever a
+    // local equip action is still pending. After successful reconciliation, the
+    // cloud becomes authoritative so an old device cannot undo a later unequip.
+    const needsLocalEquipmentRecovery =
+      localStorage.getItem(streakStorageKey('garden-collection-reconciled')) !== '1' ||
+      localStorage.getItem(streakStorageKey('garden-collection-pending-sync')) === '1';
+    const normalized = normalizeGardenCollection({
+      ...data,
+      owned: [...new Set([...cloudCollection.owned, ...localCollection.owned, ...ledgerOwned])],
+      equippedItems: needsLocalEquipmentRecovery
+        ? [...new Set([...cloudCollection.equippedItems, ...localCollection.equippedItems])]
+        : cloudCollection.equippedItems
+    });
+    const cloudEquipmentsDiffer = normalized.equippedItems.length !== cloudCollection.equippedItems.length
+      || normalized.equippedItems.some(id => !cloudCollection.equippedItems.includes(id));
+    const cloudOwnershipDiffers = normalized.owned.length !== cloudCollection.owned.length
+      || normalized.owned.some(id => !cloudCollection.owned.includes(id));
+    if (cloudOwnershipDiffers || cloudEquipmentsDiffer) {
+      await syncGardenCollectionToCloud(normalized);
+    } else {
+      try {
+        localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(normalized));
+        localStorage.setItem(streakStorageKey('garden-collection-reconciled'), '1');
+        localStorage.removeItem(streakStorageKey('garden-collection-pending-sync'));
+      } catch {}
+    }
     return normalized;
   }
   const legacy = normalizeGardenCollection(readGardenCollection());
+  cloudPetalPoints = 0;
   await syncGardenCollectionToCloud(legacy);
   return legacy;
 }
@@ -1165,7 +1257,8 @@ function renderFriendGardenCollection(collection, userId, isOwnProfile = false) 
   if (!gate || gate.dataset.collectionUserId !== String(userId)) return;
   const section = $('#friendProfileCollection');
   const catalog = typeof GARDEN_COLLECTIBLES !== 'undefined' ? GARDEN_COLLECTIBLES : [];
-  const ownedItems = catalog.filter(item => collection.owned.includes(item.id));
+  const equippedIds = new Set(collection.equippedItems || [collection.equipped, collection.bunny].filter(id => id && id !== 'none'));
+  const ownedItems = catalog.filter(item => collection.owned.includes(item.id) && equippedIds.has(item.id));
   const count = $('#friendProfileCollectionCount');
   if (count) {
     count.textContent = ownedItems.length + (ownedItems.length === 1 ? ' treasure' : ' treasures');
@@ -1179,8 +1272,8 @@ function renderFriendGardenCollection(collection, userId, isOwnProfile = false) 
     return;
   }
   if (section) section.hidden = false;
-  list.innerHTML = ownedItems.slice(0, 12).map(item => {
-    const equipped = (item.type === 'garden' ? collection.equipped : collection.bunny) === item.id;
+  list.innerHTML = ownedItems.map(item => {
+    const equipped = (collection.equippedItems || [collection.equipped, collection.bunny]).includes(item.id);
     return '<span class="friend-profile-collection-item garden-rarity-' + esc(item.rarity || 'common') + (equipped ? ' is-equipped' : '') + '" title="' + esc(item.name) + '" aria-label="' + esc(item.name + (equipped ? ', equipped' : '')) + '"><span class="friend-profile-collection-art">' + item.art + '<i class="sg-art-glint" aria-hidden="true">✧</i></span><small class="friend-profile-collection-name">' + esc(item.name) + '</small>' + (equipped ? '<i class="friend-profile-equipped-mark" aria-label="Equipped">✦</i>' : '') + '</span>';
   }).join('');
 }
@@ -1192,15 +1285,19 @@ async function loadFriendGardenCollection(user, isOwnProfile) {
   let collection;
   if (isOwnProfile) {
     collection = await hydrateGardenCollectionFromCloud();
+    const petalsNode = $('#friendProfilePetals');
+    if (petalsNode && gate.dataset.collectionUserId === String(user.id)) petalsNode.textContent = petalRewardBalance().toLocaleString();
   } else {
     if (!sb) return;
     try {
       const { data, error } = await sb.from('profile_garden_collections')
-        .select('owned,equipped,bunny')
+        .select('owned,equipped,bunny,equipped_items,petal_points')
         .eq('user_id', user.id)
         .maybeSingle();
       if (error) throw error;
       collection = normalizeGardenCollection(data || {});
+      const petalsNode = $('#friendProfilePetals');
+      if (petalsNode && gate.dataset.collectionUserId === String(user.id)) petalsNode.textContent = Math.max(0, Number(data?.petal_points) || 0).toLocaleString();
       try { localStorage.setItem(friendGardenCollectionCacheKey(user.id), JSON.stringify(collection)); } catch {}
     } catch (error) {
       console.warn('Friend garden collection could not be loaded:', error?.message || error);
@@ -1211,6 +1308,7 @@ async function loadFriendGardenCollection(user, isOwnProfile) {
   renderFriendGardenCollection(collection, user.id, isOwnProfile);
 }
 
+let gardenIllustrationSequence = 0;
 function gardenIllustration(kind) {
   const art = {
     'pink-tulips':'<path d="M32 53V34m0 12c-12-13-20-5-15 2 5 5 11 3 15-2Zm0-8c12-13 20-5 15 2-5 5-11 3-15-2Z" fill="#91ad83" stroke="#718f70" stroke-width="2"/><path d="M32 34c-13-3-13-18-3-20 0-9 13-9 14 0 10 3 8 18-5 20Z" fill="#e9a1b8" stroke="#bd7895" stroke-width="2"/><path d="M32 34c-7-8-5-16 1-20 7 5 7 13-1 20Z" fill="#f7c7d5"/>',
@@ -1232,49 +1330,167 @@ function gardenIllustration(kind) {
     'crystal-dew':'<path d="M32 8 49 28 32 56 15 28Z" fill="#c9e9f4" stroke="#78b6c9" stroke-width="2.5"/><path d="m32 8 1 48M15 28h34M32 8 23 28l9 28 9-28Z" fill="#f6ffff" fill-opacity=".48" stroke="#fff" stroke-width="1.4"/><path d="m12 13 3-6 3 6 6 3-6 3-3 6-3-6-6-3Zm39 31 2-4 2 4 4 2-4 2-2 4-2-4-4-2Z" fill="#fff0b8"/>',
     'aurora-fountain':'<path d="M13 43h38l-5 12H18Z" fill="#b9a5dc" stroke="#8874b5" stroke-width="2.5"/><path d="M19 42c-7-11 1-19 7-10 2-16 13-17 14-1 8-7 13 3 5 11" fill="none" stroke="#8ed8d0" stroke-width="4" stroke-linecap="round"/><path d="M26 40c-4-10 2-17 7-10 2-11 9-10 10 0" fill="none" stroke="#d4b7f4" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="18" r="4" fill="#fff0b8"/><path d="m12 18 2-5 2 5 5 2-5 2-2 5-2-5-5-2Zm38 4 2-4 2 4 4 2-4 2-2 4-2-4-4-2Z" fill="#fff"/>',
     'moon-bunny-hood':'<path d="M20 43 15 13c-1-8 8-10 12-2l5 12 5-12c4-8 13-6 12 2l-5 30Z" fill="#b9a9e5" stroke="#8977b5" stroke-width="2.5"/><path d="M22 39c4-10 16-14 25-3l-4 12H24Z" fill="#f7eafa" stroke="#b49bcf" stroke-width="2"/><path d="M28 39q4-4 8 0m-8 5h8" fill="none" stroke="#a47eaa" stroke-width="2" stroke-linecap="round"/><path d="m35 12 2 4 4 1-4 2-2 4-2-4-4-2 4-1Z" fill="#fff0b8"/>',
-    'celestial-rose':'<path d="M32 54V32m0 15c-13-12-20-4-14 3 5 4 10 2 14-3Z" fill="#8eae88" stroke="#688d72" stroke-width="2"/><g fill="#e9a8ce" stroke="#b77fa8" stroke-width="1.8"><ellipse cx="32" cy="20" rx="7" ry="15"/><ellipse cx="32" cy="20" rx="7" ry="15" transform="rotate(60 32 20)"/><ellipse cx="32" cy="20" rx="7" ry="15" transform="rotate(120 32 20)"/></g><circle cx="32" cy="20" r="7" fill="#ffe6a6" stroke="#c9a45e" stroke-width="1.5"/><path d="m10 19 2-5 2 5 5 2-5 2-2 5-2-5-5-2Zm42 13 2-4 2 4 4 2-4 2-2 4-2-4-4-2Z" fill="#fff"/>'
+    'celestial-rose':'<defs><linearGradient id="rosePetal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe0ed"/><stop offset=".38" stop-color="#f06b9c"/><stop offset=".76" stop-color="#c72f68"/><stop offset="1" stop-color="#7f214e"/></linearGradient><linearGradient id="roseLeaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c9e7b5"/><stop offset="1" stop-color="#477c68"/></linearGradient><radialGradient id="roseCore"><stop stop-color="#fff2c9"/><stop offset=".55" stop-color="#f7c77d"/><stop offset="1" stop-color="#d88c68"/></radialGradient></defs><circle cx="32" cy="27" r="25" fill="#f47da9" opacity=".13"/><path d="M32 58V31" stroke="#5e8c70" stroke-width="3" stroke-linecap="round"/><path d="M31 49C12 34 7 49 19 53c5 2 9-1 12-4Zm2-8c18-16 24-2 13 5-5 3-10 0-13-5Z" fill="url(#roseLeaf)" stroke="#527e68" stroke-width="1.5"/><g fill="url(#rosePetal)" stroke="#a63a69" stroke-width="1.15"><ellipse cx="32" cy="23" rx="7.5" ry="17"/><ellipse cx="32" cy="23" rx="7.5" ry="17" transform="rotate(45 32 23)"/><ellipse cx="32" cy="23" rx="7.5" ry="17" transform="rotate(90 32 23)"/><ellipse cx="32" cy="23" rx="7.5" ry="17" transform="rotate(135 32 23)"/></g><g fill="#ffb4d0" stroke="#c64c7d" stroke-width="1"><ellipse cx="32" cy="23" rx="5.2" ry="11.5" transform="rotate(22 32 23)"/><ellipse cx="32" cy="23" rx="5.2" ry="11.5" transform="rotate(82 32 23)"/><ellipse cx="32" cy="23" rx="5.2" ry="11.5" transform="rotate(142 32 23)"/></g><path d="M28 24c-1-5 6-8 9-3 2 4-2 8-6 8-4 0-6-4-3-7 2-2 5-1 5 1" fill="none" stroke="#ffe3a9" stroke-width="2.2" stroke-linecap="round"/><circle cx="32" cy="23" r="3.2" fill="url(#roseCore)"/><g fill="#fff4f8"><path d="m10 17 2-5 2 5 5 2-5 2-2 5-2-5-5-2Zm43 17 1.7-4 1.7 4 4 1.7-4 1.7-1.7 4-1.7-4-4-1.7Z"/><circle cx="49" cy="9" r="1.5"/><circle cx="14" cy="39" r="1.2"/></g>',
+    'divine-lotus':'<defs><radialGradient id="lotusAura"><stop stop-color="#f47da9" stop-opacity=".48"/><stop offset=".52" stop-color="#f47da9" stop-opacity=".28"/><stop offset=".82" stop-color="#f47da9" stop-opacity=".12"/><stop offset="1" stop-color="#f47da9" stop-opacity="0"/></radialGradient><linearGradient id="lotusOuter" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#fff0f6"/><stop offset=".3" stop-color="#ffb1ce"/><stop offset=".68" stop-color="#ed659b"/><stop offset="1" stop-color="#ad2e68"/></linearGradient><linearGradient id="lotusInnerPink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff3f9"/><stop offset=".42" stop-color="#f8a6ca"/><stop offset="1" stop-color="#d94f91"/></linearGradient><linearGradient id="lotusInnerBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4f0ff"/><stop offset=".42" stop-color="#b9b8f1"/><stop offset="1" stop-color="#777bc9"/></linearGradient><linearGradient id="lotusInnerPurple" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0fb"/><stop offset=".42" stop-color="#d8b1ee"/><stop offset="1" stop-color="#9869c4"/></linearGradient><linearGradient id="lotusLeaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c5e9b7"/><stop offset=".48" stop-color="#83bb8b"/><stop offset="1" stop-color="#477d65"/></linearGradient><radialGradient id="lotusSeed"><stop stop-color="#fff4c9"/><stop offset=".55" stop-color="#f5c873"/><stop offset="1" stop-color="#c9824f"/></radialGradient><filter id="lotusGlow" x="-95%" y="-85%" width="290%" height="270%"><feGaussianBlur in="SourceAlpha" stdDeviation="4.8" result="blur"/><feFlood flood-color="#ff6fa8" flood-opacity=".96" result="pink"/><feComposite in="pink" in2="blur" operator="in" result="pinkGlow"/><feMerge><feMergeNode in="pinkGlow"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lotusInnerPinkGlow" x="-100%" y="-90%" width="300%" height="280%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.8" result="blur"/><feFlood flood-color="#ff9ac7" flood-opacity=".95" result="light"/><feComposite in="light" in2="blur" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lotusInnerBlueGlow" x="-100%" y="-90%" width="300%" height="280%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.8" result="blur"/><feFlood flood-color="#aaaaff" flood-opacity=".98" result="light"/><feComposite in="light" in2="blur" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lotusInnerPurpleGlow" x="-100%" y="-90%" width="300%" height="280%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.8" result="blur"/><feFlood flood-color="#d4a0ff" flood-opacity=".98" result="light"/><feComposite in="light" in2="blur" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><ellipse cx="32" cy="28" rx="33" ry="31" fill="url(#lotusAura)"/><ellipse cx="32" cy="53" rx="27" ry="6" fill="#9bd3ae" opacity=".62"/><path d="M32 49C13 36 4 43 13 50c6 5 13 3 19-1Zm0 0c19-13 28-6 19 1-6 5-13 3-19-1Z" fill="url(#lotusLeaf)" stroke="#477d65" stroke-width="1.7"/><path d="M32 49c-8-7-17-7-21-2 8 1 14 3 21 2Zm0 0c8-7 17-7 21-2-8 1-14 3-21 2Z" fill="#b4dfa9" opacity=".9"/><g filter="url(#lotusGlow)"><g fill="url(#lotusOuter)" stroke="#a33368" stroke-width="1.15"><path d="M32 42C22 32 19 17 32 5c13 12 10 27 0 37Z"/><path d="M30 43C15 37 8 25 14 13c13 5 20 17 16 30Z"/><path d="M34 43c15-6 22-18 16-30-13 5-20 17-16 30Z"/><path d="M29 44C12 43 5 34 7 25c13 1 22 8 22 19Z"/><path d="M35 44c17-1 24-10 22-19-13 1-22 8-22 19Z"/></g></g><g filter="url(#lotusInnerGlow)"><path filter="url(#lotusInnerBlueGlow)" d="M32 42C24 32 24 19 32 11c8 8 8 21 0 31Z" fill="url(#lotusInnerBlue)" stroke="#7776bd" stroke-width="1.1"/><path filter="url(#lotusInnerPinkGlow)" d="M30 43C20 36 18 27 23 19c9 7 12 15 7 24Z" fill="url(#lotusInnerPink)" stroke="#c56c9c" stroke-width="1.05"/><path filter="url(#lotusInnerPurpleGlow)" d="M34 43c10-7 12-16 7-24-9 7-12 15-7 24Z" fill="url(#lotusInnerPurple)" stroke="#9a70c2" stroke-width="1.05"/></g><g fill="none" stroke="#fff7fc" stroke-linecap="round" opacity=".72"><path d="M32 15c4 7 4 15 1 22" stroke-width="1.1"/><path d="M24 23c4 5 6 10 5 15" stroke-width=".9"/><path d="M40 23c-4 5-6 10-5 15" stroke-width=".9"/></g><ellipse cx="32" cy="39" rx="7" ry="5" fill="url(#lotusSeed)" stroke="#b87543" stroke-width="1"/><g fill="#87502e"><circle cx="28" cy="38" r=".8"/><circle cx="32" cy="37" r=".8"/><circle cx="36" cy="38" r=".8"/><circle cx="30" cy="41" r=".8"/><circle cx="34" cy="41" r=".8"/></g><g fill="#fff7fc"><path d="m10 17 2-5 2 5 5 2-5 2-2 5-2-5-5-2Zm43 5 1.5-3.5L56 22l3.5 1.5L56 25l-1.5 3.5L53 25l-1.5-3.5L56 22Z"/><circle cx="49" cy="10" r="1.4"/></g>',
+
+
+    'dreamwing-halo':`<defs>
+<radialGradient id="dwAura"><stop stop-color="#ffb5df" stop-opacity=".72"/><stop offset=".48" stop-color="#c9a4ff" stop-opacity=".34"/><stop offset="1" stop-color="#c9a4ff" stop-opacity="0"/></radialGradient>
+<linearGradient id="dwPink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffaff"/><stop offset=".3" stop-color="#ffd4ed"/><stop offset=".68" stop-color="#f18acb"/><stop offset="1" stop-color="#a653ad"/></linearGradient>
+<linearGradient id="dwLilac" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffaff"/><stop offset=".36" stop-color="#e5d8ff"/><stop offset=".74" stop-color="#ad9af1"/><stop offset="1" stop-color="#7162b9"/></linearGradient>
+<linearGradient id="dwGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff7d8"/><stop offset=".55" stop-color="#e8bd77"/><stop offset="1" stop-color="#a97847"/></linearGradient>
+<radialGradient id="dwHeart"><stop stop-color="#fff"/><stop offset=".42" stop-color="#ffe0f2"/><stop offset="1" stop-color="#d65fa8"/></radialGradient>
+<filter id="dwGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur"/><feFlood flood-color="#ff83ca" flood-opacity="1" result="pink"/><feComposite in="pink" in2="blur" operator="in" result="halo"/><feMerge><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="dwInnerGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.4" result="blur"/><feFlood flood-color="#ffd0f0" flood-opacity="1" result="light"/><feComposite in="light" in2="blur" operator="in" result="halo"/><feMerge><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<circle cx="32" cy="31" r="30" fill="url(#dwAura)" class="dw-aura"/>
+<circle cx="32" cy="31" r="23" fill="none" stroke="#fff4ff" stroke-opacity=".32" stroke-width=".7" stroke-dasharray="1.5 3"/>
+<g class="dw-wings" filter="url(#dwGlow)" stroke="#a65d9f" stroke-width="1.05" stroke-linejoin="round">
+<path class="dw-wing dw-wing-left" d="M29 32C24 17 14 7 8 13 1 21 8 38 28 42c-5-8-6-16-8-23 5 5 8 10 9 16Z" fill="url(#dwPink)"/>
+<path class="dw-wing dw-wing-left-lower" d="M28 37C17 32 8 35 10 46c2 9 13 11 22 1-4-3-6-6-4-10Z" fill="url(#dwLilac)"/>
+<path class="dw-wing dw-wing-right" d="M35 32C40 17 50 7 56 13c7 8 0 25-20 29 5-8 6-16 8-23-5 5-8 10-9 16Z" fill="url(#dwLilac)"/>
+<path class="dw-wing dw-wing-right-lower" d="M36 37c11-5 20-2 18 9-2 9-13 11-22 1 4-3 6-6 4-10Z" fill="url(#dwPink)"/>
+</g>
+<g class="dw-wing-jewels" fill="none" stroke="#fffaff" stroke-width=".9">
+<path d="M9 18q8-8 16 8m-13 7q7-2 14 7m28-22q-8-8-16 8m13 7q-7-2-14 7" opacity=".85"/>
+<path d="M12 22q5-2 9 5m31-5q-5-2-9 5" stroke="#fff" stroke-width="1.4"/>
+<circle cx="15" cy="20" r="2.2" fill="#fff0fa" stroke="#e78cc8"/><circle cx="49" cy="20" r="2.2" fill="#f3eaff" stroke="#a99ae9"/>
+<circle cx="17" cy="42" r="1.7" fill="#fff0fa"/><circle cx="47" cy="42" r="1.7" fill="#fff0fa"/>
+</g>
+<g class="dw-veins" fill="none" stroke="#fff8ff" stroke-width="1.05" stroke-linecap="round" opacity=".96">
+<path d="M29 34 10 16m18 23L11 43m18-8L18 23m17 11 19-18M36 39l17 4M36 35l11-12"/>
+<path d="M12 27c5 1 9 5 12 10m28-10c-5 1-9 5-12 10"/>
+</g>
+<g class="dw-center" filter="url(#dwInnerGlow)">
+<path d="M32 15c-5 5-6 11 0 17 6-6 5-12 0-17Z" fill="url(#dwGold)" stroke="#b47c4a" stroke-width="1.2"/>
+<path d="M32 26c-8-8-15 2-7 10l7 8 7-8c8-8 1-18-7-10Z" fill="url(#dwHeart)" stroke="#c36a9e" stroke-width="1.35"/>
+<path d="m32 28 0 12m-5-9 5 4 5-4" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M27 46q5 4 10 0" fill="none" stroke="url(#dwGold)" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="32" cy="34" r="1.5" fill="#fff"/>
+</g>
+<g class="dw-sparkles" fill="#fffaff">
+<path d="m7 12 2-5 2 5 5 2-5 2-2 5-2-5-5-2Zm48 28 1.6-4 1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6Z"/>
+<path d="m18 7 1.2-3 1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2Zm27 4 1.3-3.2 1.3 3.2 3.2 1.3-3.2 1.3-1.3 3.2-1.3-3.2-3.2-1.3Z"/>
+<circle cx="12" cy="53" r="1.4"/><circle cx="51" cy="52" r="1.2"/><circle cx="32" cy="8" r="1.1"/>
+</g>`,
+
+
+
   };
-  return '<svg viewBox="0 0 64 64" role="img" focusable="false" aria-hidden="true">' + (art[kind] || art['pink-tulips']) + '</svg>';
+  const prefix = 'garden-art-' + (++gardenIllustrationSequence) + '-';
+  const illustration = (art[kind] || art['pink-tulips'])
+    .replace(/id="([^"]+)"/g, 'id="' + prefix + '$1"')
+    .replace(/url\(#([^\)]+)\)/g, 'url(#' + prefix + '$1)');
+  return '<svg viewBox="0 0 64 64" role="img" focusable="false" aria-hidden="true">' + illustration + '</svg>';
 }
 
 const GARDEN_COLLECTIBLES = [
-  {id:'pink-tulips',name:'Pink Tulip Patch',art:gardenIllustration('pink-tulips'),cost:30,type:'garden',rarity:'common'},
+  {id:'pink-tulips',name:'Pink Tulips',art:gardenIllustration('pink-tulips'),cost:30,type:'garden',rarity:'common'},
   {id:'moon-lantern',name:'Moon Lantern',art:gardenIllustration('moon-lantern'),cost:45,type:'garden',rarity:'common'},
   {id:'tiny-mushroom',name:'Tiny Mushroom',art:gardenIllustration('tiny-mushroom'),cost:60,type:'garden',rarity:'common'},
-  {id:'golden-bell',name:'Golden Garden Bell',art:gardenIllustration('golden-bell'),cost:80,type:'garden',rarity:'rare'},
-  {id:'bunny-bow',name:'Blush Bunny Bow',art:gardenIllustration('bunny-bow'),cost:35,type:'bunny',rarity:'common'},
+  {id:'golden-bell',name:'Golden Bell',art:gardenIllustration('golden-bell'),cost:80,type:'garden',rarity:'rare'},
+  {id:'bunny-bow',name:'Blush Bow',art:gardenIllustration('bunny-bow'),cost:35,type:'bunny',rarity:'common'},
   {id:'flower-crown',name:'Flower Crown',art:gardenIllustration('flower-crown'),cost:65,type:'bunny',rarity:'rare'},
-  {id:'starry-hat',name:'Starry Night Hat',art:gardenIllustration('starry-hat'),cost:90,type:'bunny',rarity:'rare'},
+  {id:'starry-hat',name:'Starry Hat',art:gardenIllustration('starry-hat'),cost:90,type:'bunny',rarity:'rare'},
   {id:'crystal-dew',name:'Crystal Dew',art:gardenIllustration('crystal-dew'),cost:120,type:'garden',rarity:'rare'},
   {id:'aurora-fountain',name:'Aurora Fountain',art:gardenIllustration('aurora-fountain'),cost:180,type:'garden',rarity:'epic'},
-  {id:'moon-bunny-hood',name:'Moon Bunny Hood',art:gardenIllustration('moon-bunny-hood'),cost:220,type:'bunny',rarity:'epic'},
-  {id:'celestial-rose',name:'Celestial Rose',art:gardenIllustration('celestial-rose'),cost:300,type:'garden',rarity:'legendary'}
+  {id:'moon-bunny-hood',name:'Moon Hood',art:gardenIllustration('moon-bunny-hood'),cost:220,type:'bunny',rarity:'epic'},
+  {id:'celestial-rose',name:'Celestial Rose',art:gardenIllustration('celestial-rose'),cost:350,type:'garden',rarity:'legendary'},
+  {id:'divine-lotus',name:'Divine Lotus',art:gardenIllustration('divine-lotus'),cost:350,type:'garden',rarity:'legendary'},
+  {id:'dreamwing-halo',name:'Dreamwing Halo',art:gardenIllustration('dreamwing-halo'),cost:400,type:'bunny',rarity:'legendary'},
 ];
+function updateGardenShopItem(id, collection) {
+  const normalized = normalizeGardenCollection(collection);
+  GARDEN_COLLECTIBLES.forEach(item => {
+    const card = document.querySelector('.sg-collectible-card [data-buy-collectible="' + item.id + '"]')?.closest('.sg-collectible-card');
+    const button = card?.querySelector('[data-buy-collectible]');
+    if (!card || !button) return;
+    const owned = normalized.owned.includes(item.id);
+    const equipped = normalized.equippedItems.includes(item.id);
+    card.classList.toggle('is-equipped', equipped);
+    button.textContent = equipped ? 'Equipped ✓' : owned ? 'Equip' : item.cost + ' petals · Collect';
+    button.disabled = !owned && petalRewardBalance() < item.cost;
+    button.setAttribute('aria-label', equipped ? 'Unequip ' + item.name : owned ? 'Equip ' + item.name : 'Collect ' + item.name + ' for ' + item.cost + ' Petal Points');
+  });
+}
+function updateGardenPetalBalance() {
+  const balance = document.querySelector('.sg-petal-balance b');
+  if (balance) balance.textContent = petalRewardBalance().toLocaleString() + ' Petal Points';
+  const profileBalance = $('#friendProfilePetals');
+  if (profileBalance && $('#friendProfileGate')?.dataset.ownProfile === 'true') profileBalance.textContent = petalRewardBalance().toLocaleString();
+}
 async function buyGardenCollectible(id) {
   const item = GARDEN_COLLECTIBLES.find(entry => entry.id === id);
-  if (!item || !me) return;
-  await hydrateGardenCollectionFromCloud();
-  const collection = readGardenCollection();
-  if (collection.owned.includes(id)) {
-    if (item.type === 'garden') collection.equipped = collection.equipped === id ? 'none' : id;
-    else collection.bunny = collection.bunny === id ? 'none' : id;
-    saveGardenCollection(collection);
-    await syncGardenCollectionToCloud(collection);
-    renderStreakPage();
+  if (!item || !me || gardenPurchaseInFlight) return;
+  if (!sb) {
+    toast('The garden shop is temporarily unavailable. Please sign in again.');
     return;
   }
-  const cost = item.cost;
-  const rewards = readPetalRewards();
-  if (petalRewardBalance(rewards) < cost) { toast('You need ' + (cost - petalRewardBalance(rewards)) + ' more Petal Points.'); return; }
-  const purchaseKey = 'purchase:' + id;
-  if (!awardPetalReward(purchaseKey, -cost)) return;
-  collection.owned.push(id);
-  if (item.type === 'garden') collection.equipped = id;
-  else collection.bunny = id;
-  saveGardenCollection(collection);
-  await syncGardenCollectionToCloud(collection);
-  toast(item.name + ' added to your collection!');
-  renderStreakPage();
+
+  gardenPurchaseInFlight = true;
+  const buttons = [...document.querySelectorAll('[data-buy-collectible]')];
+  buttons.forEach(button => {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+  });
+
+  try {
+    // Finish hydration and flush locally earned points before the database transaction.
+    await gardenCollectionHydration;
+    await hydrateGardenCollectionFromCloud();
+    if (!await syncPetalPointsToCloud()) {
+      throw new Error('Your Petal Points could not be synchronized. Please try again.');
+    }
+
+    const current = normalizeGardenCollection(readGardenCollection());
+    const action = current.owned.includes(id) ? 'toggle_equip' : 'purchase';
+    const { data, error } = await sb.rpc('perform_garden_shop_action', {
+      p_item_id: id,
+      p_action: action
+    });
+    if (error) throw error;
+    if (!data || data.ok !== true || !Array.isArray(data.owned) || !Array.isArray(data.equipped_items)) {
+      throw new Error('The shop returned an incomplete update. Please refresh and check your collection.');
+    }
+
+    // The RPC is the single source of truth: ownership, equipment and balance
+    // are committed together under a row lock, so rapid requests cannot double-spend.
+    const normalized = normalizeGardenCollection({
+      owned: data.owned,
+      equipped_items: data.equipped_items,
+      equipped: data.equipped || 'none',
+      bunny: data.bunny || 'none'
+    });
+    cloudPetalPoints = Math.max(0, Number(data.petal_points) || 0);
+    try {
+      localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(normalized));
+      localStorage.setItem(streakStorageKey('garden-collection-reconciled'), '1');
+      localStorage.removeItem(streakStorageKey('garden-collection-pending-sync'));
+    } catch {}
+
+    updateGardenShopItem(id, normalized);
+    updateGardenPetalBalance();
+
+    if (data.status === 'already_owned') {
+      toast(item.name + ' is already in your collection.');
+    } else if (action === 'purchase') {
+      toast(item.name + ' purchased and equipped!');
+    } else {
+      toast(normalized.equippedItems.includes(id) ? item.name + ' equipped!' : item.name + ' unequipped.');
+    }
+  } catch (error) {
+    console.error('Garden shop action failed:', error?.message || error);
+    toast(error?.message || 'The shop could not complete that action. Please try again.');
+  } finally {
+    gardenPurchaseInFlight = false;
+    document.querySelectorAll('[data-buy-collectible]').forEach(button => {
+      button.removeAttribute('aria-busy');
+      const item = GARDEN_COLLECTIBLES.find(entry => entry.id === button.dataset.buyCollectible);
+      const owned = readGardenCollection().owned.includes(button.dataset.buyCollectible);
+      if (item) button.disabled = !owned && petalRewardBalance() < item.cost;
+    });
+    updateGardenPetalBalance();
+  }
 }
 function getWeeklyBloomProgress(todayKey) {
   const date = new Date(todayKey + 'T00:00:00.000Z');
@@ -1712,9 +1928,19 @@ const STREAK_MILESTONE_ILLUSTRATIONS = [
 function renderStreakPage() {
   const content = $('#content');
   if (!content || !me) return;
-  if (gardenCollectionHydratedUserId !== String(me.id)) {
-    gardenCollectionHydratedUserId = String(me.id);
-    hydrateGardenCollectionFromCloud().then(() => { if (page === 'streak') renderStreakPage(); });
+  const collectionUserId = String(me.id);
+  if (gardenCollectionHydratedUserId !== collectionUserId) {
+    gardenCollectionHydratedUserId = collectionUserId;
+    gardenCollectionReadyUserId = '';
+    gardenCollectionHydration = hydrateGardenCollectionFromCloud().then(() => {
+      gardenCollectionReadyUserId = collectionUserId;
+      if (page === 'streak') renderStreakPage();
+    });
+  }
+  // Never render shop prices from a stale local cache while cloud ownership is loading.
+  if (gardenCollectionReadyUserId !== collectionUserId) {
+    content.innerHTML = '<div class="streak-garden-page"><p class="sg-petal-note">Loading your garden collection…</p></div>';
+    return;
   }
   const timezone = normalizeStreakTimeZone(me.streak_timezone || getBrowserStreakTimeZone());
   const todayKey = streakDateInTimeZone(timezone);
@@ -1797,10 +2023,11 @@ function renderStreakPage() {
   const collectibleMarkup = '<section class="sg-collectibles"><div class="sg-section-heading"><div><h3>Little Garden Shop</h3><p>Find a tiny treasure, from everyday blooms to magical keepsakes</p></div><span class="sg-shop-sparkle" aria-hidden="true">✧</span></div><div class="sg-collectible-grid">' +
     [...GARDEN_COLLECTIBLES].sort((a, b) => a.cost - b.cost).map(item => {
       const owned = collection.owned.includes(item.id);
-      const equipped = (item.type === 'garden' ? collection.equipped : collection.bunny) === item.id;
+      const equippedIds = new Set(Array.isArray(collection.equippedItems) ? collection.equippedItems : [collection.equipped, collection.bunny].filter(id => id && id !== 'none'));
+      const equipped = equippedIds.has(item.id);
       const affordable = petalRewardBalance(petalRewards) >= item.cost;
-      return '<article class="sg-collectible-card rarity-' + item.rarity + (equipped ? ' is-equipped' : '') + '" data-rarity="' + item.rarity + '"><span class="sg-collectible-art">' + item.art + '<i class="sg-art-glint" aria-hidden="true">✧</i></span><b>' + item.name + '</b><small>' + (item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1)) + ' · ' + (item.type === 'bunny' ? 'Bunny style' : 'Garden decor') + '</small><button type="button" data-buy-collectible="' + item.id + '"' + (!owned && !affordable ? ' disabled' : '') + '>' + (equipped ? 'Equipped ✓' : owned ? 'Equip' : item.cost + ' petals · Collect') + '</button></article>';
-    }).join('') + '</div><div class="sg-equipped-summary">Garden: ' + (GARDEN_COLLECTIBLES.find(item => item.id === collection.equipped)?.name || 'Original look') + ' · Bunny: ' + (GARDEN_COLLECTIBLES.find(item => item.id === collection.bunny)?.name || 'Original look') + '</div></section>';
+      return '<article class="sg-collectible-card item-' + item.id + ' rarity-' + item.rarity + (equipped ? ' is-equipped' : '') + '" data-rarity="' + item.rarity + '"><span class="sg-collectible-art">' + item.art + '<i class="sg-art-glint" aria-hidden="true">✧</i></span><b>' + item.name + '</b><small>' + (item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1)) + ' · ' + (item.type === 'bunny' ? 'Bunny style' : 'Garden decor') + '</small><button type="button" data-buy-collectible="' + item.id + '"' + (!owned && !affordable ? ' disabled' : '') + '>' + (equipped ? 'Equipped ✓' : owned ? 'Equip' : item.cost + ' petals · Collect') + '</button></article>';
+    }).join('') + '</div></section>';
   const weeklyProgress = getWeeklyBloomProgress(todayKey);
   const weeklyTiers = [{days:3,points:30,title:'Little Bloom',art:gardenIllustration('bloom-3')},{days:5,points:50,title:'Garden Glow',art:gardenIllustration('bloom-5')},{days:7,points:100,title:'Full Bloom',art:gardenIllustration('bloom-7')}];
   const weeklyMarkup = '<section class="sg-weekly-rewards"><div class="sg-section-heading"><div><h3>Weekly Bloom Rewards</h3><p>Complete daily quests on different days</p></div><span class="sg-goal-count">' + weeklyProgress.completedDays.length + ' / 7 days</span></div><div class="sg-weekly-tier-list">' +
@@ -2419,6 +2646,7 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
   const messageText = esc(m.text || '');
   const createdAt = m.createdAt || m.created_at || '';
   const time = esc(formatNoteClock(createdAt));
+  const editedLabel = m.edited_at ? '<small class="chat-edited-label">Edited</small>' : '';
   const senderTag = mine ? 'div' : 'button';
   const senderAttrs = mine ? '' : `type="button" data-friend-profile="${handle}" data-friend-id="${esc(ownerId)}" aria-label="Open ${name}'s profile"`;
   const senderMeta = showMeta ? `
@@ -2429,19 +2657,26 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
         </${senderTag}>
   ` : '';
   const seenLabel = m.last_seen_at ? formatSeenRelative(m.last_seen_at) : 'Seen';
+  const deliveryLabel = Number(m.seen_by_count || 0) > 0 ? 'Seen' : Number(m.delivered_by_count || 0) > 0 ? 'Delivered' : 'Sent';
+  const deliveryStatus = mine && !m.isPending ? `<small class="chat-delivery-status ${deliveryLabel.toLowerCase()}">${deliveryLabel}</small>` : '';
   const seenReceipt = showSeen && mine && Number(m.seen_by_count || 0) > 0
     ? '<small class="chat-seen-receipt" data-seen-at="' + esc(m.last_seen_at || '') + '" aria-label="' + esc(seenLabel) + '">' + esc(seenLabel) + '</small>'
     : '';
+  const replyTarget = m.reply_to_id ? feed.find(item => String(item.id) === String(m.reply_to_id)) : null;
+  const replyAuthor = replyTarget?.author?.displayName || replyTarget?.author?.display_name || replyTarget?.author?.username || 'Original message';
+  const replyText = replyTarget?.text || 'This message is no longer available';
+  const replyMarkup = m.reply_to_id ? `<button type="button" class="chat-reply-preview" data-chat-jump="${esc(m.reply_to_id)}" aria-label="Jump to replied message"><small>↪ Replying to</small><b>${esc(replyAuthor)}</b><span>${esc(replyText)}</span></button>` : '';
 
   return `
     <div class="chat-message ${mine ? 'is-mine' : 'is-friend'}${liked ? ' is-loved' : ''}${m.isPending ? ' is-uploading' : ''}${isContinuation ? ' is-continuation' : ''}" data-kind="note" data-memory="${esc(id)}" data-owner="${esc(ownerId)}">
       <div class="chat-message-content">
         ${senderMeta}
         <div class="chat-message-line">
-          <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>
+          <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>${editedLabel}${deliveryStatus}
           <div class="chat-bubble-wrap">
             <div class="chat-bubble${hasHeartReaction ? '' : ' no-heart-reaction'}${isShortMessage ? ' is-short-message' : ''}" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
               ${heartButton}
+              ${replyMarkup}
               <span class="chat-message-text" dir="auto">${messageText}</span>
             </div>
           </div>
@@ -2486,6 +2721,18 @@ function memoryCard(m, options = {}) {
   return `<article class="feed-item ${tone}${pending}${uploading}${m.kind === 'note' ? ' home-note-memory' : ''}${continuationClass}" data-kind="${esc(m.kind)}" data-memory="${esc(m.id)}" data-owner="${esc(owner.id || m.owner_id || '')}">${authorLine}${body}${ownerIndicator}</article>`;
 }
 
+function syncChatReplyPreview() {
+  const preview = $('#chatReplyingTo');
+  if (!preview) return;
+  const item = replyingToMessageId
+    ? feed.find(memory => String(memory.id) === String(replyingToMessageId))
+    : null;
+  preview.hidden = !item;
+  preview.innerHTML = item
+    ? `<span class="chat-replying-label">Replying to <b>${esc(item.author?.displayName || item.author?.display_name || item.author?.username || 'message')}</b></span><small>${esc(item.text || 'Message unavailable')}</small><button type="button" data-chat-reply-cancel aria-label="Cancel reply">×</button>`
+    : '';
+}
+
 /* Clean Notes conversation; message markup is shared with Home → Memory History. */
 function renderNotesPage(options = {}) {
   startNotesIncomingPoll();
@@ -2506,6 +2753,7 @@ function renderNotesPage(options = {}) {
     .filter(m => m.kind === 'note' && !hiddenNoteIds.has(String(m.id)) && !pendingDeleteTimers.has(String(m.id)))
     .slice()
     .reverse();
+  void markNotesDelivered(chatNotes);
 
   let previousLabel = '';
   let previousOwnerId = '';
@@ -2545,6 +2793,7 @@ function renderNotesPage(options = {}) {
     else delete status.dataset.seenAt;
   };
   updateSeenStatus();
+  syncChatReplyPreview();
 
   // Do not rebuild an unchanged conversation on every realtime/status tick.
   // Keeping its message nodes mounted prevents scroll, focus and CSS animation jumps.
@@ -2593,6 +2842,16 @@ function renderNotesPage(options = {}) {
           const desiredText = desiredNode.querySelector('.chat-message-text')?.textContent;
           const currentText = current.querySelector('.chat-message-text');
           if (currentText && desiredText != null && currentText.textContent !== desiredText) currentText.textContent = desiredText;
+          const desiredReply = desiredNode.querySelector('.chat-reply-preview');
+          const currentReply = current.querySelector('.chat-reply-preview');
+          if (desiredReply && currentReply) { currentReply.innerHTML = desiredReply.innerHTML; currentReply.dataset.chatJump = desiredReply.dataset.chatJump; }
+          else if (desiredReply && !currentReply) current.querySelector('.chat-bubble')?.prepend(desiredReply);
+          else if (!desiredReply && currentReply) currentReply.remove();
+          const desiredReactions = desiredNode.querySelector('.chat-message-reactions');
+          const currentReactions = current.querySelector('.chat-message-reactions');
+          if (desiredReactions && currentReactions) currentReactions.replaceWith(desiredReactions);
+          else if (desiredReactions && !currentReactions) current.querySelector('.chat-bubble-wrap')?.append(desiredReactions);
+          else if (!desiredReactions && currentReactions) currentReactions.remove();
           const desiredTime = desiredNode.querySelector('.chat-message-time');
           const currentTime = current.querySelector('.chat-message-time');
           if (desiredTime && currentTime && currentTime.dateTime !== desiredTime.dateTime) {
@@ -2662,6 +2921,7 @@ function renderNotesPage(options = {}) {
       </div>
       <form id="chatComposer" class="chat-composer" autocomplete="off">
         <small id="chatSeenStatus" class="chat-seen-receipt chat-seen-status" ${latestSeenAt ? 'data-seen-at="' + esc(latestSeenAt) + '"' : ''} aria-label="${esc(latestSeenLabel || "Not seen")}" ${latestHasBeenSeen ? "" : "hidden"}>${esc(latestSeenLabel)}</small>
+        <div id="chatReplyingTo" class="chat-replying-to" ${replyingToMessageId ? '' : 'hidden'}>${replyingToMessageId ? `<span>Replying to <b>${esc((feed.find(item => String(item.id) === String(replyingToMessageId))?.author?.displayName || feed.find(item => String(item.id) === String(replyingToMessageId))?.author?.username || 'message'))}</b></span><small>${esc(feed.find(item => String(item.id) === String(replyingToMessageId))?.text || '')}</small>` : ''}<button type="button" data-chat-reply-cancel aria-label="Cancel reply">×</button></div>
         <textarea id="chatInput" class="input" maxlength="1000" rows="1" enterkeyhint="enter" inputmode="text" autocapitalize="sentences" spellcheck="true" aria-multiline="true" placeholder="Write a little message…" aria-label="Write a little message"></textarea>
         <button type="submit" class="primary" id="chatSend" aria-label="Send message" hidden>💌</button>
       </form>
@@ -3488,7 +3748,8 @@ function showMessageActions(id, bubbleElement) {
   popup.className = 'chat-actions-popup';
   popup.setAttribute('role', 'toolbar');
   popup.setAttribute('aria-label', 'Message options');
-  popup.innerHTML = `
+  popup.innerHTML = `    <button type="button" class="chat-action-btn reply-btn" data-chat-reply="${esc(id)}">Reply</button>
+    ${ownsMessage ? `<button type="button" class="chat-action-btn edit-btn" data-chat-edit="${esc(id)}">Edit</button>` : ''}
     <button type="button" class="chat-action-btn" data-chat-copy="${esc(id)}">Copy</button>
     <button type="button" class="chat-action-btn delete-btn" ${ownsMessage ? 'data-chat-delete' : 'data-chat-hide'}="${esc(id)}">Delete</button>
   `;
@@ -3689,12 +3950,14 @@ async function sendChatMessage() {
   const field = $('#chatInput');
   const text = field?.value.trim();
   if (!text) return;
+  const replyId = replyingToMessageId;
   const tempId = 'local-note-' + Date.now();
   const createdAt = new Date().toISOString();
   const optimistic = {
     id: tempId,
     kind: 'note',
     text,
+    reply_to_id: replyId ? Number(replyId) : null,
     createdAt,
     created_at: createdAt,
     isPending: true,
@@ -3721,17 +3984,19 @@ async function sendChatMessage() {
 
   try {
     const { data: saved, error: sendError } = await sb.from('memories')
-      .insert({ owner_id: me.id, kind: 'note', text })
-      .select('id,owner_id,kind,text,created_at')
+      .insert({ owner_id: me.id, kind: 'note', text, reply_to_id: replyId ? Number(replyId) : null })
+      .select('id,owner_id,kind,text,created_at,reply_to_id,edited_at')
       .single();
     if (sendError) throw sendError;
     recordStreakNoteQuest(text);
+    if (replyingToMessageId === replyId) replyingToMessageId = null;
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
     feed = feed.map(m => String(m.id) === tempId ? record : m);
     renderNotesPage({ followLatest: true });
     refocusComposer();
   } catch (error) {
     feed = feed.filter(m => String(m.id) !== tempId);
+    if (replyId) replyingToMessageId = replyId;
     renderNotesPage({ followLatest: true });
     refocusComposer(true);
     toast(error.message);
@@ -4087,6 +4352,27 @@ function startNotesIncomingPoll() {
   }, 5000);
 }
 
+
+async function markNotesDelivered(messages = []) {
+  if (!sb || !me?.id) return;
+  const ids = messages
+    .filter(item => item?.kind === 'note' && !item.isPending &&
+      String(item.author?.id || item.owner_id || '') !== String(me.id))
+    .map(item => Number(item.id)).filter(Number.isFinite)
+    .filter(id => !noteDeliveredLocally.has(String(id)) && !noteDeliveryInFlight.has(String(id)));
+  if (!ids.length) return;
+  ids.forEach(id => noteDeliveryInFlight.add(String(id)));
+  try {
+    const { error } = await sb.rpc('mark_notes_delivered', { p_message_ids: ids });
+    if (error) throw error;
+    ids.forEach(id => noteDeliveredLocally.add(String(id)));
+  } catch (error) {
+    console.warn('Message delivery acknowledgement deferred:', error?.message || error);
+  } finally {
+    ids.forEach(id => noteDeliveryInFlight.delete(String(id)));
+  }
+}
+
 async function refreshOwnNoteSeenStatus() {
   if (!me || !sb) return;
   if (seenStatusRefreshInFlight) {
@@ -4097,19 +4383,24 @@ async function refreshOwnNoteSeenStatus() {
   try {
     // Fetch the owner's newest note and read cursors directly in parallel.
     // This avoids the extra API wrapper request and its duplicate cursor query.
-    const [{ data: latestOwnNote, error: latestError }, { data: cursors, error: cursorError }] = await Promise.all([
+    const [{ data: latestOwnNote, error: latestError }, { data: cursors, error: cursorError }, { data: deliveries, error: deliveryError }] = await Promise.all([
       sb.from('memories').select('id').eq('owner_id', me.id).eq('kind', 'note')
         .order('id', { ascending: false }).limit(1).maybeSingle(),
       sb.from('note_read_cursors').select('reader_id,last_read_message_id,last_read_at')
-        .eq('owner_id', me.id).order('last_read_message_id', { ascending: false })
+        .eq('owner_id', me.id).order('last_read_message_id', { ascending: false }),
+      sb.from('note_delivery_receipts').select('message_id,reader_id,delivered_at').eq('owner_id', me.id)
     ]);
     if (latestError) throw latestError;
     if (cursorError) throw cursorError;
+    if (deliveryError) throw deliveryError;
 
     for (const item of feed) {
       if (item.kind !== 'note' || String(item.author?.id || item.owner_id) !== String(me.id)) continue;
-      item.seen_by_count = 0;
-      item.last_seen_at = null;
+      const messageId = Number(item.id) || 0;
+      const readers = (cursors || []).filter(cursor => Number(cursor.last_read_message_id) >= messageId && messageId > 0);
+      item.seen_by_count = readers.length;
+      item.last_seen_at = readers.map(cursor => cursor.last_read_at).filter(Boolean).sort().at(-1) || null;
+      item.delivered_by_count = (deliveries || []).filter(receipt => Number(receipt.message_id) === messageId).length;
     }
 
     const latestConversationNote = feed
@@ -4262,6 +4553,40 @@ function startRealtime() {
             }, 350);
           }
         }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profile_garden_collections' }, payload => {
+        const row = payload?.new || {};
+        const changedId = String(row.user_id || payload?.old?.user_id || '');
+        if (!changedId || payload?.eventType === 'DELETE') return;
+        const collection = normalizeGardenCollection(row);
+        const profileGate = $('#friendProfileGate');
+        if (changedId === String(me?.id)) {
+          cloudPetalPoints = Math.max(0, Number(row.petal_points) || 0);
+          // A committed realtime row confirms that the pending local change reached
+          // the database, so adopt the same snapshot on this device.
+          try {
+            localStorage.setItem(streakStorageKey('garden-collection'), JSON.stringify(collection));
+            localStorage.setItem(streakStorageKey('garden-collection-reconciled'), '1');
+            localStorage.removeItem(streakStorageKey('garden-collection-pending-sync'));
+          } catch {}
+          if (page === 'streak') {
+            updateGardenShopItem('', collection);
+            updateGardenPetalBalance();
+          }
+          if (profileGate && !profileGate.classList.contains('hidden') &&
+              profileGate.dataset.collectionUserId === changedId) {
+            renderFriendGardenCollection(collection, changedId, true);
+            const petalsNode = $('#friendProfilePetals');
+            if (petalsNode) petalsNode.textContent = cloudPetalPoints.toLocaleString();
+          }
+          return;
+        }
+        if (profileGate && !profileGate.classList.contains('hidden') &&
+            profileGate.dataset.collectionUserId === changedId) {
+          renderFriendGardenCollection(collection, changedId, false);
+          const petalsNode = $('#friendProfilePetals');
+          if (petalsNode) petalsNode.textContent = Math.max(0, Number(row.petal_points) || 0).toLocaleString();
+        }
       }).subscribe();
 
     notificationChannel = sb.channel('cute-bunny-notifications-' + me.id)
@@ -4304,6 +4629,20 @@ function startRealtime() {
       });
 
     memoryChannel = sb.channel('cute-bunny-memories-' + me.id)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'memories' }, payload => {
+        const updated = payload?.new || {};
+        const item = feed.find(memory => String(memory.id) === String(updated.id));
+        if (item) Object.assign(item, updated);
+        if (page === 'notes') renderNotesPage();
+        else if (page === 'home') render();
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'memories' }, payload => {
+        const removedId = String(payload?.old?.id || '');
+        if (!removedId) return;
+        feed = feed.filter(memory => String(memory.id) !== removedId);
+        if (page === 'notes') renderNotesPage();
+        else if (page === 'home') render();
+      })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'memories' }, payload => {
         const incoming = payload?.new || {};
         if (incoming.kind === 'note' && String(incoming.owner_id || '') !== String(me.id)) {
@@ -4322,6 +4661,7 @@ function startRealtime() {
             // Keep previously loaded photos, songs and older pages while
             // refreshing the newest records after a Realtime insert.
             mergeFeedRows(freshFeed);
+            void markNotesDelivered(feed.filter(item => item.kind === 'note'));
             if (page === 'notes') {
               renderNotesPage();
               void refreshOwnNoteSeenStatus();
@@ -4331,7 +4671,10 @@ function startRealtime() {
           }
         }, 0);
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'note_delivery_receipts', filter: 'owner_id=eq.' + me.id }, () => {
+        clearTimeout(window.cuteNoteDeliveryRefresh);
+        window.cuteNoteDeliveryRefresh = setTimeout(() => { void refreshOwnNoteSeenStatus(); }, 45);
+      })      .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
         clearTimeout(window.cuteMemoryLikesRefresh);
         window.cuteMemoryLikesRefresh = setTimeout(() => {
           refreshMemoryLikeIndicators().catch(error => console.warn('Live like refresh failed:', error?.message || error));
@@ -4377,6 +4720,15 @@ function startRealtime() {
     syncPresenceUI();
   }
 }
+
+window.addEventListener('online', () => {
+  if (!sb || !me) return;
+  // Rejoin Supabase Realtime after the browser regains connectivity, then
+  // reconcile missed messages, reactions and receipts from the database.
+  startRealtime();
+  void refresh().then(() => refreshOwnNoteSeenStatus())
+    .catch(error => console.warn('Notes reconnect refresh failed:', error?.message || error));
+});
 
 function closeRealtime() {
   stopNotesTyping();
@@ -4793,6 +5145,40 @@ function formatProfileDate(value) {
 
 /* Event listeners */
 
+// Soft tactile button press + one gentle synthesized boing per activation.
+const buttonPressTimers = new WeakMap();
+function releaseCuteButton(button) {
+  if (!button) return;
+  button.classList.remove('cute-press');
+  const timer = buttonPressTimers.get(button);
+  if (timer) clearTimeout(timer);
+  buttonPressTimers.delete(button);
+}
+document.addEventListener('pointerdown', event => {
+  const button = event.target.closest('button:not(:disabled), [role="button"]:not([aria-disabled="true"])');
+  if (!button || event.button > 0 || button.matches('#surprise, #bunnyBuddy, .sg-petal-card') || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+  button.classList.remove('cute-press');
+  void button.offsetWidth;
+  button.classList.add('cute-press');
+  playBoing();
+  const timer = setTimeout(() => releaseCuteButton(button), 190);
+  buttonPressTimers.set(button, timer);
+}, true);
+document.addEventListener('pointerup', event => {
+  const button = event.target.closest('button, [role="button"]');
+  if (button) setTimeout(() => releaseCuteButton(button), 95);
+}, true);
+document.addEventListener('pointercancel', event => {
+  const button = event.target.closest('button, [role="button"]');
+  if (button) releaseCuteButton(button);
+}, true);
+// Keyboard activation has no pointerdown, so give it the same sound.
+document.addEventListener('click', event => {
+  if (event.detail !== 0) return;
+  const button = event.target.closest('button:not(:disabled), [role="button"]:not([aria-disabled="true"])');
+  if (button && !button.matches('#surprise, #bunnyBuddy, .sg-petal-card')) playBoing();
+}, true);
+
 // Tapping effect on pointerdown
 document.addEventListener('pointerup', e => {
   const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
@@ -4954,6 +5340,7 @@ document.addEventListener('pointerdown', e => {
   messagePressState.startX = e.clientX;
   messagePressState.startY = e.clientY;
   bubble.classList.add('is-pressed');
+  playBoing();
 
   messagePressState.timer = setTimeout(() => {
     if (!messagePressState.bubble?.isConnected || messagePressState.pointerId !== e.pointerId) return;
@@ -5006,6 +5393,18 @@ function finishNotesMessagePress(e) {
 
 document.addEventListener('pointerup', finishNotesMessagePress);
 document.addEventListener('pointercancel', cancelNotesMessagePress);
+document.addEventListener('keydown', event => {
+  const editor = event.target.closest?.('.chat-bubble.is-editing .chat-message-text[contenteditable="true"]');
+  if (!editor) return;
+  const id = editor.closest('.chat-bubble')?.dataset.chatMessageId;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    document.querySelector(`[data-chat-edit-cancel="${CSS.escape(String(id))}"]`)?.click();
+  } else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    document.querySelector(`[data-chat-edit-save="${CSS.escape(String(id))}"]`)?.click();
+  }
+});
 
 // Streak entry uses capture phase so card clicks cannot be swallowed by another page handler.
 document.addEventListener('click', event => {
@@ -5281,6 +5680,7 @@ document.addEventListener('click', async e => {
   const bubble = e.target.closest('.chat-page .chat-bubble, .home-note-memory .chat-bubble');
   const selectedText = window.getSelection?.()?.toString().trim();
   if (bubble && !e.target.closest('button')) {
+    if (bubble.classList.contains('is-editing')) return;
     if (messagePressState.suppressClick) {
       messagePressState.suppressClick = false;
       clearTimeout(messagePressState.suppressTimer);
@@ -5301,6 +5701,104 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  // Chat action: Edit — darken immediately, then edit the text in place.
+  const editBtn = e.target.closest('[data-chat-edit]');
+  if (editBtn) {
+    const id = String(editBtn.dataset.chatEdit);
+    const item = feed.find(m => String(m.id) === id);
+    const bubbleEl = document.querySelector(`.chat-bubble[data-chat-message-id="${CSS.escape(id)}"]`);
+    const textEl = bubbleEl?.querySelector('.chat-message-text');
+    if (!item || !bubbleEl || !textEl || String(item.author?.id || item.owner_id || '') !== String(me?.id || '')) {
+      hideMessageActions();
+      return;
+    }
+    bubbleEl.classList.add('is-editing');
+    bubbleEl.setAttribute('aria-label', 'Editing your message');
+    textEl.setAttribute('contenteditable', 'true');
+    textEl.setAttribute('role', 'textbox');
+    textEl.setAttribute('aria-label', 'Edit message');
+    textEl.focus();
+    const range = document.createRange();
+    range.selectNodeContents(textEl);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    const popup = document.querySelector('.chat-actions-popup');
+    if (popup) {
+      popup.innerHTML = `
+        <button type="button" class="chat-action-btn edit-save-btn" data-chat-edit-save="${esc(id)}">Save</button>
+        <button type="button" class="chat-action-btn" data-chat-edit-cancel="${esc(id)}">Cancel</button>
+      `;
+      popup.setAttribute('aria-label', 'Save or cancel message edit');
+    }
+    return;
+  }
+
+  const cancelEditBtn = e.target.closest('[data-chat-edit-cancel]');
+  if (cancelEditBtn) {
+    const id = String(cancelEditBtn.dataset.chatEditCancel);
+    const bubbleEl = document.querySelector(`.chat-bubble[data-chat-message-id="${CSS.escape(id)}"]`);
+    const textEl = bubbleEl?.querySelector('.chat-message-text');
+    const item = feed.find(m => String(m.id) === id);
+    if (textEl && item) textEl.textContent = item.text || '';
+    textEl?.removeAttribute('contenteditable');
+    textEl?.removeAttribute('role');
+    textEl?.removeAttribute('aria-label');
+    bubbleEl?.classList.remove('is-editing');
+    bubbleEl?.setAttribute('aria-label', 'Message');
+    hideMessageActions();
+    return;
+  }
+
+  const saveEditBtn = e.target.closest('[data-chat-edit-save]');
+  if (saveEditBtn) {
+    const id = String(saveEditBtn.dataset.chatEditSave);
+    const item = feed.find(m => String(m.id) === id);
+    const bubbleEl = document.querySelector(`.chat-bubble[data-chat-message-id="${CSS.escape(id)}"]`);
+    const textEl = bubbleEl?.querySelector('.chat-message-text');
+    const nextText = String(textEl?.innerText || textEl?.textContent || '').trim();
+    if (!item || !nextText) { toast('A message cannot be empty ♡'); return; }
+    saveEditBtn.disabled = true;
+    saveEditBtn.textContent = 'Saving…';
+    try {
+      const { data, error } = await sb.from('memories').update({ text: nextText })
+        .eq('id', Number(id)).eq('owner_id', me.id).eq('kind', 'note')
+        .select('id,text,edited_at').single();
+      if (error) throw error;
+      item.text = data.text;
+      item.edited_at = data.edited_at || new Date().toISOString();
+      hideMessageActions();
+      if (page === 'notes') renderNotesPage();
+      else render();
+      toast('Message updated ♡');
+    } catch (error) {
+      saveEditBtn.disabled = false;
+      saveEditBtn.textContent = 'Save';
+      toast(error.message || 'Could not update this message.');
+    }
+    return;
+  }
+
+  const replyBtn = e.target.closest('[data-chat-reply]');
+  if (replyBtn) {
+    replyingToMessageId = String(replyBtn.dataset.chatReply);
+    hideMessageActions();
+    if (page !== 'notes') go('notes'); else renderNotesPage();
+    const input = $('#chatInput');
+    input?.focus({ preventScroll: true });
+    syncNotesKeyboardLayout();
+    return;
+  }
+  if (e.target.closest('[data-chat-reply-cancel]')) { replyingToMessageId = null; renderNotesPage(); return; }
+  const jumpReply = e.target.closest('[data-chat-jump]');
+  if (jumpReply) {
+    const target = document.querySelector(`.chat-message[data-memory="${CSS.escape(jumpReply.dataset.chatJump)}"]`);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target?.classList.add('chat-message-highlight');
+    setTimeout(() => target?.classList.remove('chat-message-highlight'), 1000);
+    return;
+  }
   // Chat action: Copy
   const copyBtn = e.target.closest('[data-chat-copy]');
   if (copyBtn) {
