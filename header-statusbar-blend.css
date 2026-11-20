@@ -1,0 +1,42 @@
+/* Seamless status-bar and app-header surface.
+   Keep the native status-bar color and the header on the exact active theme
+   surface, and remove any inherited top-edge tint/shadow overlay. */
+html,
+body {
+  background-color: var(--cb-bg, #fcf7f2) !important;
+}
+
+html body #app > header,
+html body .app > header,
+html body[data-theme] #app > header,
+html body[data-theme] .app > header {
+  background: var(--cb-bg, #fcf7f2) !important;
+  background-color: var(--cb-bg, #fcf7f2) !important;
+  background-image: none !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+}
+
+html body #app > header::before,
+html body #app > header::after,
+html body .app > header::before,
+html body .app > header::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Preserve the theme's wallpaper below the header without letting it tint
+   the status-bar/header band. */
+html body[data-theme] #app,
+html body[data-theme] .app {
+  background-color: var(--cb-bg) !important;
+}

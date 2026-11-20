@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { shouldInstallCuteBunnyUpdate, validateCuteBunnyManifest } from './ota-manifest.js';
 
 const MANIFEST_URL = 'https://raw.githubusercontent.com/whtankus/Cute-bunny/main/ota/latest.json';
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -18,18 +19,8 @@ async function checkForCuteBunnyUpdate() {
     ]);
 
     if (!manifestResponse.ok) return;
-    const manifest = await manifestResponse.json();
-
-    if (
-      manifest?.appId !== 'com.cutebunny.app' ||
-      typeof manifest.version !== 'string' ||
-      typeof manifest.url !== 'string' ||
-      !manifest.url.startsWith('https://') ||
-      typeof manifest.checksum !== 'string' ||
-      !/^[a-f0-9]{64}$/i.test(manifest.checksum)
-    ) return;
-
-    if (currentBundle?.bundle?.version === manifest.version) return;
+    const manifest = validateCuteBunnyManifest(await manifestResponse.json());
+    if (!manifest || !shouldInstallCuteBunnyUpdate(manifest, currentBundle?.bundle?.version)) return;
 
     const downloaded = await CapacitorUpdater.download({
       version: manifest.version,

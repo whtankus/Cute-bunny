@@ -14266,3 +14266,442 @@ body[data-mode="dark"].notes-page-active.notes-header-hidden .app > header {
 }
 
 
+
+/* Legendary bunny keepsakes — rose/lotus-grade glow and living details */
+.dreamwing-halo .sg-collectible-art svg,
+.garden-rarity-dreamwing-halo svg,
+.item-dreamwing-halo .sg-collectible-art svg,
+.moon-goddess-tiara .sg-collectible-art svg,
+.garden-rarity-moon-goddess-tiara svg,
+.item-moon-goddess-tiara .sg-collectible-art svg{overflow:visible}
+.dw-wings{transform-box:fill-box;transform-origin:center;animation:dw-wing-breathe 3.8s ease-in-out infinite}
+.dw-wing-left{transform-origin:28px 33px;animation:dw-wing-left 3.8s ease-in-out infinite}
+.dw-wing-right{transform-origin:36px 33px;animation:dw-wing-right 3.8s ease-in-out infinite}
+.dw-wing-left-lower{transform-origin:28px 39px;animation:dw-wing-left 4.2s ease-in-out infinite reverse}
+.dw-wing-right-lower{transform-origin:36px 39px;animation:dw-wing-right 4.2s ease-in-out infinite reverse}
+.dw-center{transform-box:fill-box;transform-origin:center;animation:dw-heart-pulse 2.7s ease-in-out infinite}
+.dw-sparkles,.mt-sparkles{transform-box:fill-box;transform-origin:center;animation:dw-sparkle-drift 3.2s ease-in-out infinite}
+.dw-veins{animation:dw-vein-shimmer 3.8s ease-in-out infinite}
+.mt-tiara{transform-box:fill-box;transform-origin:center;animation:mt-tiara-float 4s ease-in-out infinite;filter:drop-shadow(0 0 4px #ff8fc8) drop-shadow(0 0 8px #e7a8f5)}
+.mt-gems{transform-box:fill-box;transform-origin:center;animation:mt-gem-glimmer 2.6s ease-in-out infinite}
+.mt-filigree{opacity:.9}
+.mt-sparkles{animation-delay:-1.4s}
+@keyframes dw-wing-breathe{0%,100%{filter:drop-shadow(0 0 3px #f7a4d8)}50%{filter:drop-shadow(0 0 8px #ff9bd4) drop-shadow(0 0 13px #c7a6f5)}}
+@keyframes dw-wing-left{0%,100%{transform:rotate(-1deg) scale(1)}50%{transform:rotate(-3deg) scale(1.025)}}
+@keyframes dw-wing-right{0%,100%{transform:rotate(1deg) scale(1)}50%{transform:rotate(3deg) scale(1.025)}}
+@keyframes dw-heart-pulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 3px #ffb2df)}50%{transform:scale(1.07);filter:drop-shadow(0 0 8px #ff80c5)}}
+@keyframes dw-sparkle-drift{0%,100%{opacity:.78;transform:translateY(0) scale(.96)}50%{opacity:1;transform:translateY(-2px) scale(1.08)}}
+@keyframes dw-vein-shimmer{0%,100%{opacity:.7}50%{opacity:1}}
+@keyframes mt-tiara-float{0%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 0 4px #ff8fc8) drop-shadow(0 0 8px #e7a8f5)}50%{transform:translateY(-1.5px) scale(1.018);filter:drop-shadow(0 0 8px #ff83c4) drop-shadow(0 0 14px #d4a4ff)}}
+@keyframes mt-gem-glimmer{0%,100%{filter:drop-shadow(0 0 2px #ffc2e5);opacity:.94}50%{filter:drop-shadow(0 0 7px #ff9bd7) drop-shadow(0 0 10px #b9a5ff);opacity:1}}
+@media(prefers-reduced-motion:reduce){.dw-wings,.dw-wing-left,.dw-wing-right,.dw-wing-left-lower,.dw-wing-right-lower,.dw-center,.dw-sparkles,.dw-veins,.mt-tiara,.mt-gems,.mt-sparkles{animation:none!important}}
+
+
+/* Legendary keepsake polish: consistent shop controls and richer artwork scale. */
+.sg-collectible-card>button{
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-width:0;
+  min-height:38px;
+  height:38px;
+  flex:0 0 38px;
+  padding:7px 8px;
+  white-space:nowrap;
+  line-height:1;
+  border-radius:12px;
+  font-size:.76rem;
+  font-weight:800;
+  letter-spacing:.005em;
+}
+.sg-collectible-card>button:not(:disabled){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 3px 9px rgba(165,104,139,.12);
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+.sg-collectible-card>button:not(:disabled):hover{
+  transform:translateY(-1px);
+  filter:saturate(1.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 5px 13px rgba(165,104,139,.18);
+}
+.sg-collectible-card>button:not(:disabled):active{transform:translateY(0) scale(.985)}
+.sg-collectible-art:has(svg){
+  width:64px;
+  height:64px;
+  flex:0 0 64px;
+  overflow:visible;
+  border-radius:19px;
+  background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.96),rgba(255,239,249,.76) 58%,rgba(238,222,249,.58));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 5px 16px rgba(183,119,163,.12);
+}
+.sg-collectible-art svg{width:64px;height:64px;overflow:visible}
+.item-dreamwing-halo .sg-collectible-art,
+.item-moon-goddess-tiara .sg-collectible-art{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 0 12px rgba(238,153,211,.22),0 5px 18px rgba(165,126,202,.15);
+}
+.dw-aura,.mt-aura{animation:legendary-aura-breathe 4.8s ease-in-out infinite}
+.dw-wing-jewels{transform-box:fill-box;transform-origin:center;animation:dw-jewel-shimmer 3.1s ease-in-out infinite}
+.mt-celestial-dust{animation:mt-dust-twinkle 3.7s ease-in-out infinite}
+.mt-tiara{filter:drop-shadow(0 0 5px #ff9bd3) drop-shadow(0 0 11px #d9a6ff)!important}
+.mt-gems{animation:mt-gem-glimmer 2.4s ease-in-out infinite}
+@keyframes legendary-aura-breathe{0%,100%{opacity:.72;transform:scale(.97)}50%{opacity:1;transform:scale(1.045)}}
+@keyframes dw-jewel-shimmer{0%,100%{opacity:.72;filter:drop-shadow(0 0 1px #fff)}50%{opacity:1;filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 7px #f4a4df)}}
+@keyframes mt-dust-twinkle{0%,100%{opacity:.55}50%{opacity:1;filter:drop-shadow(0 0 4px #ffe8a8)}}
+@media(max-width:380px){.sg-collectible-art:has(svg),.sg-collectible-art svg{width:60px;height:60px}.sg-collectible-art:has(svg){flex-basis:60px}}
+@media(prefers-reduced-motion:reduce){.dw-aura,.mt-aura,.dw-wing-jewels,.mt-celestial-dust{animation:none!important}}
+
+
+
+/* Restore the original collectible-card layout; keep the badge frames uniform. */
+.sg-collectible-grid{grid-auto-rows:auto;align-items:initial}
+.sg-collectible-card{
+  display:flex;
+  height:auto;
+  min-height:0;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:7px;
+  padding:13px 9px;
+}
+.sg-collectible-card>b,
+.sg-collectible-card>small{
+  display:block;
+  width:auto;
+  margin:0;
+}
+.sg-collectible-card>button{
+  align-self:stretch;
+  width:100%;
+  height:38px;
+  min-height:38px;
+  max-height:none;
+  margin-top:auto;
+  padding:7px 8px;
+  white-space:nowrap;
+  border-radius:12px;
+  font-size:.76rem;
+}
+.sg-collectible-card>button:disabled{
+  opacity:.55;
+  color:#754b62;
+  filter:saturate(.65);
+  cursor:not-allowed;
+  box-shadow:none;
+}
+.sg-collectible-card>button:not(:disabled){
+  opacity:1;
+  filter:none;
+  color:#78445f;
+  background:linear-gradient(180deg,#fff0f7 0%,#f4cfe1 100%);
+  border-color:#d79ab9;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 3px 0 rgba(197,137,169,.5),0 5px 12px rgba(165,104,139,.12);
+}
+.sg-collectible-art:has(svg){
+  width:64px;
+  height:64px;
+  flex:0 0 64px;
+}
+.sg-collectible-art svg{width:64px;height:64px}
+.item-celestial-rose .sg-collectible-art svg,
+.item-divine-lotus .sg-collectible-art svg{
+  width:70px;
+  height:70px;
+}
+.mt-artwork{
+  transform-box:fill-box;
+  transform-origin:center;
+  transform:scale(1.14);
+}
+@media(max-width:380px){
+  .sg-collectible-art:has(svg){width:60px;height:60px;flex-basis:60px}
+  .sg-collectible-art svg{width:60px;height:60px}
+  .item-celestial-rose .sg-collectible-art svg,
+  .item-divine-lotus .sg-collectible-art svg{width:66px;height:66px}
+}
+
+
+/* Final collectible polish: restore the raised 3D purchase button and normalize icon scale. */
+.sg-collectible-card>button{
+  position:relative;
+  transform:translateY(0);
+  border:1px solid #d79ab9;
+  border-bottom-width:3px;
+  border-bottom-color:#c58aa9;
+  border-radius:12px;
+  background:linear-gradient(180deg,#fff5fa 0%,#f6dce9 58%,#edc9dc 100%);
+  color:#78445f;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 2px 0 rgba(190,130,162,.32),0 5px 10px rgba(165,104,139,.13);
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+.sg-collectible-card>button:not(:disabled):hover{
+  transform:translateY(-1px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 3px 0 rgba(190,130,162,.32),0 7px 13px rgba(165,104,139,.18);
+}
+.sg-collectible-card>button:not(:disabled):active{
+  transform:translateY(2px);
+  border-bottom-width:1px;
+  box-shadow:inset 0 2px 4px rgba(150,91,126,.12),0 1px 2px rgba(165,104,139,.12);
+}
+.sg-collectible-card>button:disabled{
+  opacity:.62;
+  color:#98778a;
+  border-color:#e2c3d3;
+  border-bottom-width:3px;
+  border-bottom-color:#d6b2c6;
+  background:linear-gradient(180deg,#fbf0f6 0%,#f2e0ea 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 2px 0 rgba(202,164,187,.3),0 4px 8px rgba(165,104,139,.08);
+  cursor:not-allowed;
+}
+.item-celestial-rose .sg-collectible-art svg,
+.item-divine-lotus .sg-collectible-art svg{
+  width:64px;
+  height:64px;
+  transform:scale(.84);
+  transform-origin:50% 50%;
+}
+@media(max-width:380px){
+  .item-celestial-rose .sg-collectible-art svg,
+  .item-divine-lotus .sg-collectible-art svg{
+    width:60px;
+    height:60px;
+    transform:scale(.84);
+  }
+}
+
+
+/* One consistent specification for every Legendary collectible card. */
+.sg-collectible-card[data-rarity="legendary"]{
+  box-sizing:border-box;
+}
+.sg-collectible-card[data-rarity="legendary"] .sg-collectible-art{
+  box-sizing:border-box;
+  width:64px;
+  height:64px;
+  min-width:64px;
+  min-height:64px;
+  flex:0 0 64px;
+}
+.sg-collectible-card[data-rarity="legendary"] .sg-collectible-art svg{
+  display:block;
+  width:64px;
+  height:64px;
+  max-width:64px;
+  max-height:64px;
+  transform:scale(.84);
+  transform-origin:50% 50%;
+}
+.sg-collectible-card[data-rarity="legendary"] .mt-artwork{transform:scale(1)}
+.sg-collectible-card[data-rarity="legendary"]>button{
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  align-self:stretch;
+  width:100%;
+  min-width:0;
+  height:40px;
+  min-height:40px;
+  max-height:40px;
+  flex:0 0 40px;
+  margin-top:auto;
+  padding:0 8px;
+  border-radius:12px;
+  font-size:.74rem;
+  line-height:1;
+  white-space:nowrap;
+}
+@media(max-width:380px){
+  .sg-collectible-card[data-rarity="legendary"] .sg-collectible-art{
+    width:60px;
+    height:60px;
+    min-width:60px;
+    min-height:60px;
+    flex-basis:60px;
+  }
+  .sg-collectible-card[data-rarity="legendary"] .sg-collectible-art svg{
+    width:60px;
+    height:60px;
+    max-width:60px;
+    max-height:60px;
+    transform:scale(.84);
+  }
+  .sg-collectible-card[data-rarity="legendary"]>button{
+    height:38px;
+    min-height:38px;
+    max-height:38px;
+    flex-basis:38px;
+    font-size:.68rem;
+  }
+}
+
+
+/* Goddess Tiara — Dreamwing Halo-level glow, softness and living animation. */
+.mt-aura{
+  filter:blur(.2px) drop-shadow(0 0 7px #ff9bd7) drop-shadow(0 0 13px #c8a5ff);
+  animation:mt-aura-breathe 4.8s ease-in-out infinite;
+}
+.mt-orbit{transform-box:fill-box;transform-origin:center;animation:mt-orbit-turn 18s linear infinite}
+.mt-tiara{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:mt-tiara-float 3.8s ease-in-out infinite;
+  filter:drop-shadow(0 0 5px #ff8fc8) drop-shadow(0 0 10px #e7a8f5) drop-shadow(0 0 15px #c9a4ff)!important;
+}
+.mt-gems{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:mt-gem-glimmer 2.2s ease-in-out infinite;
+  filter:drop-shadow(0 0 4px #fff0fa) drop-shadow(0 0 8px #f2a4dc);
+}
+.mt-filigree{opacity:1;filter:drop-shadow(0 0 3px #ffe5f5)}
+.mt-celestial-dust,.mt-crown-rays{
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:mt-tiara-stardust 3.1s ease-in-out infinite;
+}
+.mt-sparkles{
+  animation:dw-sparkle-drift 3.2s ease-in-out infinite;
+  filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px #f4a4df);
+}
+@keyframes mt-aura-breathe{
+  0%,100%{opacity:.68;transform:scale(.96);filter:drop-shadow(0 0 5px #ff9bd7) drop-shadow(0 0 10px #c8a5ff)}
+  50%{opacity:1;transform:scale(1.06);filter:drop-shadow(0 0 10px #ff8fce) drop-shadow(0 0 18px #c5a0ff)}
+}
+@keyframes mt-tiara-float{
+  0%,100%{transform:translateY(0) rotate(-1deg) scale(1);filter:drop-shadow(0 0 4px #ff9bd7) drop-shadow(0 0 9px #c9a4ff)}
+  50%{transform:translateY(-2px) rotate(1deg) scale(1.035);filter:drop-shadow(0 0 8px #ff8fce) drop-shadow(0 0 15px #c5a0ff)}
+}
+@keyframes mt-gem-glimmer{
+  0%,100%{opacity:.82;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #e9a9df)}
+  50%{opacity:1;filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 11px #ff9bd7) drop-shadow(0 0 14px #c6a3ff)}
+}
+@keyframes mt-tiara-stardust{
+  0%,100%{opacity:.55;filter:drop-shadow(0 0 1px #fff)}
+  50%{opacity:1;filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 9px #f3a7dc)}
+}
+@keyframes mt-orbit-turn{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+  .mt-aura,.mt-orbit,.mt-tiara,.mt-gems,.mt-celestial-dust,.mt-crown-rays,.mt-sparkles{animation:none!important}
+}
+
+/* Goddess Tiara: golden glow reduced by another 20%, preserving its warm metallic finish. */
+.mt-tiara{
+  filter:
+    drop-shadow(0 0 1.9px #fff4bd)
+    drop-shadow(0 0 4.5px #ffd45f)
+    drop-shadow(0 0 8.3px #f5b82e)
+    drop-shadow(0 0 12.2px rgba(255,190,55,.461))!important;
+  animation:mt-golden-tiara-glow 3.8s ease-in-out infinite!important;
+}
+.mt-filigree{
+  filter:
+    drop-shadow(0 0 1.6px #fff6cf)
+    drop-shadow(0 0 4px #ffd45f)
+    drop-shadow(0 0 7.2px rgba(245,184,46,.624))!important;
+}
+.mt-aura{
+  filter:drop-shadow(0 0 6.4px rgba(255,211,104,.72)) drop-shadow(0 0 13.6px rgba(245,174,55,.52))!important;
+}
+.mt-crown-rays{
+  filter:drop-shadow(0 0 3.2px #fff2b0) drop-shadow(0 0 7.2px #ffc94d)!important;
+}
+@keyframes mt-golden-tiara-glow{
+  0%,100%{
+    filter:drop-shadow(0 0 1.9px #fff4bd) drop-shadow(0 0 4.5px #ffd45f) drop-shadow(0 0 8.3px #f5b82e) drop-shadow(0 0 12.2px rgba(255,190,55,.461));
+  }
+  50%{
+    filter:drop-shadow(0 0 3.2px #fffbe0) drop-shadow(0 0 7px #ffe27a) drop-shadow(0 0 12.2px #ffc43d) drop-shadow(0 0 17.3px rgba(255,174,35,.576));
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .mt-tiara{animation:none!important}
+}
+
+}
+
+
+/* Unified, smooth 3D press feedback for interactive buttons. */
+.app button:not(:disabled),
+#profileGate button:not(:disabled),
+#friendProfileGate button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]){
+  -webkit-tap-highlight-color:transparent;
+  transform-style:preserve-3d;
+  transition:transform 180ms cubic-bezier(.2,.75,.25,1),box-shadow 180ms cubic-bezier(.2,.75,.25,1),filter 180ms ease;
+}
+.app button:not(:disabled):active,
+#profileGate button:not(:disabled):active,
+#friendProfileGate button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active,
+.app button.cute-press,
+#profileGate button.cute-press,
+#friendProfileGate button.cute-press,
+[role="button"].cute-press{
+  transform:translateY(2px) scale(.975);
+  filter:saturate(1.06) brightness(.985);
+  box-shadow:inset 0 2px 5px rgba(90,54,76,.14),0 1px 1px rgba(90,54,76,.08)!important;
+  transition-duration:90ms;
+}
+.sg-collectible-card[data-rarity="legendary"] .sg-collectible-art{
+  filter:drop-shadow(0 0 3px rgba(255,230,151,.82)) drop-shadow(0 0 7px rgba(245,190,70,.62)) drop-shadow(0 0 12px rgba(226,164,49,.36));
+  animation:legendary-shop-gold-breathe 3.6s ease-in-out infinite;
+}
+@keyframes legendary-shop-gold-breathe{
+  0%,100%{filter:drop-shadow(0 0 2px rgba(255,238,180,.72)) drop-shadow(0 0 6px rgba(245,190,70,.48)) drop-shadow(0 0 10px rgba(226,164,49,.28))}
+  50%{filter:drop-shadow(0 0 4px rgba(255,245,201,.96)) drop-shadow(0 0 9px rgba(255,203,83,.72)) drop-shadow(0 0 15px rgba(226,164,49,.46))}
+}
+@media(prefers-reduced-motion:reduce){
+  .app button:not(:disabled),#profileGate button:not(:disabled),#friendProfileGate button:not(:disabled),[role="button"]:not([aria-disabled="true"]){transition:none!important}
+  .sg-collectible-card[data-rarity="legendary"] .sg-collectible-art{animation:none!important}
+}
+
+
+/* Notes text bubbles: match the app's soft 3D press and tactile boing feedback. */
+.chat-page .chat-bubble-wrap>.chat-bubble,
+.home-note-memory .chat-bubble-wrap>.chat-bubble{
+  transform:translateY(0) scale(1);
+  transition:transform 190ms cubic-bezier(.2,.78,.24,1),box-shadow 190ms cubic-bezier(.2,.78,.24,1),filter 190ms ease!important;
+  transform-style:preserve-3d;
+  -webkit-tap-highlight-color:transparent;
+}
+.chat-page .chat-bubble-wrap>.chat-bubble:active,
+.chat-page .chat-bubble-wrap>.chat-bubble.is-pressed,
+.home-note-memory .chat-bubble-wrap>.chat-bubble:active,
+.home-note-memory .chat-bubble-wrap>.chat-bubble.is-pressed{
+  transform:translateY(2px) scale(.985)!important;
+  box-shadow:inset 0 2px 5px rgba(91,58,82,.13),0 1px 2px rgba(91,58,82,.1)!important;
+  filter:saturate(1.04);
+  transition-duration:90ms!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .chat-page .chat-bubble-wrap>.chat-bubble,
+  .home-note-memory .chat-bubble-wrap>.chat-bubble{transition:none!important}
+}
+
+
+/* Notes inline editing: instant darker feedback, without waiting for a save request. */
+.chat-bubble.is-editing {
+  background: linear-gradient(145deg, #d8a9bd, #c99bb5) !important;
+  border-color: rgba(139, 76, 111, .42) !important;
+  color: #482b3d !important;
+  box-shadow: inset 0 2px 7px rgba(92, 43, 69, .18), 0 5px 15px rgba(122, 70, 100, .12) !important;
+  transition: background-color .12s ease, box-shadow .12s ease, border-color .12s ease !important;
+}
+.chat-bubble.is-editing .chat-message-text {
+  display: inline-block;
+  min-width: 2ch;
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.chat-bubble.is-editing .chat-message-text:focus { caret-color: #713d5a; }
+.chat-actions-popup .edit-btn { border-color: rgba(166, 112, 143, .28); }
+.chat-actions-popup .edit-save-btn { background: #8b5877; color: #fff; border-color: #8b5877; }
+@media(prefers-reduced-motion:reduce) {
+  .chat-bubble.is-editing { transition: none !important; }
+}
