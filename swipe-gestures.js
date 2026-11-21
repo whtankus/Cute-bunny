@@ -1,6 +1,4 @@
-/* Cute Bunny Preview — swipe interactions (experimental).
- * Isolated in CBP; this file is intentionally not copied to production.
- */
+/* Cute Bunny — swipe interactions for chat, notifications, navigation, and shop browsing. */
 (() => {
   'use strict';
 
