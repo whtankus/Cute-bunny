@@ -12393,10 +12393,10 @@ body[data-mode="dark"] .chat-page .chat-message-content>.chat-seen-receipt {
   height:4px;
   border-radius:50%;
   background:#c58eaf;
-  animation:chat-typing-bounce .9s ease-in-out infinite;
+  animation:chat-typing-bounce .72s ease-in-out infinite;
 }
-.chat-typing-dots i:nth-child(2) { animation-delay:.14s; }
-.chat-typing-dots i:nth-child(3) { animation-delay:.28s; }
+.chat-typing-dots i:nth-child(2) { animation-delay:.11s; }
+.chat-typing-dots i:nth-child(3) { animation-delay:.22s; }
 @keyframes chat-typing-bounce {
   0%,60%,100% { opacity:.45;transform:translateY(0); }
   30% { opacity:1;transform:translateY(-3px); }
@@ -14712,3 +14712,8 @@ body[data-mode="dark"].notes-page-active.notes-header-hidden .app > header {
   outline: 0 !important;
   box-shadow: none !important;
 }
+
+
+
+
+/* Header activity uses the existing centred refresh indicator in polish.css. */
