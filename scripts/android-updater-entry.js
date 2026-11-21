@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { shouldInstallCuteBunnyUpdate, validateCuteBunnyManifest } from './ota-manifest.js';
 
-const MANIFEST_URL = 'https://raw.githubusercontent.com/whtankus/Cute-bunny/main/ota/latest.json';
+const MANIFEST_URL = 'https://raw.githubusercontent.com/whtankus/Cute-Bunny-Preview/main/ota/latest.json';
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 let checking = false;
 
