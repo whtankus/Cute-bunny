@@ -4887,3 +4887,30 @@ body[data-mode="dark"] #content .chat-composer #chatReplyingTo{
   color:var(--cb-accent-strong)!important;
   border:1px solid var(--cb-border)!important;
 }
+
+
+/* Live friend presence: soft breathing accents that remain calm and accessible. */
+.friend-row.is-online .friend-avatar,
+.streak-garden-page .sg-friend-card.is-online .sg-friend-avatar{
+  animation:cb-presence-avatar-breathe 2.8s ease-in-out infinite;
+}
+.friend-profile-presence-dot.is-online,
+.streak-garden-page .sg-friend-card.is-online .sg-friend-presence:before{
+  animation:cb-presence-dot-breathe 2.2s ease-in-out infinite;
+}
+@keyframes cb-presence-avatar-breathe{
+  0%,100%{box-shadow:0 0 0 2px #b9e7c988,0 0 9px #72cd9c44}
+  50%{box-shadow:0 0 0 4px #b9e7c966,0 0 16px #72cd9c77}
+}
+@keyframes cb-presence-dot-breathe{
+  0%,100%{box-shadow:0 0 0 2px #65b87922}
+  50%{box-shadow:0 0 0 4px #65b87926,0 0 8px #65b87966}
+}
+@media(prefers-reduced-motion:reduce){
+  .friend-row.is-online .friend-avatar,
+  .streak-garden-page .sg-friend-card.is-online .sg-friend-avatar,
+  .friend-profile-presence-dot.is-online,
+  .streak-garden-page .sg-friend-card.is-online .sg-friend-presence:before{
+    animation:none!important;
+  }
+}
