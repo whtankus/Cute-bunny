@@ -50,14 +50,21 @@ test.after(async () => {
   await new Promise(resolve => server?.close(resolve));
 });
 
-async function newTestPage({ authenticated = false, viewport } = {}) {
+async function newTestPage({ authenticated = false, viewport, seedHistory = false } = {}) {
   const context = await browser.newContext({
     viewport: viewport || { width: 1280, height: 900 },
     serviceWorkers: 'block'
   });
   contexts.add(context);
   const page = await context.newPage();
-  await page.addInitScript({ content: fixture + `\n;(() => {\n  const authenticated = ${JSON.stringify(authenticated)};\n  if (authenticated) localStorage.setItem('cuteBunnyTestAuth', 'true');\n})();` });
+  await page.addInitScript({ content: fixture + `\n;(() => {\n  const authenticated = ${JSON.stringify(authenticated)};\n  const seedHistory = ${JSON.stringify(seedHistory)};\n  if (authenticated) localStorage.setItem('cuteBunnyTestAuth', 'true');\n  if (seedHistory) {\n    const state = window.__cuteBunnyTestState;\n    state.nextMemoryId = 2000;\n    for (let id = 1000; id < 1090; id++) {\n      state.tables.memories.push({ id, owner_id: id % 2 === 0 ? state.friend.id : state.user.id, kind: 'note', text: id === 1000 ? 'An old message with a persistent heart ♡ and a long line that should wrap naturally without wasting available space.' : 'Historical conversation message number ' + id + ' with words of different lengths and an emoji 🌷', created_at: new Date(Date.UTC(2026, 10, 21, 12, 0, 0) - (1090 - id) * 60000).toISOString(), file_name: '', content_type: '', storage_path: '' });\n    }\n    state.tables.memory_likes.push(
+      { memory_id: 1000, user_id: state.user.id, created_at: new Date().toISOString() },
+      { memory_id: 1000, user_id: 'other-test-user', created_at: new Date().toISOString() }
+    );
+    state.tables.memory_reactions.push(
+      { memory_id: 1000, user_id: state.friend.id, emoji: '❤️', created_at: new Date().toISOString() },
+      { memory_id: 1000, user_id: state.user.id, emoji: '🥰', created_at: new Date().toISOString() }
+    );\n  }\n})();` });
   await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', route => route.abort());
   await page.route('https://fonts.googleapis.com/**', route => route.abort());
   await page.route('https://fonts.gstatic.com/**', route => route.abort());
@@ -219,4 +226,59 @@ test('photo upload stores the file and creates a memory record', async () => {
   assert.equal(result.memory.owner_id, 'user-ankush-test');
   assert.equal(result.memory.kind, 'photo');
   assert.match(result.memory.storage_path, /^user-ankush-test\//);
+});
+
+
+test('Notes history uses stable keyset pagination and restores old message hearts', async () => {
+  const page = await newTestPage({ authenticated: true, seedHistory: true });
+  await waitForSignedInApp(page);
+  await page.locator('#nav button[data-page="notes"]').click();
+  await page.locator('.chat-message[data-memory="1089"]').waitFor({ state: 'visible' });
+  assert.equal(await page.locator('.chat-message[data-memory="1000"]').count(), 0, 'older rows should begin outside the first page');
+
+  await page.evaluate(() => {
+    const state = window.__cuteBunnyTestState;
+    state.tables.memories.push({ id: 1090, owner_id: state.friend.id, kind: 'note', text: 'A new realtime message', created_at: new Date(Date.now() + 1000).toISOString(), file_name: '', content_type: '', storage_path: '' });
+    const thread = document.querySelector('#chatThread');
+    thread.scrollTop = 0;
+    window.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+  });
+  await page.waitForFunction(() => document.querySelectorAll('#chatThread > .chat-message[data-memory]').length >= 80);
+  await page.evaluate(() => {
+    document.querySelector('#chatThread').scrollTop = 0;
+    window.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+  });
+  await page.locator('.chat-message[data-memory="1000"]').waitFor({ state: 'visible' });
+  const oldMessage = page.locator('.chat-message[data-memory="1000"]');
+  assert.match(await oldMessage.getAttribute('class'), /\bis-loved\b/, 'the historical message should render its saved heart state');
+  assert.equal(await oldMessage.getAttribute('data-like-count'), '2', 'all hearts from different users should remain attached to the historical message');
+  assert.equal(await oldMessage.getAttribute('data-reaction-count'), '2', 'all emoji reactions should hydrate with the historical message');
+  const reactionQueryRan = await page.evaluate(() => window.__cuteBunnyTestState.calls.some(call => call.table === 'memory_reactions' && call.action === 'select'));
+  assert.equal(reactionQueryRan, true, 'historical reaction rows should be fetched from persistent storage');
+  const persisted = await page.evaluate(() => window.__cuteBunnyTestState.tables.memory_likes.some(row => row.memory_id === 1000 && row.user_id === 'user-ankush-test'));
+  assert.equal(persisted, true, 'historical heart remains in persistent reaction storage');
+});
+
+test('message text wraps naturally inside existing desktop and mobile bubble limits', async () => {
+  for (const viewport of [{ width: 1280, height: 900 }, { width: 360, height: 780 }]) {
+    const page = await newTestPage({ authenticated: true, viewport, seedHistory: true });
+    await waitForSignedInApp(page);
+    await page.locator('#nav button[data-page="notes"]').click();
+    const text = page.locator('.chat-message[data-memory="1089"] .chat-message-text');
+    await text.waitFor({ state: 'visible' });
+    const metrics = await text.evaluate(node => ({
+      overflowWrap: getComputedStyle(node).overflowWrap,
+      wordBreak: getComputedStyle(node).wordBreak,
+      whiteSpace: getComputedStyle(node).whiteSpace,
+      bubbleOverflow: node.closest('.chat-bubble').scrollWidth > node.closest('.chat-bubble').clientWidth,
+      renderedLines: (() => { const range = document.createRange(); range.selectNodeContents(node); return range.getClientRects().length; })()
+    }));
+    assert.equal(metrics.overflowWrap, 'break-word');
+    assert.equal(metrics.wordBreak, 'normal');
+    assert.equal(metrics.whiteSpace, 'pre-wrap');
+    assert.equal(metrics.bubbleOverflow, false);
+    assert.ok(metrics.renderedLines >= 2, 'the long emoji-containing message should wrap naturally');
+    await page.context().close();
+    contexts.delete(page.context());
+  }
 });

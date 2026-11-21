@@ -55,6 +55,7 @@ window.CUTE_BUNNY_CONFIG = { supabaseUrl: 'https://test.supabase.co', supabaseAn
     upsert(value, options = {}) { this.action = 'upsert'; this.payload = Array.isArray(value) ? value : [value]; this.conflict = options.onConflict; return this; }
     eq(key, value) { this.filters.push(row => row[key] === value); return this; }
     neq(key, value) { this.filters.push(row => row[key] !== value); return this; }
+    lt(key, value) { this.filters.push(row => row[key] < value); return this; }
     in(key, values) { this.filters.push(row => values.includes(row[key])); return this; }
     is(key, value) { this.filters.push(row => row[key] === value); return this; }
     ilike(key, value) { const term = String(value).replace(/%/g, '').toLowerCase(); this.filters.push(row => String(row[key] || '').toLowerCase().includes(term)); return this; }
@@ -78,8 +79,8 @@ window.CUTE_BUNNY_CONFIG = { supabaseUrl: 'https://test.supabase.co', supabaseAn
           if (this.table === 'notifications') row.id = row.id || 'notification-' + (rows.length + 1);
           if (this.table === 'note_read_cursors') row.last_read_at = row.last_read_at || new Date().toISOString();
           if (this.action === 'upsert') {
-            const key = this.conflict || (this.table === 'profile_private_settings' ? 'user_id' : 'id');
-            const existing = rows.find(item => item[key] === row[key]);
+            const keys = String(this.conflict || (this.table === 'profile_private_settings' ? 'user_id' : 'id')).split(',').map(key => key.trim());
+            const existing = rows.find(item => keys.every(key => item[key] === row[key]));
             if (existing) { Object.assign(existing, row); return existing; }
           }
           rows.push(row);
