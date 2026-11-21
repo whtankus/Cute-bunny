@@ -240,14 +240,13 @@ test('Notes history uses stable keyset pagination and restores old message heart
     const state = window.__cuteBunnyTestState;
     state.tables.memories.push({ id: 1090, owner_id: state.friend.id, kind: 'note', text: 'A new realtime message', created_at: new Date(Date.now() + 1000).toISOString(), file_name: '', content_type: '', storage_path: '' });
     const thread = document.querySelector('#chatThread');
+    // The app deliberately arms history loading on upward wheel intent, then
+    // checks whether the history sentinel is near the top of this scroll root.
     thread.scrollTop = 0;
     window.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
   });
-  await page.waitForFunction(() => document.querySelectorAll('#chatThread > .chat-message[data-memory]').length >= 80);
-  await page.evaluate(() => {
-    document.querySelector('#chatThread').scrollTop = 0;
-    window.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
-  });
+  await page.waitForFunction(() => window.__cuteBunnyTestState.calls.some(call => String(call.url || call.query || '').includes('beforeId=')), { timeout: 10000 });
+  await page.waitForFunction(() => document.querySelectorAll('#chatThread > .chat-message[data-memory]').length >= 80, { timeout: 10000 });
   await page.locator('.chat-message[data-memory="1000"]').waitFor({ state: 'visible' });
   const oldMessage = page.locator('.chat-message[data-memory="1000"]');
   assert.match(await oldMessage.getAttribute('class'), /\bis-loved\b/, 'the historical message should render its saved heart state');
