@@ -13,6 +13,8 @@ const assets = [
   'style.css',
   'polish.css',
   'button-interactions.css',
+  'swipe-gestures.css',
+  'swipe-gestures.js',
   'sw.js',
   'manifest.webmanifest',
   'bunny-app-icon-192.png',
