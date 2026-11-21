@@ -1,11 +1,19 @@
-/* Cute Bunny — swipe interaction presentation layer. */
-/* Keep vertical scrolling native while reserving horizontal gestures for CBP. */
-#mainContent, #notificationList, .chat-thread { touch-action: pan-y; }
-.chat-bubble.cb-swipe-tracking {
+/* Cute Bunny — swipe interaction layer. */
+#mainContent,
+.chat-thread,
+.notification-list,
+.notification-row,
+.chat-bubble,
+.sg-collectible-grid {
+  touch-action: pan-y;
+}
+.chat-bubble.cb-swipe-tracking,
+.notification-row.cb-swipe-tracking {
   transform: translateX(var(--cb-swipe-x, 0));
   transition: none !important;
-  position: relative;
+  will-change: transform;
 }
+.chat-bubble.cb-swipe-tracking { position: relative; }
 .chat-bubble.cb-swipe-tracking::before {
   content: "↪";
   position: absolute;
@@ -22,10 +30,7 @@
   font-weight: 900;
   transform: translateY(-50%);
   opacity: .95;
-}
-.notification-row.cb-swipe-tracking {
-  transform: translateX(var(--cb-swipe-x, 0));
-  transition: none !important;
+  pointer-events: none;
 }
 .notification-row.cb-swipe-dismiss {
   opacity: 0;
@@ -33,42 +38,6 @@
   transition: transform .17s ease, opacity .17s ease !important;
   pointer-events: none;
 }
-@media (max-width: 700px) {
-  #content .sg-collectible-grid {
-    display: flex;
-    gap: 13px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 4px 2px 14px;
-    margin-inline: -2px;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: 2px;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
-  #content .sg-collectible-grid > .sg-collectible-card {
-    flex: 0 0 min(72vw, 205px);
-    min-width: 0;
-    scroll-snap-align: start;
-  }
-  #content .sg-collectibles .sg-section-heading::after {
-    content: "Swipe to explore  →";
-    display: block;
-    margin-top: 5px;
-    color: var(--cb-text-muted, #88758a);
-    font-size: .72rem;
-    font-weight: 700;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .chat-bubble.cb-swipe-tracking,
-  .notification-row.cb-swipe-dismiss {
-    transition: none !important;
-  }
-}
-
-/* Consistent horizontal collectible browsing on touch and desktop. */
 #content .sg-collectible-grid {
   display: flex;
   gap: 13px;
@@ -81,13 +50,29 @@
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  cursor: grab;
 }
 #content .sg-collectible-grid > .sg-collectible-card {
   flex: 0 0 min(72vw, 205px);
   min-width: 0;
   scroll-snap-align: start;
 }
-@media (min-width: 701px) {
-  #content .sg-collectible-grid { cursor: grab; }
-  #content .sg-collectible-grid.cb-shop-dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+#content .sg-collectible-grid.cb-shop-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  user-select: none;
+}
+#content .sg-collectibles .sg-section-heading::after {
+  content: "Swipe to explore  →";
+  display: block;
+  margin-top: 5px;
+  color: var(--cb-text-muted, #88758a);
+  font-size: .72rem;
+  font-weight: 700;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-bubble.cb-swipe-tracking,
+  .notification-row.cb-swipe-dismiss {
+    transition: none !important;
+  }
 }
