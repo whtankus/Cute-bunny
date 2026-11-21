@@ -69,7 +69,7 @@ let cloudPetalPoints = 0, petalPointsSyncInFlight = null;
 let streakCountdownInterval = null, streakCountdownDayKey = '';
 let presenceStatus = 'closed';
 let presenceHeartbeatTimer = null, presenceReconnectTimer = null;
-let presenceReconnectAttempts = 0, presenceLastSuccessfulTrackAt = 0;
+let presenceReconnectAttempts = 0, presenceLastSuccessfulTrackAt = 0, presenceClientGeneration = 0;
 const PRESENCE_HEARTBEAT_MS = 25000;
 const PRESENCE_RECONNECT_BASE_MS = 1500;
 const PRESENCE_RECONNECT_MAX_MS = 30000;
@@ -4587,6 +4587,7 @@ document.addEventListener('visibilitychange', () => {
 function startRealtime() {
   if (!sb || !me) return;
   closeRealtime();
+  const realtimeGeneration = presenceClientGeneration;
   presenceStatus = 'connecting';
   try {
     // Each browser tab/device gets its own key; the user_id payload lets peers
@@ -4629,23 +4630,28 @@ function startRealtime() {
       });
 
     presence
-      .on('presence', { event: 'sync' }, () => syncPresenceUI('sync'))
-      .on('presence', { event: 'join' }, () => syncPresenceUI('join'))
-      .on('presence', { event: 'leave' }, () => syncPresenceUI('leave'))
+      .on('presence', { event: 'sync' }, () => {
+        if (realtimeGeneration === presenceClientGeneration) syncPresenceUI('sync');
+      })
+      .on('presence', { event: 'join' }, () => {
+        if (realtimeGeneration === presenceClientGeneration) syncPresenceUI('join');
+      })
+      .on('presence', { event: 'leave' }, () => {
+        if (realtimeGeneration === presenceClientGeneration) syncPresenceUI('leave');
+      })
       .subscribe(async status => {
+        if (realtimeGeneration !== presenceClientGeneration) return;
         if (status === 'SUBSCRIBED') {
           presenceStatus = 'ready';
-          presenceReconnectAttempts = 0;
           clearTimeout(presenceReconnectTimer);
           presenceReconnectTimer = null;
           syncPresenceUI();
-          try {
-            await updateMyPresencePage();
+          await updateMyPresencePage();
+          if (presenceStatus === 'ready') {
+            presenceReconnectAttempts = 0;
             void touchLastActive(true);
-          } catch (error) {
-            presenceStatus = 'error';
-            console.warn('Presence tracking failed:', error?.message || error);
-            syncPresenceUI();
+          } else {
+            schedulePresenceReconnect('initial-track-failed');
           }
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           presenceStatus = 'error';
@@ -4901,6 +4907,7 @@ function startRealtime() {
     presenceStatus = 'error';
     console.info('Realtime will start when supported.', error?.message || '');
     syncPresenceUI();
+    schedulePresenceReconnect('channel-setup-failed');
   }
 }
 
@@ -4930,11 +4937,13 @@ function closeRealtime() {
   notesTypingChannelReady = false;
   notesTypingQueuedState = null;
   presenceStatus = 'closed';
+  presenceClientGeneration += 1;
   clearInterval(presenceHeartbeatTimer);
   clearTimeout(presenceReconnectTimer);
   presenceHeartbeatTimer = null;
   presenceReconnectTimer = null;
-  presenceReconnectAttempts = 0;
+  // Preserve the retry count across reconnect attempts; reset only after a
+  // Presence channel has successfully subscribed and tracked its state.
   presenceLastSuccessfulTrackAt = 0;
   lastPublishedPresencePage = null;
   knownOnlineFriendKeys = new Set();
@@ -5116,7 +5125,10 @@ async function updateMyPresencePage() {
     await presenceTrackQueue;
     syncPresenceUI('local-track');
   } catch (error) {
+    presenceStatus = 'error';
     console.warn('Presence page update failed:', error?.message || error);
+    syncPresenceUI();
+    schedulePresenceReconnect('presence-track-failed');
   }
 }
 
