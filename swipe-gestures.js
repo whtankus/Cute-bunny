@@ -7,7 +7,7 @@
   const state = {
     pointerId: null, pointerType: '', mode: '', target: null,
     startX: 0, startY: 0, lastX: 0, lastY: 0, startTime: 0,
-    startScrollLeft: 0, moved: false
+    moved: false
   };
   let suppressClickUntil = 0;
 
@@ -41,7 +41,6 @@
 
     const bubble = closest(target, '.chat-message .chat-bubble[data-chat-message-id]');
     const notification = closest(target, '.notification-row[data-notification-row]');
-    const shop = closest(target, '.sg-collectible-grid');
 
     if (bubble && !isControl(target)) {
       mode = 'reply';
@@ -49,11 +48,6 @@
     } else if (notification && !isControl(target)) {
       mode = 'notification';
       surface = notification;
-    } else if (shop && !isControl(target)) {
-      // The app shell reserves vertical panning for the browser. Horizontal
-      // shop movement is therefore handled here on both touch and mouse.
-      mode = 'shop';
-      surface = shop;
     } else if (closest(target, '#mainContent') && !isControl(target) && !isNestedSurface(target)) {
       mode = 'pages';
       surface = document.querySelector('#mainContent');
@@ -67,7 +61,6 @@
     state.startX = state.lastX = event.clientX;
     state.startY = state.lastY = event.clientY;
     state.startTime = performance.now();
-    state.startScrollLeft = mode === 'shop' ? surface.scrollLeft : 0;
     state.moved = false;
 
     // Capture keeps a drag alive if the pointer leaves a small message row.
@@ -90,11 +83,6 @@
     if (absX < absY * 1.15) return;
     state.moved = true;
 
-    if (state.mode === 'shop') {
-      state.target.classList.add('cb-shop-dragging');
-      state.target.scrollLeft = state.startScrollLeft - dx;
-      return;
-    }
     if (state.mode === 'reply' && dx > 0) {
       state.target.style.setProperty('--cb-swipe-x', Math.min(82, dx * .62) + 'px');
       state.target.classList.add('cb-swipe-tracking');
@@ -117,11 +105,6 @@
     const moved = state.moved;
     reset();
     if (!target || !moved || Math.abs(dy) > 64) return;
-
-    if (mode === 'shop') {
-      if (Math.abs(dx) > 8) suppressClickUntil = Date.now() + 350;
-      return;
-    }
 
     if (mode === 'reply' && dx > 0 && (dx >= 64 || (dx >= 38 && velocity >= .45))) {
       const messageId = String(target.dataset.chatMessageId || '');
@@ -177,7 +160,7 @@
 
   document.addEventListener('click', event => {
     if (Date.now() < suppressClickUntil &&
-        closest(event.target, '.chat-message .chat-bubble, .notification-row, .sg-collectible-grid, #mainContent')) {
+        closest(event.target, '.chat-message .chat-bubble, .notification-row, #mainContent')) {
       event.preventDefault();
       event.stopImmediatePropagation();
     }
