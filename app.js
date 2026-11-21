@@ -6910,15 +6910,14 @@ sharedAudioElement?.addEventListener('playing', () => {
   button?.classList.remove('is-buffering', 'is-loading');
 });
 
-// Keep the original boing feedback on meaningful controls, but keep navigation
-// and visual thumbnail surfaces quiet so browsing the app does not sound noisy.
+// Preserve global boing feedback on actionable controls.
+// Streak entry (the Open streak button and artwork thumbnail) deliberately sounds too.
 document.addEventListener('click', event => {
   const button = event.target.closest?.('button, [role="button"]');
   if (!button || button.disabled || button.closest('#nav, nav')) return;
   const quietSurface = event.target.closest?.(
-    '[data-open-streak], [data-streak-garden-tab], .streak-art-trigger, ' +
-    '.happy-thing-art, .feed-photo, .photo-thumbnail, .photo-thumb, ' +
-    '[data-photo-thumbnail], [data-thumbnail]'
+    '[data-streak-garden-tab], .happy-thing-art, .feed-photo, ' +
+    '.photo-thumbnail, .photo-thumb, [data-photo-thumbnail], [data-thumbnail]'
   );
   if (quietSurface) return;
   playCuteSound('boing');
