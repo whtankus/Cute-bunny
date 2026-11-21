@@ -79,3 +79,13 @@ test('Virtual Buddy feature and its 3D module are fully removed', () => {
   assert.doesNotMatch(workflow, /virtual-buddy-3d/);
   assert.ok(!fs.existsSync(path.join(root, 'virtual-buddy-3d.js')));
 });
+
+
+test('global boing stays quiet on streak navigation and thumbnail surfaces', () => {
+  const app = read('app.js');
+  assert.match(app, /\[data-open-streak\]/);
+  assert.match(app, /\[data-streak-garden-tab\]/);
+  assert.match(app, /\.happy-thing-art/);
+  assert.match(app, /\.feed-photo/);
+  assert.match(app, /playCuteSound\('boing'\)/);
+});
