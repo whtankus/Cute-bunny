@@ -1,12 +1,11 @@
-const CACHE_NAME = "cute-bunny-shell-v323";
+const CACHE_NAME = "cute-bunny-shell-v330";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./style.css?v=notes-inline-edit-fast2-20261120",
-  "./polish.css?v=notes-replies-clean-v2-20261120",
-  "./header-statusbar-blend.css?v=20261120-1",
+  "./polish.css?v=global-boing-no-buddy-20261121",
   "./button-interactions.css?v=nav-3d-depth-20261118",
-  "./app.js?v=notes-replies-clean-v6-20261120",
+  "./app.js?v=original-boing-restored-v2-20261121",
   "./manifest.webmanifest",
   "./supabase-config.js",
   "./bunny-app-icon-192.png",
@@ -18,7 +17,6 @@ const SHELL_FILES = new Set([
   "index.html",
   "style.css",
   "polish.css",
-  "header-statusbar-blend.css",
   "button-interactions.css",
   "app.js",
   "sw.js",

@@ -14705,3 +14705,10 @@ body[data-mode="dark"].notes-page-active.notes-header-hidden .app > header {
 @media(prefers-reduced-motion:reduce) {
   .chat-bubble.is-editing { transition: none !important; }
 }
+
+/* The notification empty state should remain borderless. */
+#notificationGate .notification-empty {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
