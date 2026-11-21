@@ -74,6 +74,7 @@ test('swiping a chat bubble right opens reply for that exact message', async () 
 test('swiping a notification left dismisses that notification', async () => {
   const page = await gesturePage();
   await drag(page, '[data-notification-row="notification-9"]', -120);
+  await page.waitForFunction(() => window.__dismissedNotification === 'notification-9');
   assert.equal(await page.evaluate(() => window.__dismissedNotification), 'notification-9');
   assert.equal(await page.locator('[data-notification-row="notification-9"]').count(), 0);
   await page.close();
@@ -83,7 +84,7 @@ test('horizontal shop drag scrolls the collectible track without activating a ca
   const page = await gesturePage();
   const grid = page.locator('.sg-collectible-grid');
   const before = await grid.evaluate(node => node.scrollLeft);
-  await drag(page, '.sg-collectible-card', -160);
+  await drag(page, '.sg-collectible-card:first-child', -160);
   const after = await grid.evaluate(node => node.scrollLeft);
   assert.ok(after > before, 'the collectible track should scroll horizontally');
   await page.close();
