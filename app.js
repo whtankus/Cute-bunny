@@ -68,6 +68,11 @@ let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: f
 let cloudPetalPoints = 0, petalPointsSyncInFlight = null;
 let streakCountdownInterval = null, streakCountdownDayKey = '';
 let presenceStatus = 'closed';
+let presenceHeartbeatTimer = null, presenceReconnectTimer = null;
+let presenceReconnectAttempts = 0, presenceLastSuccessfulTrackAt = 0;
+const PRESENCE_HEARTBEAT_MS = 25000;
+const PRESENCE_RECONNECT_BASE_MS = 1500;
+const PRESENCE_RECONNECT_MAX_MS = 30000;
 let lastActiveWriteAt = 0, lastActiveWriteUserId = '';
 let streakRecordInFlight = null, streakRecordInFlightKey = '';
 const noteGraphemeSegmenter = typeof Intl.Segmenter === 'function'
@@ -4564,11 +4569,16 @@ document.addEventListener('pointerdown', () => { void touchLastActive(); }, { pa
 document.addEventListener('keydown', () => { void touchLastActive(); }, { passive: true });
 window.addEventListener('focus', () => { void touchLastActive(true); });
 document.addEventListener('visibilitychange', () => {
-  void updateMyPresencePage();
   if (!document.hidden) {
+    if (presenceStatus === 'error' || presenceStatus === 'closed' || !presenceChannel) {
+      schedulePresenceReconnect('foreground');
+    } else {
+      void updateMyPresencePage();
+    }
     void touchLastActive(true);
     if (page === 'notes') requestAnimationFrame(observeNoteSeenMessages);
   } else {
+    void updateMyPresencePage();
     stopNotesTyping();
     clearTimeout(noteSeenDebounceTimer);
   }
@@ -4625,6 +4635,9 @@ function startRealtime() {
       .subscribe(async status => {
         if (status === 'SUBSCRIBED') {
           presenceStatus = 'ready';
+          presenceReconnectAttempts = 0;
+          clearTimeout(presenceReconnectTimer);
+          presenceReconnectTimer = null;
           syncPresenceUI();
           try {
             await updateMyPresencePage();
@@ -4637,8 +4650,22 @@ function startRealtime() {
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           presenceStatus = 'error';
           syncPresenceUI();
+          schedulePresenceReconnect(status);
         }
       });
+
+    // Keep presence metadata fresh without coupling it to typing activity.
+    clearInterval(presenceHeartbeatTimer);
+    presenceHeartbeatTimer = setInterval(() => {
+      if (!me || !presenceChannel || document.hidden) return;
+      if (presenceStatus === 'ready') {
+        if (Date.now() - presenceLastSuccessfulTrackAt >= PRESENCE_HEARTBEAT_MS) {
+          void updateMyPresencePage();
+        }
+      } else if (presenceStatus === 'error' || presenceStatus === 'closed') {
+        schedulePresenceReconnect('heartbeat');
+      }
+    }, PRESENCE_HEARTBEAT_MS);
 
     profileChannel = sb.channel('cute-bunny-profiles-' + me.id)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, payload => {
@@ -4903,6 +4930,12 @@ function closeRealtime() {
   notesTypingChannelReady = false;
   notesTypingQueuedState = null;
   presenceStatus = 'closed';
+  clearInterval(presenceHeartbeatTimer);
+  clearTimeout(presenceReconnectTimer);
+  presenceHeartbeatTimer = null;
+  presenceReconnectTimer = null;
+  presenceReconnectAttempts = 0;
+  presenceLastSuccessfulTrackAt = 0;
   lastPublishedPresencePage = null;
   knownOnlineFriendKeys = new Set();
   knownNotesFriendKeys = new Set();
@@ -4914,6 +4947,35 @@ function closeRealtime() {
     window.clearInterval(streakCountdownInterval);
     streakCountdownInterval = null;
   }
+}
+
+function schedulePresenceReconnect(reason = 'connection-lost') {
+  if (!sb || !me || presenceReconnectTimer || presenceStatus === 'connecting') return;
+  const attempt = Math.min(presenceReconnectAttempts++, 8);
+  const delay = Math.min(PRESENCE_RECONNECT_MAX_MS,
+    PRESENCE_RECONNECT_BASE_MS * Math.pow(2, attempt));
+  const jitteredDelay = Math.round(delay * (0.8 + Math.random() * 0.4));
+  console.warn('Presence reconnect scheduled:', reason, 'in', jitteredDelay, 'ms');
+  presenceReconnectTimer = setTimeout(() => {
+    presenceReconnectTimer = null;
+    if (!me || !sb || document.hidden || presenceStatus === 'ready' || presenceStatus === 'connecting') return;
+    startRealtime();
+  }, jitteredDelay);
+}
+
+function normalizePresenceFriendKey(friend) {
+  const id = String(friend?.id || friend?.user_id || '').trim();
+  const username = String(friend?.username || '').trim().toLowerCase();
+  return id ? 'id:' + id : username ? 'username:' + username : '';
+}
+
+function getPresenceSessionsForFriend(friend, sessionsById, sessionsByUsername) {
+  const id = String(friend?.id || friend?.user_id || '').trim();
+  const username = String(friend?.username || '').trim().toLowerCase();
+  return [...new Set([
+    ...(id ? sessionsById.get(id) || [] : []),
+    ...(username ? sessionsByUsername.get(username) || [] : [])
+  ])];
 }
 
 function isPresenceUserOnline(userOrId, state) {
@@ -5033,6 +5095,7 @@ async function updateMyPresencePage() {
     };
 
     await channel.track(payload);
+    presenceLastSuccessfulTrackAt = Date.now();
     const previousPage = lastPublishedPresencePage;
     lastPublishedPresencePage = nextPage;
 
@@ -5084,11 +5147,8 @@ function syncPresenceUI(presenceEvent = 'local') {
     // Never treat this user's own session as a friend activity event.
     if ((me?.id && friendId === String(me.id)) ||
         (me?.username && username === String(me.username).trim().toLowerCase())) return;
-    const matches = new Set([
-      ...(friendId ? sessionsById.get(friendId) || [] : []),
-      ...(username ? sessionsByUsername.get(username) || [] : [])
-    ]);
-    if ([...matches].some(session =>
+    const matches = getPresenceSessionsForFriend(friend, sessionsById, sessionsByUsername);
+    if (matches.some(session =>
       String(session?.active_page || session?.activePage || session?.current_page || session?.currentPage || session?.page || '').trim().toLowerCase() === 'notes'
     )) {
       notesNow.add(friendId || username);
@@ -5102,13 +5162,10 @@ function syncPresenceUI(presenceEvent = 'local') {
   (Array.isArray(friends) ? friends : []).forEach(friend => {
     const id = String(friend?.id || friend?.user_id || '');
     const username = String(friend?.username || '').trim().toLowerCase();
-    const key = id || username;
+    const key = normalizePresenceFriendKey(friend);
     if (!key) return;
-    const sessions = new Set([
-      ...(id ? sessionsById.get(id) || [] : []),
-      ...(username ? sessionsByUsername.get(username) || [] : [])
-    ]);
-    if (sessions.size) onlineNow.add(key);
+    const sessions = getPresenceSessionsForFriend(friend, sessionsById, sessionsByUsername);
+    if (sessions.length) onlineNow.add(key);
   });
 
   const previousOnline = knownOnlineFriendKeys;
