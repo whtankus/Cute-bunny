@@ -3,8 +3,7 @@
 .chat-thread,
 .notification-list,
 .notification-row,
-.chat-bubble,
-.sg-collectible-grid {
+.chat-bubble {
   touch-action: pan-y;
 }
 .chat-bubble.cb-swipe-tracking,
@@ -37,38 +36,6 @@
   transform: translateX(-110%);
   transition: transform .17s ease, opacity .17s ease !important;
   pointer-events: none;
-}
-#content .sg-collectible-grid {
-  display: flex;
-  gap: 13px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 4px 2px 14px;
-  margin-inline: -2px;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: 2px;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  cursor: grab;
-}
-#content .sg-collectible-grid > .sg-collectible-card {
-  flex: 0 0 min(72vw, 205px);
-  min-width: 0;
-  scroll-snap-align: start;
-}
-#content .sg-collectible-grid.cb-shop-dragging {
-  cursor: grabbing;
-  scroll-snap-type: none;
-  user-select: none;
-}
-#content .sg-collectibles .sg-section-heading::after {
-  content: "Swipe to explore  →";
-  display: block;
-  margin-top: 5px;
-  color: var(--cb-text-muted, #88758a);
-  font-size: .72rem;
-  font-weight: 700;
 }
 @media (prefers-reduced-motion: reduce) {
   .chat-bubble.cb-swipe-tracking,
