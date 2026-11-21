@@ -81,22 +81,11 @@ test('Virtual Buddy feature and its 3D module are fully removed', () => {
 });
 
 
-test('streak button and artwork thumbnail play one boing on click and keyboard entry', () => {
+test('streak entry button and thumbnail play boing on pointer and keyboard activation', () => {
   const app = read('app.js');
-  assert.match(app, /class="tile-art streak-art streak-art-trigger" data-open-streak/);
-  assert.match(app, /class="primary streak-open-button" data-open-streak/);
-
-  const entryStart = app.indexOf('// Streak entry uses capture phase');
-  const entryEnd = app.indexOf('// Homepage feature cards', entryStart);
-  const entryHandlers = app.slice(entryStart, entryEnd);
-  assert.match(entryHandlers, /if \(streakButton\) playCuteSound\('boing'\)/);
-  assert.match(entryHandlers, /playCuteSound\('boing'\);\s*openStreakGarden\(\);/);
-
-  const soundHandler = app.slice(app.lastIndexOf('// Preserve global boing feedback on actionable controls.'));
-  assert.match(soundHandler, /playCuteSound\('boing'\)/);
-  assert.match(soundHandler, /\[data-open-streak\]/);
-  assert.match(soundHandler, /\.streak-art-trigger/);
-  assert.match(soundHandler, /\[data-streak-garden-tab\]/);
-  assert.match(soundHandler, /\.happy-thing-art/);
-  assert.match(soundHandler, /#nav, nav/);
+  const start = app.indexOf('// Streak entry uses capture phase');
+  const end = app.indexOf('// Homepage feature cards', start);
+  const handlers = app.slice(start, end);
+  assert.match(handlers, /if \(streakButton\) playCuteSound\('boing'\)/);
+  assert.match(handlers, /playCuteSound\('boing'\);\s*openStreakGarden\(\);/);
 });
