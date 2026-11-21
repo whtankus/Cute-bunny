@@ -5583,6 +5583,7 @@ document.addEventListener('click', event => {
   const retryButton = target?.closest('[data-streak-retry]');
   const streakButton = target?.closest('[data-open-streak]');
   if (!retryButton && !streakButton) return;
+  if (streakButton) playCuteSound('boing');
   event.preventDefault();
   event.stopImmediatePropagation();
   openStreakGarden();
@@ -5592,6 +5593,7 @@ document.addEventListener('keydown', event => {
   const thumbnail = event.target?.closest?.('.streak-art-trigger[data-open-streak]');
   if (!thumbnail || (event.key !== 'Enter' && event.key !== ' ')) return;
   event.preventDefault();
+  playCuteSound('boing');
   openStreakGarden();
 }, true);
 
@@ -6910,8 +6912,8 @@ sharedAudioElement?.addEventListener('playing', () => {
   button?.classList.remove('is-buffering', 'is-loading');
 });
 
-// Keep the original boing feedback on meaningful controls, but keep navigation
-// and visual thumbnail surfaces quiet so browsing the app does not sound noisy.
+// Preserve global boing feedback on actionable controls.
+// Streak entry (the Open streak button and artwork thumbnail) deliberately sounds too.
 document.addEventListener('click', event => {
   const button = event.target.closest?.('button, [role="button"]');
   if (!button || button.disabled || button.closest('#nav, nav')) return;

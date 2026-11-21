@@ -81,11 +81,22 @@ test('Virtual Buddy feature and its 3D module are fully removed', () => {
 });
 
 
-test('global boing stays quiet on streak navigation and thumbnail surfaces', () => {
+test('streak button and artwork thumbnail play one boing on click and keyboard entry', () => {
   const app = read('app.js');
-  assert.match(app, /\[data-open-streak\]/);
-  assert.match(app, /\[data-streak-garden-tab\]/);
-  assert.match(app, /\.happy-thing-art/);
-  assert.match(app, /\.feed-photo/);
-  assert.match(app, /playCuteSound\('boing'\)/);
+  assert.match(app, /class="tile-art streak-art streak-art-trigger" data-open-streak/);
+  assert.match(app, /class="primary streak-open-button" data-open-streak/);
+
+  const entryStart = app.indexOf('// Streak entry uses capture phase');
+  const entryEnd = app.indexOf('// Homepage feature cards', entryStart);
+  const entryHandlers = app.slice(entryStart, entryEnd);
+  assert.match(entryHandlers, /if \(streakButton\) playCuteSound\('boing'\)/);
+  assert.match(entryHandlers, /playCuteSound\('boing'\);\s*openStreakGarden\(\);/);
+
+  const soundHandler = app.slice(app.lastIndexOf('// Preserve global boing feedback on actionable controls.'));
+  assert.match(soundHandler, /playCuteSound\('boing'\)/);
+  assert.match(soundHandler, /\[data-open-streak\]/);
+  assert.match(soundHandler, /\.streak-art-trigger/);
+  assert.match(soundHandler, /\[data-streak-garden-tab\]/);
+  assert.match(soundHandler, /\.happy-thing-art/);
+  assert.match(soundHandler, /#nav, nav/);
 });
