@@ -6910,10 +6910,17 @@ sharedAudioElement?.addEventListener('playing', () => {
   button?.classList.remove('is-buffering', 'is-loading');
 });
 
-// Restore the original PR #115 global boing feedback for every enabled button.
+// Keep the original boing feedback on meaningful controls, but keep navigation
+// and visual thumbnail surfaces quiet so browsing the app does not sound noisy.
 document.addEventListener('click', event => {
   const button = event.target.closest?.('button, [role="button"]');
-  if (!button || button.closest('#nav, nav') || button.disabled) return;
+  if (!button || button.disabled || button.closest('#nav, nav')) return;
+  const quietSurface = event.target.closest?.(
+    '[data-open-streak], [data-streak-garden-tab], .streak-art-trigger, ' +
+    '.happy-thing-art, .feed-photo, .photo-thumbnail, .photo-thumb, ' +
+    '[data-photo-thumbnail], [data-thumbnail]'
+  );
+  if (quietSurface) return;
   playCuteSound('boing');
 });
 
