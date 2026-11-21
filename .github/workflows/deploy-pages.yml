@@ -31,6 +31,7 @@ jobs:
         run: |
           node --check app.js
           node --check sw.js
+          node --check swipe-gestures.js
           node --check scripts/build-preview.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -42,7 +43,7 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY || secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
           mkdir -p _site
-          cp index.html app.js style.css polish.css button-interactions.css manifest.webmanifest sw.js bunny-app-icon-192.png bunny-app-icon-512.png apple-touch-icon.png _site/
+          cp index.html app.js style.css polish.css button-interactions.css swipe-gestures.css swipe-gestures.js manifest.webmanifest sw.js bunny-app-icon-192.png bunny-app-icon-512.png apple-touch-icon.png _site/
           python3 - <<'PY'
           import json, os, pathlib
           url = os.environ.get('SUPABASE_URL', '').strip()
