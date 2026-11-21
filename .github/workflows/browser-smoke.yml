@@ -43,8 +43,5 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: browser-smoke-test-publishable-key
         run: npm run build
 
-      - name: Run swipe gesture interaction tests
-        run: node --test tests/swipe-gestures.test.js
-
-      - name: Run Chromium app smoke tests
-        run: node --test tests/browser-smoke.test.js
+      - name: Run Chromium smoke tests
+        run: node --test tests/browser-smoke.test.js tests/swipe-gestures.test.js
