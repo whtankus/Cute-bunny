@@ -1,4 +1,4 @@
-/* Cute Bunny Preview — swipe-only presentation layer. */
+/* Cute Bunny — swipe interaction presentation layer. */
 /* Keep vertical scrolling native while reserving horizontal gestures for CBP. */
 #mainContent, #notificationList, .chat-thread { touch-action: pan-y; }
 .chat-bubble.cb-swipe-tracking {
