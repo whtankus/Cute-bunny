@@ -3800,6 +3800,14 @@ body[data-theme] .app button:focus-visible,body[data-theme] .auth-gate button:fo
   animation:cb-refresh-glide .9s ease-in-out infinite;
   pointer-events:none;
 }
+body > #cb-presence-sweep{
+  position:fixed;z-index:2147483647;top:calc(env(safe-area-inset-top,0px) + 7px);left:50%;
+  display:block;width:34px;height:4px;border-radius:99px;transform:translateX(-50%);
+  opacity:0;pointer-events:none;visibility:hidden;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--cb-accent,#c87598) 18%,transparent),var(--cb-accent,#c87598),color-mix(in srgb,var(--cb-accent,#c87598) 18%,transparent));
+  background-size:220% 100%;box-shadow:0 1px 5px color-mix(in srgb,var(--cb-accent,#c87598) 22%,transparent);
+}
+body > #cb-presence-sweep.is-active{visibility:visible;animation:cb-refresh-glide .9s ease-in-out infinite}
 @keyframes cb-refresh-glide{0%{background-position:100% 0;opacity:.55}50%{opacity:1}100%{background-position:-120% 0;opacity:.55}}
 .notification-loading{min-height:34px!important;padding:6px!important}
 .notification-loader{
@@ -4775,4 +4783,107 @@ body[data-mode="dark"] #notificationList .notification-delete:hover{background:v
 @media(max-width:360px){
   .notification-preference-pair{gap:8px}
   .notification-preference-pair>label{font-size:.69rem!important}
+}
+
+/* Reply quote sits above the write row, with a fully rounded message-card edge. */
+#content .chat-composer{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:stretch;
+  column-gap:9px;
+  row-gap:8px;
+}
+#content .chat-composer #chatReplyingTo{
+  grid-column:1/-1;
+  grid-row:1;
+  position:relative;
+  display:flex;
+  align-items:center;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:10px 42px 10px 14px;
+  border:1px solid var(--cb-border,#efd9e4);
+  border-radius:19px;
+  background:var(--cb-surface,#fffafd);
+  color:var(--cb-text,#80677d);
+  box-shadow:0 2px 8px rgba(151,103,133,.06);
+  animation:chatReplyIn .2s ease-out;
+}
+#content .chat-composer #chatReplyingTo[hidden]{display:none!important}
+#content .chat-composer #chatSeenStatus{grid-column:1/-1;grid-row:2}
+#content .chat-composer #chatInput{grid-column:1;grid-row:3;width:100%;min-width:0}
+#content .chat-composer #chatSend{grid-column:2;grid-row:3;align-self:stretch}
+#content .chat-replying-content{
+  display:flex;
+  flex:1 1 auto;
+  min-width:0;
+  width:100%;
+}
+#content .chat-replying-message{
+  display:-webkit-box;
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  color:var(--cb-text-soft,#866b80);
+  font-size:12px;
+  font-weight:650;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+#content .chat-composer #chatReplyingTo button{
+  position:absolute;
+  top:50%;
+  right:9px;
+  transform:translateY(-50%);
+  flex:0 0 26px;
+  width:26px;
+  height:26px;
+  min-height:26px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:var(--cb-accent-soft,#f7e8ef);
+  color:var(--cb-accent-strong,#9b6380);
+  font-size:18px;
+  line-height:1;
+}
+#content .chat-composer #chatReplyingTo button:active{transform:translateY(-50%) scale(.9)}
+body[data-mode="dark"] #content .chat-composer #chatReplyingTo{
+  background:var(--cb-surface,#302838);
+  border-color:var(--cb-border,#59495d);
+}
+
+
+/* Match the pending reply quote to the complete chat bubble treatment. */
+#content .chat-composer #chatReplyingTo{
+  min-height:44px;
+  padding:11px 44px 11px 14px;
+  border:1px solid var(--cb-border)!important;
+  border-radius:19px!important;
+  background:var(--cb-surface-soft)!important;
+  color:var(--cb-text)!important;
+  box-shadow:0 3px 0 color-mix(in srgb,var(--cb-accent) 18%,transparent)!important;
+}
+#content .chat-composer #chatReplyingTo.is-mine{
+  background:linear-gradient(145deg,var(--cb-surface-raised),var(--cb-accent-soft))!important;
+  border-color:color-mix(in srgb,var(--cb-accent) 35%,var(--cb-border))!important;
+}
+#content .chat-composer #chatReplyingTo.is-friend{
+  background:var(--cb-surface)!important;
+  border-color:var(--cb-border)!important;
+}
+#content .chat-composer #chatReplyingTo .chat-replying-message{
+  color:var(--cb-text)!important;
+  font-size:12px;
+  font-weight:650;
+  line-height:1.45;
+}
+#content .chat-composer #chatReplyingTo button{
+  background:var(--cb-accent-soft)!important;
+  color:var(--cb-accent-strong)!important;
+  border:1px solid var(--cb-border)!important;
 }
