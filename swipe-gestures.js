@@ -1,4 +1,4 @@
-/* Cute Bunny — unified pointer-based gesture controller. */
+/* Cute Bunny Preview — unified pointer-based gesture controller. */
 (() => {
   'use strict';
 
@@ -13,13 +13,14 @@
 
   const closest = (target, selector) => target instanceof Element ? target.closest(selector) : null;
   const isControl = target => !!closest(target, 'button, a, input, textarea, select, [contenteditable="true"], [role="button"]');
+  // The Garden Shop remains a normal grid and is excluded from page swipes.
   const isNestedSurface = target => !!closest(target,
     '.sg-collectible-grid, #notificationList, .chat-thread, .chat-composer, .now-playing-panel, .photo-lightbox, .auth-gate');
 
   function resetVisuals() {
     if (!state.target) return;
     state.target.style.removeProperty('--cb-swipe-x');
-    state.target.classList.remove('cb-swipe-tracking', 'cb-shop-dragging');
+    state.target.classList.remove('cb-swipe-tracking');
   }
 
   function reset() {
@@ -38,7 +39,6 @@
     const target = event.target;
     let mode = '';
     let surface = null;
-
     const bubble = closest(target, '.chat-message .chat-bubble[data-chat-message-id]');
     const notification = closest(target, '.notification-row[data-notification-row]');
 
@@ -62,8 +62,6 @@
     state.startY = state.lastY = event.clientY;
     state.startTime = performance.now();
     state.moved = false;
-
-    // Capture keeps a drag alive if the pointer leaves a small message row.
     try { surface.setPointerCapture(event.pointerId); } catch (_) {}
   }
 
@@ -76,10 +74,7 @@
     const absX = Math.abs(dx), absY = Math.abs(dy);
 
     if (!state.moved && Math.max(absX, absY) < 8) return;
-    if (absY > absX * 1.15) {
-      reset();
-      return;
-    }
+    if (absY > absX * 1.15) { reset(); return; }
     if (absX < absY * 1.15) return;
     state.moved = true;
 
@@ -119,9 +114,7 @@
           document.querySelector('#chatInput')?.focus({ preventScroll: true });
           if (typeof syncNotesKeyboardLayout === 'function') syncNotesKeyboardLayout();
         });
-      } catch (error) {
-        console.warn('Cute Bunny swipe reply failed:', error);
-      }
+      } catch (error) { console.warn('Cute Bunny Preview swipe reply failed:', error); }
       return;
     }
 
@@ -131,11 +124,10 @@
       suppressClickUntil = Date.now() + 600;
       target.classList.add('cb-swipe-dismiss');
       if (!REDUCED_MOTION) await new Promise(resolve => setTimeout(resolve, 170));
-      try {
-        await dismissNotification(id);
-      } catch (error) {
+      try { await dismissNotification(id); }
+      catch (error) {
         target.classList.remove('cb-swipe-dismiss');
-        console.warn('Cute Bunny notification swipe failed:', error);
+        console.warn('Cute Bunny Preview notification swipe failed:', error);
       }
       return;
     }
