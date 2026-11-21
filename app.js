@@ -5583,6 +5583,7 @@ document.addEventListener('click', event => {
   const retryButton = target?.closest('[data-streak-retry]');
   const streakButton = target?.closest('[data-open-streak]');
   if (!retryButton && !streakButton) return;
+  if (streakButton) playCuteSound('boing');
   event.preventDefault();
   event.stopImmediatePropagation();
   openStreakGarden();
@@ -5592,6 +5593,7 @@ document.addEventListener('keydown', event => {
   const thumbnail = event.target?.closest?.('.streak-art-trigger[data-open-streak]');
   if (!thumbnail || (event.key !== 'Enter' && event.key !== ' ')) return;
   event.preventDefault();
+  playCuteSound('boing');
   openStreakGarden();
 }, true);
 
@@ -6916,8 +6918,9 @@ document.addEventListener('click', event => {
   const button = event.target.closest?.('button, [role="button"]');
   if (!button || button.disabled || button.closest('#nav, nav')) return;
   const quietSurface = event.target.closest?.(
-    '[data-streak-garden-tab], .happy-thing-art, .feed-photo, ' +
-    '.photo-thumbnail, .photo-thumb, [data-photo-thumbnail], [data-thumbnail]'
+    '[data-open-streak], [data-streak-garden-tab], .streak-art-trigger, ' +
+    '.happy-thing-art, .feed-photo, .photo-thumbnail, .photo-thumb, ' +
+    '[data-photo-thumbnail], [data-thumbnail]'
   );
   if (quietSurface) return;
   playCuteSound('boing');
