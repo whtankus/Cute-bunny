@@ -21,7 +21,8 @@ const memoryLikeInFlight = new Set();
 let feedHasMore = false, feedLoadingMore = false;
 const FEED_PAGE_SIZE = 40;
 const feedPageOffsets = { all: 0, photo: 0, song: 0 };
-const feedPageHasMore = { all: false, photo: true, song: true };
+const feedPageHasMore = { all: false, photo: true, song: true, note: false };
+let noteHistoryCursor = null;
 const mediaVisibleCount = { photo: 8, song: 8 };
 let feedHistoryObserver = null, feedHistoryScrollArmed = false, mediaPageLoading = { photo: false, song: false };
 let mediaObserver = null;
@@ -30,6 +31,7 @@ let pendingDeleteTimers = new Map(), authMode = 'register';
 let playlist = [], playlistIndex = -1, audioObjectUrl = '', songLoadSequence = 0;
 const songUrlCache = new Map(), songUrlInFlight = new Map();
 let notificationRows = [], notificationLoaded = false, notificationLoading = false;
+let notificationVisibleCount = 3;
 let notificationSeenObserver = null, notificationDismissals = new Set();
 let noteSeenObserver = null, noteSeenDebounceTimer = null, seenRelativeInterval = null;
 const noteSeenPending = new Map(), noteSeenInFlight = new Map();
@@ -113,7 +115,7 @@ function rollKindness() {
     void p.offsetWidth;
     p.classList.add('kindness-pop');
   }
-  playBoing();
+
   toast('A little drop of kindness for you ♡');
 }
 
@@ -314,9 +316,10 @@ async function api(path, options = {}) {
   }
 
   if (path === '/notifications/read' && method === 'PUT') {
-    const ids = body.ids || [];
+    const ids = [...new Set((body.ids || []).map(String).filter(Boolean))];
     if (ids.length) {
-      const { error } = await sb.from('notifications').update({ read_at: new Date().toISOString() }).in('id', ids);
+      const { error } = await sb.from('notifications').update({ read_at: new Date().toISOString() })
+        .in('id', ids).eq('recipient_id', session.user.id).is('read_at', null);
       fail(error);
     }
     return {};
@@ -338,13 +341,22 @@ async function api(path, options = {}) {
     const offsetMatch = path.match(/[?&]offset=(\d+)/);
     const kindMatch = path.match(/[?&]kind=(photo|song|note)/);
     const limitMatch = path.match(/[?&]limit=(\d+)/);
+    const beforeIdMatch = path.match(/[?&]beforeId=(\d+)/);
     const offset = Math.max(0, Number(offsetMatch?.[1]) || 0);
+    const beforeId = Math.max(0, Number(beforeIdMatch?.[1]) || 0);
     const pageSize = Math.min(120, Math.max(1, Number(limitMatch?.[1]) || FEED_PAGE_SIZE));
     let memoriesQuery = sb.from('memories')
       .select('*,author:profiles!memories_owner_id_fkey(id,username,display_name,mascot,theme)')
       .order('created_at', { ascending: false }).order('id', { ascending: false });
     if (kindMatch) memoriesQuery = memoriesQuery.eq('kind', kindMatch[1]);
-    const { data: rows, error } = await memoriesQuery.range(offset, offset + pageSize - 1);
+    if (beforeId && kindMatch?.[1] === 'note') {
+      // Keyset pagination is stable when new messages arrive; inserting at the
+      // newest end cannot shift the next historical page.
+      memoriesQuery = memoriesQuery.lt('id', beforeId).order('id', { ascending: false });
+    }
+    const { data: rows, error } = beforeId && kindMatch?.[1] === 'note'
+      ? await memoriesQuery.limit(pageSize)
+      : await memoriesQuery.range(offset, offset + pageSize - 1);
     fail(error);
 
     let latestOwnNoteId = null;
@@ -378,6 +390,24 @@ async function api(path, options = {}) {
       likesByMemory.set(key, state);
     }
 
+    // Emoji reactions are stored independently from the single-heart like
+    // toggle. Load the complete reaction set for each page of messages.
+    let reactionRows = [];
+    if (memoryIds.length) {
+      const { data, error: reactionsError } = await sb.from('memory_reactions')
+        .select('memory_id,user_id,emoji,created_at')
+        .in('memory_id', memoryIds);
+      fail(reactionsError);
+      reactionRows = data || [];
+    }
+    const reactionsByMemory = new Map();
+    for (const reaction of reactionRows) {
+      const key = String(reaction.memory_id);
+      const items = reactionsByMemory.get(key) || [];
+      items.push(reaction);
+      reactionsByMemory.set(key, items);
+    }
+
     return (rows || []).map(m => {
       const likeState = likesByMemory.get(String(m.id)) || { count: 0, likedByMe: false };
       const author = Array.isArray(m.author) ? m.author[0] : (m.author || {});
@@ -385,6 +415,7 @@ async function api(path, options = {}) {
         ...m,
         like_count: likeState.count,
         liked_by_me: likeState.likedByMe,
+        reactions: reactionsByMemory.get(String(m.id)) || [],
         is_latest_own_note: m.kind === 'note' && String(m.id) === String(latestOwnNoteId),
         seen_by_count: m.kind === 'note' && String(m.id) === String(latestOwnNoteId) ? ownNoteSeenCount : 0,
         createdAt: m.created_at,
@@ -623,14 +654,15 @@ async function refresh() {
       api('/following'),
       api('/feed?kind=photo&limit=8').catch(error => { console.warn('Photo warm cache skipped:', error?.message || error); return null; }),
       api('/feed?kind=song&limit=8').catch(error => { console.warn('Music warm cache skipped:', error?.message || error); return null; }),
-      api('/notes/my-read-cursors').catch(error => { console.warn('Note read cursors could not be loaded:', error?.message || error); return [] })
+      api('/notes/my-read-cursors').catch(error => { console.warn('Note read cursors could not be loaded:', error?.message || error); return [] }),
+      api('/feed?kind=note&limit=' + FEED_PAGE_SIZE).catch(error => { console.warn('Notes history could not be loaded:', error?.message || error); return [] })
     ]);
     me = results[0];
     // The database profile is the source of truth for the colour palette.
     // Re-apply it on every refresh, not only during the initial session restore.
     setTheme(me?.theme);
     const feedById = new Map();
-    [...results[1], ...(results[3] || []), ...(results[4] || [])].forEach(item => feedById.set(String(item.id), item));
+    [...results[1], ...(results[3] || []), ...(results[4] || []), ...(results[6] || [])].forEach(item => feedById.set(String(item.id), item));
     feed = [...feedById.values()].sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
     feedPageOffsets.all = results[1].length;
     feedPageHasMore.all = results[1].length === FEED_PAGE_SIZE;
@@ -642,6 +674,9 @@ async function refresh() {
     mediaVisibleCount.photo = mediaVisibleCount.song = 8;
     feedPageHasMore.photo = (results[3] || []).length === 8;
     feedPageHasMore.song = (results[4] || []).length === 8;
+    const initialNotes = results[6] || [];
+    noteHistoryCursor = initialNotes.length ? String(initialNotes[initialNotes.length - 1].id) : null;
+    feedPageHasMore.note = initialNotes.length === FEED_PAGE_SIZE;
     friends = results[2];
 
     noteSeenLastAck = new Map((results[5] || []).map(cursor => [String(cursor.owner_id), Number(cursor.last_read_message_id) || 0]));
@@ -697,17 +732,24 @@ function setFeedHistoryLoading(loading) {
 
 async function loadMoreFeed() {
   if (feedLoadingMore || !me) return;
-  const kind = page === 'gallery' ? 'photo' : page === 'music' ? 'song' : 'all';
-  if (!feedPageHasMore[kind] || (kind !== 'all' && mediaPageLoading[kind])) return;
+  const kind = page === 'notes' ? 'note' : page === 'gallery' ? 'photo' : page === 'music' ? 'song' : 'all';
+  if (!feedPageHasMore[kind] || (kind !== 'all' && kind !== 'note' && mediaPageLoading[kind])) return;
   feedLoadingMore = true; setFeedHistoryLoading(true);
   const previousScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
   try {
     const offset = feedPageOffsets[kind];
-    const query = kind === 'all' ? '/feed?offset=' + offset : '/feed?kind=' + kind + '&offset=' + offset;
+    const query = kind === 'note'
+      ? (noteHistoryCursor ? '/feed?kind=note&beforeId=' + encodeURIComponent(noteHistoryCursor) + '&limit=' + FEED_PAGE_SIZE : '')
+      : kind === 'all' ? '/feed?offset=' + offset : '/feed?kind=' + kind + '&offset=' + offset;
+    if (!query) return;
     const older = await api(query);
-    feedPageOffsets[kind] += older.length;
+    if (kind === 'note') {
+      if (older.length) noteHistoryCursor = String(older[older.length - 1].id);
+    } else {
+      feedPageOffsets[kind] += older.length;
+      if (kind !== 'all') mediaVisibleCount[kind] += older.length;
+    }
     feedPageHasMore[kind] = older.length === FEED_PAGE_SIZE;
-    if (kind !== 'all') mediaVisibleCount[kind] += older.length;
     mergeFeedRows(older); feedHasMore = feedPageHasMore.all;
     if (page === 'notes') {
       renderNotesPage();
@@ -1817,7 +1859,7 @@ function renderStreakPetalGame() {
 function flipStreakPetalCard(cardId) {
   const state = streakPetalGame;
   if (state.locked || state.completed || state.matched.includes(cardId) || state.flipped.includes(cardId)) return;
-  playBoing();
+
   state.flipped.push(cardId);
   if (state.flipped.length === 2) {
     state.moves += 1;
@@ -1825,6 +1867,7 @@ function flipStreakPetalCard(cardId) {
     const first = state.cards.find(card => card.id === firstId);
     const second = state.cards.find(card => card.id === secondId);
     if (first && second && first.pairKey === second.pairKey) {
+
       state.matched.push(firstId,secondId);
       state.flipped = [];
       state.completed = state.matched.length === state.cards.length;
@@ -2334,27 +2377,45 @@ function renderStreakPage() {
   syncPresenceUI();
 }
 
-function playBoing() {
+// Small, purpose-specific UI sound palette. Sounds are opt-in at meaningful moments,
+// not attached globally to every button press.
+let cuteSoundContext = null;
+let lastCuteSoundAt = 0;
+function playCuteSound(kind = 'tap') {
+  if (localStorage.getItem('cuteBunnyAppSounds') === 'off') return;
   try {
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (!Audio) return;
-    const context = new Audio();
-    const oscillator = context.createOscillator(), gain = context.createGain();
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(520, context.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(760, context.currentTime + .09);
-    oscillator.frequency.exponentialRampToValueAtTime(390, context.currentTime + .24);
-    gain.gain.setValueAtTime(.0001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.12, context.currentTime + .025);
-    gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .28);
+    const now = performance.now();
+    if (now - lastCuteSoundAt < 55) return;
+    lastCuteSoundAt = now;
+    const context = cuteSoundContext || (cuteSoundContext = new Audio());
+    if (context.state === 'suspended') void context.resume();
+    const t = context.currentTime;
+    const presets = {
+      tap:     { start: 620, end: 470, duration: .075, volume: .035, type: 'sine' },
+      buddy:   { start: 520, peak: 760, end: 390, duration: .25, volume: .075, type: 'sine' },
+      boing:   { start: 360, peak: 790, end: 320, duration: .23, volume: .07, type: 'sine' },
+      sparkle: { start: 880, peak: 1320, end: 1180, duration: .22, volume: .045, type: 'sine' },
+      success: { start: 660, peak: 990, end: 1320, duration: .32, volume: .055, type: 'sine' },
+      card:    { start: 420, end: 560, duration: .09, volume: .03, type: 'triangle' }
+    };
+    const sound = presets[kind] || presets.tap;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = sound.type;
+    oscillator.frequency.setValueAtTime(sound.start, t);
+    if (sound.peak) oscillator.frequency.exponentialRampToValueAtTime(sound.peak, t + sound.duration * .42);
+    oscillator.frequency.exponentialRampToValueAtTime(sound.end, t + sound.duration);
+    gain.gain.setValueAtTime(.0001, t);
+    gain.gain.exponentialRampToValueAtTime(sound.volume, t + .012);
+    gain.gain.exponentialRampToValueAtTime(.0001, t + sound.duration);
     oscillator.connect(gain);
     gain.connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + .29);
-    oscillator.onended = () => context.close();
+    oscillator.start(t);
+    oscillator.stop(t + sound.duration + .015);
   } catch {}
 }
-
 async function popLoveHeart(card, event) {
   if (!card || !me || !sb) return false;
   const memoryRoot = card.closest('[data-memory]');
@@ -2397,10 +2458,17 @@ async function popLoveHeart(card, event) {
   memoryLikeInFlight.add(memoryId);
   try {
     const result = nextLiked
-      ? await sb.from('memory_likes').insert({ memory_id: item.id, user_id: me.id })
+      ? await sb.from('memory_likes').upsert({ memory_id: item.id, user_id: me.id }, { onConflict: 'memory_id,user_id', ignoreDuplicates: true })
       : await sb.from('memory_likes').delete().eq('memory_id', item.id).eq('user_id', me.id);
     if (result.error) throw result.error;
-    if (nextLiked) recordStreakDailyQuest('heart', memoryId);
+    const { data: persistedLikes, error: likesReadError } = await sb.from('memory_likes')
+      .select('memory_id,user_id')
+      .eq('memory_id', item.id);
+    if (likesReadError) throw likesReadError;
+    item.like_count = (persistedLikes || []).length;
+    item.liked_by_me = (persistedLikes || []).some(like => String(like.user_id) === String(me.id));
+    paint();
+    if (nextLiked && item.liked_by_me) recordStreakDailyQuest('heart', memoryId);
     return true;
   } catch (error) {
     item.liked_by_me = wasLiked; item.like_count = previousCount; paint();
@@ -2465,6 +2533,7 @@ function go(p, options = {}) {
   }
 
   page = p;
+  updateNotificationBadge();
   $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends', streak: 'Streak Garden' })[p];
   document.querySelectorAll('#nav button[data-page]').forEach(b => {
     const isCurrentPage = b.dataset.page === p;
@@ -2489,6 +2558,7 @@ function go(p, options = {}) {
   syncPresenceUI();
 
   if (p === 'notes') {
+    void clearActiveNotesNotifications();
     requestAnimationFrame(() => {
       if (page !== 'notes') return;
       const thread = $('#chatThread');
@@ -2657,22 +2727,20 @@ function chatMessageMarkup(m, showMeta = true, isContinuation = false, showSeen 
         </${senderTag}>
   ` : '';
   const seenLabel = m.last_seen_at ? formatSeenRelative(m.last_seen_at) : 'Seen';
-  const deliveryLabel = Number(m.seen_by_count || 0) > 0 ? 'Seen' : Number(m.delivered_by_count || 0) > 0 ? 'Delivered' : 'Sent';
-  const deliveryStatus = mine && !m.isPending ? `<small class="chat-delivery-status ${deliveryLabel.toLowerCase()}">${deliveryLabel}</small>` : '';
   const seenReceipt = showSeen && mine && Number(m.seen_by_count || 0) > 0
     ? '<small class="chat-seen-receipt" data-seen-at="' + esc(m.last_seen_at || '') + '" aria-label="' + esc(seenLabel) + '">' + esc(seenLabel) + '</small>'
     : '';
   const replyTarget = m.reply_to_id ? feed.find(item => String(item.id) === String(m.reply_to_id)) : null;
   const replyAuthor = replyTarget?.author?.displayName || replyTarget?.author?.display_name || replyTarget?.author?.username || 'Original message';
   const replyText = replyTarget?.text || 'This message is no longer available';
-  const replyMarkup = m.reply_to_id ? `<button type="button" class="chat-reply-preview" data-chat-jump="${esc(m.reply_to_id)}" aria-label="Jump to replied message"><small>↪ Replying to</small><b>${esc(replyAuthor)}</b><span>${esc(replyText)}</span></button>` : '';
+  const replyMarkup = m.reply_to_id ? `<button type="button" class="chat-reply-preview" data-chat-jump="${esc(m.reply_to_id)}" aria-label="Jump to original message"><span class="chat-reply-preview-quote"><span class="chat-reply-preview-arrow" aria-hidden="true">↪</span><span class="chat-reply-preview-text">${esc(replyText)}</span></span></button>` : '';
 
   return `
-    <div class="chat-message ${mine ? 'is-mine' : 'is-friend'}${liked ? ' is-loved' : ''}${m.isPending ? ' is-uploading' : ''}${isContinuation ? ' is-continuation' : ''}" data-kind="note" data-memory="${esc(id)}" data-owner="${esc(ownerId)}">
+    <div class="chat-message ${mine ? 'is-mine' : 'is-friend'}${liked ? ' is-loved' : ''}${m.isPending ? ' is-uploading' : ''}${isContinuation ? ' is-continuation' : ''}" data-kind="note" data-memory="${esc(id)}" data-owner="${esc(ownerId)}" data-like-count="${Number(m.like_count) || 0}" data-reaction-count="${Array.isArray(m.reactions) ? m.reactions.length : 0}">
       <div class="chat-message-content">
         ${senderMeta}
         <div class="chat-message-line">
-          <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>${editedLabel}${deliveryStatus}
+          <time class="chat-message-time" datetime="${esc(createdAt)}">${time}</time>${editedLabel}
           <div class="chat-bubble-wrap">
             <div class="chat-bubble${hasHeartReaction ? '' : ' no-heart-reaction'}${isShortMessage ? ' is-short-message' : ''}" tabindex="0" data-chat-message-id="${esc(id)}" aria-label="Message from ${name}">
               ${heartButton}
@@ -2860,6 +2928,8 @@ function renderNotesPage(options = {}) {
           }
           current.classList.toggle('is-uploading', desiredNode.classList.contains('is-uploading'));
           current.classList.toggle('is-loved', desiredNode.classList.contains('is-loved'));
+          current.setAttribute('data-like-count', desiredNode.getAttribute('data-like-count') || '0');
+          current.setAttribute('data-reaction-count', desiredNode.getAttribute('data-reaction-count') || '0');
           nextNodes.push(current);
         } else {
           nextNodes.push(desiredNode);
@@ -3327,7 +3397,6 @@ function profileSettingsMarkup() {
     <div class="profile-settings-section profile-editor-settings hidden" id="profileSettingsNotifications" data-settings-section="notifications" role="tabpanel">
       <div class="settings-section-intro"><span class="settings-section-icon">♡</span><div><b>Your notifications</b><small>Choose what you want to hear about.</small></div></div>
       <div class="settings-notification-card"><span>Photos, songs & notes</span><small>Updates shared in your little corner</small><button type="button" class="settings-open-notifications" id="profileSettingsOpenNotifications">Manage alerts →</button></div>
-      <div class="settings-notification-card"><span>Buddy hellos</span><small>When your friends stop by</small><button type="button" class="settings-open-notifications" data-open-notification-settings>Notification preferences →</button></div>
     </div>
     <div class="profile-settings-actions">
       <p class="profile-settings-feedback" id="profileSettingsFeedback" role="status" aria-live="polite"></p>
@@ -4591,21 +4660,38 @@ function startRealtime() {
 
     notificationChannel = sb.channel('cute-bunny-notifications-' + me.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'recipient_id=eq.' + me.id }, payload => {
-        // Fetch the inserted notification directly; loadNotifications() may be
-        // busy with an older request and otherwise return before this row arrives.
+        const inserted = payload?.new;
+        const isActiveNotesUpdate = page === 'notes' && String(inserted?.kind || '') === 'note';
+        if (isActiveNotesUpdate) {
+          toast('New note activity ♡');
+          if (inserted?.id) {
+            notificationRows = notificationRows.filter(row => String(row.id) !== String(inserted.id));
+            updateNotificationBadge();
+            void api('/notifications/' + encodeURIComponent(inserted.id), { method: 'DELETE' })
+              .catch(error => console.warn('Active Notes notification could not be dismissed:', error?.message || error));
+          }
+          return;
+        }
         void api('/notifications').then(rows => {
           notificationRows = rows;
           notificationLoaded = true;
           updateNotificationBadge();
-          const added = rows.find(row => String(row.id) === String(payload?.new?.id));
+          const added = rows.find(row => String(row.id) === String(inserted?.id));
           if (added) void showPhoneNotification(added);
-          if (!$('#notificationGate').classList.contains('hidden')) {
-            rows.forEach(row => notificationViewedIds.add(String(row.id)));
-            renderNotifications();
-          }
+          if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
         }).catch(error => console.warn('Live notification refresh failed:', error?.message || error));
-        if (!(page === 'notes' && String(payload?.new?.kind || '') === 'note')) {
-          toast('A little hello from your friend ♡');
+        toast('A little hello from your friend ♡');
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: 'recipient_id=eq.' + me.id }, payload => {
+        const changed = payload?.new;
+        if (!changed?.id) return;
+        const row = notificationRows.find(item => String(item.id) === String(changed.id));
+        if (row) {
+          row.read_at = changed.read_at || null;
+          updateNotificationBadge();
+          if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+        } else if (notificationLoaded) {
+          void loadNotifications();
         }
       }).subscribe();
 
@@ -4674,7 +4760,27 @@ function startRealtime() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'note_delivery_receipts', filter: 'owner_id=eq.' + me.id }, () => {
         clearTimeout(window.cuteNoteDeliveryRefresh);
         window.cuteNoteDeliveryRefresh = setTimeout(() => { void refreshOwnNoteSeenStatus(); }, 45);
-      })      .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
+      })      .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_reactions' }, payload => {
+        const changed = payload?.new || payload?.old || {};
+        const memoryId = String(changed.memory_id || '');
+        const item = feed.find(memory => String(memory.id) === memoryId);
+        if (!item) return;
+        clearTimeout(window.cuteMemoryReactionsRefresh);
+        window.cuteMemoryReactionsRefresh = setTimeout(async () => {
+          try {
+            const { data, error } = await sb.from('memory_reactions')
+              .select('memory_id,user_id,emoji,created_at')
+              .eq('memory_id', item.id);
+            if (error) throw error;
+            item.reactions = data || [];
+            if (page === 'notes') renderNotesPage();
+            else if (page === 'home') render();
+          } catch (error) {
+            console.warn('Live message reactions could not refresh:', error?.message || error);
+          }
+        }, 80);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'memory_likes' }, () => {
         clearTimeout(window.cuteMemoryLikesRefresh);
         window.cuteMemoryLikesRefresh = setTimeout(() => {
           refreshMemoryLikeIndicators().catch(error => console.warn('Live like refresh failed:', error?.message || error));
@@ -4806,6 +4912,27 @@ function syncPresenceUI() {
   });
 }
 
+async function clearActiveNotesNotifications() {
+  if (!me || page !== 'notes') return;
+  const userId = String(me.id);
+  try {
+    const rows = await api('/notifications');
+    if (String(me?.id || '') !== userId || page !== 'notes') return;
+    const noteRows = rows.filter(row => row.kind === 'note');
+    if (!noteRows.length) return;
+    const noteIds = new Set(noteRows.map(row => String(row.id)));
+    notificationRows = notificationRows.filter(row => !noteIds.has(String(row.id)));
+    updateNotificationBadge();
+    await Promise.all(noteRows.map(row =>
+      api('/notifications/' + encodeURIComponent(row.id), { method: 'DELETE' }).catch(error => {
+        console.warn('Active Notes notification could not be dismissed:', error?.message || error);
+      })
+    ));
+  } catch (error) {
+    console.warn('Active Notes notifications could not be refreshed:', error?.message || error);
+  }
+}
+
 async function loadNotifications() {
   if (!me || notificationLoading) return;
   const req = me.id;
@@ -4827,13 +4954,14 @@ async function loadNotifications() {
 }
 
 async function showPhoneNotification(notification) {
-  if (!notification || !document.hidden || Notification.permission !== 'granted') return;
+  if (!notification || !document.hidden || !('Notification' in window) || Notification.permission !== 'granted') return;
   let enabled = false;
   try { enabled = localStorage.getItem('cuteBunnyPhoneNotifications') === 'on'; } catch {}
   if (!enabled || !('serviceWorker' in navigator)) return;
   const prefs = me?.notification_preferences || {};
-  if (notification.kind && prefs.memories === false) return;
-  if (!notification.kind && prefs.buddy === false) return;
+  const isBuddyNotification = notification.kind === 'buddy';
+  if (isBuddyNotification && prefs.buddy === false) return;
+  if (!isBuddyNotification && prefs.memories === false) return;
   const actor = Array.isArray(notification.actor) ? notification.actor[0] : (notification.actor || {});
   const title = actor.display_name || actor.username || 'A little hello from Cute Bunny';
   const body = String(notification.message || 'Your friend shared something with you.').slice(0, 160);
@@ -4853,9 +4981,47 @@ async function showPhoneNotification(notification) {
 }
 
 function updateNotificationBadge() {
-  const badge = $('#notificationBadge'), count = notificationRows.filter(n => !n.read_at).length;
+  const badge = $('#notificationBadge'), count = notificationRows.filter(n => !n.read_at && !(page === 'notes' && n.kind === 'note')).length;
   badge.textContent = count > 9 ? '9+' : String(count);
   badge.classList.toggle('hidden', count === 0);
+}
+
+function notificationGroupLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Earlier';
+  const today = new Date(), yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return 'Earlier';
+}
+
+function notificationKindMeta(notification) {
+  const kind = String(notification?.kind || '').toLowerCase();
+  if (kind === 'buddy') return { icon: '♡', label: 'Friend hello' };
+  if (kind === 'photo') return { icon: '▧', label: 'Photo' };
+  if (kind === 'song') return { icon: '♫', label: 'Music' };
+  if (kind === 'note') return { icon: '✎', label: 'Note' };
+  return { icon: '♡', label: 'Activity' };
+}
+
+async function markNotificationRead(id) {
+  const key = String(id || '');
+  const row = notificationRows.find(item => String(item.id) === key);
+  if (!row || row.read_at) return true;
+  const previous = row.read_at;
+  row.read_at = new Date().toISOString();
+  updateNotificationBadge();
+  if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+  try {
+    await api('/notifications/read', { method: 'PUT', body: JSON.stringify({ ids: [key] }) });
+    return true;
+  } catch (error) {
+    row.read_at = previous;
+    updateNotificationBadge();
+    if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
+    throw error;
+  }
 }
 
 function renderNotifications() {
@@ -4863,37 +5029,44 @@ function renderNotifications() {
   if (!list) return;
   const prefs = me?.notification_preferences || {};
   $('#notifyMemories').checked = prefs.memories !== false;
-  $('#notifyBuddy').checked = prefs.buddy !== false;
+  const soundToggle = $('#notifySounds');
+  if (soundToggle) soundToggle.checked = localStorage.getItem('cuteBunnyAppSounds') !== 'off';
   const previousScrollTop = list.scrollTop;
-  list.innerHTML = notificationRows.map(n => {
-    const actor = Array.isArray(n.actor) ? n.actor[0] : (n.actor || {});
-    const unread = !n.read_at;
-    const actorName = String(actor.display_name || actor.username || 'Friend');
-    const rawMessage = String(n.message || '');
-    const likedMatch = rawMessage.match(/\bliked your (photo|song|note)\b/i);
-    let actionText = likedMatch ? 'liked your ' + likedMatch[1] : rawMessage;
-    if (!likedMatch && actionText.toLowerCase().startsWith(actorName.toLowerCase())) {
-      actionText = actionText.slice(actorName.length).trim();
-    }
-    if (!actionText) actionText = 'shared something with you';
-    return `<div class="notification-row${unread ? ' is-unread' : ''}" data-notification-row="${esc(n.id)}">
-      <button type="button" class="notification-open" data-notification="${esc(n.id)}" aria-label="Open notification from ${esc(actorName)}">
-        <span class="notification-avatar">${esc(actor.mascot || '🐰')}</span>
-        <span class="notification-copy">
-          <b>${esc(actorName)}</b>
-          <small>${esc(actionText)}</small>
-          <time>${esc(formatMessageTime(n.created_at))}</time>
-        </span>
-        ${unread ? '<i class="notification-unread-dot" aria-label="Unread"></i>' : ''}
-      </button>
-    </div>`;
-  }).join('') || (notificationLoading && !notificationLoaded
+  const visibleRows = notificationRows.filter(notification => !(page === 'notes' && notification.kind === 'note'));
+  const groups = new Map();
+  visibleRows.forEach(notification => {
+    const label = notificationGroupLabel(notification.created_at);
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(notification);
+  });
+  const content = ['Today', 'Yesterday', 'Earlier'].filter(label => groups.has(label)).map(label => {
+    const rows = groups.get(label).map(n => {
+      const actor = Array.isArray(n.actor) ? n.actor[0] : (n.actor || {});
+      const unread = !n.read_at;
+      const actorName = String(actor.display_name || actor.username || 'Friend');
+      const rawMessage = String(n.message || '');
+      const likedMatch = rawMessage.match(/\bliked your (photo|song|note)\b/i);
+      let actionText = likedMatch ? 'liked your ' + likedMatch[1] : rawMessage;
+      if (!likedMatch && actionText.toLowerCase().startsWith(actorName.toLowerCase())) actionText = actionText.slice(actorName.length).trim();
+      if (!actionText) actionText = 'shared something with you';
+      const meta = notificationKindMeta(n);
+      return `<div class="notification-row${unread ? ' is-unread' : ''}" data-notification-row="${esc(n.id)}">
+        <button type="button" class="notification-open" data-notification="${esc(n.id)}" aria-label="Open notification from ${esc(actorName)}">
+          <span class="notification-avatar" aria-hidden="true">${esc(actor.mascot || meta.icon)}</span>
+          <span class="notification-copy"><b>${esc(actorName)}</b><small>${esc(actionText)}</small><time>${esc(formatMessageTime(n.created_at))}</time></span>
+          <span class="notification-kind" aria-label="${esc(meta.label)}">${esc(meta.icon)}</span>
+          ${unread ? '<i class="notification-unread-dot" aria-label="Unread"></i>' : ''}
+        </button>
+      </div>`;
+    }).join('');
+    return `<section class="notification-group"><h3>${label}</h3>${rows}</section>`;
+  }).join('');
+  list.innerHTML = content || (notificationLoading && !notificationLoaded
     ? '<div class="notification-loading" aria-label="Loading notifications"><span class="notification-loader" aria-hidden="true"></span></div>'
     : '<div class="notification-empty"><span aria-hidden="true">♡</span><b>You’re all caught up</b><small>New shared activity will appear here.</small></div>');
   list.scrollTop = previousScrollTop;
   observeNotificationListRows();
 }
-
 function observeNotificationListRows() {
   notificationListSeenObserver?.disconnect();
   notificationListSeenObserver = null;
@@ -4919,11 +5092,9 @@ function observeNotificationListRows() {
 async function dismissViewedNotifications() {
   notificationListSeenObserver?.disconnect();
   notificationListSeenObserver = null;
-  const ids = [...notificationViewedIds];
+  const viewedIds = [...notificationViewedIds];
   notificationViewedIds.clear();
-  for (const id of ids) {
-    try { await dismissNotification(id, { silent: true }); } catch {}
-  }
+  await Promise.all(viewedIds.map(id => dismissNotification(id, { silent: true }).catch(() => false)));
 }
 
 async function dismissNotification(id, options = {}) {
@@ -5143,9 +5314,16 @@ function formatProfileDate(value) {
   return `${date.getDate()} ${month}, ${date.getFullYear()}`;
 }
 
+/* App sound preference is local to this device and takes effect immediately. */
+document.addEventListener('change', event => {
+  if (!event.target.matches('#notifySounds')) return;
+  localStorage.setItem('cuteBunnyAppSounds', event.target.checked ? 'on' : 'off');
+  toast(event.target.checked ? 'App sounds are on ♡' : 'App sounds are off');
+});
+
 /* Event listeners */
 
-// Soft tactile button press + one gentle synthesized boing per activation.
+// Soft tactile button press animation. Audio is reserved for selected moments.
 const buttonPressTimers = new WeakMap();
 function releaseCuteButton(button) {
   if (!button) return;
@@ -5160,7 +5338,6 @@ document.addEventListener('pointerdown', event => {
   button.classList.remove('cute-press');
   void button.offsetWidth;
   button.classList.add('cute-press');
-  playBoing();
   const timer = setTimeout(() => releaseCuteButton(button), 190);
   buttonPressTimers.set(button, timer);
 }, true);
@@ -5172,13 +5349,6 @@ document.addEventListener('pointercancel', event => {
   const button = event.target.closest('button, [role="button"]');
   if (button) releaseCuteButton(button);
 }, true);
-// Keyboard activation has no pointerdown, so give it the same sound.
-document.addEventListener('click', event => {
-  if (event.detail !== 0) return;
-  const button = event.target.closest('button:not(:disabled), [role="button"]:not([aria-disabled="true"])');
-  if (button && !button.matches('#surprise, #bunnyBuddy, .sg-petal-card')) playBoing();
-}, true);
-
 // Tapping effect on pointerdown
 document.addEventListener('pointerup', e => {
   const interactive = e.target.closest('button, .primary, .round, .tile, .ig-note-item, .feed-photo, .bunny-button, .daily, [data-go], #nav button');
@@ -5193,6 +5363,7 @@ document.addEventListener('pointerup', e => {
   const y = e.clientY || (rect.top + rect.height / 2);
 
 }, { passive: true });
+
 
 document.addEventListener('submit', e => {
   if (e.target.id !== 'streakGoalForm') return;
@@ -5340,7 +5511,6 @@ document.addEventListener('pointerdown', e => {
   messagePressState.startX = e.clientX;
   messagePressState.startY = e.clientY;
   bubble.classList.add('is-pressed');
-  playBoing();
 
   messagePressState.timer = setTimeout(() => {
     if (!messagePressState.bubble?.isConnected || messagePressState.pointerId !== e.pointerId) return;
@@ -5692,6 +5862,7 @@ document.addEventListener('click', async e => {
       return;
     }
     if (selectedText || bubble.classList.contains('no-heart-reaction')) return;
+    playCuteSound('boing');
     clearTimeout(bubbleTapState.timer);
     bubbleTapState.timer = null;
     bubbleTapState.bubble = null;
@@ -6006,7 +6177,7 @@ document.addEventListener('click', async e => {
 
   // Mascot button — restore the earlier, soft CSS hop from the previous design.
   if (e.target.closest('#bunnyBuddy')) {
-    playBoing();
+
     const bunny = $('#bunnyBuddy'), buddy = me?.mascot || '🐰';
     const greetings = { '🐰': 'Bunny says hi! ♡', '🐱': 'Kitty says meow! ♡', '🐻': 'Bear sends a hug! ♡', '🐸': 'Froggy says ribbit! ♡' };
     bunny.classList.remove('bunny-happy');
@@ -6040,13 +6211,10 @@ document.addEventListener('click', async e => {
     return;
   }
   if (e.target.closest('#notificationOpen')) {
-    notificationRows.forEach(row => notificationViewedIds.add(String(row.id)));
+    notificationVisibleCount = 3;
     $('#notificationGate').classList.remove('hidden');
     void loadNotifications().then(() => {
-      if (!$('#notificationGate').classList.contains('hidden')) {
-        notificationRows.forEach(row => notificationViewedIds.add(String(row.id)));
-        renderNotifications();
-      }
+      if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
     });
     return;
   }
@@ -6285,11 +6453,12 @@ document.addEventListener('click', async e => {
   }
 
   // Notifications
-  const notifItem = e.target.closest('[data-notification]');
+    const notifItem = e.target.closest('[data-notification]');
   if (notifItem) {
     const notification = notificationRows.find(row => String(row.id) === String(notifItem.dataset.notification));
     try {
-      if (notification) await dismissNotification(notification.id);
+      if (notification) await markNotificationRead(notification.id);
+      if (notification) notificationViewedIds.add(String(notification.id));
       $('#notificationGate').classList.add('hidden');
       await dismissViewedNotifications();
       if (notification?.memory_id) {
@@ -6328,12 +6497,13 @@ document.addEventListener('click', async e => {
   }
   if (e.target.closest('#notificationsSave')) {
     try {
-      await api('/me', {
+      const saved = await api('/me', {
         method: 'PUT',
         body: JSON.stringify({
-          notificationPreferences: { memories: $('#notifyMemories').checked, buddy: $('#notifyBuddy').checked }
+          notificationPreferences: { memories: $('#notifyMemories').checked }
         })
       });
+      if (me && saved?.notification_preferences) me.notification_preferences = saved.notification_preferences;
       toast('Notification settings saved ♡');
     } catch (err) {
       toast(err.message);
@@ -6738,4 +6908,19 @@ sharedAudioElement?.addEventListener('playing', () => {
   const activeId = playlist[playlistIndex]?.id;
   const button = [...document.querySelectorAll('[data-play-song]')].find(item => String(item.dataset.playSong) === String(activeId));
   button?.classList.remove('is-buffering', 'is-loading');
+});
+
+// Restore the original PR #115 global boing feedback for every enabled button.
+document.addEventListener('click', event => {
+  const button = event.target.closest?.('button, [role="button"]');
+  if (!button || button.closest('#nav, nav') || button.disabled) return;
+  playCuteSound('boing');
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  const gate = $('#notificationGate');
+  if (!gate || gate.classList.contains('hidden')) return;
+  gate.classList.add('hidden');
+  void dismissViewedNotifications();
 });
