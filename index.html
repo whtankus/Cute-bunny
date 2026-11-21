@@ -15,10 +15,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=notes-inline-edit-fast2-20261120">
-  <link rel="stylesheet" href="polish.css?v=global-boing-no-buddy-20261121">
+  <link rel="stylesheet" href="polish.css?v=streak-boing-20261121">
   <link rel="stylesheet" href="header-statusbar-blend.css?v=20261120-1">
   <link rel="stylesheet" href="button-interactions.css?v=nav-3d-depth-20261118">
-  <link rel="stylesheet" href="swipe-gestures.css?v=20261121-4">
+  <link rel="stylesheet" href="swipe-gestures.css?v=20261121-2">
 </head>
 <body class="is-restoring">
   <svg class="cb-icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -326,8 +326,8 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=full-preview-sync-boing-20261121-v1"></script>
-  <script src="swipe-gestures.js?v=20261121-4" defer></script>
+  <script src="app.js?v=streak-boing-20261121"></script>
+  <script src="swipe-gestures.js?v=20261121-2" defer></script>
   <script>
 (() => {
   let deferredInstallPrompt = null;
@@ -358,7 +358,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=191", {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=192", {
             scope: "./",
             updateViaCache: "none"
           });
