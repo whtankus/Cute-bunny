@@ -235,18 +235,26 @@ test('Notes history uses stable keyset pagination and restores old message heart
   await page.locator('#nav button[data-page="notes"]').click();
   await page.locator('.chat-message[data-memory="1089"]').waitFor({ state: 'visible' });
   assert.equal(await page.locator('.chat-message[data-memory="1000"]').count(), 0, 'older rows should begin outside the first page');
+  const initialMessageCount = await page.locator('#chatThread > .chat-message[data-memory]').count();
 
   await page.evaluate(() => {
     const state = window.__cuteBunnyTestState;
     state.tables.memories.push({ id: 1090, owner_id: state.friend.id, kind: 'note', text: 'A new realtime message', created_at: new Date(Date.now() + 1000).toISOString(), file_name: '', content_type: '', storage_path: '' });
     const thread = document.querySelector('#chatThread');
-    // The app deliberately arms history loading on upward wheel intent, then
-    // checks whether the history sentinel is near the top of this scroll root.
     thread.scrollTop = 0;
-    window.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+    // Dispatch from the actual scroll container so the window-level history
+    // listener receives the same bubbling event a real user gesture produces.
+    thread.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
   });
-  await page.waitForFunction(() => window.__cuteBunnyTestState.calls.some(call => String(call.url || call.query || '').includes('beforeId=')), { timeout: 10000 });
-  await page.waitForFunction(() => document.querySelectorAll('#chatThread > .chat-message[data-memory]').length >= 80, { timeout: 10000 });
+  await page.waitForFunction(
+    initialCount => document.querySelectorAll('#chatThread > .chat-message[data-memory]').length >= initialCount + 38,
+    initialMessageCount
+  );
+  await page.evaluate(() => {
+    const thread = document.querySelector('#chatThread');
+    thread.scrollTop = 0;
+    thread.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }));
+  });
   await page.locator('.chat-message[data-memory="1000"]').waitFor({ state: 'visible' });
   const oldMessage = page.locator('.chat-message[data-memory="1000"]');
   assert.match(await oldMessage.getAttribute('class'), /\bis-loved\b/, 'the historical message should render its saved heart state');
@@ -280,4 +288,101 @@ test('message text wraps naturally inside existing desktop and mobile bubble lim
     await page.context().close();
     contexts.delete(page.context());
   }
+});
+
+
+test('Notes activity sweep reacts only to friend Notes entry and exit broadcasts', async () => {
+  const page = await newTestPage({ authenticated: true });
+  await waitForSignedInApp(page);
+  await page.waitForFunction(() => window.__cuteBunnyTestState.presenceTracks.length > 0);
+  await page.locator('#nav button[data-page="notes"]').click();
+  await page.waitForFunction(() => window.__cuteBunnyTestState.presenceTracks.some(row => row.payload.active_page === 'notes'));
+
+  await page.evaluate(() => {
+    window.__cuteBunnyTestState.emitBroadcast('cute-bunny-notes-activity', 'notes_page_transition', {
+      user_id: 'friend-test', username: 'friend_test', transition: 'entered'
+    });
+  });
+  await page.locator('#cb-presence-sweep.is-active').waitFor({ state: 'attached' });
+  assert.equal(await page.locator('#cb-presence-sweep').evaluate(node => getComputedStyle(node).visibility), 'visible');
+
+  await page.waitForTimeout(2100);
+  await page.evaluate(() => {
+    window.__cuteBunnyTestState.emitBroadcast('cute-bunny-notes-activity', 'notes_page_transition', {
+      user_id: 'friend-test', username: 'friend_test', transition: 'left'
+    });
+  });
+  await page.locator('#cb-presence-sweep.is-active').waitFor({ state: 'attached' });
+
+  await page.waitForTimeout(2100);
+  await page.evaluate(() => {
+    window.__cuteBunnyTestState.emitBroadcast('cute-bunny-notes-activity', 'notes_page_transition', {
+      user_id: 'user-ankush-test', username: 'ankush_test', transition: 'entered'
+    });
+  });
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('#cb-presence-sweep.is-active').count(), 0, 'own activity must never animate');
+
+  await page.evaluate(() => {
+    window.__cuteBunnyTestState.emitBroadcast('cute-bunny-notes-activity', 'notes_page_transition', {
+      user_id: 'not-a-friend', username: 'stranger', transition: 'entered'
+    });
+  });
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('#cb-presence-sweep.is-active').count(), 0, 'non-friend activity must never animate');
+
+  await page.locator('#nav button[data-page="gallery"]').click();
+  await page.waitForFunction(() => window.__cuteBunnyTestState.broadcasts.some(row =>
+    row.topic === 'cute-bunny-notes-activity' &&
+    row.message.event === 'notes_page_transition' &&
+    row.message.payload.transition === 'left'
+  ));
+  const outgoing = await page.evaluate(() => window.__cuteBunnyTestState.broadcasts.find(row =>
+    row.topic === 'cute-bunny-notes-activity' && row.message.payload.transition === 'left'
+  ));
+  assert.equal(outgoing.message.payload.user_id, 'user-ankush-test');
+  assert.equal(outgoing.message.payload.from_page, 'notes');
+  assert.equal(outgoing.message.payload.to_page, 'gallery');
+});
+
+
+test('friend presence sweep covers online, offline, Notes entry, and Notes exit from both sides', async () => {
+  const page = await newTestPage({ authenticated: true });
+  await waitForSignedInApp(page);
+  await page.waitForFunction(() => window.__cuteBunnyTestState.presenceTracks.length > 0);
+
+  const setFriendPresence = async activePage => page.evaluate(activePage => {
+    const state = window.__cuteBunnyTestState;
+    state.presenceState = activePage ? {
+      'friend-test-session': [{
+        user_id: state.friend.id,
+        username: state.friend.username,
+        active_page: activePage
+      }]
+    } : {};
+    state.emitPresence('sync');
+  }, activePage);
+
+  // We come online while a friend is already online.
+  await setFriendPresence('home');
+  await page.locator('#cb-presence-sweep.is-active').waitFor({ state: 'attached' });
+  await page.waitForTimeout(2100);
+
+  // A friend going offline is also visible to an already-online client.
+  await setFriendPresence(null);
+  await page.locator('#cb-presence-sweep.is-active').waitFor({ state: 'attached' });
+  await page.waitForTimeout(2100);
+
+  // A friend returns and is already in Notes before we open Notes.
+  await setFriendPresence('notes');
+  await page.locator('#cb-presence-sweep.is-active').waitFor({ state: 'attached' });
+  await page.waitForTimeout(2100);
+  await page.locator('#nav button[data-page="notes"]').click();
+  await page.locator('#cb-presence-sweep.is-active').waitFor({ state: 'attached' });
+
+  // Their Notes exit must reach us while we remain in Notes.
+  await page.waitForTimeout(2100);
+  await setFriendPresence('gallery');
+  await page.locator('#cb-presence-sweep.is-active').waitFor({ state: 'attached' });
+  assert.equal(await page.locator('#cb-presence-sweep').evaluate(node => getComputedStyle(node).visibility), 'visible');
 });
