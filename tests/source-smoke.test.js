@@ -81,11 +81,14 @@ test('Virtual Buddy feature and its 3D module are fully removed', () => {
 });
 
 
-test('global boing stays quiet on streak navigation and thumbnail surfaces', () => {
+test('global boing plays on the streak button and artwork thumbnail', () => {
   const app = read('app.js');
-  assert.match(app, /\[data-open-streak\]/);
-  assert.match(app, /\[data-streak-garden-tab\]/);
-  assert.match(app, /\.happy-thing-art/);
-  assert.match(app, /\.feed-photo/);
-  assert.match(app, /playCuteSound\('boing'\)/);
+  assert.match(app, /class="tile-art streak-art streak-art-trigger" data-open-streak/);
+  assert.match(app, /class="primary streak-open-button" data-open-streak/);
+  const soundHandler = app.slice(app.lastIndexOf('// Preserve global boing feedback on actionable controls.'));
+  assert.match(soundHandler, /playCuteSound\('boing'\)/);
+  assert.doesNotMatch(soundHandler, /\[data-open-streak\]|\.streak-art-trigger/);
+  assert.match(soundHandler, /\[data-streak-garden-tab\]/);
+  assert.match(soundHandler, /\.happy-thing-art/);
+  assert.match(soundHandler, /#nav, nav/);
 });
