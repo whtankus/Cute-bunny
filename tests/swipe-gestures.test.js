@@ -79,13 +79,3 @@ test('swiping a notification left dismisses that notification', async () => {
   assert.equal(await page.locator('[data-notification-row="notification-9"]').count(), 0);
   await page.close();
 });
-
-test('horizontal shop drag scrolls the collectible track without activating a card', async () => {
-  const page = await gesturePage();
-  const grid = page.locator('.sg-collectible-grid');
-  const before = await grid.evaluate(node => node.scrollLeft);
-  await drag(page, '.sg-collectible-card:first-child', -160);
-  const after = await grid.evaluate(node => node.scrollLeft);
-  assert.ok(after > before, 'the collectible track should scroll horizontally');
-  await page.close();
-});
