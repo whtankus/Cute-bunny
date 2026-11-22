@@ -1049,118 +1049,85 @@ function writeStreakDailyQuests(dateKey, state) {
   try { localStorage.setItem(streakStorageKey('daily-quests:' + dateKey), JSON.stringify(state)); } catch {}
 }
 function getDailyQuestRotation(dateKey) {
-  // 20-day guided journey: three hand-picked quests per day, in a fixed order.
-  const journey = [
-    [
-      ['Cloud watcher','Share a photo of the clouds drifting above you.','photo','photo'],
-      ['A note to the sky','Write a little Notes message about the clouds you saw.','note','note','cloud'],
-      ['Leave three hearts','Send love to three different memories.','heart','hearts',null,3]
-    ],
-    [
-      ['Pocket-sized soundtrack','Share a song that feels like a peaceful morning.','song','song'],
-      ['Blue above','Share a photo of something blue in the sky or around you.','photo','photo'],
-      ['A color you love','Write a Notes message about your favourite color.','note','note','color']
-    ],
-    [
-      ['A tiny kindness','Leave hearts on three memories that make you smile.','heart','hearts',null,3],
-      ['Send a little kiss','Send a Notes message with a kiss or heart-kiss emoji.','kiss-note','kissNote'],
-      ['One good thing','Write one small thing that made today better.','note','note','today']
-    ],
-    [
-      ['Nature postcard','Share a photo of a tree, leaf, flower, or garden.','photo','photo'],
-      ['Your current soundtrack','Share a song you would play on a slow evening.','song','song'],
-      ['A warm hello','Like three memories shared by someone else.','heart','hearts',null,3]
-    ],
-    [
-      ['A memory in a frame','Share a photo of a place you want to remember.','photo','photo'],
-      ['A note of gratitude','Write a Notes message thanking someone or something.','note','note','thank'],
-      ['Visit your little garden','Check in today and let your streak flower.','login','login']
-    ],
-    [
-      ['Soundtrack for the stars','Share a song that belongs under a night sky.','song','song'],
-      ['A little daydream','Write a Notes message about somewhere you wish to visit.','note','note','wish'],
-      ['Spread the softest love','Send hearts to three different memories.','heart','hearts',null,3]
-    ],
-    [
-      ['Golden-hour moment','Share a photo with a warm, sunny, or golden feeling.','photo','photo'],
-      ['A sweet surprise','Send a Notes message with a kiss emoji.','kiss-note','kissNote'],
-      ['A tiny poem','Write two short lines in Notes about something beautiful.','note','note','beautiful']
-    ],
-    [
-      ['Find a little wonder','Share a photo of something small and lovely.','photo','photo'],
-      ['Music that feels like home','Share a song that makes you feel at home.','song','song'],
-      ['Three smiles sent','Like three memories that brighten your day.','heart','hearts',null,3]
-    ],
-    [
-      ['A note to future you','Write a Notes message to your future self.','note','note','future'],
-      ['Kindness in the garden','Send three hearts to memories from other people.','heart','hearts',null,3],
-      ['A kiss in the margins','Send a little kiss through Notes.','kiss-note','kissNote']
-    ],
-    [
-      ['The view outside','Share a photo of the view from where you are.','photo','photo'],
-      ['A song for the journey','Share a song you would take on a long trip.','song','song'],
-      ['Today in three words','Write a Notes message describing today in three words.','note','note','today']
-    ],
-    [
-      ['Cloud shapes','Share a photo of clouds that look like something.','photo','photo'],
-      ['Three little appreciations','Leave hearts on three memories you appreciate.','heart','hearts',null,3],
-      ['A moment worth keeping','Write a Notes message about a moment you want to remember.','note','note','remember']
-    ],
-    [
-      ['A melody to share','Share a song that matches your mood right now.','song','song'],
-      ['A little love note','Send a Notes message with a kiss or affectionate emoji.','kiss-note','kissNote'],
-      ['A new perspective','Write one thing you noticed today that you usually overlook.','note','note','noticed']
-    ],
-    [
-      ['Nature, up close','Share a photo of a leaf, petal, raindrop, or tiny detail.','photo','photo'],
-      ['Three bright spots','Like three memories that deserve a little love.','heart','hearts',null,3],
-      ['A hopeful thought','Write a Notes message about something you are looking forward to.','note','note','forward']
-    ],
-    [
-      ['A song for the moon','Share a calm song for a quiet night.','song','song'],
-      ['A little piece of color','Share a photo with your favourite color in it.','photo','photo'],
-      ['Send kindness around','Leave hearts on three different memories.','heart','hearts',null,3]
-    ],
-    [
-      ['A photo with a story','Share a photo that has a small story behind it.','photo','photo'],
-      ['A note of encouragement','Write a Notes message to encourage someone.','note','note','encourage'],
-      ['A kiss for the day','Send a sweet kiss in Notes.','kiss-note','kissNote']
-    ],
-    [
-      ['A sound you love','Share a song whose sound you never get tired of.','song','song'],
-      ['A small victory','Write a Notes message about one thing you did well.','note','note','did'],
-      ['Three hearts of joy','Like three memories that make you happy.','heart','hearts',null,3]
-    ],
-    [
-      ['A quiet corner','Share a photo of a peaceful corner or cosy spot.','photo','photo'],
-      ['A thought worth sharing','Write a Notes message about an idea on your mind.','note','note','idea'],
-      ['Back to the garden','Check in and give your streak a little care.','login','login']
-    ],
-    [
-      ['A song to remember','Share a song connected to a special memory.','song','song'],
-      ['A little affection','Send a kiss or heart-kiss through Notes.','kiss-note','kissNote'],
-      ['Three thoughtful hearts','Leave hearts on three memories from others.','heart','hearts',null,3]
-    ],
-    [
-      ['A sky worth saving','Share a photo of the sky at any time of day.','photo','photo'],
-      ['A note about wonder','Write a Notes message about something that still amazes you.','note','note','wonder'],
-      ['Share the love','Like three different memories in the garden.','heart','hearts',null,3]
-    ],
-    [
-      ['The final soundtrack','Share one song that sums up these 20 days.','song','song'],
-      ['A postcard to yourself','Share a photo of something you want to carry into tomorrow.','photo','photo'],
-      ['Your 20-day reflection','Write a Notes message about your favourite moment from this journey.','note','note','favourite']
-    ]
+  // A shared 20-day journey: one fresh chat quest, one photo quest,
+  // and one community quest each day. Each category has 20 unique entries.
+  const chatQuests = [
+    ['Warm hello','Send a message that includes “hello”.','note','note','hello'],
+    ['A happy thought','Share a message with the word “happy”.','note','note','happy'],
+    ['A little thank-you','Send someone a thank-you message.','note','note','thank'],
+    ['Dream big','Tell someone about a dream or wish.','note','note','dream'],
+    ['Something beautiful','Share a thought using the word “beautiful”.','note','note','beautiful'],
+    ['Morning sunshine','Send a good-morning message.','note','note','morning'],
+    ['Moonlight wishes','Send a good-night message.','note','note','night'],
+    ['Kind words','Send a message with the word “kind”.','note','note','kind'],
+    ['Tiny victory','Share a little win from your day.','note','note','win'],
+    ['A note of appreciation','Tell someone what you appreciate.','note','note','appreciate'],
+    ['Favourite melody','Talk about a song you love.','note','note','song'],
+    ['A memory to keep','Share a message about a favourite memory.','note','note','remember'],
+    ['You can do it','Send someone an encouraging message.','note','note','proud'],
+    ['A heart in words','Send a message with a heart symbol.','note','note','♡'],
+    ['A hopeful note','Share something you are hopeful about.','note','note','hope'],
+    ['How was your day?','Ask someone how their day is going.','note','note','day'],
+    ['Pass on a smile','Send a message with the word “smile”.','note','note','smile'],
+    ['A little love','Send a message that includes “love”.','note','note','love'],
+    ['Three little messages','Send three chat messages today.','note','note',null,3],
+    ['Keep the conversation going','Send five chat messages today.','note','note',null,5]
   ];
-  // Every account follows the same campaign anchor; never store this per device.
-  // Day 1 began on 2026-11-21, so all accounts see the same quest set for a date.
+  const photoQuests = [
+    ['Sky postcard','Share a photo of the sky.','photo','photo'],
+    ['A favourite colour','Share a photo featuring your favourite colour.','photo','photo'],
+    ['Little piece of nature','Share a photo of something from nature.','photo','photo'],
+    ['Cosy corner','Share a photo of a cosy place or corner.','photo','photo'],
+    ['A tasty moment','Share a photo of something you enjoyed eating.','photo','photo'],
+    ['Tiny details','Share a close-up photo of an interesting detail.','photo','photo'],
+    ['Flower of the day','Share a photo of a flower or plant.','photo','photo'],
+    ['Golden hour','Share a photo in warm evening light.','photo','photo'],
+    ['A view worth keeping','Share a photo of a view you love.','photo','photo'],
+    ['Something handmade','Share a photo of something you made.','photo','photo'],
+    ['A bookish moment','Share a photo of a book, page, or reading spot.','photo','photo'],
+    ['Everyday beauty','Share a photo of something ordinary but lovely.','photo','photo'],
+    ['Pet or animal friend','Share a photo of an animal.','photo','photo'],
+    ['A little celebration','Share a photo of something that made you smile.','photo','photo'],
+    ['Rainy-day mood','Share a photo that captures a rainy-day feeling.','photo','photo'],
+    ['Your creative side','Share a photo of your art or creative work.','photo','photo'],
+    ['A special keepsake','Share a photo of an object you treasure.','photo','photo'],
+    ['Two tiny moments','Share two photos from your day.','photo','photo',null,2],
+    ['A mini photo story','Share two photos that tell a little story.','photo','photo',null,2],
+    ['Photo diary','Share three photos that capture your day.','photo','photo',null,3]
+  ];
+  const communityQuests = [
+    ['Three hearts of kindness','Leave hearts on three different memories.','heart','hearts',null,3],
+    ['A song to share','Share a song with your friends.','song','song'],
+    ['Garden hello','Visit your little garden today.','login','login'],
+    ['Five kind reactions','Leave hearts on five different memories.','heart','hearts',null,5],
+    ['A soundtrack for today','Share a song that matches your mood.','song','song'],
+    ['A little appreciation','Leave hearts on three memories from others.','heart','hearts',null,3],
+    ['Music for the moment','Share another song you enjoy.','song','song'],
+    ['A friendly visit','Check in and keep your streak growing.','login','login'],
+    ['Spread the sunshine','Like five memories that brighten your day.','heart','hearts',null,5],
+    ['A peaceful melody','Share a calm song.','song','song'],
+    ['Three thoughtful hearts','Send hearts to three different memories.','heart','hearts',null,3],
+    ['Back to the garden','Visit your garden and care for your streak.','login','login'],
+    ['Celebrate a creator','Leave hearts on five memories.','heart','hearts',null,5],
+    ['Share your soundtrack','Share a song you would recommend.','song','song'],
+    ['A little wave','Check in to your garden today.','login','login'],
+    ['Kindness all around','Like three memories from other people.','heart','hearts',null,3],
+    ['One more melody','Share a song that makes you smile.','song','song'],
+    ['Garden regular','Keep your daily streak alive.','login','login'],
+    ['Five bright hearts','Leave hearts on five lovely memories.','heart','hearts',null,5],
+    ['Music for everyone','Share one final song for today.','song','song']
+  ];
+
+  // Day 1 began on 2026-11-21. Every account sees the same set on each date.
   const campaignStart = '2026-11-21';
   const startDate = new Date(campaignStart + 'T00:00:00Z');
   const currentDate = new Date(dateKey + 'T00:00:00Z');
   const elapsedDays = Number.isFinite(startDate.getTime()) && Number.isFinite(currentDate.getTime())
     ? Math.max(0, Math.floor((currentDate - startDate) / 86400000)) : 0;
-  const dayIndex = elapsedDays % journey.length;
-  return journey[dayIndex].map((entry, slot) => {
+  const dayIndex = elapsedDays % 20;
+  const entries = [chatQuests[dayIndex], photoQuests[dayIndex], communityQuests[dayIndex]];
+
+  return entries.map((entry, slot) => {
     const [title, description, kind, art, match, target = 1] = entry;
     const id = 'day-' + (dayIndex + 1) + '-quest-' + (slot + 1);
     const progress = state => {
@@ -2482,7 +2449,7 @@ function renderStreakPage() {
       '<section class="sg-milestones-section sg-hearts-section"><div class="sg-section-heading"><div><h3>Your Hearts</h3><p>' + heartCount + ' hearts received · ' + heartMilestones.filter(item => heartCount >= item.hearts).length + ' of ' + heartMilestones.length + ' milestones unlocked</p></div></div>' +
       '<div class="sg-milestone-route">' + heartBadges + '</div></section></section>',
     '<section class="sg-tab-panel' + (streakGardenActiveTab === 'daily' ? ' is-active' : '') + '" id="sgDailyPanel" role="tabpanel"' + (streakGardenActiveTab === 'daily' ? '' : ' hidden') + '>' +
-      '<section class="sg-daily-quests-section"><div class="sg-section-heading"><div><h3>Daily Quest</h3><p>20-day garden adventure · Day ' + (Math.floor(Math.max(0,(new Date(todayKey + 'T00:00:00Z') - new Date((localStorage.getItem(streakStorageKey('daily-quest-campaign-start')) || todayKey) + 'T00:00:00Z')) / 86400000) % 20) + 1) + ' of 20 · 60 little challenges</p></div><span class="sg-goal-count">' + completedQuests + ' / 3</span></div>' +
+      '<section class="sg-daily-quests-section"><div class="sg-section-heading"><div><h3>Daily Quest</h3><p>20-day garden adventure · Day ' + (Math.floor(Math.max(0,(new Date(todayKey + 'T00:00:00Z') - new Date('2026-11-21T00:00:00Z')) / 86400000) % 20) + 1) + ' of 20 · 20 chat + 20 photo quests</p></div><span class="sg-goal-count">' + completedQuests + ' / 3</span></div>' +
       dailyQuestMarkup + petalRewardsMarkup + weeklyMarkup + collectibleMarkup + '</section></section>',
     '</div>',
     '</div>',
