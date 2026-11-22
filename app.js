@@ -2015,6 +2015,8 @@ async function claimKindnessEventReward() {
 function renderKindnessEventMarkup() {
   const status = kindnessEventStatusUserId === String(me?.id || '') ? kindnessEventStatus : null;
   const state = status?.state || 'loading';
+  // Once the reward is collected, remove the entire Kindness Hour card.
+  if (state === 'claimed') return '';
   const count = Math.max(0, Number(status?.bubble_count) || 0);
   const isClaimable = state === 'claimable' && count > 0;
   const isActive = state === 'active';
