@@ -2052,27 +2052,34 @@ function renderKindnessEventMarkup() {
   const isClaimable = state === 'claimable' && count > 0;
   const isActive = state === 'active';
   const isClaimed = state === 'claimed';
+  const viewerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  let startTime = '9:00 PM';
+  try {
+    if (status?.starts_at) {
+      startTime = new Intl.DateTimeFormat(undefined, {
+        timeZone: viewerTimezone, hour: 'numeric', minute: '2-digit', hour12: true
+      }).format(new Date(status.starts_at));
+    }
+  } catch {}
   const action = isClaimable
-    ? '<button type="button" class="sg-kindness-claim" data-claim-kindness-event' + (kindnessClaimInFlight ? ' disabled' : '') + '>Claim +' + count + ' ♡</button>'
+    ? '<button type="button" class="sg-kindness-claim" data-claim-kindness-event' + (kindnessClaimInFlight ? ' disabled' : '') + '>Collect +' + count + ' ♡</button>'
     : isClaimed
-      ? '<span class="sg-kindness-claimed">Claimed ✓</span>'
-      : '<span class="sg-kindness-state">' + (isActive ? 'Collecting…' : state === 'waiting' ? 'No bubbles earned' : 'Opens at 9 PM IST') + '</span>';
+      ? '<span class="sg-kindness-claimed">Collected ✓</span>'
+      : '<span class="sg-kindness-state">' + (isActive ? 'Collecting petals…' : state === 'waiting' ? 'No petals this time' : 'A little moment is on its way') + '</span>';
   const detail = isActive
-    ? count + ' chat bubbles counted · ' + count + ' Petal Points pending'
+    ? count + ' petals growing from your chats'
     : isClaimable
-      ? count + ' Petal Points are ready to collect'
+      ? count + ' Petal Points are ready for you'
       : isClaimed
         ? count + ' Petal Points added to your garden'
         : state === 'waiting'
-          ? 'Your next kindness hour opens at 9 PM'
-          : 'Every sent or received chat bubble earns 1 Petal Point';
-  const timezone = status?.timezone || me?.streak_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local time';
-  let localClock = 'Your local time';
-  try { localClock = new Intl.DateTimeFormat(undefined, { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' }).format(new Date()); } catch {}
+          ? 'Every bubble sent or received earns 1 Petal Point.'
+          : 'Every bubble sent or received earns 1 Petal Point.';
   return '<section class="sg-kindness-event" aria-label="A Little Kindness for Today">' +
-    '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div><h3>A Little Kindness</h3><p>Your daily one-hour chat event</p></div><span class="sg-kindness-time">9–10 PM local</span></div>' +
-    '<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><b>Share a little love, earn Petal Points.</b><p>Every chat bubble you send or receive during your local kindness hour earns 1 Petal Point.</p><small>' + detail + '</small></div>' + action + '</div>' +
-    '<div class="sg-kindness-event-foot"><span>Your local time: ' + esc(localClock) + '</span> · <span>' + esc(timezone) + '</span> · Claim after 10 PM</div></section>';
+    '<div class="sg-kindness-event-sparkle sg-kindness-sparkle-one" aria-hidden="true">✦</div>' +
+    '<div class="sg-kindness-event-sparkle sg-kindness-sparkle-two" aria-hidden="true">✧</div>' +
+    '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div class="sg-kindness-title-wrap"><span class="sg-kindness-eyebrow">A LITTLE KINDNESS FOR TODAY</span><h3>Kindness Hour</h3></div><div class="sg-kindness-start"><span>STARTS AT</span><b>' + esc(startTime) + '</b></div></div>' +
+    '<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><p>Send a little love, receive a little joy. Every chat bubble you send or receive earns <strong>1 Petal Point</strong>.</p><small>' + esc(detail) + '</small></div>' + action + '</div></section>';
 }
 
 function renderStreakPage() {
