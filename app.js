@@ -2021,8 +2021,8 @@ function renderKindnessEventMarkup() {
   const isActive = state === 'active';
   const isClaimed = state === 'claimed';
   const viewerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  let startTime = '10:00 PM';
-  let endTime = '11:00 PM';
+  let startTime = '11:00 PM';
+  let endTime = '12:00 AM';
   try {
     if (status?.starts_at) {
       const startDate = new Date(status.starts_at);
