@@ -48,14 +48,28 @@ jobs:
           import json, os, pathlib
           url = os.environ.get('SUPABASE_URL', '').strip()
           key = os.environ.get('SUPABASE_PUBLISHABLE_KEY', '').strip()
-          if not url or not key:
-              raise SystemExit('Add SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in repository Actions secrets.')
-          config = 'window.CUTE_BUNNY_CONFIG = ' + json.dumps({'supabaseUrl': url, 'supabaseAnonKey': key}) + ';\\n'
-          pathlib.Path('_site/supabase-config.js').write_text(config, encoding='utf-8')
+          if not url.startswith('https://') or not key:
+              raise SystemExit('Supabase deployment configuration is missing or invalid. Check the repository Actions secrets.')
+          config_object = {'supabaseUrl': url, 'supabaseAnonKey': key}
+          config = 'window.CUTE_BUNNY_CONFIG = ' + json.dumps(config_object) + ';' + chr(10)
+          config_path = pathlib.Path('_site/supabase-config.js')
+          config_path.write_text(config, encoding='utf-8')
+
+          # Embed the same config before app.js as a reliable fallback to the
+          # external config file. This avoids a missing/stale static config script.
+          index_path = pathlib.Path('_site/index.html')
+          html = index_path.read_text(encoding='utf-8')
+          marker = '<script src="supabase-config.js"></script>'
+          if html.count(marker) != 1:
+              raise SystemExit('Expected exactly one Supabase config script marker in index.html.')
+          inline = '<script>window.CUTE_BUNNY_CONFIG = ' + json.dumps(config_object) + ';</script>'
+          index_path.write_text(html.replace(marker, inline), encoding='utf-8')
           pathlib.Path('_site/.nojekyll').touch()
           PY
-      # Each workflow attempt gets its own artifact name. This prevents deploy-pages
-      # from finding duplicate github-pages artifacts after a failed-run retry.
+          node --check _site/supabase-config.js
+          grep -q 'window.CUTE_BUNNY_CONFIG' _site/index.html
+      # Each workflow attempt gets its own artifact name to avoid duplicate
+      # Pages artifacts when a failed deployment is retried.
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
