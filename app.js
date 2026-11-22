@@ -624,7 +624,7 @@ function setUser(u) {
   // Hydrate the cloud collection before any shop action can read or write it.
   gardenCollectionHydratedUserId = String(u.id);
   gardenCollectionReadyUserId = '';
-  gardenCollectionHydration = hydrateGardenCollectionFromCloud().then(() => {
+  gardenCollectionHydration = hydrateGardenCollectionFromCloud().then(async () => {
     if (String(me?.id || '') !== String(u.id)) return;
     // Recover rewards earned offline/on another device after cloud balance loads.
     const pendingPetalRewards = readPetalRewards();
