@@ -14719,20 +14719,29 @@ body[data-mode="dark"].notes-page-active.notes-header-hidden .app > header {
 /* Header activity uses the existing centred refresh indicator in polish.css. */
 
 
-/* A Little Kindness for Today — global IST chat-bubble event */
-.sg-kindness-event{margin:0 0 18px;padding:16px;border:1px solid color-mix(in srgb,var(--cb-accent,#d98eaa) 24%,transparent);border-radius:20px;background:linear-gradient(135deg,color-mix(in srgb,#f8dce8 46%,var(--cb-card,#fff)),color-mix(in srgb,#eee4fa 34%,var(--cb-card,#fff)));box-shadow:0 8px 24px rgba(176,113,145,.08)}
-.sg-kindness-event-heading{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.sg-kindness-heart{display:grid;place-items:center;width:38px;height:38px;flex:0 0 38px;border-radius:13px;background:rgba(255,255,255,.72);color:#c96f98;font-size:25px}
-.sg-kindness-event-heading h3{margin:0;color:var(--cb-text);font-size:1rem;font-weight:800}
-.sg-kindness-event-heading p{margin:3px 0 0;color:var(--cb-muted);font-size:.76rem}
-.sg-kindness-time{margin-left:auto;padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.72);color:#a9577c;font-size:.7rem;font-weight:800;white-space:nowrap}
-.sg-kindness-event-body{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px;border-radius:15px;background:rgba(255,255,255,.58)}
+/* A Little Kindness for Today — soft, storybook-style home card */
+.sg-kindness-event{position:relative;isolation:isolate;overflow:hidden;margin:0 0 18px;padding:17px 18px 16px;border:1px solid rgba(222,164,190,.42);border-radius:23px;background:linear-gradient(118deg,#fff2f7 0%,#fff8f2 48%,#f4efff 100%);box-shadow:0 7px 22px rgba(185,126,157,.09)}
+.sg-kindness-event:before{content:"";position:absolute;z-index:-1;width:170px;height:170px;right:-55px;top:-92px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.92),rgba(255,255,255,0) 70%)}
+.sg-kindness-event:after{content:"";position:absolute;z-index:-1;width:130px;height:130px;left:-65px;bottom:-95px;border-radius:50%;background:rgba(255,255,255,.38);filter:blur(2px)}
+.sg-kindness-event-heading{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.sg-kindness-heart{display:grid;place-items:center;width:43px;height:43px;flex:0 0 43px;border:1px solid rgba(226,174,196,.36);border-radius:16px;background:rgba(255,255,255,.78);color:#d47da2;font-size:27px;box-shadow:0 4px 11px rgba(203,137,166,.1)}
+.sg-kindness-title-wrap{min-width:0}
+.sg-kindness-eyebrow{display:block;margin-bottom:3px;color:#bd819b;font-size:.59rem;font-weight:850;letter-spacing:.12em}
+.sg-kindness-event-heading h3{margin:0;color:#754b63;font-size:1.03rem;font-weight:850;letter-spacing:-.025em}
+.sg-kindness-start{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:auto;padding:7px 11px;border:1px solid rgba(225,174,197,.42);border-radius:14px;background:rgba(255,255,255,.74);white-space:nowrap}
+.sg-kindness-start span{color:#bd819b;font-size:.55rem;font-weight:850;letter-spacing:.1em}
+.sg-kindness-start b{color:#a85f82;font-size:.92rem;font-weight:850}
+.sg-kindness-event-body{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 13px;border:1px solid rgba(255,255,255,.8);border-radius:17px;background:rgba(255,255,255,.62)}
 .sg-kindness-copy{min-width:0}
-.sg-kindness-copy>b{display:block;color:var(--cb-text);font-size:.9rem}
-.sg-kindness-copy p{margin:5px 0;color:var(--cb-muted);font-size:.78rem;line-height:1.45}
-.sg-kindness-copy small{display:block;color:#ad6484;font-size:.72rem;font-weight:700}
-.sg-kindness-claim{flex:0 0 auto;border:0;border-radius:999px;padding:10px 15px;background:#d982a5;color:white;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(191,103,145,.2)}
-.sg-kindness-claim:disabled{opacity:.55;cursor:wait}
-.sg-kindness-claimed,.sg-kindness-state{flex:0 0 auto;color:#a9577c;font-size:.76rem;font-weight:800}
-.sg-kindness-event-foot{margin:10px 2px 0;color:var(--cb-muted);font-size:.68rem}
-@media(max-width:520px){.sg-kindness-event{padding:13px}.sg-kindness-event-heading{gap:8px}.sg-kindness-time{font-size:.64rem;padding:5px 7px}.sg-kindness-event-body{align-items:flex-start;gap:8px;padding:11px}.sg-kindness-claim{padding:9px 11px;font-size:.73rem}}
+.sg-kindness-copy p{margin:0;color:#856779;font-size:.78rem;line-height:1.48}
+.sg-kindness-copy strong{color:#a65f82;font-weight:850}
+.sg-kindness-copy small{display:block;margin-top:6px;color:#b17c96;font-size:.7rem;font-weight:750}
+.sg-kindness-claim{flex:0 0 auto;border:0;border-radius:999px;padding:10px 14px;background:linear-gradient(135deg,#e99ab9,#c58bd4);color:#fff;font:inherit;font-size:.76rem;font-weight:850;cursor:pointer;box-shadow:0 4px 12px rgba(193,124,165,.22);transition:transform .18s ease,filter .18s ease}
+.sg-kindness-claim:hover{transform:translateY(-1px);filter:brightness(1.03)}
+.sg-kindness-claim:disabled{opacity:.55;cursor:wait;transform:none}
+.sg-kindness-claimed,.sg-kindness-state{flex:0 0 auto;color:#ad7791;font-size:.72rem;font-weight:800}
+.sg-kindness-event-sparkle{position:absolute;z-index:0;color:rgba(202,143,174,.48);pointer-events:none}
+.sg-kindness-sparkle-one{top:13px;right:17px;font-size:13px}
+.sg-kindness-sparkle-two{bottom:15px;left:16px;font-size:11px}
+@media(max-width:520px){.sg-kindness-event{padding:14px;border-radius:20px}.sg-kindness-event-heading{gap:9px;margin-bottom:11px}.sg-kindness-heart{width:39px;height:39px;flex-basis:39px;border-radius:14px;font-size:24px}.sg-kindness-eyebrow{font-size:.53rem}.sg-kindness-event-heading h3{font-size:.96rem}.sg-kindness-start{padding:6px 9px;border-radius:12px}.sg-kindness-start span{font-size:.5rem}.sg-kindness-start b{font-size:.82rem}.sg-kindness-event-body{align-items:flex-start;gap:9px;padding:11px}.sg-kindness-copy p{font-size:.74rem}.sg-kindness-copy small{font-size:.66rem}.sg-kindness-claim{padding:9px 11px;font-size:.7rem}.sg-kindness-state,.sg-kindness-claimed{font-size:.66rem}}
+@media(prefers-reduced-motion:reduce){.sg-kindness-claim{transition:none}}
