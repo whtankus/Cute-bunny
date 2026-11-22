@@ -5085,6 +5085,7 @@ function isPresenceUserOnline(userOrId, state) {
 const presenceSweepRecentEvents = new Map();
 const presenceSweepQueue = [];
 let presenceSweepRunning = false;
+let pendingPresenceSweepWhileHidden = false;
 
 function triggerFriendPresenceSweep(friendKey, transition) {
   const transitionName = String(transition || 'activity');
@@ -5103,8 +5104,29 @@ function triggerFriendPresenceSweep(friendKey, transition) {
   }
   lastPresenceSweepKey = key;
   lastPresenceSweepAt = now;
+  // Background tabs can throttle or finish CSS animations before the user
+  // sees them. Remember the activity and replay one sweep on return.
+  if (document.hidden) {
+    pendingPresenceSweepWhileHidden = true;
+    return;
+  }
+  pendingPresenceSweepWhileHidden = false;
   triggerHeaderActivitySweep();
 }
+
+function flushPendingPresenceSweep() {
+  if (document.hidden || !pendingPresenceSweepWhileHidden) return;
+  pendingPresenceSweepWhileHidden = false;
+  triggerHeaderActivitySweep();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  // Reconcile the authoritative snapshot first; a missed join/leave is caught
+  // here, then any activity already observed while hidden is replayed once.
+  syncPresenceUI('visibility-resume');
+  flushPendingPresenceSweep();
+});
 
 function triggerHeaderActivitySweep() {
   if (!document.body) return;
