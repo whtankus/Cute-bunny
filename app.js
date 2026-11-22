@@ -2022,33 +2022,37 @@ function renderKindnessEventMarkup() {
   const isActive = state === 'active';
   const isClaimed = state === 'claimed';
   const viewerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  let startTime = '9:00 PM';
+  let startTime = '10:00 PM';
+  let endTime = '11:00 PM';
   try {
     if (status?.starts_at) {
-      startTime = new Intl.DateTimeFormat(undefined, {
+      const startDate = new Date(status.starts_at);
+      const formatTime = date => new Intl.DateTimeFormat(undefined, {
         timeZone: viewerTimezone, hour: 'numeric', minute: '2-digit', hour12: true
-      }).format(new Date(status.starts_at));
+      }).format(date);
+      startTime = formatTime(startDate);
+      endTime = formatTime(new Date(startDate.getTime() + 60 * 60 * 1000));
     }
   } catch {}
+  const phaseLabel = isActive ? 'LIVE NOW' : isClaimable ? 'READY TO COLLECT' : state === 'waiting' ? 'NEXT SESSION' : 'TONIGHT';
   const action = isClaimable
-    ? '<button type="button" class="sg-kindness-claim" data-claim-kindness-event' + (kindnessClaimInFlight ? ' disabled' : '') + '>Collect +' + count + ' ♡</button>'
+    ? '<button type="button" class="sg-kindness-claim" data-claim-kindness-event' + (kindnessClaimInFlight ? ' disabled' : '') + '>Collect +' + count + ' <span aria-hidden="true">♡</span></button>'
     : isClaimed
       ? '<span class="sg-kindness-claimed">Collected ✓</span>'
       : '<span class="sg-kindness-state">' + (isActive ? 'Collecting petals…' : state === 'waiting' ? 'No petals this time' : 'A little moment is on its way') + '</span>';
   const detail = isActive
-    ? count + ' petals growing from your chats'
+    ? count + ' petals collected so far'
     : isClaimable
-      ? count + ' Petal Points are ready for you'
-      : isClaimed
-        ? count + ' Petal Points added to your garden'
-        : state === 'waiting'
-          ? 'Every bubble sent or received earns 1 Petal Point.'
-          : 'Every bubble sent or received earns 1 Petal Point.';
+      ? count + ' Petal Points are ready for your garden'
+      : state === 'waiting'
+        ? 'Your next chance to collect begins at ' + startTime + '.'
+        : 'Every chat bubble sent or received during the hour earns 1 Petal Point.';
   return '<section class="sg-kindness-event" aria-label="A Little Kindness for Today">' +
     '<div class="sg-kindness-event-sparkle sg-kindness-sparkle-one" aria-hidden="true">✦</div>' +
     '<div class="sg-kindness-event-sparkle sg-kindness-sparkle-two" aria-hidden="true">✧</div>' +
-    '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div class="sg-kindness-title-wrap"><span class="sg-kindness-eyebrow">A LITTLE KINDNESS FOR TODAY</span><h3>Kindness Hour</h3></div><div class="sg-kindness-start"><span>STARTS AT</span><b>' + esc(startTime) + '</b></div></div>' +
-    '<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><p>Send a little love, receive a little joy. Every chat bubble you send or receive earns <strong>1 Petal Point</strong>.</p><small>' + esc(detail) + '</small></div>' + action + '</div></section>';
+    '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div class="sg-kindness-title-wrap"><span class="sg-kindness-eyebrow">A LITTLE KINDNESS FOR TODAY</span><h3>Kindness Hour</h3><span class="sg-kindness-subtitle">A little love goes a long way</span></div><span class="sg-kindness-phase' + (isActive ? ' is-live' : isClaimable ? ' is-ready' : '') + '">' + phaseLabel + '</span></div>' +
+    '<div class="sg-kindness-timebar"><span class="sg-kindness-clock" aria-hidden="true">◷</span><span class="sg-kindness-time-label">EVERY NIGHT</span><strong>' + esc(startTime) + ' – ' + esc(endTime) + '</strong><span class="sg-kindness-timezone">YOUR LOCAL TIME</span></div>' +
+    '<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><p>Send a little love, receive a little joy. Every chat bubble you send or receive earns <strong>1 Petal Point</strong>.</p><small>' + esc(detail) + '</small></div><div class="sg-kindness-reward"><span class="sg-kindness-petal-count">' + count + '</span><span class="sg-kindness-petal-label">PETALS</span>' + action + '</div></div></section>';
 }
 
 function renderStreakPage() {
