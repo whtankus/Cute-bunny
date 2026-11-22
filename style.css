@@ -14717,3 +14717,22 @@ body[data-mode="dark"].notes-page-active.notes-header-hidden .app > header {
 
 
 /* Header activity uses the existing centred refresh indicator in polish.css. */
+
+
+/* A Little Kindness for Today — global IST chat-bubble event */
+.sg-kindness-event{margin:0 0 18px;padding:16px;border:1px solid color-mix(in srgb,var(--cb-accent,#d98eaa) 24%,transparent);border-radius:20px;background:linear-gradient(135deg,color-mix(in srgb,#f8dce8 46%,var(--cb-card,#fff)),color-mix(in srgb,#eee4fa 34%,var(--cb-card,#fff)));box-shadow:0 8px 24px rgba(176,113,145,.08)}
+.sg-kindness-event-heading{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sg-kindness-heart{display:grid;place-items:center;width:38px;height:38px;flex:0 0 38px;border-radius:13px;background:rgba(255,255,255,.72);color:#c96f98;font-size:25px}
+.sg-kindness-event-heading h3{margin:0;color:var(--cb-text);font-size:1rem;font-weight:800}
+.sg-kindness-event-heading p{margin:3px 0 0;color:var(--cb-muted);font-size:.76rem}
+.sg-kindness-time{margin-left:auto;padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.72);color:#a9577c;font-size:.7rem;font-weight:800;white-space:nowrap}
+.sg-kindness-event-body{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px;border-radius:15px;background:rgba(255,255,255,.58)}
+.sg-kindness-copy{min-width:0}
+.sg-kindness-copy>b{display:block;color:var(--cb-text);font-size:.9rem}
+.sg-kindness-copy p{margin:5px 0;color:var(--cb-muted);font-size:.78rem;line-height:1.45}
+.sg-kindness-copy small{display:block;color:#ad6484;font-size:.72rem;font-weight:700}
+.sg-kindness-claim{flex:0 0 auto;border:0;border-radius:999px;padding:10px 15px;background:#d982a5;color:white;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(191,103,145,.2)}
+.sg-kindness-claim:disabled{opacity:.55;cursor:wait}
+.sg-kindness-claimed,.sg-kindness-state{flex:0 0 auto;color:#a9577c;font-size:.76rem;font-weight:800}
+.sg-kindness-event-foot{margin:10px 2px 0;color:var(--cb-muted);font-size:.68rem}
+@media(max-width:520px){.sg-kindness-event{padding:13px}.sg-kindness-event-heading{gap:8px}.sg-kindness-time{font-size:.64rem;padding:5px 7px}.sg-kindness-event-body{align-items:flex-start;gap:8px;padding:11px}.sg-kindness-claim{padding:9px 11px;font-size:.73rem}}
