@@ -4722,12 +4722,22 @@ function startRealtime() {
     presenceHeartbeatTimer = setInterval(() => {
       if (!me || !presenceChannel || document.hidden) return;
       if (presenceStatus === 'ready') {
-        if (Date.now() - presenceLastSuccessfulTrackAt >= PRESENCE_HEARTBEAT_MS) {
+        const trackAge = Date.now() - presenceLastSuccessfulTrackAt;
+        if (!presenceLastSuccessfulTrackAt || trackAge > PRESENCE_HEARTBEAT_MS * 2.5) {
+          // SUBSCRIBED can remain stale while the underlying socket is half-open.
+          // Force the normal backoff reconnect instead of displaying stale state.
+          presenceStatus = 'error';
+          syncPresenceUI();
+          schedulePresenceReconnect('heartbeat-stale-track');
+        } else if (trackAge >= PRESENCE_HEARTBEAT_MS) {
           void updateMyPresencePage();
         }
       } else if (presenceStatus === 'error' || presenceStatus === 'closed') {
         schedulePresenceReconnect('heartbeat');
       }
+      // Keep last-active fallback current even when the user is reading without
+      // pointer or keyboard input; writes remain throttled inside touchLastActive.
+      void touchLastActive();
     }, PRESENCE_HEARTBEAT_MS);
 
     profileChannel = sb.channel('cute-bunny-profiles-' + me.id)
@@ -5190,7 +5200,20 @@ async function updateMyPresencePage() {
       typing_at: Date.now()
     };
 
-    await channel.track(payload);
+    // A stalled Realtime transport must not block every later page update.
+    // Bound each track attempt so the heartbeat can recover a half-open socket.
+    let trackTimeout;
+    try {
+      await Promise.race([
+        channel.track(payload),
+        new Promise((_, reject) => {
+          trackTimeout = setTimeout(() => reject(new Error('Presence track timed out after 8 seconds')), 8000);
+        })
+      ]);
+    } finally {
+      clearTimeout(trackTimeout);
+    }
+    if (presenceChannel !== channel || presenceStatus !== 'ready') return;
     presenceLastSuccessfulTrackAt = Date.now();
     const previousPage = lastPublishedPresencePage;
     lastPublishedPresencePage = nextPage;
@@ -5212,7 +5235,11 @@ async function updateMyPresencePage() {
     await presenceTrackQueue;
     syncPresenceUI('local-track');
   } catch (error) {
+    // Release the serial queue after a failed/timed-out track so future
+    // heartbeats are not chained behind a permanently pending promise.
+    presenceTrackQueue = Promise.resolve();
     presenceStatus = 'error';
+    presenceLastSuccessfulTrackAt = 0;
     console.warn('Presence page update failed:', error?.message || error);
     syncPresenceUI();
     schedulePresenceReconnect('presence-track-failed');
