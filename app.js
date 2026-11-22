@@ -67,6 +67,7 @@ let streakSelectedDailyQuest = 0;
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
 let cloudPetalPoints = 0, petalPointsSyncInFlight = null;
 let kindnessEventStatus = null, kindnessEventStatusUserId = '', kindnessEventStatusLoading = false, kindnessClaimInFlight = false;
+let kindnessEventPollInterval = null;
 let streakCountdownInterval = null, streakCountdownDayKey = '';
 let presenceStatus = 'closed';
 let presenceHeartbeatTimer = null, presenceReconnectTimer = null;
@@ -661,6 +662,7 @@ function setUser(u) {
   installAppBackNavigation();
   startRealtime();
   void loadKindnessEventStatus();
+  if (!kindnessEventPollInterval) kindnessEventPollInterval = window.setInterval(() => { void loadKindnessEventStatus(); }, 30000);
   startStreakCountdown();
   void loadNotifications();
 }
