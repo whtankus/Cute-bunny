@@ -2011,6 +2011,7 @@ async function loadKindnessEventStatus() {
     kindnessEventStatus = data && typeof data === 'object' ? data : null;
     kindnessEventStatusUserId = userId;
     if (page === 'streak') renderStreakPage();
+    else if (page === 'home') render();
     return kindnessEventStatus;
   } catch (error) {
     console.warn('Kindness event status could not be loaded:', error?.message || error);
@@ -2033,6 +2034,7 @@ async function claimKindnessEventReward() {
     kindnessEventStatus = { ...(kindnessEventStatus || {}), state: 'claimed', bubble_count: Number(data?.petal_points) || Number(kindnessEventStatus?.bubble_count) || 0 };
     kindnessEventStatusUserId = String(me.id);
     if (page === 'streak') renderStreakPage();
+    else if (page === 'home') render();
     toast('Your ' + (Number(data?.petal_points) || 0) + ' Petal Points have been added ♡');
   } catch (error) {
     toast(error?.message || 'Your kindness reward could not be claimed. Please try again.');
@@ -2062,12 +2064,15 @@ function renderKindnessEventMarkup() {
       : isClaimed
         ? count + ' Petal Points added to your garden'
         : state === 'waiting'
-          ? 'Send chat bubbles between 9 and 10 PM IST tomorrow'
-          : 'Every sent chat bubble earns 1 Petal Point';
+          ? 'Your next kindness hour opens at 9 PM'
+          : 'Every sent or received chat bubble earns 1 Petal Point';
+  const timezone = status?.timezone || me?.streak_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local time';
+  let localClock = 'Your local time';
+  try { localClock = new Intl.DateTimeFormat(undefined, { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' }).format(new Date()); } catch {}
   return '<section class="sg-kindness-event" aria-label="A Little Kindness for Today">' +
-    '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div><h3>A Little Kindness for Today</h3><p>One hour · Same time worldwide</p></div><span class="sg-kindness-time">9–10 PM IST</span></div>' +
-    '<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><b>Send a little love through your words.</b><p>Every chat bubble you send during the kindness hour earns 1 Petal Point. Friends’ incoming messages do not count.</p><small>' + detail + '</small></div>' + action + '</div>' +
-    '<div class="sg-kindness-event-foot">Your points are saved securely and can be claimed after 10 PM IST.</div></section>';
+    '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div><h3>A Little Kindness</h3><p>Your daily one-hour chat event</p></div><span class="sg-kindness-time">9–10 PM local</span></div>' +
+    '<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><b>Share a little love, earn Petal Points.</b><p>Every chat bubble you send or receive during your local kindness hour earns 1 Petal Point.</p><small>' + detail + '</small></div>' + action + '</div>' +
+    '<div class="sg-kindness-event-foot"><span>Your local time: ' + esc(localClock) + '</span> · <span>' + esc(timezone) + '</span> · Claim after 10 PM</div></section>';
 }
 
 function renderStreakPage() {
@@ -2470,7 +2475,7 @@ function renderStreakPage() {
       '<section class="sg-milestones-section sg-hearts-section"><div class="sg-section-heading"><div><h3>Your Hearts</h3><p>' + heartCount + ' hearts received · ' + heartMilestones.filter(item => heartCount >= item.hearts).length + ' of ' + heartMilestones.length + ' milestones unlocked</p></div></div>' +
       '<div class="sg-milestone-route">' + heartBadges + '</div></section></section>',
     '<section class="sg-tab-panel' + (streakGardenActiveTab === 'daily' ? ' is-active' : '') + '" id="sgDailyPanel" role="tabpanel"' + (streakGardenActiveTab === 'daily' ? '' : ' hidden') + '>' +
-      renderKindnessEventMarkup() + '<section class="sg-daily-quests-section"><div class="sg-section-heading"><div><h3>Daily Quest</h3><p>20-day garden adventure · Day ' + (Math.floor(Math.max(0,(new Date(todayKey + 'T00:00:00Z') - new Date((localStorage.getItem(streakStorageKey('daily-quest-campaign-start')) || todayKey) + 'T00:00:00Z')) / 86400000) % 20) + 1) + ' of 20 · 60 little challenges</p></div><span class="sg-goal-count">' + completedQuests + ' / 3</span></div>' +
+      '<section class="sg-daily-quests-section"><div class="sg-section-heading"><div><h3>Daily Quest</h3><p>20-day garden adventure · Day ' + (Math.floor(Math.max(0,(new Date(todayKey + 'T00:00:00Z') - new Date((localStorage.getItem(streakStorageKey('daily-quest-campaign-start')) || todayKey) + 'T00:00:00Z')) / 86400000) % 20) + 1) + ' of 20 · 60 little challenges</p></div><span class="sg-goal-count">' + completedQuests + ' / 3</span></div>' +
       dailyQuestMarkup + petalRewardsMarkup + weeklyMarkup + collectibleMarkup + '</section></section>',
     '</div>',
     '</div>',
@@ -3209,6 +3214,7 @@ function render(options = {}) {
       <div class="daily" id="dailyCard" role="button" tabindex="0" aria-label="A little kindness for today. Tap for another reminder">
         <span class="daily-icon">🌼</span><div><small>A LITTLE KINDNESS FOR TODAY</small><p id="compliment">${esc(getKindness())}</p></div>
       </div>
+      ${renderKindnessEventMarkup()}
       <div class="toolbar"><h3>Your happy things</h3><span>${visibleFeed.length} shared memories</span></div>
       <div class="grid happy-things-grid">
         ${streakWidget()}
