@@ -66,6 +66,7 @@ let streakGardenActiveTab = 'daily';
 let streakSelectedDailyQuest = 0;
 let streakPetalGame = { cards: [], flipped: [], matched: [], moves: 0, locked: false, completed: false, newBest: false };
 let cloudPetalPoints = 0, petalPointsSyncInFlight = null;
+let kindnessEventStatus = null, kindnessEventStatusUserId = '', kindnessEventStatusLoading = false, kindnessClaimInFlight = false;
 let streakCountdownInterval = null, streakCountdownDayKey = '';
 let presenceStatus = 'closed';
 let presenceHeartbeatTimer = null, presenceReconnectTimer = null;
@@ -659,6 +660,7 @@ function setUser(u) {
   go('home', { resetStack: true });
   installAppBackNavigation();
   startRealtime();
+  void loadKindnessEventStatus();
   startStreakCountdown();
   void loadNotifications();
 }
@@ -1996,6 +1998,76 @@ const STREAK_MILESTONE_ILLUSTRATIONS = [
     '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 80V40" stroke="#688b6c" stroke-width="5" stroke-linecap="round"/><path d="M50 67C22 48 17 63 29 73c8 6 15 1 21-6Zm0-14c23-25 37-8 24 4-8 7-16 2-24-4Z" fill="#83a47a"/><path d="M50 45C26 24 33 8 50 3c18 8 26 26 0 42Z" fill="#87a978"/><g fill="#e9a4bd"><circle cx="37" cy="22" r="8"/><circle cx="63" cy="24" r="9"/><circle cx="49" cy="11" r="9"/><circle cx="50" cy="34" r="9"/></g><g fill="#f1d17f"><circle cx="37" cy="22" r="3"/><circle cx="63" cy="24" r="3"/><circle cx="49" cy="11" r="3"/><circle cx="50" cy="34" r="3"/></g><path d="M20 80h60" stroke="#bd9a74" stroke-width="3" stroke-linecap="round"/></svg>'
   ];
 
+async function loadKindnessEventStatus() {
+  if (!sb || !me?.id || kindnessEventStatusLoading) return kindnessEventStatus;
+  const userId = String(me.id);
+  kindnessEventStatusLoading = true;
+  try {
+    const { data, error } = await sb.rpc('get_kindness_event_status');
+    if (error) throw error;
+    if (String(me?.id || '') !== userId) return null;
+    kindnessEventStatus = data && typeof data === 'object' ? data : null;
+    kindnessEventStatusUserId = userId;
+    if (page === 'streak') renderStreakPage();
+    return kindnessEventStatus;
+  } catch (error) {
+    console.warn('Kindness event status could not be loaded:', error?.message || error);
+    return null;
+  } finally {
+    kindnessEventStatusLoading = false;
+  }
+}
+
+async function claimKindnessEventReward() {
+  if (!sb || !me?.id || kindnessClaimInFlight) return;
+  const button = $('[data-claim-kindness-event]');
+  if (button) button.disabled = true;
+  kindnessClaimInFlight = true;
+  try {
+    const { data, error } = await sb.rpc('claim_kindness_event_reward');
+    if (error) throw error;
+    await hydrateGardenCollectionFromCloud();
+    gardenCollectionReadyUserId = String(me.id);
+    kindnessEventStatus = { ...(kindnessEventStatus || {}), state: 'claimed', bubble_count: Number(data?.petal_points) || Number(kindnessEventStatus?.bubble_count) || 0 };
+    kindnessEventStatusUserId = String(me.id);
+    if (page === 'streak') renderStreakPage();
+    toast('Your ' + (Number(data?.petal_points) || 0) + ' Petal Points have been added ♡');
+  } catch (error) {
+    toast(error?.message || 'Your kindness reward could not be claimed. Please try again.');
+    void loadKindnessEventStatus();
+  } finally {
+    kindnessClaimInFlight = false;
+    if (button) button.disabled = false;
+  }
+}
+
+function renderKindnessEventMarkup() {
+  const status = kindnessEventStatusUserId === String(me?.id || '') ? kindnessEventStatus : null;
+  const state = status?.state || 'loading';
+  const count = Math.max(0, Number(status?.bubble_count) || 0);
+  const isClaimable = state === 'claimable' && count > 0;
+  const isActive = state === 'active';
+  const isClaimed = state === 'claimed';
+  const action = isClaimable
+    ? '<button type="button" class="sg-kindness-claim" data-claim-kindness-event' + (kindnessClaimInFlight ? ' disabled' : '') + '>Claim +' + count + ' ♡</button>'
+    : isClaimed
+      ? '<span class="sg-kindness-claimed">Claimed ✓</span>'
+      : '<span class="sg-kindness-state">' + (isActive ? 'Collecting…' : state === 'waiting' ? 'No bubbles earned' : 'Opens at 9 PM IST') + '</span>';
+  const detail = isActive
+    ? count + ' chat bubbles counted · ' + count + ' Petal Points pending'
+    : isClaimable
+      ? count + ' Petal Points are ready to collect'
+      : isClaimed
+        ? count + ' Petal Points added to your garden'
+        : state === 'waiting'
+          ? 'Send chat bubbles between 9 and 10 PM IST tomorrow'
+          : 'Every sent chat bubble earns 1 Petal Point';
+  return '<section class="sg-kindness-event" aria-label="A Little Kindness for Today">' +
+    '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div><h3>A Little Kindness for Today</h3><p>One hour · Same time worldwide</p></div><span class="sg-kindness-time">9–10 PM IST</span></div>' +
+    '<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><b>Send a little love through your words.</b><p>Every chat bubble you send during the kindness hour earns 1 Petal Point. Friends’ incoming messages do not count.</p><small>' + detail + '</small></div>' + action + '</div>' +
+    '<div class="sg-kindness-event-foot">Your points are saved securely and can be claimed after 10 PM IST.</div></section>';
+}
+
 function renderStreakPage() {
   const content = $('#content');
   if (!content || !me) return;
@@ -2396,7 +2468,7 @@ function renderStreakPage() {
       '<section class="sg-milestones-section sg-hearts-section"><div class="sg-section-heading"><div><h3>Your Hearts</h3><p>' + heartCount + ' hearts received · ' + heartMilestones.filter(item => heartCount >= item.hearts).length + ' of ' + heartMilestones.length + ' milestones unlocked</p></div></div>' +
       '<div class="sg-milestone-route">' + heartBadges + '</div></section></section>',
     '<section class="sg-tab-panel' + (streakGardenActiveTab === 'daily' ? ' is-active' : '') + '" id="sgDailyPanel" role="tabpanel"' + (streakGardenActiveTab === 'daily' ? '' : ' hidden') + '>' +
-      '<section class="sg-daily-quests-section"><div class="sg-section-heading"><div><h3>Daily Quest</h3><p>20-day garden adventure · Day ' + (Math.floor(Math.max(0,(new Date(todayKey + 'T00:00:00Z') - new Date((localStorage.getItem(streakStorageKey('daily-quest-campaign-start')) || todayKey) + 'T00:00:00Z')) / 86400000) % 20) + 1) + ' of 20 · 60 little challenges</p></div><span class="sg-goal-count">' + completedQuests + ' / 3</span></div>' +
+      renderKindnessEventMarkup() + '<section class="sg-daily-quests-section"><div class="sg-section-heading"><div><h3>Daily Quest</h3>'<p>20-day garden adventure · Day ' + (Math.floor(Math.max(0,(new Date(todayKey + 'T00:00:00Z') - new Date((localStorage.getItem(streakStorageKey('daily-quest-campaign-start')) || todayKey) + 'T00:00:00Z')) / 86400000) % 20) + 1) + ' of 20 · 60 little challenges</p></div><span class="sg-goal-count">' + completedQuests + ' / 3</span></div>' +
       dailyQuestMarkup + petalRewardsMarkup + weeklyMarkup + collectibleMarkup + '</section></section>',
     '</div>',
     '</div>',
@@ -4086,6 +4158,7 @@ async function sendChatMessage() {
       .single();
     if (sendError) throw sendError;
     recordStreakNoteQuest(text);
+    void loadKindnessEventStatus();
     if (replyingToMessageId === replyId) replyingToMessageId = null;
     const record = { ...saved, createdAt: saved.created_at, author: optimistic.author };
     feed = feed.map(m => String(m.id) === tempId ? record : m);
@@ -6477,6 +6550,10 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  if (e.target.closest('[data-claim-kindness-event]')) {
+    void claimKindnessEventReward();
+    return;
+  }
   if (e.target.closest('[data-claim-petal-chest]')) {
     claimDailyPetalChest();
     return;
