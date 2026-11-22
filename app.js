@@ -180,19 +180,18 @@ async function optimizePhotoUpload(file) {
 async function fetchFriendHeartCounts(userIds) {
   const ids = [...new Set((userIds || []).filter(Boolean).map(String))];
   if (!ids.length) return new Map();
-  const { data, error } = await sb.from('memories')
-    .select('owner_id,memory_likes(count)')
-    .in('owner_id', ids);
+  // Profile hearts are lifetime totals stored separately from memories.
+  // Deleting or expiring an old message must never erase hearts it earned.
+  const { data, error } = await sb.from('profile_heart_totals')
+    .select('user_id,heart_count')
+    .in('user_id', ids);
   if (error) {
-    console.warn('Friend heart totals could not be loaded:', error.message || error);
+    console.warn('Persistent profile heart totals could not be loaded:', error.message || error);
     return null;
   }
   const totals = new Map(ids.map(id => [id, 0]));
-  (data || []).forEach(memory => {
-    const likes = Array.isArray(memory.memory_likes) ? memory.memory_likes : [];
-    const count = likes.reduce((sum, row) => sum + (Number(row.count) || 0), 0);
-    const ownerId = String(memory.owner_id);
-    totals.set(ownerId, (totals.get(ownerId) || 0) + count);
+  (data || []).forEach(row => {
+    totals.set(String(row.user_id), Math.max(0, Number(row.heart_count) || 0));
   });
   return totals;
 }
