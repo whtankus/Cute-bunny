@@ -3326,7 +3326,8 @@ function showFriendProfile(user) {
   if (settingsPanel && !isOwnProfile) settingsPanel.classList.add('hidden');
   const profileOnline = isPresenceUserOnline(user.id, (() => { try { return presenceChannel?.presenceState?.() || {}; } catch { return {}; } })());
   const presenceDot = $('#friendProfilePresenceDot');
-  $('#friendProfilePresence').textContent = profileOnline ? 'Active now' : formatFriendProfileActivity(user.last_active_at);
+  $('#friendProfilePresence').textContent = profileOnline ? 'Active now' :
+    presenceStatus === 'ready' ? formatFriendProfileActivity(user.last_active_at) : 'Checking activity…';
   presenceDot?.classList.toggle('is-online', profileOnline);
   presenceDot?.classList.toggle('is-offline', !profileOnline);
   presenceDot?.setAttribute('aria-label', profileOnline ? 'Online' : 'Offline');
@@ -5051,15 +5052,25 @@ function isPresenceUserOnline(userOrId, state) {
   const targetUsername = typeof userOrId === 'object'
     ? String(userOrId.username || '').trim().toLowerCase()
     : '';
-  return Object.values(state).some(sessions =>
+  return Object.entries(state).some(([presenceKey, sessions]) =>
     Array.isArray(sessions) && sessions.some(session => {
       const sessionId = String(session?.user_id || session?.userId || session?.profile_id || session?.id || '');
       const sessionUsername = String(session?.username || '').trim().toLowerCase();
+      const keyMatches = !!targetId && (
+        presenceKey === targetId ||
+        presenceKey.startsWith('cb-' + targetId + '-') ||
+        presenceKey.startsWith(targetId + ':')
+      );
       return (!!targetId && sessionId === targetId) ||
-        (!!targetUsername && sessionUsername === targetUsername);
+        (!!targetUsername && sessionUsername === targetUsername) ||
+        keyMatches;
     })
   );
 }
+
+const presenceSweepRecentEvents = new Map();
+const presenceSweepQueue = [];
+let presenceSweepRunning = false;
 
 function triggerFriendPresenceSweep(friendKey, transition) {
   const transitionName = String(transition || 'activity');
@@ -5067,8 +5078,15 @@ function triggerFriendPresenceSweep(friendKey, transition) {
     : ['left', 'notes-left', 'offline'].includes(transitionName) ? 'departed' : transitionName;
   const key = String(friendKey || 'friend') + ':' + transitionGroup;
   const now = Date.now();
-  // Presence and Broadcast can report the same transition; collapse duplicates.
-  if (key === lastPresenceSweepKey && now - lastPresenceSweepAt < 900) return;
+  // Collapse duplicate Presence/Broadcast reports, but retain distinct rapid
+  // transitions so a quick switch into/out of Notes is still animated.
+  if (now - (presenceSweepRecentEvents.get(key) || 0) < 700) return;
+  presenceSweepRecentEvents.set(key, now);
+  if (presenceSweepRecentEvents.size > 100) {
+    for (const [eventKey, at] of presenceSweepRecentEvents) {
+      if (now - at > 10000) presenceSweepRecentEvents.delete(eventKey);
+    }
+  }
   lastPresenceSweepKey = key;
   lastPresenceSweepAt = now;
   triggerHeaderActivitySweep();
@@ -5076,7 +5094,6 @@ function triggerFriendPresenceSweep(friendKey, transition) {
 
 function triggerHeaderActivitySweep() {
   if (!document.body) return;
-  clearTimeout(notesHeaderActivityTimer);
   let sweep = document.getElementById('cb-presence-sweep');
   if (!sweep) {
     sweep = document.createElement('span');
@@ -5084,13 +5101,27 @@ function triggerHeaderActivitySweep() {
     sweep.setAttribute('aria-hidden', 'true');
     document.body.appendChild(sweep);
   }
-  sweep.classList.remove('is-active');
-  void sweep.offsetWidth;
-  sweep.classList.add('is-active');
-  notesHeaderActivityTimer = setTimeout(() => {
+  if (presenceSweepRunning) {
+    if (presenceSweepQueue.length < 12) presenceSweepQueue.push(true);
+    return;
+  }
+  const playNext = () => {
+    presenceSweepRunning = true;
     sweep.classList.remove('is-active');
-    notesHeaderActivityTimer = null;
-  }, 2000);
+    void sweep.offsetWidth;
+    sweep.classList.add('is-active');
+    notesHeaderActivityTimer = setTimeout(() => {
+      sweep.classList.remove('is-active');
+      if (presenceSweepQueue.length) {
+        presenceSweepQueue.shift();
+        playNext();
+      } else {
+        presenceSweepRunning = false;
+        notesHeaderActivityTimer = null;
+      }
+    }, 950);
+  };
+  playNext();
 }
 
 function handleNotesPageTransition(payload) {
@@ -5194,17 +5225,26 @@ function syncPresenceUI(presenceEvent = 'local') {
   const allSessions = Object.values(state || {}).flatMap(sessions => Array.isArray(sessions) ? sessions : []);
   const sessionsById = new Map();
   const sessionsByUsername = new Map();
-  allSessions.forEach(session => {
-    const id = String(session?.user_id || session?.userId || session?.profile_id || '');
-    const username = String(session?.username || '').trim().toLowerCase();
-    if (id) {
-      if (!sessionsById.has(id)) sessionsById.set(id, []);
-      sessionsById.get(id).push(session);
-    }
-    if (username) {
-      if (!sessionsByUsername.has(username)) sessionsByUsername.set(username, []);
-      sessionsByUsername.get(username).push(session);
-    }
+  Object.entries(state || {}).forEach(([presenceKey, sessions]) => {
+    if (!Array.isArray(sessions)) return;
+    sessions.forEach(session => {
+      const id = String(session?.user_id || session?.userId || session?.profile_id || session?.id || '').trim();
+      const username = String(session?.username || '').trim().toLowerCase();
+      if (id) {
+        if (!sessionsById.has(id)) sessionsById.set(id, []);
+        sessionsById.get(id).push(session);
+      }
+      if (username) {
+        if (!sessionsByUsername.has(username)) sessionsByUsername.set(username, []);
+        sessionsByUsername.get(username).push(session);
+      }
+      const keyMatch = presenceKey.match(/^cb-(.+?)-[0-9a-f-]{20,}$/i);
+      if (keyMatch) {
+        const keyId = keyMatch[1];
+        if (!sessionsById.has(keyId)) sessionsById.set(keyId, []);
+        sessionsById.get(keyId).push(session);
+      }
+    });
   });
 
   const notesNow = new Set();
@@ -5278,7 +5318,8 @@ function syncPresenceUI(presenceEvent = 'local') {
       const online = isPresenceUserOnline(profileUser, state);
       const status = $('#friendProfilePresence');
       const dot = $('#friendProfilePresenceDot');
-      if (status) status.textContent = online ? 'Active now' : formatFriendProfileActivity(profileUser.last_active_at);
+      if (status) status.textContent = online ? 'Active now' :
+        presenceStatus === 'ready' ? formatFriendProfileActivity(profileUser.last_active_at) : 'Checking activity…';
       dot?.classList.toggle('is-online', online);
       dot?.classList.toggle('is-offline', !online);
       dot?.setAttribute('aria-label', online ? 'Online' : 'Offline');
@@ -5294,12 +5335,9 @@ function syncPresenceUI(presenceEvent = 'local') {
     node.classList.toggle('is-offline', !online);
     const presenceLabel = node.querySelector('.sg-friend-presence');
     if (presenceLabel) {
-      if (node.classList.contains('friend-row')) {
-        const friend = [...friends, ...friendResults, ...(me ? [me] : [])].find(user => String(user.id) === String(node.dataset.friendId));
-        presenceLabel.textContent = '';
-      } else {
-        presenceLabel.textContent = '';
-      }
+      const friend = nodeUser;
+      presenceLabel.textContent = online ? 'Active now' :
+        presenceStatus === 'ready' ? formatFriendProfileActivity(friend?.last_active_at) : 'Checking activity…';
     }
   });
 }
