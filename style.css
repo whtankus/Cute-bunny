@@ -14745,3 +14745,29 @@ body[data-mode="dark"].notes-page-active.notes-header-hidden .app > header {
 .sg-kindness-sparkle-two{bottom:15px;left:16px;font-size:11px}
 @media(max-width:520px){.sg-kindness-event{padding:14px;border-radius:20px}.sg-kindness-event-heading{gap:9px;margin-bottom:11px}.sg-kindness-heart{width:39px;height:39px;flex-basis:39px;border-radius:14px;font-size:24px}.sg-kindness-eyebrow{font-size:.53rem}.sg-kindness-event-heading h3{font-size:.96rem}.sg-kindness-start{padding:6px 9px;border-radius:12px}.sg-kindness-start span{font-size:.5rem}.sg-kindness-start b{font-size:.82rem}.sg-kindness-event-body{align-items:flex-start;gap:9px;padding:11px}.sg-kindness-copy p{font-size:.74rem}.sg-kindness-copy small{font-size:.66rem}.sg-kindness-claim{padding:9px 11px;font-size:.7rem}.sg-kindness-state,.sg-kindness-claimed{font-size:.66rem}}
 @media(prefers-reduced-motion:reduce){.sg-kindness-claim{transition:none}}
+
+
+/* Kindness Hour — clearer schedule, live state and reward layout */
+.sg-kindness-event{padding:19px 20px 18px;border-radius:25px;background:linear-gradient(125deg,#fff0f6 0%,#fffaf3 52%,#f1edff 100%);border-color:rgba(216,153,184,.48);box-shadow:0 9px 26px rgba(174,116,151,.11)}
+.sg-kindness-event-heading{gap:12px;margin-bottom:14px}
+.sg-kindness-title-wrap h3{font-size:1.12rem}
+.sg-kindness-subtitle{display:block;margin-top:3px;color:#a98598;font-size:.68rem;font-weight:650}
+.sg-kindness-phase{margin-left:auto;align-self:center;flex:0 0 auto;padding:6px 9px;border:1px solid rgba(213,157,184,.35);border-radius:999px;background:rgba(255,255,255,.7);color:#a66c88;font-size:.56rem;font-weight:900;letter-spacing:.07em}
+.sg-kindness-phase.is-live{background:#fff0f3;border-color:#edb6c8;color:#b34e78;box-shadow:0 0 0 3px rgba(237,182,200,.12)}
+.sg-kindness-phase.is-ready{background:#f2f8ec;border-color:#c8d9bc;color:#65875f}
+.sg-kindness-timebar{display:flex;align-items:center;gap:8px;min-height:43px;margin:0 0 11px;padding:9px 12px;border:1px solid rgba(255,255,255,.9);border-radius:15px;background:rgba(255,255,255,.66)}
+.sg-kindness-clock{color:#c27c9d;font-size:1.15rem;line-height:1}
+.sg-kindness-time-label{color:#b18a9d;font-size:.57rem;font-weight:900;letter-spacing:.09em}
+.sg-kindness-timebar strong{margin-left:auto;color:#80536b;font-size:.86rem;font-weight:900;white-space:nowrap}
+.sg-kindness-timezone{color:#b89aaa;font-size:.52rem;font-weight:800;letter-spacing:.05em;white-space:nowrap}
+.sg-kindness-event-body{align-items:center;gap:14px;padding:13px 14px;border-radius:17px;background:rgba(255,255,255,.72)}
+.sg-kindness-copy p{font-size:.79rem;line-height:1.52}
+.sg-kindness-copy small{margin-top:7px;font-size:.69rem;line-height:1.4}
+.sg-kindness-reward{display:flex;flex:0 0 auto;flex-direction:column;align-items:center;gap:2px;min-width:88px;padding:8px 9px;border:1px solid rgba(225,177,197,.4);border-radius:15px;background:rgba(255,248,251,.82)}
+.sg-kindness-petal-count{color:#a65f82;font-size:1.28rem;font-weight:950;line-height:1.1;font-variant-numeric:tabular-nums}
+.sg-kindness-petal-label{color:#b78a9e;font-size:.5rem;font-weight:900;letter-spacing:.11em}
+.sg-kindness-reward .sg-kindness-claim,.sg-kindness-reward .sg-kindness-state,.sg-kindness-reward .sg-kindness-claimed{margin-top:6px;text-align:center}
+.sg-kindness-reward .sg-kindness-claim{padding:8px 11px;font-size:.68rem}
+.sg-kindness-reward .sg-kindness-state,.sg-kindness-reward .sg-kindness-claimed{max-width:110px;font-size:.62rem;line-height:1.3}
+@media(max-width:520px){.sg-kindness-event{padding:14px}.sg-kindness-event-heading{gap:9px}.sg-kindness-title-wrap h3{font-size:1rem}.sg-kindness-subtitle{font-size:.62rem}.sg-kindness-phase{padding:5px 7px;font-size:.49rem}.sg-kindness-timebar{gap:6px;padding:9px}.sg-kindness-time-label{font-size:.51rem}.sg-kindness-timebar strong{font-size:.76rem}.sg-kindness-timezone{font-size:.46rem}.sg-kindness-event-body{align-items:center;gap:9px;padding:10px}.sg-kindness-copy p{font-size:.72rem}.sg-kindness-copy small{font-size:.63rem}.sg-kindness-reward{min-width:76px;padding:7px 6px}.sg-kindness-petal-count{font-size:1.15rem}.sg-kindness-reward .sg-kindness-claim{padding:8px 9px;font-size:.62rem}}
+@media(max-width:360px){.sg-kindness-timezone{display:none}.sg-kindness-timebar strong{font-size:.72rem}}
