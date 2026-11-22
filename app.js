@@ -626,6 +626,11 @@ function setUser(u) {
   gardenCollectionReadyUserId = '';
   gardenCollectionHydration = hydrateGardenCollectionFromCloud().then(() => {
     if (String(me?.id || '') !== String(u.id)) return;
+    // Recover rewards earned offline/on another device after cloud balance loads.
+    const pendingPetalRewards = readPetalRewards();
+    if (Object.values(pendingPetalRewards).some(amount => Number(amount) !== 0)) {
+      await syncPetalPointsToCloud();
+    }
     gardenCollectionReadyUserId = String(u.id);
     const ownPetals = $('#friendProfilePetals');
     if (ownPetals && $('#friendProfileGate')?.dataset.ownProfile === 'true') ownPetals.textContent = petalRewardBalance().toLocaleString();
@@ -1143,15 +1148,9 @@ function getDailyQuestRotation(dateKey) {
       ['Your 20-day reflection','Write a Notes message about your favourite moment from this journey.','note','note','favourite']
     ]
   ];
-  const campaignKey = streakStorageKey('daily-quest-campaign-start');
-  let campaignStart = '';
-  try {
-    campaignStart = localStorage.getItem(campaignKey) || '';
-    if (!campaignStart) {
-      campaignStart = dateKey;
-      localStorage.setItem(campaignKey, campaignStart);
-    }
-  } catch { campaignStart = dateKey; }
+  // Every account follows the same campaign anchor; never store this per device.
+  // Day 1 began on 2026-11-21, so all accounts see the same quest set for a date.
+  const campaignStart = '2026-11-21';
   const startDate = new Date(campaignStart + 'T00:00:00Z');
   const currentDate = new Date(dateKey + 'T00:00:00Z');
   const elapsedDays = Number.isFinite(startDate.getTime()) && Number.isFinite(currentDate.getTime())
@@ -2090,7 +2089,7 @@ function renderStreakPage() {
     '<div class="sg-petal-balance"><span class="sg-petal-balance-art">' + gardenIllustration('bloom-5') + '</span><div><b>' + petalRewardBalance(petalRewards) + ' Petal Points</b><small>Earn 10 per daily quest · 25 from the daily chest</small></div></div>' +
     '<button type="button" class="sg-petal-chest" data-claim-petal-chest' + (completedQuests !== 3 || chestClaimed ? ' disabled' : '') + '>' +
     '<span class="sg-chest-art">' + gardenIllustration('golden-bell') + '</span> ' + (chestClaimed ? 'Chest collected today' : completedQuests === 3 ? 'Open daily chest · +25' : 'Complete 3 quests to unlock chest') + '</button>' +
-    '<small class="sg-petal-note">Your Petal Points stay on this device; your collected treasures sync to your profile for friends to see.</small></div>';
+    '<small class="sg-petal-note">Your Petal Points sync to your account and stay available across your devices.</small></div>';
   const collection = readGardenCollection();
   const collectibleMarkup = '<section class="sg-collectibles"><div class="sg-section-heading"><div><h3>Little Garden Shop</h3><p>Find a tiny treasure, from everyday blooms to magical keepsakes</p></div><span class="sg-shop-sparkle" aria-hidden="true">✧</span></div><div class="sg-collectible-grid">' +
     [...GARDEN_COLLECTIBLES].sort((a, b) => a.cost - b.cost).map(item => {
