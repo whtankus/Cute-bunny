@@ -1149,32 +1149,38 @@ function readPetalRewards() {
   } catch { return {}; }
 }
 function petalRewardBalance(rewards = readPetalRewards()) {
-  return Math.max(0, cloudPetalPoints + Object.values(rewards).reduce((sum, amount) => sum + (Number.isFinite(amount) ? Math.max(-1000, Math.min(100, amount)) : 0), 0));
+ const pending=Object.values(rewards).reduce((sum,amount)=>{const value=Number(amount);return sum+(Number.isFinite(value)&&value>0?Math.trunc(value):0);},0);
+ return Math.max(0,Math.trunc(Number(cloudPetalPoints)||0)+pending);
 }
 async function syncPetalPointsToCloud() {
-  if (!sb || !me?.id) return false;
-  if (petalPointsSyncInFlight) await petalPointsSyncInFlight;
-  const rewards = readPetalRewards();
-  const total = petalRewardBalance(rewards);
-  petalPointsSyncInFlight = (async () => {
-    const { error } = await sb.from('profile_garden_collections').upsert({ user_id: me.id, petal_points: total, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-    if (error) { console.warn('Petal Points sync failed:', error.message || error); return false; }
-    cloudPetalPoints = total;
-    const settled = Object.fromEntries(Object.keys(rewards).map(key => [key, 0]));
-    try { localStorage.setItem(streakStorageKey('petal-rewards'), JSON.stringify(settled)); } catch {}
-    return true;
-  })();
-  try { return await petalPointsSyncInFlight; } finally { petalPointsSyncInFlight = null; }
-}
-function awardPetalReward(key, amount, sync = true) {
-  if (!me || !key) return false;
-  const rewards = readPetalRewards();
-  if (Object.prototype.hasOwnProperty.call(rewards, key)) return false;
-  rewards[key] = amount;
-  try { localStorage.setItem(streakStorageKey('petal-rewards'), JSON.stringify(rewards)); }
-  catch { return false; }
-  if (sync) void syncPetalPointsToCloud();
+ if(!sb||!me?.id)return false;
+ if(petalPointsSyncInFlight)return petalPointsSyncInFlight;
+ const userId=String(me.id);
+ petalPointsSyncInFlight=(async()=>{
+  const pending=readPetalRewards();
+  for(const [key,rawAmount] of Object.entries(pending)){
+   const amount=Math.trunc(Number(rawAmount)); if(!key||!Number.isFinite(amount)||amount<1)continue;
+   const {data,error}=await sb.rpc('grant_petal_points',{p_grant_key:String(key),p_amount:amount});
+   if(error)throw error;
+   if(String(me?.id||'')!==userId)return false;
+   if(data&&Number.isFinite(Number(data.petal_points)))cloudPetalPoints=Math.max(0,Number(data.petal_points));
+   const latest=readPetalRewards();
+   if(Number(latest[key])===Number(rawAmount)){delete latest[key];try{localStorage.setItem(streakStorageKey('petal-rewards'),JSON.stringify(latest));}catch{return false;}}
+  }
   return true;
+ })();
+ try{return await petalPointsSyncInFlight;}
+ catch(error){console.warn('Petal Points sync failed; pending rewards were retained:',error?.message||error);return false;}
+ finally{petalPointsSyncInFlight=null;}
+}
+function awardPetalReward(key,amount,sync=true){
+ if(!me||!key)return false;
+ const rewardAmount=Math.trunc(Number(amount));
+ if(!Number.isFinite(rewardAmount)||rewardAmount<1||rewardAmount>1000)return false;
+ const rewards=readPetalRewards();if(Object.prototype.hasOwnProperty.call(rewards,key))return false;
+ rewards[key]=rewardAmount;
+ try{localStorage.setItem(streakStorageKey('petal-rewards'),JSON.stringify(rewards));}catch{return false;}
+ if(sync)void syncPetalPointsToCloud();return true;
 }
 function readGardenCollection() {
   try {
@@ -1967,26 +1973,19 @@ const STREAK_MILESTONE_ILLUSTRATIONS = [
   ];
 
 async function loadKindnessEventStatus() {
-  if (!sb || !me?.id || kindnessEventStatusLoading) return kindnessEventStatus;
-  const userId = String(me.id);
-  kindnessEventStatusLoading = true;
-  try {
-    const { data, error } = await sb.rpc('get_kindness_event_status');
-    if (error) throw error;
-    if (String(me?.id || '') !== userId) return null;
-    kindnessEventStatus = data && typeof data === 'object' ? data : null;
-    kindnessEventStatusUserId = userId;
-    if (page === 'streak') renderStreakPage();
-    else if (page === 'home') render();
-    return kindnessEventStatus;
-  } catch (error) {
-    console.warn('Kindness event status could not be loaded:', error?.message || error);
-    return null;
-  } finally {
-    kindnessEventStatusLoading = false;
-  }
+ if(!sb||!me?.id||kindnessEventStatusLoading)return kindnessEventStatus;
+ const userId=String(me.id);kindnessEventStatusLoading=true;
+ try{
+  const {data,error}=await sb.rpc('get_kindness_event_status');if(error)throw error;
+  if(String(me?.id||'')!==userId)return null;
+  kindnessEventStatus=data&&typeof data==='object'?data:null;kindnessEventStatusUserId=userId;
+  const {data:garden,error:gardenError}=await sb.from('profile_garden_collections').select('petal_points').eq('user_id',userId).maybeSingle();
+  if(!gardenError&&String(me?.id||'')===userId&&garden)cloudPetalPoints=Math.max(0,Number(garden.petal_points)||0);
+  if(page==='streak')renderStreakPage();else if(page==='home')render();
+  return kindnessEventStatus;
+ }catch(error){console.warn('Kindness event status could not be loaded:',error?.message||error);return null;}
+ finally{kindnessEventStatusLoading=false;}
 }
-
 async function claimKindnessEventReward() {
   if (!sb || !me?.id || kindnessClaimInFlight) return;
   const button = $('[data-claim-kindness-event]');
@@ -2012,48 +2011,17 @@ async function claimKindnessEventReward() {
 }
 
 function renderKindnessEventMarkup() {
-  const status = kindnessEventStatusUserId === String(me?.id || '') ? kindnessEventStatus : null;
-  const state = status?.state || 'loading';
-  // Once the reward is collected, remove the entire Kindness Hour card.
-  if (state === 'claimed') return '';
-  const count = Math.max(0, Number(status?.bubble_count) || 0);
-  const isClaimable = state === 'claimable' && count > 0;
-  const isActive = state === 'active';
-  const isClaimed = state === 'claimed';
-  const viewerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  let startTime = '11:00 PM';
-  let endTime = '12:00 AM';
-  try {
-    if (status?.starts_at) {
-      const startDate = new Date(status.starts_at);
-      const formatTime = date => new Intl.DateTimeFormat(undefined, {
-        timeZone: viewerTimezone, hour: 'numeric', minute: '2-digit', hour12: true
-      }).format(date);
-      startTime = formatTime(startDate);
-      endTime = formatTime(new Date(startDate.getTime() + 60 * 60 * 1000));
-    }
-  } catch {}
-  const phaseLabel = isActive ? 'LIVE NOW' : isClaimable ? 'READY TO COLLECT' : state === 'waiting' ? 'NEXT SESSION' : 'TONIGHT';
-  const action = isClaimable
-    ? '<button type="button" class="sg-kindness-claim" data-claim-kindness-event' + (kindnessClaimInFlight ? ' disabled' : '') + '>Collect +' + count + ' <span aria-hidden="true">♡</span></button>'
-    : isClaimed
-      ? '<span class="sg-kindness-claimed">Collected ✓</span>'
-      : '<span class="sg-kindness-state">' + (isActive ? 'Collecting petals…' : state === 'waiting' ? 'No petals this time' : 'A little moment is on its way') + '</span>';
-  const detail = isActive
-    ? count + ' petals collected so far'
-    : isClaimable
-      ? count + ' Petal Points are ready for your garden'
-      : state === 'waiting'
-        ? 'Your next chance to collect begins at ' + startTime + '.'
-        : 'Every chat bubble sent or received during the hour earns 1 Petal Point.';
-  return '<section class="sg-kindness-event" aria-label="A Little Kindness for Today">' +
-    '<div class="sg-kindness-event-sparkle sg-kindness-sparkle-one" aria-hidden="true">✦</div>' +
-    '<div class="sg-kindness-event-sparkle sg-kindness-sparkle-two" aria-hidden="true">✧</div>' +
-    '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div class="sg-kindness-title-wrap"><span class="sg-kindness-eyebrow">A LITTLE KINDNESS FOR TODAY</span><h3>Kindness Hour</h3><span class="sg-kindness-subtitle">A little love goes a long way</span></div><span class="sg-kindness-phase' + (isActive ? ' is-live' : isClaimable ? ' is-ready' : '') + '">' + phaseLabel + '</span></div>' +
-    '<div class="sg-kindness-timebar"><span class="sg-kindness-clock" aria-hidden="true">◷</span><span class="sg-kindness-time-label">EVERY NIGHT</span><strong>' + esc(startTime) + ' – ' + esc(endTime) + '</strong><span class="sg-kindness-timezone">YOUR LOCAL TIME</span></div>' +
-    '<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><p>Send a little love, receive a little joy. Every chat bubble you send or receive earns <strong>1 Petal Point</strong>.</p><small>' + esc(detail) + '</small></div><div class="sg-kindness-reward"><span class="sg-kindness-petal-count">' + count + '</span><span class="sg-kindness-petal-label">PETALS</span>' + action + '</div></div></section>';
+ const status=kindnessEventStatusUserId===String(me?.id||'')?kindnessEventStatus:null;
+ if(!status||status.show_poster!==true)return '';
+ const friendTimes=(Array.isArray(friends)?friends:[]).filter(friend=>friend&&friend.id&&friend.streak_timezone).slice(0,6).map(friend=>'<span class="sg-kindness-friend-time"><b>'+esc(friend.displayName||friend.display_name||friend.username||'Friend')+'</b><small>11:00 PM · '+esc(friend.streak_timezone)+'</small></span>').join('');
+ const active=status.state==='active',count=Math.max(0,Number(status.bubble_count)||0);
+ const timeZone=status.timezone||'Local timezone';
+ const detail=active?count+' petals collected so far. Completed petals are added to your permanent balance after midnight.':'Your next kindness hour begins at 11 PM in your local timezone.';
+ return '<section class="sg-kindness-event" aria-label="Kindness Hour">'+
+ '<div class="sg-kindness-event-sparkle sg-kindness-sparkle-one" aria-hidden="true">✦</div><div class="sg-kindness-event-sparkle sg-kindness-sparkle-two" aria-hidden="true">✧</div>'+
+ '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div class="sg-kindness-title-wrap"><span class="sg-kindness-eyebrow">SUNDAY &amp; WEDNESDAY</span><h3>Kindness Hour</h3><span class="sg-kindness-subtitle">A little love goes a long way</span></div><span class="sg-kindness-phase'+(active?' is-live':'')+'">'+(active?'LIVE NOW':'NEXT SESSION')+'</span></div>'+
+ '<div class="sg-kindness-timebar"><span class="sg-kindness-clock" aria-hidden="true">◷</span><span class="sg-kindness-time-label">YOUR LOCAL TIME</span><strong>11:00 PM – 12:00 AM</strong><span class="sg-kindness-timezone">'+esc(timeZone)+'</span></div>'+(friendTimes?'<div class="sg-kindness-friend-times"><span>FRIENDS’ LOCAL SCHEDULES</span>'+friendTimes+'</div>':'')+'<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><p>Every chat bubble you send or receive during the hour earns <strong>1 Petal Point</strong>.</p><small>'+esc(detail)+'</small></div><div class="sg-kindness-reward"><span class="sg-kindness-petal-count">'+count+'</span><span class="sg-kindness-petal-label">PETALS THIS HOUR</span><span class="sg-kindness-state">'+(active?'Collecting…':'See you tonight ♡')+'</span></div></div></section>';
 }
-
 function renderStreakPage() {
   const content = $('#content');
   if (!content || !me) return;
