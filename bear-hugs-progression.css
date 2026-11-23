@@ -370,3 +370,80 @@
   .bear-friend-picker-card{padding:20px 14px 14px}
   .bear-friend-picker-card .bear-friend-choice{padding:7px 8px}
 }
+
+
+/* Softer, smoother Care Points and Bear Level progress design. */
+#coupleBearGame .bear-care-strip{
+  padding:13px 15px 12px;
+  border:1px solid color-mix(in srgb,#e7a9c5 42%,var(--cb-border));
+  border-radius:23px;
+  background:linear-gradient(135deg,
+    color-mix(in srgb,#fff8fc 94%,var(--cb-card)),
+    color-mix(in srgb,#f5edff 72%,var(--cb-card)));
+  box-shadow:0 7px 20px rgba(174,112,151,.09),inset 0 1px 0 rgba(255,255,255,.9);
+}
+#coupleBearGame .bear-care-mark{
+  border-radius:50%;
+  background:linear-gradient(145deg,#ffe7f1,#f0e5ff);
+  box-shadow:inset 0 1px 3px rgba(255,255,255,.9);
+}
+#coupleBearGame .bear-care-level{
+  padding:7px 12px;
+  border-radius:999px;
+  border-color:#efd8e7;
+  background:rgba(255,255,255,.82);
+  box-shadow:0 2px 8px rgba(174,112,151,.06);
+}
+#coupleBearGame .bear-care-track{
+  height:11px;
+  margin-top:11px;
+  padding:2px;
+  border:1px solid rgba(231,190,211,.55);
+  border-radius:999px;
+  background:linear-gradient(90deg,#f8e8f0,#eee8f8);
+  box-shadow:inset 0 1px 3px rgba(145,103,133,.1);
+}
+#coupleBearGame .bear-care-track>span{
+  min-width:0;
+  border-radius:999px;
+  background:linear-gradient(90deg,#f2a9c8 0%,#d6a9e8 52%,#b5a6e9 100%);
+  box-shadow:0 1px 5px rgba(190,127,176,.28);
+  transition:width .85s cubic-bezier(.22,.8,.25,1);
+}
+#coupleBearGame .bear-care-foot{margin-top:8px;gap:10px;font-size:.64rem}
+#coupleBearGame .bear-care-foot b{padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.72);white-space:nowrap}
+@media(prefers-reduced-motion:reduce){
+  #coupleBearGame .bear-care-track>span{transition:none}
+}
+
+/* A smaller, simpler Bearfriend picker with compact, easy-to-scan sections. */
+.bear-friend-picker{padding:12px}
+.bear-friend-picker-card{
+  width:min(100%,380px);
+  max-height:min(78vh,590px);
+  padding:18px 16px 14px;
+  border-radius:23px;
+}
+.bear-picker-art{margin:0 0 4px;font-size:1.65rem}
+.bear-friend-picker-card>small{font-size:.55rem;letter-spacing:.12em}
+.bear-friend-picker-card h3{margin:4px 0;font-size:1.18rem}
+.bear-friend-picker-card>p{margin:0 auto 8px;font-size:.74rem;line-height:1.38}
+.bear-friend-search{
+  gap:6px;
+  margin:0 0 8px;
+  padding:4px;
+  border-radius:999px;
+}
+.bear-friend-search input{padding:6px 9px;font-size:.74rem}
+.bear-friend-search button{padding:7px 12px;border-radius:999px}
+.bear-request-section{gap:6px;margin:8px 0}
+.bear-request-section h4{margin:2px 3px;font-size:.72rem}
+.bear-friend-picker-list{gap:6px}
+.bear-friend-choice{gap:8px;padding:7px 9px;border-radius:13px}
+.bear-friend-avatar{flex-basis:34px;width:34px;height:34px;font-size:1.15rem}
+.bear-request-row{gap:6px;padding:7px 8px;border-radius:13px}
+.bear-picker-footnote{margin:7px 0 0!important;font-size:.64rem!important}
+@media(max-width:420px){
+ .bear-friend-picker-card{width:100%;padding:17px 13px 12px}
+ .bear-friend-picker-card>p{font-size:.7rem}
+}
