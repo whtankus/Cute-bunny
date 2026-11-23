@@ -3181,9 +3181,9 @@ function render(options = {}) {
           <div><small>A LITTLE PLAYTIME</small><h3 id="coupleBearTitle">Bear Hugs</h3><p>Choose how our little bears show their love.</p></div>
           <span class="couple-bear-sparkle" aria-hidden="true">♡</span>
         </div>
-        <div class="couple-bears-scene bear-pose-scene" data-action="idle" data-viewer-gender="${esc(me?.gender || '')}" aria-label="Daddy, the brown bear, and Mommy, the white bear">
-          <svg id="bearPoseSvg" viewBox="90 120 420 270" role="img" aria-label="Daddy and Mommy, two animated bears showing affection through movement">
-            <title>Daddy and Mommy Bear Hugs</title>
+        <div class="couple-bears-scene bear-pose-scene" data-action="idle" data-viewer-gender="${esc(me?.gender || '')}" aria-label="Two little bears, one brown and one white">
+          <svg id="bearPoseSvg" viewBox="90 120 420 270" role="img" aria-label="Two animated bears showing affection through movement">
+            <title>Two Little Bears</title>
           </svg>
         </div>
         <p class="couple-bear-status" id="coupleBearStatus" aria-live="polite">Two little bears, one big love.</p>
@@ -5903,7 +5903,7 @@ function bearActorIndex(gender) {
 function createBearPoseEngine(svg) {
   "use strict";
   const $B = id => svg.querySelector('#' + id);
-  const R=Math.PI/180,G=318,CX=[200,400],S=[1,-1],L1=24,L2=20,NAME=["Daddy","Mommy"];
+  const R=Math.PI/180,G=318,CX=[200,400],S=[1,-1],L1=24,L2=20,NAME=["Brown Bear","White Bear"];
   const COL=[{fur:"#9b6a47",st:"#6e4529",bel:"#c99a74",muz:"#e9cfb3",ear:"#d79a86",bow:"#8d7bd0"},
   {fur:"#fffaf3",st:"#dcc5b4",bel:"#fffdf9",muz:"#f6e6dc",ear:"#f7c3d1",bow:"#ef8fb1"}];
   const ACTS=[["hug","🤗","Hug"],["kiss","💋","Kiss"],["flykiss","😘","Flying Kiss"],["slap","🖐️","Playful Slap"],["hands","🫶","Hold Hands"],["feed","🍓","Feed"],["sleep","💤","Sleep"],["dance","💃","Dance"],["pet","🐾","Pet"],["tummy","🫳","Scratch Tummy"],["idle","🌸","Relax"]];
@@ -5931,7 +5931,7 @@ svg.innerHTML=`<defs><radialGradient id="gl" cx=".5" cy=".4"><stop offset="0" st
 <g fill="#fff" opacity=".7"><ellipse cx="150" cy="160" rx="38" ry="12"/><ellipse cx="176" cy="152" rx="24" ry="12"/><ellipse cx="450" cy="172" rx="42" ry="12"/><ellipse cx="478" cy="163" rx="24" ry="11"/></g>
 <ellipse cx="300" cy="${G+10}" rx="280" ry="36" fill="#fdeedd" stroke="#e9c6da" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="round"/>
 <ellipse id="pil" cx="300" cy="${G-14}" rx="112" ry="22" fill="#f7d3e2" stroke="#e5b2c9" stroke-width="2.5" opacity="0"/>
-<g id="bears">${bear(0)}${bear(1)}<g id="tummyBackArm" opacity="0" pointer-events="none"><path id="tummyBackArmOutline" fill="none" stroke="#6e4529" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/><path id="tummyBackArmFill" fill="none" stroke="#9b6a47" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"/><g id="tummyBackPaw"><circle r="12.5" fill="#9b6a47" stroke="#6e4529" stroke-width="2.2"/><ellipse cx="-7" cy="-8" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><ellipse cx="0" cy="-10" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><ellipse cx="7" cy="-8" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><path d="M-4 2Q0 5 4 2" fill="none" stroke="#d7a58a" stroke-width="1.4" stroke-linecap="round"/></g></g></g><g font-family="Nunito,Segoe UI,sans-serif" font-size="10" font-weight="800" fill="#8b6a7e" text-anchor="middle"><text x="200" y="377">Daddy</text><text x="400" y="377">Mommy</text></g>
+<g id="bears">${bear(0)}${bear(1)}<g id="tummyBackArm" opacity="0" pointer-events="none"><path id="tummyBackArmOutline" fill="none" stroke="#6e4529" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/><path id="tummyBackArmFill" fill="none" stroke="#9b6a47" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"/><g id="tummyBackPaw"><circle r="12.5" fill="#9b6a47" stroke="#6e4529" stroke-width="2.2"/><ellipse cx="-7" cy="-8" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><ellipse cx="0" cy="-10" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><ellipse cx="7" cy="-8" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><path d="M-4 2Q0 5 4 2" fill="none" stroke="#d7a58a" stroke-width="1.4" stroke-linecap="round"/></g></g></g><g font-family="Nunito,Segoe UI,sans-serif" font-size="10" font-weight="800" fill="#8b6a7e" text-anchor="middle"></g>
 <rect id="blk" x="0" y="0" width="600" height="400" fill="#5b4a9a" fill-opacity=".24" opacity="0" pointer-events="none"/>
 <g id="berry" opacity="0"><path d="M0 -10C-12 -11 -14 3 -8 11 -4 17 4 17 8 11 14 3 12 -11 0 -10Z" fill="#f0455f"/><g fill="#ffe7a8"><circle cx="-4" cy="0" r="1.2"/><circle cx="4" cy="-2" r="1.2"/><circle cx="0" cy="6" r="1.2"/><circle cx="5" cy="7" r="1.2"/><circle cx="-6" cy="8" r="1.2"/></g><path d="M0-10L-7-14 -3-9 0-15 3-9 7-14Z" fill="#6fbf73"/></g>
 <g id="fx"></g>`;
@@ -6143,7 +6143,7 @@ function triggerBearAction(action, options = {}) {
     pet: 'A gentle head pat. They love it! 🐾',
     feed: 'Strawberries for two. Yum, yum! 🍓',
     sleep: 'Shhh… the little bears are dreaming together. 🌙',
-    idle: 'Mommy and Daddy are relaxing together. 🌸'
+    idle: 'Our little bears are relaxing together. 🌸'
   };
   scene.dataset.action = action;
   bearPoseEngine?.play(action, bearActorIndex(options.gender || me?.gender));
