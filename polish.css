@@ -4922,3 +4922,266 @@ body[data-mode="dark"] #content .chat-composer #chatReplyingTo{
 #content .sg-kindness-friend-time{display:flex;flex-direction:column;gap:2px;min-width:0}
 #content .sg-kindness-friend-time b{font-size:.76rem;color:#765b70}
 #content .sg-kindness-friend-time small{font-size:.68rem;color:#9a8292}
+
+
+/* Tiny couple-bear game below the Home happy-things cards. */
+#content .couple-bear-game{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  margin:24px 0 30px;
+  padding:clamp(16px,3vw,24px);
+  border:1px solid color-mix(in srgb,var(--cb-accent) 18%,var(--cb-border));
+  border-radius:26px;
+  background:
+    radial-gradient(ellipse at 14% 10%,rgba(255,224,236,.62),transparent 42%),
+    radial-gradient(ellipse at 88% 92%,rgba(229,222,250,.48),transparent 42%),
+    var(--cb-surface-soft);
+  box-shadow:0 9px 26px rgba(155,111,139,.08);
+}
+#content .couple-bear-heading{display:flex;align-items:center;justify-content:center;gap:12px;text-align:center}
+#content .couple-bear-heading>div{min-width:0}
+#content .couple-bear-heading small{display:block;color:var(--cb-accent-strong);font-size:.62rem;font-weight:900;letter-spacing:.16em}
+#content .couple-bear-heading h3{margin:3px 0 2px;color:var(--cb-text);font-size:1.25rem;font-weight:900}
+#content .couple-bear-heading p{margin:0;color:var(--cb-text-soft);font-size:.8rem}
+#content .couple-bear-sparkle{color:#d99ab5;font-size:1.35rem}
+#content .couple-bears-scene{
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  gap:clamp(0px,3vw,24px);
+  width:min(100%,480px);
+  min-height:210px;
+  margin:10px auto 0;
+  padding:12px 12px 0;
+  overflow:hidden;
+  border-radius:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,241,247,.55));
+}
+#content .couple-bear{
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex:0 1 180px;
+  flex-direction:column;
+  align-items:center;
+  width:42%;
+  max-width:180px;
+  transform-origin:50% 100%;
+  transition:transform .55s cubic-bezier(.2,.8,.2,1);
+  animation:coupleBearIdle 3.2s ease-in-out infinite;
+}
+#content .couple-bear svg{display:block;width:100%;max-height:185px;overflow:visible}
+#content .bear-name{margin-top:-2px;padding:3px 11px;border-radius:20px;background:rgba(255,255,255,.78);color:#927386;font-size:.68rem;font-weight:900;letter-spacing:.04em}
+#content .bear-shadow{fill:rgba(111,83,102,.13)}
+#content .white-bear .bear-body,#content .white-bear .bear-head{fill:#fffdfb;stroke:#e8dce0;stroke-width:2}
+#content .white-bear .bear-belly,#content .white-bear .bear-muzzle{fill:#fff0ed}
+#content .white-bear .bear-ear{fill:#fffdfb;stroke:#e8dce0;stroke-width:2}
+#content .white-bear .bear-ear-inner{fill:#f4cbd5}
+#content .brown-bear .bear-body,#content .brown-bear .bear-head{fill:#b77c57;stroke:#996044;stroke-width:2}
+#content .brown-bear .bear-belly,#content .brown-bear .bear-muzzle{fill:#f2d5b9}
+#content .brown-bear .bear-ear{fill:#b77c57;stroke:#996044;stroke-width:2}
+#content .brown-bear .bear-ear-inner{fill:#e9b99f}
+#content .bear-eye,#content .bear-nose{fill:#49343b}
+#content .bear-mouth{fill:none;stroke:#49343b;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#content .bear-blush{fill:#ed9eae;opacity:.65}
+#content .bear-arm{fill:inherit;stroke:rgba(90,60,65,.13);stroke-width:1.5;transform-box:fill-box;transition:transform .5s ease}
+#content .white-bear .bear-arm{fill:#fffdfb}
+#content .brown-bear .bear-arm{fill:#b77c57}
+#content .bear-foot{fill:inherit;stroke:rgba(90,60,65,.13);stroke-width:1.4}
+#content .white-bear .bear-foot{fill:#fffdfb}
+#content .brown-bear .bear-foot{fill:#b77c57}
+#content .bear-paw-pad{fill:#e9b9c7;opacity:.9}
+#content .bear-shine{fill:none;stroke:rgba(255,255,255,.9);stroke-width:3;stroke-linecap:round}
+#content .bear-scene-cloud{position:absolute;color:rgba(210,174,197,.42);font-size:2rem}
+#content .cloud-one{top:16px;left:13%}
+#content .cloud-two{top:35px;right:12%;font-size:1.4rem}
+#content .bear-floating-heart{position:absolute;z-index:1;top:24px;left:50%;color:#e7a0ba;font-size:1.4rem;opacity:.55;transform:translateX(-50%);animation:bearHeartFloat 2.7s ease-in-out infinite}
+#content .bear-hand-link,#content .bear-kiss-heart{position:absolute;z-index:4;left:50%;top:56%;opacity:0;pointer-events:none;transform:translate(-50%,-50%) scale(.3);transition:opacity .25s,transform .35s}
+#content .bear-hand-link{color:#d78ca9;font-size:2rem}
+#content .bear-kiss-heart{top:34%;color:#e67eaa;font-size:2.2rem}
+#content .couple-bears-scene[data-action="hug"] .white-bear{transform:translateX(24px) rotate(-5deg)}
+#content .couple-bears-scene[data-action="hug"] .brown-bear{transform:translateX(-24px) rotate(5deg)}
+#content .couple-bears-scene[data-action="hug"] .white-bear .bear-arm-inner{transform:rotate(62deg) translateY(-3px)}
+#content .couple-bears-scene[data-action="hug"] .brown-bear .bear-arm-inner{transform:rotate(-62deg) translateY(-3px)}
+#content .couple-bears-scene[data-action="hug"] .bear-floating-heart{opacity:1;transform:translate(-50%,-15px) scale(1.2)}
+#content .couple-bears-scene[data-action="kiss"] .white-bear{transform:translateX(23px) rotate(-3deg)}
+#content .couple-bears-scene[data-action="kiss"] .brown-bear{transform:translateX(-23px) rotate(3deg)}
+#content .couple-bears-scene[data-action="kiss"] .bear-kiss-heart{opacity:1;transform:translate(-50%,-70%) scale(1.15);animation:bearKissPop .8s ease-in-out infinite alternate}
+#content .couple-bears-scene[data-action="hands"] .white-bear{transform:translateX(17px)}
+#content .couple-bears-scene[data-action="hands"] .brown-bear{transform:translateX(-17px)}
+#content .couple-bears-scene[data-action="hands"] .white-bear .bear-arm-inner{transform:rotate(74deg) translate(5px,-5px)}
+#content .couple-bears-scene[data-action="hands"] .brown-bear .bear-arm-inner{transform:rotate(-74deg) translate(-5px,-5px)}
+#content .couple-bears-scene[data-action="hands"] .bear-hand-link{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#content .couple-bear-status{min-height:22px;margin:8px 0 12px;text-align:center;color:var(--cb-text-soft);font-size:.8rem;font-weight:750}
+#content .couple-bear-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+#content .bear-action-button{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  min-height:42px;padding:9px 15px;border:1px solid var(--cb-border);
+  border-radius:999px;background:var(--cb-surface);color:var(--cb-text);
+  box-shadow:0 3px 0 color-mix(in srgb,var(--cb-accent) 13%,transparent);
+  font:inherit;font-size:.78rem;font-weight:850;cursor:pointer;
+  transition:transform .16s ease,background .2s,border-color .2s,box-shadow .2s;
+}
+#content .bear-action-button>span{font-size:1.05rem}
+#content .bear-action-button:active{transform:translateY(2px) scale(.97);box-shadow:none}
+#content .bear-action-button[aria-pressed="true"]{background:var(--cb-accent-soft);border-color:color-mix(in srgb,var(--cb-accent) 42%,var(--cb-border));color:var(--cb-accent-strong);box-shadow:0 3px 0 color-mix(in srgb,var(--cb-accent) 22%,transparent)}
+@keyframes coupleBearIdle{0%,100%{translate:0 0}50%{translate:0 -4px}}
+@keyframes bearHeartFloat{0%,100%{translate:0 0}50%{translate:0 -9px}}
+@keyframes bearKissPop{from{transform:translate(-50%,-60%) scale(.95)}to{transform:translate(-50%,-95%) scale(1.2)}}
+@media(max-width:420px){
+  #content .couple-bear-game{padding:15px 12px;border-radius:22px}
+  #content .couple-bears-scene{min-height:185px;padding-inline:4px}
+  #content .couple-bear svg{max-height:162px}
+  #content .bear-action-button{padding:8px 12px;font-size:.73rem}
+}
+@media(prefers-reduced-motion:reduce){
+  #content .couple-bear,#content .bear-floating-heart,#content .bear-kiss-heart{animation:none!important}
+  #content .couple-bear,#content .bear-arm,#content .bear-action-button{transition:none!important}
+}
+body[data-mode="dark"] #content .couple-bears-scene{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(221,176,204,.08))}
+body[data-mode="dark"] #content .bear-name{background:rgba(54,43,58,.9);color:#ead5e1}
+
+
+/* Bear Hugs expansion: expressive poses, tiny reactions and a local affection meter. */
+#content .couple-bear-footer{display:flex;align-items:center;gap:12px;margin-top:14px}
+#content .bear-love-meter{flex:1;min-width:0}
+#content .bear-love-meter-copy{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:7px;color:var(--cb-text-soft);font-size:.68rem;font-weight:800}
+#content .bear-love-meter-copy b{color:var(--cb-accent-strong);font-size:.66rem}
+#content .bear-love-track{height:7px;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--cb-accent) 12%,transparent)}
+#content .bear-love-track span{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#e9a6c1,#b99ad9);transition:width .35s ease}
+#content .bear-sound-toggle{flex:0 0 auto;padding:8px 11px;border:1px solid var(--cb-border);border-radius:999px;background:var(--cb-surface);color:var(--cb-text-soft);font:inherit;font-size:.68rem;font-weight:850;cursor:pointer}
+#content .bear-sound-toggle[aria-pressed="false"]{opacity:.65}
+#content .couple-bears-scene[data-action="dance"] .couple-bear{animation:bearDance .42s ease-in-out 3}
+#content .couple-bears-scene[data-action="dance"] .white-bear{transform:rotate(-9deg) translateY(-5px)}
+#content .couple-bears-scene[data-action="dance"] .brown-bear{transform:rotate(9deg) translateY(-5px)}
+#content .couple-bears-scene[data-action="pet"] .couple-bear{animation:bearPet .55s ease-in-out 2}
+#content .couple-bears-scene[data-action="pet"] .bear-blush{opacity:1;transform:scale(1.35)}
+#content .couple-bears-scene[data-action="feed"] .couple-bear{animation:bearNibble .32s ease-in-out 4}
+#content .couple-bears-scene[data-action="feed"]::after{content:"🍓  🍓";position:absolute;z-index:5;left:50%;top:48%;transform:translate(-50%,-50%);font-size:1.25rem;animation:bearTreat .9s ease-out both;pointer-events:none}
+#content .couple-bears-scene[data-action="sleep"]{background:linear-gradient(180deg,rgba(184,166,216,.13),rgba(255,255,255,.22))}
+#content .couple-bears-scene[data-action="sleep"] .couple-bear{transform:translateY(9px) scale(.94)}
+#content .couple-bears-scene[data-action="sleep"] .bear-head{transform:translateY(4px)}
+#content .couple-bears-scene[data-action="sleep"] .bear-eye{opacity:0}
+#content .couple-bears-scene[data-action="sleep"] .bear-mouth{d:path("M80 97q10 5 20 0")}
+#content .couple-bears-scene[data-action="sleep"]::after{content:"z  z  Z";position:absolute;z-index:5;left:50%;top:18%;color:#9d8bb8;font-size:1.15rem;font-weight:900;letter-spacing:5px;animation:bearZzz 1.5s ease-in-out infinite;pointer-events:none}
+#content .couple-bears-scene[data-action="sleep"] .bear-floating-heart{opacity:.8}
+@keyframes bearDance{0%,100%{translate:0 0}50%{translate:0 -8px}}
+@keyframes bearPet{0%,100%{translate:0 0}40%{translate:0 -6px}70%{translate:0 1px}}
+@keyframes bearNibble{0%,100%{rotate:0}25%{rotate:-3deg}75%{rotate:3deg}}
+@keyframes bearTreat{0%{opacity:0;top:58%;scale:.6}35%{opacity:1}100%{opacity:0;top:25%;scale:1.2}}
+@keyframes bearZzz{0%,100%{opacity:.55;translate:0 4px}50%{opacity:1;translate:5px -7px}}
+#content .couple-bears-scene[data-action="hug"] .bear-blush,
+#content .couple-bears-scene[data-action="kiss"] .bear-blush{opacity:1}
+#content .couple-bears-scene[data-action="sleep"] .bear-arm-inner{transform:rotate(18deg)}
+@media(max-width:420px){#content .couple-bear-footer{gap:7px}#content .bear-sound-toggle{padding:7px 9px}}
+@media(prefers-reduced-motion:reduce){#content .couple-bears-scene[data-action] .couple-bear,#content .couple-bears-scene[data-action]::after{animation:none!important}}
+
+
+/* Bear Hugs refinement: closer poses, aligned paws and viewer-specific sides. */
+#content .couple-bears-scene{gap:0;padding-inline:8px}
+#content .couple-bear{flex:0 1 200px;width:47%;max-width:200px;margin-inline:-12px}
+#content .couple-bear svg{max-height:190px}
+#content .bear-arm-inner{transform-box:fill-box;transform-origin:50% 50%}
+#content .couple-bears-scene[data-action="hug"] .white-bear .bear-arm-inner{transform:rotate(68deg) translate(2px,-4px)}
+#content .couple-bears-scene[data-action="hug"] .brown-bear .bear-arm-inner{transform:rotate(-68deg) translate(-2px,-4px)}
+#content .couple-bears-scene[data-action="hands"] .white-bear .bear-arm-inner{transform:rotate(82deg) translate(7px,-5px)}
+#content .couple-bears-scene[data-action="hands"] .brown-bear .bear-arm-inner{transform:rotate(-82deg) translate(-7px,-5px)}
+#content .couple-bears-scene[data-action="hands"] .bear-hand-link{top:62%;font-size:1.75rem;text-shadow:0 2px 8px rgba(215,140,169,.25)}
+#content .couple-bears-scene[data-viewer-gender="male"] .brown-bear{order:-1}
+#content .couple-bears-scene[data-viewer-gender="male"] .white-bear{order:1}
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="hug"] .brown-bear,
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="kiss"] .brown-bear,
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="hands"] .brown-bear{transform:translateX(24px) rotate(-4deg)}
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="hug"] .white-bear,
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="kiss"] .white-bear,
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="hands"] .white-bear{transform:translateX(-24px) rotate(4deg)}
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="dance"] .brown-bear{transform:rotate(-9deg) translateY(-5px)}
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="dance"] .white-bear{transform:rotate(9deg) translateY(-5px)}
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="hug"] .brown-bear .bear-arm-inner,
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="hands"] .brown-bear .bear-arm-inner{transform:rotate(-82deg) translate(-7px,-5px)}
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="hug"] .white-bear .bear-arm-inner,
+#content .couple-bears-scene[data-viewer-gender="male"][data-action="hands"] .white-bear .bear-arm-inner{transform:rotate(82deg) translate(7px,-5px)}
+#content .couple-bear-game .bear-name{white-space:nowrap}
+@media(max-width:420px){
+  #content .couple-bears-scene{padding-inline:2px}
+  #content .couple-bear{width:49%;flex-basis:49%;margin-inline:-10px}
+  #content .couple-bear svg{max-height:168px}
+  #content .couple-bears-scene[data-action="hug"] .white-bear{transform:translateX(18px) rotate(-5deg)}
+  #content .couple-bears-scene[data-action="hug"] .brown-bear{transform:translateX(-18px) rotate(5deg)}
+  #content .couple-bears-scene[data-viewer-gender="male"][data-action="hug"] .brown-bear{transform:translateX(18px) rotate(-4deg)}
+  #content .couple-bears-scene[data-viewer-gender="male"][data-action="hug"] .white-bear{transform:translateX(-18px) rotate(4deg)}
+}
+
+
+/* Bear Hugs: grounded paws, readable silhouettes and more natural action choreography. */
+#content .couple-bear .bear-arm{
+  transform-box:fill-box;
+  transform-origin:50% 12%;
+  transition:transform .48s cubic-bezier(.2,.75,.25,1);
+}
+#content .couple-bear .bear-arm-outer{transform-origin:50% 12%}
+#content .couple-bears-scene[data-action="idle"] .bear-arm-inner,
+#content .couple-bears-scene[data-action="idle"] .bear-arm-outer{transform:rotate(0deg)}
+#content .couple-bears-scene[data-action="hug"] .white-bear .bear-arm-inner{transform:rotate(54deg) translate(3px,-2px)}
+#content .couple-bears-scene[data-action="hug"] .brown-bear .bear-arm-inner{transform:rotate(-54deg) translate(-3px,-2px)}
+#content .couple-bears-scene[data-action="hug"] .white-bear .bear-arm-outer{transform:rotate(-17deg) translate(-2px,1px)}
+#content .couple-bears-scene[data-action="hug"] .brown-bear .bear-arm-outer{transform:rotate(17deg) translate(2px,1px)}
+#content .couple-bears-scene[data-action="hands"] .white-bear .bear-arm-inner{transform:rotate(63deg) translate(3px,-1px)}
+#content .couple-bears-scene[data-action="hands"] .brown-bear .bear-arm-inner{transform:rotate(-63deg) translate(-3px,-1px)}
+#content .couple-bears-scene[data-action="hands"] .bear-hand-link{top:61%;left:50%;font-size:1.45rem;text-shadow:0 2px 8px rgba(215,140,169,.3)}
+#content .couple-bears-scene[data-action="kiss"] .white-bear{transform:translateX(20px) rotate(-2deg)}
+#content .couple-bears-scene[data-action="kiss"] .brown-bear{transform:translateX(-20px) rotate(2deg)}
+#content .couple-bears-scene[data-action="kiss"] .bear-head{transform:translateY(3px) rotate(-7deg);transform-box:fill-box;transform-origin:50% 82%;transition:transform .42s cubic-bezier(.2,.8,.2,1)}
+#content .couple-bears-scene[data-action="kiss"] .brown-bear .bear-head{transform:translateY(3px) rotate(7deg)}
+#content .couple-bears-scene[data-action="kiss"] .bear-arm-inner{transform:rotate(24deg) translateY(-2px)}
+#content .couple-bears-scene[data-action="kiss"] .bear-kiss-heart{top:37%;font-size:1.65rem}
+#content .couple-bears-scene[data-action="feed"] .couple-bear{animation:bearFeedLean .72s ease-in-out 2}
+#content .couple-bears-scene[data-action="feed"] .bear-head{transform:rotate(-5deg) translateY(3px);transform-box:fill-box;transform-origin:50% 85%;transition:transform .35s ease}
+#content .couple-bears-scene[data-action="feed"] .brown-bear .bear-head{transform:rotate(5deg) translateY(3px)}
+#content .couple-bears-scene[data-action="feed"] .bear-arm-inner{transform:rotate(48deg) translate(2px,-4px)}
+#content .couple-bears-scene[data-action="feed"]::after{content:"🍓";left:50%;top:49%;font-size:1.05rem;animation:bearFeedPass 1.35s ease-in-out both}
+#content .couple-bears-scene[data-action="sleep"] .couple-bear{transform:translateY(10px) rotate(-5deg) scale(.91)}
+#content .couple-bears-scene[data-action="sleep"] .brown-bear{transform:translateY(10px) rotate(5deg) scale(.91)}
+#content .couple-bears-scene[data-action="sleep"] .bear-head{transform:rotate(8deg) translateY(5px);transform-box:fill-box;transform-origin:50% 85%}
+#content .couple-bears-scene[data-action="sleep"] .brown-bear .bear-head{transform:rotate(-8deg) translateY(5px)}
+#content .couple-bears-scene[data-action="sleep"] .bear-arm-inner{transform:rotate(30deg) translateY(2px)}
+#content .couple-bears-scene[data-action="sleep"] .bear-arm-outer{transform:rotate(-22deg) translateY(2px)}
+#content .couple-bears-scene[data-action="sleep"] .bear-eye{opacity:1;transform:scaleY(.12);transform-box:fill-box;transform-origin:center}
+#content .couple-bears-scene[data-action="sleep"] .bear-floating-heart{animation:none;opacity:.6}
+@keyframes bearFeedLean{0%,100%{translate:0 0}35%,65%{translate:0 3px}}
+@keyframes bearFeedPass{0%{opacity:0;translate:-25px 8px;scale:.65}22%{opacity:1}65%{opacity:1;translate:20px -2px;scale:1}100%{opacity:0;translate:23px -7px;scale:.8}}
+@media(max-width:420px){
+  #content .couple-bears-scene[data-action="kiss"] .white-bear{transform:translateX(15px) rotate(-2deg)}
+  #content .couple-bears-scene[data-action="kiss"] .brown-bear{transform:translateX(-15px) rotate(2deg)}
+  #content .couple-bears-scene[data-action="sleep"] .couple-bear{transform:translateY(8px) rotate(-4deg) scale(.9)}
+  #content .couple-bears-scene[data-action="sleep"] .brown-bear{transform:translateY(8px) rotate(4deg) scale(.9)}
+}
+@media(prefers-reduced-motion:reduce){
+  #content .couple-bears-scene[data-action="feed"] .couple-bear{animation:none!important}
+}
+
+
+
+
+/* Bear Hugs: replace the old static character art with the articulated SVG pose engine. */
+#content .couple-bears-scene.bear-pose-scene{
+  display:block;width:min(100%,480px);min-height:0;aspect-ratio:420 / 270;
+  padding:0;margin:10px auto 0;overflow:hidden;border-radius:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.48),rgba(255,241,247,.62));
+}
+#content .bear-pose-scene #bearPoseSvg{
+  display:block;width:100%;height:auto;max-height:none;aspect-ratio:420 / 270;
+  overflow:hidden;border-radius:22px;
+  background:linear-gradient(180deg,#fde7f0 0%,#fbeee6 70%,#f8e6e9 100%);
+}
+#content .couple-bears-scene.bear-pose-scene::before,
+#content .couple-bears-scene.bear-pose-scene::after{content:none!important;display:none!important}
+@media(max-width:420px){
+  #content .couple-bears-scene.bear-pose-scene{width:100%;min-height:0;padding:0}
+  #content .bear-pose-scene #bearPoseSvg{width:100%;height:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  #content .bear-pose-scene #bearPoseSvg{scroll-behavior:auto}
+}
