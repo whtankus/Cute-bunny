@@ -14771,3 +14771,7 @@ body[data-mode="dark"].notes-page-active.notes-header-hidden .app > header {
 .sg-kindness-reward .sg-kindness-state,.sg-kindness-reward .sg-kindness-claimed{max-width:110px;font-size:.62rem;line-height:1.3}
 @media(max-width:520px){.sg-kindness-event{padding:14px}.sg-kindness-event-heading{gap:9px}.sg-kindness-title-wrap h3{font-size:1rem}.sg-kindness-subtitle{font-size:.62rem}.sg-kindness-phase{padding:5px 7px;font-size:.49rem}.sg-kindness-timebar{gap:6px;padding:9px}.sg-kindness-time-label{font-size:.51rem}.sg-kindness-timebar strong{font-size:.76rem}.sg-kindness-timezone{font-size:.46rem}.sg-kindness-event-body{align-items:center;gap:9px;padding:10px}.sg-kindness-copy p{font-size:.72rem}.sg-kindness-copy small{font-size:.63rem}.sg-kindness-reward{min-width:76px;padding:7px 6px}.sg-kindness-petal-count{font-size:1.15rem}.sg-kindness-reward .sg-kindness-claim{padding:8px 9px;font-size:.62rem}}
 @media(max-width:360px){.sg-kindness-timezone{display:none}.sg-kindness-timebar strong{font-size:.72rem}}
+
+/* Give the new tummy-scratch action enough room on narrow screens. */
+#coupleBearGame .couple-bear-actions{grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
+#coupleBearGame [data-couple-action="tummy"] span{display:inline-block;transform:rotate(-18deg)}
