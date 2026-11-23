@@ -326,7 +326,9 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=kindness-sun-wed-petal-ledger-20261123"></script>
+  <link rel="stylesheet" href="bear-hugs-progression.css?v=care-compact-20261124-1">
+  <script src="bear-hugs-progression.js?v=care-compact-20261124-1" defer></script>
+  <script src="app.js?v=bear-hugs-main-20261124-1"></script>
   <script src="swipe-gestures.js?v=20261121-2" defer></script>
   <script>
 (() => {
@@ -358,7 +360,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=192", {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=193", {
             scope: "./",
             updateViaCache: "none"
           });
