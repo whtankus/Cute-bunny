@@ -32,6 +32,7 @@ jobs:
           node --check app.js
           node --check sw.js
           node --check swipe-gestures.js
+          node --check bear-hugs-progression.js
           node --check scripts/build-preview.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -43,38 +44,25 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY || secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
           mkdir -p _site
-          cp index.html app.js style.css polish.css button-interactions.css swipe-gestures.css swipe-gestures.js manifest.webmanifest sw.js bunny-app-icon-192.png bunny-app-icon-512.png apple-touch-icon.png _site/
+          cp index.html app.js style.css polish.css button-interactions.css swipe-gestures.css swipe-gestures.js bear-hugs-progression.css bear-hugs-progression.js manifest.webmanifest sw.js bunny-app-icon-192.png bunny-app-icon-512.png apple-touch-icon.png _site/
           python3 - <<'PY'
           import json, os, pathlib
           url = os.environ.get('SUPABASE_URL', '').strip()
           key = os.environ.get('SUPABASE_PUBLISHABLE_KEY', '').strip()
-          if not url.startswith('https://') or not key:
-              raise SystemExit('Supabase deployment configuration is missing or invalid. Check the repository Actions secrets.')
-          config_object = {'supabaseUrl': url, 'supabaseAnonKey': key}
-          config = 'window.CUTE_BUNNY_CONFIG = ' + json.dumps(config_object) + ';' + chr(10)
-          config_path = pathlib.Path('_site/supabase-config.js')
-          config_path.write_text(config, encoding='utf-8')
-
-          # Embed the same config before app.js as a reliable fallback to the
-          # external config file. This avoids a missing/stale static config script.
-          index_path = pathlib.Path('_site/index.html')
-          html = index_path.read_text(encoding='utf-8')
-          marker = '<script src="supabase-config.js"></script>'
-          if html.count(marker) != 1:
-              raise SystemExit('Expected exactly one Supabase config script marker in index.html.')
-          inline = '<script>window.CUTE_BUNNY_CONFIG = ' + json.dumps(config_object) + ';</script>'
-          index_path.write_text(html.replace(marker, inline), encoding='utf-8')
+          if not url or not key:
+              raise SystemExit('Add SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in repository Actions secrets.')
+          config = 'window.CUTE_BUNNY_CONFIG = ' + json.dumps({'supabaseUrl': url, 'supabaseAnonKey': key}) + ';\n'
+          pathlib.Path('_site/supabase-config.js').write_text(config, encoding='utf-8')
           pathlib.Path('_site/.nojekyll').touch()
           PY
-          node --check _site/supabase-config.js
-          grep -q 'window.CUTE_BUNNY_CONFIG' _site/index.html
-      # Each workflow attempt gets its own artifact name to avoid duplicate
-      # Pages artifacts when a failed deployment is retried.
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
           name: github-pages-${{ github.run_attempt }}
+          path: _site
+      # Pages artifact metadata can briefly lag behind the upload API.
+      - name: Wait for Pages artifact metadata
+        run: sleep 10
       - name: Publish website
         id: deployment
         uses: actions/deploy-pages@v4
