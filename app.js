@@ -2015,13 +2015,14 @@ async function claimKindnessEventReward() {
 function renderKindnessEventMarkup() {
  const status=kindnessEventStatusUserId===String(me?.id||'')?kindnessEventStatus:null;
  if(!status||status.show_poster!==true)return '';
+ const friendTimes=(Array.isArray(friends)?friends:[]).filter(friend=>friend&&friend.id&&friend.streak_timezone).slice(0,6).map(friend=>'<span class="sg-kindness-friend-time"><b>'+esc(friend.displayName||friend.display_name||friend.username||'Friend')+'</b><small>11:00 PM · '+esc(friend.streak_timezone)+'</small></span>').join('');
  const active=status.state==='active',count=Math.max(0,Number(status.bubble_count)||0);
  const timeZone=status.timezone||'Local timezone';
  const detail=active?count+' petals collected so far. Completed petals are added to your permanent balance after midnight.':'Your next kindness hour begins at 11 PM in your local timezone.';
  return '<section class="sg-kindness-event" aria-label="Kindness Hour">'+
  '<div class="sg-kindness-event-sparkle sg-kindness-sparkle-one" aria-hidden="true">✦</div><div class="sg-kindness-event-sparkle sg-kindness-sparkle-two" aria-hidden="true">✧</div>'+
  '<div class="sg-kindness-event-heading"><span class="sg-kindness-heart" aria-hidden="true">♡</span><div class="sg-kindness-title-wrap"><span class="sg-kindness-eyebrow">SUNDAY &amp; WEDNESDAY</span><h3>Kindness Hour</h3><span class="sg-kindness-subtitle">A little love goes a long way</span></div><span class="sg-kindness-phase'+(active?' is-live':'')+'">'+(active?'LIVE NOW':'NEXT SESSION')+'</span></div>'+
- '<div class="sg-kindness-timebar"><span class="sg-kindness-clock" aria-hidden="true">◷</span><span class="sg-kindness-time-label">YOUR LOCAL TIME</span><strong>11:00 PM – 12:00 AM</strong><span class="sg-kindness-timezone">'+esc(timeZone)+'</span></div>'+
+ '<div class="sg-kindness-timebar"><span class="sg-kindness-clock" aria-hidden="true">◷</span><span class="sg-kindness-time-label">YOUR LOCAL TIME</span><strong>11:00 PM – 12:00 AM</strong><span class="sg-kindness-timezone">'+esc(timeZone)+'</span></div>'+(friendTimes?'<div class="sg-kindness-friend-times"><span>FRIENDS’ LOCAL SCHEDULES</span>'+friendTimes+'</div>':'')+'
  '<div class="sg-kindness-event-body"><div class="sg-kindness-copy"><p>Every chat bubble you send or receive during the hour earns <strong>1 Petal Point</strong>.</p><small>'+esc(detail)+'</small></div><div class="sg-kindness-reward"><span class="sg-kindness-petal-count">'+count+'</span><span class="sg-kindness-petal-label">PETALS THIS HOUR</span><span class="sg-kindness-state">'+(active?'Collecting…':'See you tonight ♡')+'</span></div></div></section>';
 }
 function renderStreakPage() {
