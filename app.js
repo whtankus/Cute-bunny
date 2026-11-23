@@ -41,7 +41,7 @@ let notificationListSeenObserver = null, notificationRowViewTimers = new Map();
 let notificationViewedIds = new Set();
 let navRefreshInFlight = false, appExitStep = 0;
 let presenceChannel = null, notificationChannel = null, memoryChannel = null, profileChannel = null, noteReadCursorChannel = null;
-let bearPoseEngine = null;
+let bearRealtimeChannel = null, bearRealtimePartnerChannel = null, bearRealtimeTopic = '', bearRealtimePartnerTopic = '';
 let seenStatusRefreshTimer = null, seenStatusRefreshInFlight = false, seenStatusRefreshQueued = false;
 let typingHeartbeatTimer = null, typingStopTimer = null, typingActive = false, typingLastSentAt = 0;
 let notesTypingChannelReady = false, notesTypingQueuedState = null;
@@ -702,7 +702,7 @@ async function refresh() {
     noteHistoryCursor = initialNotes.length ? String(initialNotes[initialNotes.length - 1].id) : null;
     feedPageHasMore.note = initialNotes.length === FEED_PAGE_SIZE;
     friends = results[2];
-    window.CuteBunnyBearHugs?.refreshFriends?.();
+    startBearRealtime();
     syncPresenceUI();
 
     noteSeenLastAck = new Map((results[5] || []).map(cursor => [String(cursor.owner_id), Number(cursor.last_read_message_id) || 0]));
@@ -3127,6 +3127,8 @@ function achievementGardenMarkup(items) {
 function render(options = {}) {
   const c = $('#content');
   if (!c) return;
+  if (page !== 'home') destroyBearPoseEngine();
+  if (sb && me) startBearRealtime();
 
   if (page === 'notes') {
     renderNotesPage({ followLatest: !!options.followLatest });
@@ -3146,6 +3148,7 @@ function render(options = {}) {
   const notes = visibleFeed.filter(x => x.kind === 'note');
 
   if (page === 'home') {
+    destroyBearPoseEngine();
     c.innerHTML = `
       <div class="hero home-hero">
         <div>
@@ -3170,18 +3173,6 @@ function render(options = {}) {
         <article class="tile"><button type="button" class="tile-art note-art happy-thing-art happy-note-thumbnail" data-happy-go="notes" aria-label="Open Little Love Notes"><svg viewBox="0 0 220 132" role="img" aria-hidden="true"><defs><linearGradient id="note-paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffefa"/><stop offset="1" stop-color="#fff0f3"/></linearGradient><linearGradient id="note-envelope" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f3c5d3"/><stop offset="1" stop-color="#df91ad"/></linearGradient><filter id="note-shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="3"/></filter></defs><ellipse cx="111" cy="113" rx="66" ry="8" fill="#b77f98" opacity=".17" filter="url(#note-shadow)"/><g class="note-artwork"><g transform="rotate(-9 82 67)"><rect x="42" y="29" width="91" height="76" rx="8" fill="#f8e9ec" stroke="#d9a8b7" stroke-width="2"/><path d="M54 45h56M54 54h44M54 63h51" stroke="#d9b2bf" stroke-width="2" stroke-linecap="round"/><path d="M54 82q11-9 22 0t22 0" fill="none" stroke="#e3a7bb" stroke-width="2"/><path d="M106 88c-5-7-14-2-11 5 2 4 11 10 11 10s9-6 11-10c3-7-6-12-11-5Z" fill="#e6a1b9"/></g><g transform="rotate(5 133 67)"><rect x="91" y="18" width="88" height="91" rx="10" fill="url(#note-paper)" stroke="#d7a0b4" stroke-width="2.5"/><path d="M103 38h49M103 48h56M103 58h45M103 68h52" stroke="#e6c4ce" stroke-width="2.4" stroke-linecap="round"/><path d="M103 82q13-7 25 0t25 0" fill="none" stroke="#edc5d1" stroke-width="2"/><path d="M103 91h31" stroke="#e6c4ce" stroke-width="2" stroke-linecap="round"/><circle cx="164" cy="29" r="5" fill="#e6b66f"/></g><g transform="translate(59 77)"><path d="M0 0 53-28l54 28-54 34Z" fill="url(#note-envelope)" stroke="#c77f9e" stroke-width="2.2" stroke-linejoin="round"/><path d="m0 0 53 34L107 0" fill="#f8dce5" stroke="#c77f9e" stroke-width="2.2" stroke-linejoin="round"/><path d="M43 4c-6-8-16-2-12 6 2 5 12 12 12 12s10-7 12-12c4-8-6-14-12-6Z" fill="#d87899" stroke="#fff2f5" stroke-width="1.5"/></g><path d="M183 35c-5-7-14-2-11 5 2 4 11 10 11 10s9-6 11-10c3-7-6-12-11-5Z" fill="#e6a1b9"/><path d="m38 34 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" fill="#d9b36e"/></g></svg></button><h3>Little Love Notes</h3><p>${notes.length} saved notes</p><button class="primary" data-go="notes">Open notes →</button></article>
         <article class="tile"><button type="button" class="tile-art photo-art happy-thing-art happy-photo-thumbnail" data-happy-go="gallery" aria-label="Open Photo Garden"><svg viewBox="0 0 220 132" role="img" aria-hidden="true"><ellipse cx="110" cy="112" rx="63" ry="8" fill="#8fae8b" opacity=".17"/><rect x="68" y="20" width="84" height="91" rx="13" fill="#fffaf4" stroke="#c4d5b8" stroke-width="2.5" transform="rotate(-5 110 65)"/><rect x="79" y="29" width="84" height="91" rx="13" fill="#fffdf8" stroke="#b9cda9" stroke-width="2.5" transform="rotate(5 120 74)"/><rect x="88" y="38" width="68" height="69" rx="8" fill="#e8f0df"/><circle cx="122" cy="65" r="12" fill="#f2c6d1"/><circle cx="122" cy="51" r="7" fill="#e8a7ba"/><circle cx="136" cy="65" r="7" fill="#e8a7ba"/><circle cx="122" cy="79" r="7" fill="#e8a7ba"/><circle cx="108" cy="65" r="7" fill="#e8a7ba"/><circle cx="122" cy="65" r="5" fill="#e4be73"/><path d="M93 96q15-25 29-7t28-2" fill="none" stroke="#8da77e" stroke-width="3" stroke-linecap="round"/></svg></button><h3>Photo Garden</h3><p>${pics.length} shared photos</p><button class="primary" data-go="gallery">Open photos →</button></article>
         <article class="tile"><button type="button" class="tile-art music-art happy-thing-art happy-music-thumbnail" data-happy-go="music" aria-label="Open Cozy Playlist"><svg viewBox="0 0 220 132" role="img" aria-hidden="true"><defs><linearGradient id="music-deck" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4eafa"/><stop offset="1" stop-color="#cdb9e2"/></linearGradient><linearGradient id="music-vinyl" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#806d9d"/><stop offset=".55" stop-color="#544968"/><stop offset="1" stop-color="#9882ae"/></linearGradient></defs><ellipse cx="111" cy="113" rx="68" ry="8" fill="#8e79a9" opacity=".17"/><g class="music-artwork"><g transform="rotate(-5 111 75)"><rect x="43" y="40" width="136" height="66" rx="13" fill="url(#music-deck)" stroke="#a58cbd" stroke-width="2.5"/><rect x="51" y="48" width="120" height="50" rx="9" fill="#f9f3fb" opacity=".8"/><circle cx="105" cy="73" r="35" fill="url(#music-vinyl)" stroke="#76618f" stroke-width="2"/><circle cx="105" cy="73" r="27" fill="none" stroke="#c9b8d8" stroke-width="1.2" opacity=".48"/><circle cx="105" cy="73" r="20" fill="none" stroke="#c9b8d8" stroke-width="1.2" opacity=".42"/><circle cx="105" cy="73" r="12" fill="#f0c7d5" stroke="#b986a5" stroke-width="1.5"/><path d="M105 66c-4-5-10-1-7 4 1 3 7 7 7 7s6-4 7-7c3-5-3-9-7-4Z" fill="#b86f91"/><circle cx="105" cy="73" r="2.2" fill="#fff5f7"/><path d="M145 55 160 55 160 83Q160 91 152 91Q144 91 144 84Q144 77 153 77Q156 77 158 79V61H145Z" fill="#b79acb"/><path d="M60 58h13M60 64h8" stroke="#d4bfdc" stroke-width="2" stroke-linecap="round"/></g><path d="M52 29q-9 11 0 22m118-25q9 11 0 22" fill="none" stroke="#b29ac8" stroke-width="3" stroke-linecap="round"/><path d="M185 32c-5-7-14-2-11 5 2 4 11 10 11 10s9-6 11-10c3-7-6-12-11-5Z" fill="#d9b2df"/><path d="m38 81 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" fill="#d9b36e"/></g></svg></button><h3>Cozy Playlist</h3><p>${songs.length} shared songs</p><button class="primary" data-go="music">Open music →</button></article>
-      </div>
-      <div class="feed-list">
-        <h3>Your memory history</h3>
-        ${visibleFeed.map((m, index) => {
-          const previous = visibleFeed[index - 1];
-          const ownerId = String(m.author?.id || m.owner_id || '');
-          const previousOwnerId = String(previous?.author?.id || previous?.owner_id || '');
-          const sameDay = previous && noteDayLabel(m.createdAt || m.created_at) === noteDayLabel(previous.createdAt || previous.created_at);
-          const isContinuation = m.kind === 'note' && previous?.kind === 'note' && !!ownerId && ownerId === previousOwnerId && sameDay;
-          return memoryCard(m, { isContinuation });
-        }).join('') || '<div class="empty">Your shared scrapbook starts with one little note ♡</div>'}
-        ${historySentinelMarkup('bottom')}
       </div>
 
       <section class="couple-bear-game" id="coupleBearGame" aria-labelledby="coupleBearTitle">
@@ -3218,7 +3209,6 @@ function render(options = {}) {
       </section>
     `;
     initBearPoseEngine();
-    updateBearLoveMeter();
   } else if (page === 'gallery') {
     c.innerHTML = `
       <div class="heading"><h2>Photo garden 🌷</h2><p>Little snapshots, shared with your friend.</p></div>
@@ -3532,6 +3522,7 @@ function renderProfileSettings() {
     button.classList.toggle('is-selected', selected);
     button.setAttribute('aria-pressed', String(selected));
   });
+  syncBearViewerRole();
 }
 async function saveProfileSettings() {
   if (!me?.id) return;
@@ -4652,7 +4643,7 @@ document.addEventListener('visibilitychange', () => {
 function startRealtime() {
   if (!sb || !me) return;
   closeRealtime();
-  window.CuteBunnyBearHugs?.startRealtime?.();
+  startBearRealtime();
   const realtimeGeneration = presenceClientGeneration;
   presenceStatus = 'connecting';
   try {
@@ -4989,12 +4980,12 @@ function closeRealtime() {
   remoteTypingUsers.forEach(entry => clearTimeout(entry.timer));
   remoteTypingUsers.clear();
   syncNotesTypingIndicator();
-  window.CuteBunnyBearHugs?.stopRealtime?.();
-  [presenceChannel, notesActivityChannel, notesTypingChannel, notificationChannel, memoryChannel, profileChannel, noteReadCursorChannel].forEach(channel => {
+  [presenceChannel, notesActivityChannel, notesTypingChannel, notificationChannel, memoryChannel, profileChannel, noteReadCursorChannel, bearRealtimeChannel, bearRealtimePartnerChannel].forEach(channel => {
     if (channel && sb) sb.removeChannel(channel);
   });
 
-  presenceChannel = notesActivityChannel = notesTypingChannel = notificationChannel = memoryChannel = profileChannel = noteReadCursorChannel = null;
+  presenceChannel = notesActivityChannel = notesTypingChannel = notificationChannel = memoryChannel = profileChannel = noteReadCursorChannel = bearRealtimeChannel = bearRealtimePartnerChannel = null;
+  bearRealtimeTopic = bearRealtimePartnerTopic = '';
   notesActivityChannelReady = false;
   pendingNotesPageTransitions = [];
   clearTimeout(seenStatusRefreshTimer);
@@ -5458,7 +5449,7 @@ async function showPhoneNotification(notification) {
 }
 
 function updateNotificationBadge() {
-  const badge = $('#notificationBadge'), count = notificationRows.filter(n => !n.read_at && !(page === 'notes' && n.kind === 'note' && !/\bliked your note\b/i.test(String(n.message || '')))).length
+  const badge = $('#notificationBadge'), count = notificationRows.filter(n => !n.read_at && !(page === 'notes' && n.kind === 'note' && !/\bliked your note\b/i.test(String(n.message || '')))).length;
   badge.textContent = count > 9 ? '9+' : String(count);
   badge.classList.toggle('hidden', count === 0);
 }
@@ -5475,7 +5466,7 @@ function notificationGroupLabel(value) {
 
 function notificationKindMeta(notification) {
   const kind = String(notification?.kind || '').toLowerCase();
-  if (kind === 'buddy') return { icon: '♡', label: 'Friend hello' };
+  if (kind === 'buddy') return /bearfriend request/i.test(String(notification?.message || '')) ? { icon: '♡', label: 'Bearfriend request' } : { icon: '♡', label: 'Friend hello' };
   if (kind === 'photo') return { icon: '▧', label: 'Photo' };
   if (kind === 'song') return { icon: '♫', label: 'Music' };
   if (kind === 'note') return { icon: '✎', label: 'Note' };
@@ -5863,6 +5854,331 @@ document.addEventListener('change', e => {
   try { localStorage.setItem(streakStorageKey('checks:' + today), JSON.stringify(checks)); } catch {}
   updateStreakGoalProgress();
 });
+
+// Bear Hugs mini-game: action animations sync live with the selected friend; the affection meter stays local.
+const bearLoveStorageKey = 'cuteBunnyBearLove:v1';
+const bearSoundStorageKey = 'cuteBunnyBearSounds:v1';
+function readBearLoveCount() {
+  try { return Math.max(0, Number(localStorage.getItem(bearLoveStorageKey)) || 0); }
+  catch { return 0; }
+}
+function updateBearLoveMeter() {
+  const count = readBearLoveCount();
+  const level = count < 100 ? { level: 1, previous: 0, next: 100 }
+    : count < 150 ? { level: 2, previous: 100, next: 150 }
+    : count < 200 ? { level: 3, previous: 150, next: 200 }
+    : count < 350 ? { level: 4, previous: 200, next: 350 }
+    : (() => { const current = 5 + Math.floor((count - 350) / 300); const previous = 350 + (current - 5) * 300; return { level: current, previous, next: previous + 300 }; })();
+  const progress = Math.max(0, Math.min(100, ((count - level.previous) / (level.next - level.previous)) * 100));
+  const label = $('#bearLoveCount');
+  const fill = $('#bearLoveFill');
+  if (label) label.textContent = 'Level ' + level.level + ' · ' + count + ' love points';
+  if (fill) fill.style.width = progress + '%';
+  const soundButton = $('#bearSoundToggle');
+  if (soundButton) {
+    const enabled = localStorage.getItem(bearSoundStorageKey) !== 'off';
+    soundButton.setAttribute('aria-pressed', String(enabled));
+    soundButton.setAttribute('aria-label', enabled ? 'Turn bear sounds off' : 'Turn bear sounds on');
+    soundButton.textContent = enabled ? '♫ Sound on' : '♫ Sound off';
+  }
+}
+
+// Bear Hugs articulated SVG animation engine — embedded in the existing Home experience.
+let bearPoseEngine = null;
+function destroyBearPoseEngine() {
+  if (bearPoseEngine) {
+    bearPoseEngine.destroy();
+    bearPoseEngine = null;
+  }
+}
+function initBearPoseEngine() {
+  const svg = $('#bearPoseSvg');
+  if (!svg) return;
+  destroyBearPoseEngine();
+  bearPoseEngine = createBearPoseEngine(svg);
+}
+function bearActorIndex(gender) {
+  return String(gender || '').toLowerCase() === 'female' ? 1 : 0;
+}
+function createBearPoseEngine(svg) {
+  "use strict";
+  const $B = id => svg.querySelector('#' + id);
+  const R=Math.PI/180,G=318,CX=[200,400],S=[1,-1],L1=24,L2=20,NAME=["Daddy","Mommy"];
+  const COL=[{fur:"#9b6a47",st:"#6e4529",bel:"#c99a74",muz:"#e9cfb3",ear:"#d79a86",bow:"#8d7bd0"},
+  {fur:"#fffaf3",st:"#dcc5b4",bel:"#fffdf9",muz:"#f6e6dc",ear:"#f7c3d1",bow:"#ef8fb1"}];
+  const ACTS=[["hug","🤗","Hug"],["kiss","💋","Kiss"],["flykiss","😘","Flying Kiss"],["slap","🖐️","Playful Slap"],["hands","🫶","Hold Hands"],["feed","🍓","Feed"],["sleep","💤","Sleep"],["dance","💃","Dance"],["pet","🐾","Pet"],["tummy","🫳","Scratch Tummy"],["idle","🌸","Relax"]];
+  const reduceMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)").matches??false;
+  let active=true,rafId=0,snd=localStorage.getItem(bearSoundStorageKey)!=="off";
+  function bear(i){const c=COL[i],st=`stroke="${c.st}" stroke-width="2.6"`;
+const arm=n=>`<path id="${n}${i}o" fill="none" stroke="${c.st}" stroke-width="24.5" stroke-linecap="round" stroke-linejoin="round"/><circle id="${n}${i}co" r="14.2" fill="${c.st}"/><path id="${n}${i}f" fill="none" stroke="${c.fur}" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><g id="${n}${i}p"><circle r="12" fill="${c.fur}"/><ellipse cx="-3.5" cy="-3.5" rx="4.5" ry="3" fill="#fff" opacity=".25"/></g>`;
+const eye=k=>`<g id="e${i}${k}"><ellipse id="ee${i}${k}" rx="4.4" ry="5.4" fill="#3d2f2d"/><circle cx="1.4" cy="-1.8" r="1.7" fill="#fff"/><path id="ea${i}${k}" fill="none" stroke="#3d2f2d" stroke-width="2.4" stroke-linecap="round" opacity="0"/></g>`;
+return `<ellipse id="sh${i}" cy="${G+8}" rx="48" ry="8" fill="#9a6a86" opacity=".16"/>
+<g id="s${i}"><g id="p${i}"><g id="bd${i}">
+<g id="lg${i}l"><ellipse cx="-22" cy="-13" rx="19" ry="14" fill="${c.fur}" ${st}/><ellipse cx="-22" cy="-10" rx="9.5" ry="6.5" fill="${c.ear}" opacity=".85"/></g>
+<g id="lg${i}r"><ellipse cx="22" cy="-13" rx="19" ry="14" fill="${c.fur}" ${st}/><ellipse cx="22" cy="-10" rx="9.5" ry="6.5" fill="${c.ear}" opacity=".85"/></g>
+<ellipse cy="-50" rx="38" ry="40" fill="${c.fur}" ${st}/><ellipse cy="-46" rx="24" ry="28" fill="${c.bel}"/></g>
+<g id="a${i}">${arm("o"+0)}${arm("i"+0)}</g>
+<g id="h${i}"><circle cx="-43" cy="-76" r="15" fill="${c.fur}" ${st}/><circle cx="43" cy="-76" r="15" fill="${c.fur}" ${st}/><circle cx="-43" cy="-76" r="8" fill="${c.ear}"/><circle cx="43" cy="-76" r="8" fill="${c.ear}"/>
+<ellipse cy="-38" rx="58" ry="48" fill="${c.fur}" ${st}/>
+${i?`<g transform="translate(40 -88) rotate(20)"><path d="M0 0L-13-8 -13 8Z M0 0L13-8 13 8Z" fill="${c.bow}" stroke="#d3688f" stroke-width="1.5" stroke-linejoin="round"/><circle r="4" fill="#f9b6cd"/></g>`:""}
+<ellipse id="bl${i}l" cx="-39" cy="-27" rx="10" ry="6" fill="#ff8fb0" opacity=".5"/><ellipse id="bl${i}r" cx="39" cy="-27" rx="10" ry="6" fill="#ff8fb0" opacity=".5"/>
+<ellipse cy="-26" rx="15" ry="10.5" fill="${c.muz}"/><ellipse cy="-30" rx="5" ry="3.4" fill="#4a3433"/><circle cx="-1.3" cy="-31" r="1" fill="#fff" opacity=".7"/>
+<path id="mo${i}" transform="translate(0 -22)" fill="#b2606d" stroke="#4a3433" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+${eye("l")}${eye("r")}</g></g></g>`}
+svg.innerHTML=`<defs><radialGradient id="gl" cx=".5" cy=".4"><stop offset="0" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+<ellipse cx="300" cy="150" rx="280" ry="150" fill="url(#gl)"/>
+<path d="M0 270Q110 215 230 262T440 250T600 240V380H0Z" fill="#f6d6e4" opacity=".75"/><path d="M0 300Q140 255 300 290T600 280V380H0Z" fill="#eadcf7" opacity=".8"/>
+<g fill="#fff" opacity=".7"><ellipse cx="150" cy="160" rx="38" ry="12"/><ellipse cx="176" cy="152" rx="24" ry="12"/><ellipse cx="450" cy="172" rx="42" ry="12"/><ellipse cx="478" cy="163" rx="24" ry="11"/></g>
+<ellipse cx="300" cy="${G+10}" rx="280" ry="36" fill="#fdeedd" stroke="#e9c6da" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="round"/>
+<ellipse id="pil" cx="300" cy="${G-14}" rx="112" ry="22" fill="#f7d3e2" stroke="#e5b2c9" stroke-width="2.5" opacity="0"/>
+<g id="bears">${bear(0)}${bear(1)}<g id="tummyBackArm" opacity="0" pointer-events="none"><path id="tummyBackArmOutline" fill="none" stroke="#6e4529" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/><path id="tummyBackArmFill" fill="none" stroke="#9b6a47" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"/><g id="tummyBackPaw"><circle r="12.5" fill="#9b6a47" stroke="#6e4529" stroke-width="2.2"/><ellipse cx="-7" cy="-8" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><ellipse cx="0" cy="-10" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><ellipse cx="7" cy="-8" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><path d="M-4 2Q0 5 4 2" fill="none" stroke="#d7a58a" stroke-width="1.4" stroke-linecap="round"/></g></g></g><g font-family="Nunito,Segoe UI,sans-serif" font-size="10" font-weight="800" fill="#8b6a7e" text-anchor="middle"><text x="200" y="377">Daddy</text><text x="400" y="377">Mommy</text></g>
+<rect id="blk" x="0" y="0" width="600" height="400" fill="#5b4a9a" fill-opacity=".24" opacity="0" pointer-events="none"/>
+<g id="berry" opacity="0"><path d="M0 -10C-12 -11 -14 3 -8 11 -4 17 4 17 8 11 14 3 12 -11 0 -10Z" fill="#f0455f"/><g fill="#ffe7a8"><circle cx="-4" cy="0" r="1.2"/><circle cx="4" cy="-2" r="1.2"/><circle cx="0" cy="6" r="1.2"/><circle cx="5" cy="7" r="1.2"/><circle cx="-6" cy="8" r="1.2"/></g><path d="M0-10L-7-14 -3-9 0-15 3-9 7-14Z" fill="#6fbf73"/></g>
+<g id="fx"></g>`;
+
+  /* ---------- pose engine ---------- */
+const K=["x","y","rot","hr","hx","hy","eye","eh","mouth","pk","blush","i1","i2","o1","o2"];
+const P=[0,1].map(()=>({x:0,y:0,rot:0,hr:0,hx:0,hy:0,eye:1,eh:1,mouth:0,pk:0,blush:.3,i1:-12,i2:-6,o1:12,o2:6}));
+const ptL=(b,lx,ly)=>{const p=P[b],r=p.rot*R,vy=ly+50;return[CX[b]+S[b]*(p.x+lx*Math.cos(r)-vy*Math.sin(r)),G+p.y+lx*Math.sin(r)+vy*Math.cos(r)-50]};
+const ptH=(b,hx,hy)=>{const p=P[b],r=p.hr*R;return ptL(b,p.hx+hx*Math.cos(r)-hy*Math.sin(r),-70+p.hy+hx*Math.sin(r)+hy*Math.cos(r))};
+const toL=(b,wx,wy)=>{const p=P[b],r=p.rot*R,x1=S[b]*(wx-CX[b])-p.x,y1=wy-G-p.y+50;return[x1*Math.cos(r)+y1*Math.sin(r),-x1*Math.sin(r)+y1*Math.cos(r)-50]};
+function ik(tx,ty){const sx=28,sy=-76;let dx=tx-sx,dy=ty-sy,d=Math.hypot(dx,dy);const m=L1+L2-.5;if(d>m){dx*=m/d;dy*=m/d;d=m}d=Math.max(d,10);
+const tb=Math.atan2(-dx,dy),al=Math.acos(Math.max(-1,Math.min(1,(L1*L1+d*d-L2*L2)/(2*L1*d))));let best;
+for(const g of[1,-1]){const a=tb+g*al,ex=sx-L1*Math.sin(a),ey=sy+L1*Math.cos(a);if(!best||ey>best.ey)best={a,ex,ey}}
+const tt=Math.atan2(-(sx+dx-best.ex),sy+dy-best.ey);let a2=(tt-best.a)/R;a2=((a2+540)%360)-180;return[best.a/R,a2]}
+const fk=(s,a1,a2)=>{const t1=a1*R,t2=(a1+a2)*R,ex=s-L1*Math.sin(t1),ey=-76+L1*Math.cos(t1);return[[s,-76],[ex,ey],[ex-L2*Math.sin(t2),ey+L2*Math.cos(t2)],t2/R]};
+
+const V=[{},{}],EXP={eye:1,eh:1,mouth:1,pk:1,blush:1};let cur="idle",actor=0,role=0,t0=performance.now(),sleepF=0,berryS=1,rate=7;
+const idle=(b,t)=>{const w=Math.sin(t*1.2+b*1.7);return{x:0,y:0,rot:w*1.2,hr:Math.sin(t*.8+b*2.3)*3+2,hx:0,hy:0,eye:1,eh:1,mouth:0,pk:0,blush:.3,i1:-12+w*2,i2:-6,o1:12-w*2,o2:6}};
+const BITES=[1.4,2.8,4.0];
+const ACT={
+idle:()=>({}),
+flykiss:(t,b)=>{const other=1-actor,phase=t<.72?0:t<1.42?1:2,flutter=Math.sin(t*8);if(b===actor){const mouth=ptH(actor,0,-28),target=ptH(other,0,-34),point=phase===0?mouth:target;return{x:58+Math.sin(t*2)*1.2,rot:2,hr:phase===0?8:phase===1?19:5,hx:phase===1?12:0,eye:1,mouth:.25,blush:.82,ik:phase<2?[point[0],point[1]+(phase===1?flutter*1.6:0)]:null,i1:-28,i2:-12,o1:phase===1?30:18,o2:phase===1?20:10}}return{x:58,y:Math.abs(flutter)*.8,rot:Math.sin(t*5)*.8,hr:t>1.05?-5:0,eye:t>1.05?.12:1,mouth:.48,blush:.98,i1:-24,i2:-10,o1:24,o2:10}},
+slap:(t,b)=>{const other=1-actor,impact=t>.82&&t<1.18,cheek=ptH(other,other===0?-32:32,-34),recoil=t>.86&&t<1.9;if(b===actor){return{x:68,rot:3,hr:t<.55?8:impact?24:8,hx:impact?16:0,eye:1,mouth:.22,blush:.6,ik:t>.32&&t<1.22?[cheek[0],cheek[1]+(impact?Math.sin(t*34)*1.5:0)]:null,i1:-28,i2:-12,o1:impact?34:18,o2:impact?22:10}}const kick=recoil?Math.sin((t-.86)*17):0;return{x:66+kick*5,y:Math.abs(kick)*1.2,rot:recoil?-kick*2.8:0,hr:recoil?-12-kick*3:0,eye:recoil?.12:1,mouth:recoil?.7:.15,blush:recoil?1:.45,i1:-24,i2:-10,o1:24,o2:10}},
+tummy:(t,b)=>{const sw=Math.sin(t*9),rub=t>.45&&t<4.05;if(b===actor){return{x:75+Math.sin(t*2)*1.2,rot:3,hr:rub?22+sw*2:9,hx:rub?20:6,eye:1,mouth:.22,blush:.65,i1:-16,i2:-8,o1:18,o2:8}}return{x:75,y:Math.abs(sw)*1.4,rot:Math.sin(t*9)*1.1,hr:-8+Math.sin(t*9)*2,eye:rub?.18:1,mouth:.42,blush:.95,i1:-24,i2:-10,o1:24,o2:10}},
+hug:(t,b)=>{const o=1-b,sq=t>1.4?Math.sin((t-1.4)*3.2):0,r={x:64+2*sq,y:-2.5*Math.abs(sq),rot:2,hr:12,hx:-18,hy:2*sq,eye:t>.9?.1:1,mouth:.1,blush:.9,o1:30,o2:20};
+ if(t<.6)Object.assign(r,{i1:-82,i2:-8,o1:82,o2:8,hr:3,hx:0,x:36,y:-5*Math.abs(Math.sin(t*5))});else r.ik=ptL(o,-6,-58);return r},
+kiss:(t,b)=>{const a=actor,o=1-a,go=t>.8&&t<2.6;
+ if(b===a)return{x:go?68:50,rot:go?6:0,hr:go?22:5,hx:go?32:0,eye:go?.1:1,mouth:go?.3:.1,pk:go?1:0,blush:.7,ik:t>.4?ptL(o,-14,-66):null,i1:-40,i2:-10};
+ const sh=t>1.2&&t<2.9;return{x:50,hr:sh?-4:6,hy:sh?-3:0,eye:t>1.25&&t<3?.1:1,mouth:.12,blush:t>1.2?1:.5,ik:sh?ptH(b,34,-24):null,i1:-40,i2:-10}},
+hands:t=>({x:38,hr:8,eye:1,mouth:.2,blush:.7,ik:[300,G-52+Math.sin(t*2.2)*3.5],i1:-20,y:-1.5*Math.abs(Math.sin(t*2.2))}),
+sleep:(t,b)=>({x:12,y:12,rot:72,hr:-48,hx:20,hy:2,eye:0,eh:0,mouth:0,blush:.45,i1:-32,i2:-12,o1:30,o2:12}),
+dance:(t,b)=>{const ph=t*1.7*Math.PI,hop=Math.abs(Math.sin(ph)),sw=Math.sin(ph/2),sg=b?-1:1;
+ return{x:38+12*sw*sg,y:-16*hop,rot:sg*sw*7,hr:sg*Math.sin(ph/2+.8)*10,hy:2*hop,eye:.1,mouth:.35+.4*hop,blush:.9,ik:[300+sw*10,G-98+Math.sin(ph*2)*5],o1:105+35*Math.sin(ph*2+b*Math.PI),o2:10}},
+pet:(t,b)=>{const r=1-actor,sw=Math.sin(t*5);
+ return b===actor?{x:64,hr:-5,hx:-8,mouth:.2,blush:.6,ik:(h=>[h[0]+sw*4,h[1]+Math.sin(t*5+1.2)*2.5])(ptH(r,-34,-50))}
+ :{x:64,hr:14+sw*2,hx:16,hy:Math.abs(sw)*1.8,eye:.1,blush:1,mouth:.25}},
+feed:(t,b)=>{const a=actor,r=1-a,open=(t>1.1&&t<1.7)||(t>2.65&&t<3)||(t>3.85&&t<4.2),chew=(t>1.7&&t<2.65)||(t>3&&t<3.85)||(t>4.2&&t<5.2);
+ if(b===a){const k=t<.9?40:open?14:chew?34:t<5.2?34:44,M=ptH(r,0,-22);return{x:64,hr:-6,hx:-16,mouth:.25,blush:.6,ik:[M[0]-S[a]*k,M[1]+2]}}
+ return{x:64,hr:open?12:chew?7:4,hx:open?8:chew?3:0,mouth:open?.9:chew?.2+.2*Math.abs(Math.sin(t*14)):t>5.2?.05:0,eye:chew?.12:1,blush:chew||t>5.2?.9:.5}}
+};
+const END={kiss:3.8,flykiss:3.6,slap:2.8,feed:6.8,tummy:4.6};
+
+
+  /* ---------- audio ---------- */
+let ac,master,nbuf;
+function A(){if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;ac=new C();master=ac.createGain();master.gain.value=(snd ? .9 : 0);master.connect(ac.destination);
+ const n=ac.sampleRate*1.8|0,ib=ac.createBuffer(2,n,ac.sampleRate);for(let c=0;c<2;c++){const d=ib.getChannelData(c);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3)}
+ const cv=ac.createConvolver(),wg=ac.createGain();cv.buffer=ib;wg.gain.value=.3;master.connect(wg);wg.connect(cv);cv.connect(ac.destination);
+ nbuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);const d=nbuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+ if(ac.state==="suspended")ac.resume();return ac}
+function tone(f,d,v=.05,ty="sine",dl=0,gl=0){if(!snd)return;const c=A();if(!c)return;const t=c.currentTime+dl,o=c.createOscillator(),g=c.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(gl)o.frequency.exponentialRampToValueAtTime(gl,t+d);
+ g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+Math.min(.03,d/3));g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.05)}
+function nz(d,v,f,ty="bandpass",dl=0,att=.01){if(!snd)return;const c=A();if(!c)return;const t=c.currentTime+dl,s=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();s.buffer=nbuf;fl.type=ty;fl.frequency.value=f;fl.Q.value=.9;
+ g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(fl);fl.connect(g);g.connect(master);s.start(t,Math.random());s.stop(t+d+.05)}
+const kiss=()=>{tone(280,.12,.04,"sine",0,400);nz(.025,.16,3400,"bandpass",.1);tone(1250,.08,.09,"sine",.1,380);nz(.05,.08,1300,"lowpass",.11);tone(1976,.4,.022,"sine",.2);tone(2637,.3,.012,"sine",.26)};
+const crunch=()=>{for(let i=0;i<4;i++)nz(.022,.2-.03*i,2200+Math.random()*2600,"bandpass",i*.04);tone(130,.09,.08,"sine",0,70)};
+const chew=n=>{for(let i=0;i<n;i++){const d=i*.26;nz(.13,.07,520+Math.random()*200,"lowpass",d);tone(230,.1,.03,"sine",d,150)}};
+const yum=()=>{tone(392,.14,.05,"triangle",0,350);tone(523,.22,.045,"triangle",.14,600);tone(659,.4,.035,"sine",.3)};
+const box=(f,d=0,v=.03)=>{tone(f,1.5,v,"sine",d);tone(f*2,.9,v*.3,"sine",d);tone(f*3,.5,v*.12,"sine",d)};
+const breath=()=>{nz(1.6,.05,620,"bandpass",0,1.2);nz(1.7,.04,400,"bandpass",1.7,.3);tone(98,3.2,.014)};
+const LULL=[[784,659,587,659],[784,784,784,0],[659,659,659,0],[784,988,988,0]];
+const SC=[523,587,659,784,880],MEL=[0,2,4,2,3,2,1,-1,0,2,4,3,4,2,1,-1],BASS=[131,196,220,175];
+const pluck=f=>{tone(f,.22,.05,"triangle");tone(f*2,.14,.015,"sine")};
+const beat=n=>{const bt=n>>1;if(n%2===0){tone(125,.2,.14,"sine",0,42);if(bt%2)nz(.1,.09,1900);tone(BASS[(bt>>1)%4],.5,.05,"triangle")}else nz(.04,.03,7500,"highpass");const m=MEL[n%16];if(m>=0)pluck(SC[m])};
+const pat=n=>{tone(230,.16,.06,"sine",0,150);tone(880,.6,.012,"sine",.02);if(n%4===0)tone(330,.7,.03,"triangle",.05,392)};
+let tm=[],lp=[];const later=(f,ms)=>{const id=setTimeout(f,ms);tm.push(id);return id},loop=(f,ms)=>{f(0);let n=0;lp.push(setInterval(()=>f(++n),ms))};
+const mid=()=>[300,G-90];
+
+
+  /* ---------- fx ---------- */
+function flyFx(sym,x1,y1,x2,y2,col="#f28db5",sz=22){const e=document.createElementNS("http://www.w3.org/2000/svg","text");e.textContent=sym;e.setAttribute("x",x1);e.setAttribute("y",y1);e.setAttribute("fill",col);e.setAttribute("font-size",sz);e.setAttribute("text-anchor","middle");e.style.transformBox="fill-box";e.style.transformOrigin="center";$B("fx").appendChild(e);if(reduceMotion){e.setAttribute("x",x2);e.setAttribute("y",y2);e.setAttribute("opacity",".8");return}const dx=x2-x1,dy=y2-y1;e.animate([{transform:"translate(0,0) scale(.55)",opacity:0},{opacity:1,offset:.18},{transform:`translate(${dx}px,${dy}px) scale(1.25)`,opacity:0}],{duration:1250,easing:"cubic-bezier(.2,.7,.25,1)"}).onfinish=()=>e.remove()}
+function fx(sym,x,y,col="#f4789f",sz=22){const e=document.createElementNS("http://www.w3.org/2000/svg","text");e.textContent=sym;e.setAttribute("x",x);e.setAttribute("y",y);e.setAttribute("fill",col);e.setAttribute("font-size",sz);e.setAttribute("text-anchor","middle");e.style.transformBox="fill-box";e.style.transformOrigin="center";$B("fx").appendChild(e);
+ if(reduceMotion){e.setAttribute("opacity",".75");return}const dx=(Math.random()-.5)*50;e.animate([{transform:"translate(0,0) scale(.4)",opacity:0},{opacity:1,offset:.25},{transform:`translate(${dx}px,-70px) scale(1.15)`,opacity:0}],{duration:1900,easing:"ease-out"}).onfinish=()=>e.remove()}
+const burst=(x,y,n=5,sym="♥")=>{for(let i=0;i<n;i++)later(()=>fx(sym,x+(Math.random()-.5)*50,y,i%2?"#f4789f":"#d79ae8",16+Math.random()*14),i*130)};
+
+
+  /* ---------- actions ---------- */
+const TXT=(a,by)=>{const o=1-by,n=NAME[by],m=NAME[o];return{hug:`${n} hugs ${m} 🤗`,kiss:`${n} gives ${m} a sweet kiss 💋`,hands:`${n} and ${m} hold paws 🫶`,feed:`${n} shares a strawberry with ${m} 🍓`,sleep:`${n} and ${m} drift off peacefully 💤`,dance:`${n} and ${m} are dancing together 💃`,pet:`${n} gently pets ${m} 🐾`,tummy:`${n} gives ${m} gentle tummy tickles! 🫳`,flykiss:`${n} blows ${m} a flying kiss! 💋`,slap:`${n} gives ${m} a playful little slap! 🖐️`,idle:`${n} and ${m} are relaxing 🌸`}[a]};
+function start(a,by){tm.forEach(clearTimeout);lp.forEach(clearInterval);tm=[];lp=[];$B("fx").innerHTML="";
+ cur=a;actor=by;t0=performance.now();rate=a==="dance"?13:a==="sleep"?4.5:7;berryS=1;
+ const bears=$B("bears"),backArm=$B("tummyBackArm");if(a==="tummy"){bears.appendChild($B("s"+by));bears.appendChild(backArm);bears.appendChild($B("s"+(1-by)));}else{backArm.setAttribute("opacity","0");const ord=a==="flykiss"||a==="slap"||a==="feed"||a==="pet"||a==="kiss"?[1-by,by]:[0,1];ord.forEach(i=>bears.appendChild($B("s"+i)));}
+ const scene=svg.closest(".couple-bears-scene");if(scene)scene.dataset.action=a;
+ if(a==="hug"){tone(262,1.4,.04);tone(330,1.4,.035,"sine",.06);tone(392,1.5,.03,"sine",.12);later(()=>{tone(196,1,.06,"triangle");tone(523,.9,.02,"sine",.1);burst(300,G-170,5)},1250)}
+ if(a==="kiss"){later(()=>{kiss();burst(300,G-170,6)},1350);later(()=>{nz(.03,.1,2500);tone(900,.06,.05,"sine",0,500)},2600)}
+ if(a==="flykiss"){later(()=>{tone(740,.16,.04,"sine",0,980);tone(988,.22,.035,"sine",.12,1318);const from=ptH(by,0,-28),to=ptH(1-by,0,-34);flyFx("♡",from[0],from[1],to[0],to[1],"#ed79a5",27);later(()=>flyFx("💋",from[0],from[1]-4,to[0],to[1]-12,"#e98bad",20),180)},850)}
+ if(a==="slap"){later(()=>{tone(210,.11,.07,"triangle",0,115);nz(.045,.08,1450,"bandpass",.015);const cheek=ptH(1-by,1-by===0?-32:32,-34);burst(cheek[0],cheek[1],5,"✦")},920)}
+ if(a==="hands"){later(()=>{[1047,1319,1568,2093,1568].forEach((f,i)=>tone(f,.55,.025,"sine",i*.08));burst(300,G-70,5,"✦")},800)}
+ if(a==="feed"){BITES.forEach((b,index)=>later(()=>{crunch();later(()=>chew(3),220);if(index===2)later(yum,500)},b*1000));later(()=>burst(CX[1-by]+S[1-by]*30,G-190,4),5600)}
+ if(a==="sleep"){loop(n=>{breath();LULL[n%4].forEach((f,k)=>f&&box(f,k*.8));if(n%2===0)later(()=>fx("z",300+(Math.random()-.5)*60,G-100,"#9b86d6",20+Math.random()*10),500)},3400)}
+ if(a==="dance"){loop(n=>{beat(n);if(n%4===0)fx("♪",300+(Math.random()-.5)*120,G-170,"#b08be0",22)},294)}
+ if(a==="pet"){tone(300,.5,.03,"triangle");loop(n=>{pat(n);if(n%2==0){const h=ptH(1-by,0,-80);fx("♥",h[0],h[1]-20,"#f4789f",16)}},628)}
+  if(a==="tummy"){tone(660,.18,.035,"sine",0,820);tone(784,.2,.03,"sine",.22,988);loop(n=>{pat(n);if(n%2===0){const side=by===0?1:-1,hx=CX[1-by]+side*(63+Math.sin(n*1.8)*2),hy=G-38+Math.sin(n*2.4)*5;fx(n%4===0?"♡":"✦",hx,hy-10,"#f28db5",14+Math.random()*5)}},420)}
+ if(a==="idle"){tone(392,.7,.025,"sine",0,330)}
+ if(END[a])later(()=>{if(cur===a)start("idle",by)},END[a]*1000)}
+
+  /* ---------- render loop ---------- */
+const blink=[{n:1.5,u:0},{n:3,u:0}];let last=performance.now();
+const setT=(id,v)=>$B(id).setAttribute("transform",v);
+function drawArm(b,n,s,a1,a2){const f=fk(s,a1,a2),d=`M${f[0][0]} ${f[0][1]}Q${f[1][0]} ${f[1][1]} ${f[2][0]} ${f[2][1]}`,id=n+0+b;
+ $B(id+"o").setAttribute("d",d);$B(id+"f").setAttribute("d",d);$B(id+"co").setAttribute("cx",f[2][0]);$B(id+"co").setAttribute("cy",f[2][1]);setT(id+"p",`translate(${f[2][0]} ${f[2][1]}) rotate(${f[3]})`);return f}
+function frame(now){if(!active||!svg.isConnected)return;const dt=Math.min(.05,(now-last)/1e3);last=now;const t=(now-t0)/1e3,ts=now/1e3,k=1-Math.exp(-dt*rate);
+ sleepF+=((cur==="sleep"?1:0)-sleepF)*(1-Math.exp(-dt*2.5));
+ const tg=[0,1].map(b=>{const o=Object.assign(idle(b,ts),ACT[cur](t,b));if(o.ik){const[a1,a2]=ik(...toL(b,o.ik[0],o.ik[1]));o.i1=a1;o.i2=a2}return o});
+ for(let b=0;b<2;b++){const p=P[b],g=tg[b];for(const key of K){if(EXP[key])p[key]+=(g[key]-p[key])*(1-Math.exp(-dt*(key==="eye"?16:9)));else{const arm=key[0]==="i"||key[0]==="o",w=(arm?1.25:1)*rate*1.15,z=arm?.72:.78,vv=V[b];vv[key]=(vv[key]||0)+((g[key]-p[key])*w*w-2*z*w*(vv[key]||0))*dt;p[key]+=vv[key]*dt}}
+ const br=reduceMotion?0:Math.sin(ts*(sleepF>.5?1.5:2.1)+b),bs=1+br*(.012+.02*sleepF),bl=blink[b];
+ if(!reduceMotion&&ts>bl.n){bl.u=ts;bl.n=ts+2.5+Math.random()*3}const bf=!reduceMotion&&ts-bl.u<.14?.1:1;
+ setT("s"+b,`translate(${CX[b]} ${G+p.y}) scale(${S[b]} 1)`);setT("p"+b,`translate(${p.x} 0) rotate(${p.rot} 0 -50)`);
+ {const mv=reduceMotion?0:(cur==="dance"?1:Math.min(1,Math.abs(V[b].x||0)/22)),ph=ts*(cur==="dance"?1.7*Math.PI*2:13),ll=Math.max(0,Math.sin(ph))*mv,lr=Math.max(0,-Math.sin(ph))*mv,sp=sleepF*14;
+ setT("lg"+b+"l",`translate(0 ${-ll*7}) rotate(${-ll*10-sp} -22 -22)`);setT("lg"+b+"r",`translate(0 ${-lr*7}) rotate(${lr*10+sp} 22 -22)`)}
+ setT("bd"+b,`translate(0 -10) scale(1 ${bs}) translate(0 10)`);
+ setT("h"+b,`translate(${p.hx} ${-70+p.hy-br*(.8+sleepF)}) rotate(${p.hr})`);
+ drawArm(b,"o",-28,p.o1,p.o2);drawArm(b,"i",28,p.i1,p.i2);
+ const cl=p.eye<.25,op=Math.max(.06,p.eye*bf);
+ for(const e of["l","r"]){const x=e==="l"?-26:26;setT("e"+b+e,`translate(${x} -36)`);const ee=$B("ee"+b+e);ee.setAttribute("ry",5.4*op);ee.style.opacity=cl?0:1;
+  const ea=$B("ea"+b+e);ea.setAttribute("d",`M-5.5 ${p.eh>.5?2:-1}Q0 ${p.eh>.5?-5:6} 5.5 ${p.eh>.5?2:-1}`);ea.style.opacity=cl?1:0;$B("bl"+b+e).style.opacity=Math.min(1,p.blush)}
+ const m=Math.max(0,p.mouth),w=6.5-3.5*p.pk,tp=6*(1-m*.9),bt=6+16*m;
+ $B("mo"+b).setAttribute("d",`M${-w} 0Q0 ${tp} ${w} 0Q0 ${bt} ${-w} 0Z`);
+ const sh=$B("sh"+b);sh.setAttribute("cx",CX[b]+S[b]*p.x);sh.setAttribute("rx",48-p.y*.7);sh.setAttribute("opacity",.16*(1-sleepF)*(1+p.y/60))}
+ const backArm=$B("tummyBackArm");if(cur==="tummy"){const side=actor===0?1:-1,target=1-actor,startX=CX[actor]+S[actor]*(P[actor].x+28),startY=G+P[actor].y-76,endX=startX+side*42,endY=startY+8+Math.sin(t*9)*3.2,controlX=(startX+endX)/2,controlY=startY+5+Math.sin(t*4)*2;const path=`M${startX} ${startY} Q${controlX} ${controlY} ${endX} ${endY}`;const c=COL[actor];$B("tummyBackArmOutline").setAttribute("d",path);$B("tummyBackArmFill").setAttribute("d",path);$B("tummyBackArmOutline").setAttribute("stroke",c.st);$B("tummyBackArmFill").setAttribute("stroke",c.fur);$B("tummyBackPaw").setAttribute("transform",`translate(${endX} ${endY}) rotate(${side*8+Math.sin(t*9)*7})`);backArm.setAttribute("opacity",t>.35&&t<4.25?"1":"0")}else backArm.setAttribute("opacity","0");
+ $B("pil").setAttribute("opacity",sleepF);$B("blk").setAttribute("opacity",sleepF);
+ const bs=$B("berry");if(cur==="feed"&&t<5.3){const f=fk(28,P[actor].i1,P[actor].i2),h=f[2],rad=f[3]*R,wp=ptL(actor,h[0]-Math.sin(rad)*8,h[1]+Math.cos(rad)*8),sc=t<1.7?1:t<3?.66:t<4.2?.36:0;
+  berryS+=(sc-berryS)*(1-Math.exp(-dt*14));bs.setAttribute("transform",`translate(${wp[0]} ${wp[1]}) scale(${berryS*.9}) rotate(${-S[actor]*20})`);bs.setAttribute("opacity",berryS>.05?1:0)}else bs.setAttribute("opacity",0);
+ rafId=requestAnimationFrame(frame)}
+rafId=requestAnimationFrame(frame);
+  function setSound(enabled) {
+    snd=!!enabled;
+    if(master&&ac&&ac.state!=="closed") {
+      try { master.gain.setTargetAtTime(snd ? .9 : 0,ac.currentTime,.04); } catch {}
+    }
+  }
+  function destroy() {
+    if(!active)return;
+    active=false;
+    cancelAnimationFrame(rafId);
+    tm.forEach(clearTimeout); lp.forEach(clearInterval);
+    tm=[]; lp=[];
+    if(ac&&ac.state!=="closed") void ac.close().catch(()=>{});
+  }
+  return {
+    play(action,by){if(active&&ACT[action])start(action,by===1?1:0)},
+    setSound,
+    destroy
+  };
+}
+
+function getBearPartnerId() {
+  const partner = friends.find(friend => friend?.id && String(friend.id) !== String(me?.id));
+  return partner ? String(partner.id) : '';
+}
+function startBearRealtime() {
+  if (!sb || !me?.id) return;
+  const ownTopic = 'cute-bunny-bear-actions-' + String(me.id);
+  if (!bearRealtimeChannel || bearRealtimeTopic !== ownTopic) {
+    if (bearRealtimeChannel) void sb.removeChannel(bearRealtimeChannel);
+    bearRealtimeTopic = ownTopic;
+    bearRealtimeChannel = sb.channel(ownTopic, { config: { broadcast: { self: false } } })
+      .on('broadcast', { event: 'bear-action' }, ({ payload }) => {
+        if (String(payload?.userId || '') === String(me?.id || '')) return;
+        const action = String(payload?.action || '');
+        if (!['hug', 'kiss', 'hands', 'dance', 'pet', 'feed', 'sleep', 'idle'].includes(action)) return;
+        triggerBearAction(action, { remote: true, gender: payload?.gender });
+      })
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.warn('Bear Hugs receive channel status:', status);
+        }
+      });
+  }
+  const partnerId = getBearPartnerId();
+  const partnerTopic = partnerId ? 'cute-bunny-bear-actions-' + partnerId : '';
+  if (partnerTopic && bearRealtimePartnerTopic !== partnerTopic) {
+    if (bearRealtimePartnerChannel) void sb.removeChannel(bearRealtimePartnerChannel);
+    bearRealtimePartnerTopic = partnerTopic;
+    bearRealtimePartnerChannel = sb.channel(partnerTopic, { config: { broadcast: { self: false } } })
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.warn('Bear Hugs send channel status:', status);
+        }
+      });
+  } else if (!partnerTopic && bearRealtimePartnerChannel) {
+    void sb.removeChannel(bearRealtimePartnerChannel);
+    bearRealtimePartnerChannel = null;
+    bearRealtimePartnerTopic = '';
+  }
+}
+function publishBearAction(action) {
+  startBearRealtime();
+  if (!bearRealtimePartnerChannel || !bearRealtimePartnerTopic || !me?.id) return;
+  void bearRealtimePartnerChannel.send({
+    type: 'broadcast',
+    event: 'bear-action',
+    payload: { action, userId: String(me.id), gender: me.gender || null, sentAt: Date.now() }
+  }).then(status => {
+    if (status !== 'ok') console.warn('Bear Hugs action was not delivered:', status);
+  }).catch(error => console.warn('Bear Hugs action could not be sent:', error?.message || error));
+}
+function syncBearViewerRole() {
+  const scene = $('#coupleBearGame .couple-bears-scene');
+  if (scene) scene.dataset.viewerGender = me?.gender || '';
+}
+function triggerBearAction(action, options = {}) {
+  const scene = $('#coupleBearGame .couple-bears-scene');
+  if (!scene) return;
+  const messages = {
+    hug: 'A big, warm bear hug! ♡',
+    kiss: 'A tiny kiss, sealed with a heart. 💗',
+    hands: 'Together, paw in paw. ♡',
+    dance: 'Look at them dance! Two happy little bears. ✨',
+    pet: 'A gentle head pat. They love it! 🐾',
+    feed: 'Strawberries for two. Yum, yum! 🍓',
+    sleep: 'Shhh… the little bears are dreaming together. 🌙',
+    idle: 'Mommy and Daddy are relaxing together. 🌸'
+  };
+  scene.dataset.action = action;
+  bearPoseEngine?.play(action, bearActorIndex(options.gender || me?.gender));
+  const status = $('#coupleBearStatus');
+  if (status) status.textContent = messages[action] || 'Two little bears, one big love.';
+  document.querySelectorAll('#coupleBearGame [data-couple-action]').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.coupleAction === action));
+  });
+  // Shared Bear Hugs points are awarded by the progression module
+  // only after an action is successfully delivered to the accepted partner.
+  updateBearLoveMeter();
+  if (!options.remote) publishBearAction(action);
+}
+document.addEventListener('click', event => {
+  const soundToggle = event.target.closest('#bearSoundToggle');
+  if (soundToggle) {
+    const next = localStorage.getItem(bearSoundStorageKey) === 'off' ? 'on' : 'off';
+    try { localStorage.setItem(bearSoundStorageKey, next); } catch {}
+    updateBearLoveMeter();
+    bearPoseEngine?.setSound(next === 'on');
+    return;
+  }
+  const actionButton = event.target.closest('#coupleBearGame [data-couple-action]');
+  if (!actionButton) return;
+  triggerBearAction(actionButton.dataset.coupleAction);
+});
+document.addEventListener('click', event => {
+  const bear = event.target.closest('#coupleBearGame .couple-bear, #coupleBearGame #bearPoseSvg');
+  if (!bear) return;
+  triggerBearAction('pet');
+});
+document.addEventListener('click', event => {
+  if (!event.target.closest('#coupleBearGame')) return;
+  updateBearLoveMeter();
+}, true);
 
 // Open friend profiles from the card surface (but never from its Follow button).
 document.addEventListener('click', event => {
@@ -6995,258 +7311,6 @@ document.addEventListener('click', async e => {
   }
 });
 
-const bearLoveStorageKey = 'cuteBunnyBearLove:v1';
-const bearSoundStorageKey = 'cuteBunnyBearSounds:v1';
-function updateBearLoveMeter() { window.CuteBunnyBearHugs?.refreshUI?.(); }
-
-// Bear Hugs articulated SVG animation engine — embedded in the existing Home experience.
-
-function destroyBearPoseEngine() {
-  if (bearPoseEngine) {
-    bearPoseEngine.destroy();
-    bearPoseEngine = null;
-  }
-}
-function initBearPoseEngine() {
-  const svg = $('#bearPoseSvg');
-  if (!svg) return;
-  destroyBearPoseEngine();
-  bearPoseEngine = createBearPoseEngine(svg);
-}
-function bearActorIndex(gender) {
-  return String(gender || '').toLowerCase() === 'female' ? 1 : 0;
-}
-function createBearPoseEngine(svg) {
-  "use strict";
-  const $B = id => svg.querySelector('#' + id);
-  const R=Math.PI/180,G=318,CX=[200,400],S=[1,-1],L1=24,L2=20,NAME=["Daddy","Mommy"];
-  const COL=[{fur:"#9b6a47",st:"#6e4529",bel:"#c99a74",muz:"#e9cfb3",ear:"#d79a86",bow:"#8d7bd0"},
-  {fur:"#fffaf3",st:"#dcc5b4",bel:"#fffdf9",muz:"#f6e6dc",ear:"#f7c3d1",bow:"#ef8fb1"}];
-  const ACTS=[["hug","🤗","Hug"],["kiss","💋","Kiss"],["flykiss","😘","Flying Kiss"],["slap","🖐️","Playful Slap"],["hands","🫶","Hold Hands"],["feed","🍓","Feed"],["sleep","💤","Sleep"],["dance","💃","Dance"],["pet","🐾","Pet"],["tummy","🫳","Scratch Tummy"],["idle","🌸","Relax"]];
-  const reduceMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)").matches??false;
-  let active=true,rafId=0,snd=localStorage.getItem(bearSoundStorageKey)!=="off";
-  function bear(i){const c=COL[i],st=`stroke="${c.st}" stroke-width="2.6"`;
-const arm=n=>`<path id="${n}${i}o" fill="none" stroke="${c.st}" stroke-width="24.5" stroke-linecap="round" stroke-linejoin="round"/><circle id="${n}${i}co" r="14.2" fill="${c.st}"/><path id="${n}${i}f" fill="none" stroke="${c.fur}" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><g id="${n}${i}p"><circle r="12" fill="${c.fur}"/><ellipse cx="-3.5" cy="-3.5" rx="4.5" ry="3" fill="#fff" opacity=".25"/></g>`;
-const eye=k=>`<g id="e${i}${k}"><ellipse id="ee${i}${k}" rx="4.4" ry="5.4" fill="#3d2f2d"/><circle cx="1.4" cy="-1.8" r="1.7" fill="#fff"/><path id="ea${i}${k}" fill="none" stroke="#3d2f2d" stroke-width="2.4" stroke-linecap="round" opacity="0"/></g>`;
-return `<ellipse id="sh${i}" cy="${G+8}" rx="48" ry="8" fill="#9a6a86" opacity=".16"/>
-<g id="s${i}"><g id="p${i}"><g id="bd${i}">
-<g id="lg${i}l"><ellipse cx="-22" cy="-13" rx="19" ry="14" fill="${c.fur}" ${st}/><ellipse cx="-22" cy="-10" rx="9.5" ry="6.5" fill="${c.ear}" opacity=".85"/></g>
-<g id="lg${i}r"><ellipse cx="22" cy="-13" rx="19" ry="14" fill="${c.fur}" ${st}/><ellipse cx="22" cy="-10" rx="9.5" ry="6.5" fill="${c.ear}" opacity=".85"/></g>
-<ellipse cy="-50" rx="38" ry="40" fill="${c.fur}" ${st}/><ellipse cy="-46" rx="24" ry="28" fill="${c.bel}"/></g>
-<g id="a${i}">${arm("o"+0)}${arm("i"+0)}</g>
-<g id="h${i}"><circle cx="-43" cy="-76" r="15" fill="${c.fur}" ${st}/><circle cx="43" cy="-76" r="15" fill="${c.fur}" ${st}/><circle cx="-43" cy="-76" r="8" fill="${c.ear}"/><circle cx="43" cy="-76" r="8" fill="${c.ear}"/>
-<ellipse cy="-38" rx="58" ry="48" fill="${c.fur}" ${st}/>
-${i?`<g transform="translate(40 -88) rotate(20)"><path d="M0 0L-13-8 -13 8Z M0 0L13-8 13 8Z" fill="${c.bow}" stroke="#d3688f" stroke-width="1.5" stroke-linejoin="round"/><circle r="4" fill="#f9b6cd"/></g>`:""}
-<ellipse id="bl${i}l" cx="-39" cy="-27" rx="10" ry="6" fill="#ff8fb0" opacity=".5"/><ellipse id="bl${i}r" cx="39" cy="-27" rx="10" ry="6" fill="#ff8fb0" opacity=".5"/>
-<ellipse cy="-26" rx="15" ry="10.5" fill="${c.muz}"/><ellipse cy="-30" rx="5" ry="3.4" fill="#4a3433"/><circle cx="-1.3" cy="-31" r="1" fill="#fff" opacity=".7"/>
-<path id="mo${i}" transform="translate(0 -22)" fill="#b2606d" stroke="#4a3433" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
-${eye("l")}${eye("r")}</g></g></g>`}
-svg.innerHTML=`<defs><radialGradient id="gl" cx=".5" cy=".4"><stop offset="0" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
-<ellipse cx="300" cy="150" rx="280" ry="150" fill="url(#gl)"/>
-<path d="M0 270Q110 215 230 262T440 250T600 240V380H0Z" fill="#f6d6e4" opacity=".75"/><path d="M0 300Q140 255 300 290T600 280V380H0Z" fill="#eadcf7" opacity=".8"/>
-<g fill="#fff" opacity=".7"><ellipse cx="150" cy="160" rx="38" ry="12"/><ellipse cx="176" cy="152" rx="24" ry="12"/><ellipse cx="450" cy="172" rx="42" ry="12"/><ellipse cx="478" cy="163" rx="24" ry="11"/></g>
-<ellipse cx="300" cy="${G+10}" rx="280" ry="36" fill="#fdeedd" stroke="#e9c6da" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="round"/>
-<ellipse id="pil" cx="300" cy="${G-14}" rx="112" ry="22" fill="#f7d3e2" stroke="#e5b2c9" stroke-width="2.5" opacity="0"/>
-<g id="bears">${bear(0)}${bear(1)}<g id="tummyBackArm" opacity="0" pointer-events="none"><path id="tummyBackArmOutline" fill="none" stroke="#6e4529" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/><path id="tummyBackArmFill" fill="none" stroke="#9b6a47" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"/><g id="tummyBackPaw"><circle r="12.5" fill="#9b6a47" stroke="#6e4529" stroke-width="2.2"/><ellipse cx="-7" cy="-8" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><ellipse cx="0" cy="-10" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><ellipse cx="7" cy="-8" rx="4" ry="3.2" fill="#9b6a47" stroke="#6e4529" stroke-width="1.3"/><path d="M-4 2Q0 5 4 2" fill="none" stroke="#d7a58a" stroke-width="1.4" stroke-linecap="round"/></g></g></g><g font-family="Nunito,Segoe UI,sans-serif" font-size="10" font-weight="800" fill="#8b6a7e" text-anchor="middle"><text x="200" y="377">Daddy</text><text x="400" y="377">Mommy</text></g>
-<rect id="blk" x="0" y="0" width="600" height="400" fill="#5b4a9a" fill-opacity=".24" opacity="0" pointer-events="none"/>
-<g id="berry" opacity="0"><path d="M0 -10C-12 -11 -14 3 -8 11 -4 17 4 17 8 11 14 3 12 -11 0 -10Z" fill="#f0455f"/><g fill="#ffe7a8"><circle cx="-4" cy="0" r="1.2"/><circle cx="4" cy="-2" r="1.2"/><circle cx="0" cy="6" r="1.2"/><circle cx="5" cy="7" r="1.2"/><circle cx="-6" cy="8" r="1.2"/></g><path d="M0-10L-7-14 -3-9 0-15 3-9 7-14Z" fill="#6fbf73"/></g>
-<g id="fx"></g>`;
-
-  /* ---------- pose engine ---------- */
-const K=["x","y","rot","hr","hx","hy","eye","eh","mouth","pk","blush","i1","i2","o1","o2"];
-const P=[0,1].map(()=>({x:0,y:0,rot:0,hr:0,hx:0,hy:0,eye:1,eh:1,mouth:0,pk:0,blush:.3,i1:-12,i2:-6,o1:12,o2:6}));
-const ptL=(b,lx,ly)=>{const p=P[b],r=p.rot*R,vy=ly+50;return[CX[b]+S[b]*(p.x+lx*Math.cos(r)-vy*Math.sin(r)),G+p.y+lx*Math.sin(r)+vy*Math.cos(r)-50]};
-const ptH=(b,hx,hy)=>{const p=P[b],r=p.hr*R;return ptL(b,p.hx+hx*Math.cos(r)-hy*Math.sin(r),-70+p.hy+hx*Math.sin(r)+hy*Math.cos(r))};
-const toL=(b,wx,wy)=>{const p=P[b],r=p.rot*R,x1=S[b]*(wx-CX[b])-p.x,y1=wy-G-p.y+50;return[x1*Math.cos(r)+y1*Math.sin(r),-x1*Math.sin(r)+y1*Math.cos(r)-50]};
-function ik(tx,ty){const sx=28,sy=-76;let dx=tx-sx,dy=ty-sy,d=Math.hypot(dx,dy);const m=L1+L2-.5;if(d>m){dx*=m/d;dy*=m/d;d=m}d=Math.max(d,10);
-const tb=Math.atan2(-dx,dy),al=Math.acos(Math.max(-1,Math.min(1,(L1*L1+d*d-L2*L2)/(2*L1*d))));let best;
-for(const g of[1,-1]){const a=tb+g*al,ex=sx-L1*Math.sin(a),ey=sy+L1*Math.cos(a);if(!best||ey>best.ey)best={a,ex,ey}}
-const tt=Math.atan2(-(sx+dx-best.ex),sy+dy-best.ey);let a2=(tt-best.a)/R;a2=((a2+540)%360)-180;return[best.a/R,a2]}
-const fk=(s,a1,a2)=>{const t1=a1*R,t2=(a1+a2)*R,ex=s-L1*Math.sin(t1),ey=-76+L1*Math.cos(t1);return[[s,-76],[ex,ey],[ex-L2*Math.sin(t2),ey+L2*Math.cos(t2)],t2/R]};
-
-const V=[{},{}],EXP={eye:1,eh:1,mouth:1,pk:1,blush:1};let cur="idle",actor=0,role=0,t0=performance.now(),sleepF=0,berryS=1,rate=7;
-const idle=(b,t)=>{const w=Math.sin(t*1.2+b*1.7);return{x:0,y:0,rot:w*1.2,hr:Math.sin(t*.8+b*2.3)*3+2,hx:0,hy:0,eye:1,eh:1,mouth:0,pk:0,blush:.3,i1:-12+w*2,i2:-6,o1:12-w*2,o2:6}};
-const BITES=[1.4,2.8,4.0];
-const ACT={
-idle:()=>({}),
-flykiss:(t,b)=>{const other=1-actor,phase=t<.72?0:t<1.42?1:2,flutter=Math.sin(t*8);if(b===actor){const mouth=ptH(actor,0,-28),target=ptH(other,0,-34),point=phase===0?mouth:target;return{x:58+Math.sin(t*2)*1.2,rot:2,hr:phase===0?8:phase===1?19:5,hx:phase===1?12:0,eye:1,mouth:.25,blush:.82,ik:phase<2?[point[0],point[1]+(phase===1?flutter*1.6:0)]:null,i1:-28,i2:-12,o1:phase===1?30:18,o2:phase===1?20:10}}return{x:58,y:Math.abs(flutter)*.8,rot:Math.sin(t*5)*.8,hr:t>1.05?-5:0,eye:t>1.05?.12:1,mouth:.48,blush:.98,i1:-24,i2:-10,o1:24,o2:10}},
-slap:(t,b)=>{const other=1-actor,impact=t>.82&&t<1.18,cheek=ptH(other,other===0?-32:32,-34),recoil=t>.86&&t<1.9;if(b===actor){return{x:68,rot:3,hr:t<.55?8:impact?24:8,hx:impact?16:0,eye:1,mouth:.22,blush:.6,ik:t>.32&&t<1.22?[cheek[0],cheek[1]+(impact?Math.sin(t*34)*1.5:0)]:null,i1:-28,i2:-12,o1:impact?34:18,o2:impact?22:10}}const kick=recoil?Math.sin((t-.86)*17):0;return{x:66+kick*5,y:Math.abs(kick)*1.2,rot:recoil?-kick*2.8:0,hr:recoil?-12-kick*3:0,eye:recoil?.12:1,mouth:recoil?.7:.15,blush:recoil?1:.45,i1:-24,i2:-10,o1:24,o2:10}},
-tummy:(t,b)=>{const sw=Math.sin(t*9),rub=t>.45&&t<4.05;if(b===actor){return{x:75+Math.sin(t*2)*1.2,rot:3,hr:rub?22+sw*2:9,hx:rub?20:6,eye:1,mouth:.22,blush:.65,i1:-16,i2:-8,o1:18,o2:8}}return{x:75,y:Math.abs(sw)*1.4,rot:Math.sin(t*9)*1.1,hr:-8+Math.sin(t*9)*2,eye:rub?.18:1,mouth:.42,blush:.95,i1:-24,i2:-10,o1:24,o2:10}},
-hug:(t,b)=>{const o=1-b,sq=t>1.4?Math.sin((t-1.4)*3.2):0,r={x:64+2*sq,y:-2.5*Math.abs(sq),rot:2,hr:12,hx:-18,hy:2*sq,eye:t>.9?.1:1,mouth:.1,blush:.9,o1:30,o2:20};
- if(t<.6)Object.assign(r,{i1:-82,i2:-8,o1:82,o2:8,hr:3,hx:0,x:36,y:-5*Math.abs(Math.sin(t*5))});else r.ik=ptL(o,-6,-58);return r},
-kiss:(t,b)=>{const a=actor,o=1-a,go=t>.8&&t<2.6;
- if(b===a)return{x:go?68:50,rot:go?6:0,hr:go?22:5,hx:go?32:0,eye:go?.1:1,mouth:go?.3:.1,pk:go?1:0,blush:.7,ik:t>.4?ptL(o,-14,-66):null,i1:-40,i2:-10};
- const sh=t>1.2&&t<2.9;return{x:50,hr:sh?-4:6,hy:sh?-3:0,eye:t>1.25&&t<3?.1:1,mouth:.12,blush:t>1.2?1:.5,ik:sh?ptH(b,34,-24):null,i1:-40,i2:-10}},
-hands:t=>({x:38,hr:8,eye:1,mouth:.2,blush:.7,ik:[300,G-52+Math.sin(t*2.2)*3.5],i1:-20,y:-1.5*Math.abs(Math.sin(t*2.2))}),
-sleep:(t,b)=>({x:12,y:12,rot:72,hr:-48,hx:20,hy:2,eye:0,eh:0,mouth:0,blush:.45,i1:-32,i2:-12,o1:30,o2:12}),
-dance:(t,b)=>{const ph=t*1.7*Math.PI,hop=Math.abs(Math.sin(ph)),sw=Math.sin(ph/2),sg=b?-1:1;
- return{x:38+12*sw*sg,y:-16*hop,rot:sg*sw*7,hr:sg*Math.sin(ph/2+.8)*10,hy:2*hop,eye:.1,mouth:.35+.4*hop,blush:.9,ik:[300+sw*10,G-98+Math.sin(ph*2)*5],o1:105+35*Math.sin(ph*2+b*Math.PI),o2:10}},
-pet:(t,b)=>{const r=1-actor,sw=Math.sin(t*5);
- return b===actor?{x:64,hr:-5,hx:-8,mouth:.2,blush:.6,ik:(h=>[h[0]+sw*4,h[1]+Math.sin(t*5+1.2)*2.5])(ptH(r,-34,-50))}
- :{x:64,hr:14+sw*2,hx:16,hy:Math.abs(sw)*1.8,eye:.1,blush:1,mouth:.25}},
-feed:(t,b)=>{const a=actor,r=1-a,open=(t>1.1&&t<1.7)||(t>2.65&&t<3)||(t>3.85&&t<4.2),chew=(t>1.7&&t<2.65)||(t>3&&t<3.85)||(t>4.2&&t<5.2);
- if(b===a){const k=t<.9?40:open?14:chew?34:t<5.2?34:44,M=ptH(r,0,-22);return{x:64,hr:-6,hx:-16,mouth:.25,blush:.6,ik:[M[0]-S[a]*k,M[1]+2]}}
- return{x:64,hr:open?12:chew?7:4,hx:open?8:chew?3:0,mouth:open?.9:chew?.2+.2*Math.abs(Math.sin(t*14)):t>5.2?.05:0,eye:chew?.12:1,blush:chew||t>5.2?.9:.5}}
-};
-const END={kiss:3.8,flykiss:3.6,slap:2.8,feed:6.8,tummy:4.6};
-
-
-  /* ---------- audio ---------- */
-let ac,master,nbuf;
-function A(){if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;ac=new C();master=ac.createGain();master.gain.value=(snd ? .9 : 0);master.connect(ac.destination);
- const n=ac.sampleRate*1.8|0,ib=ac.createBuffer(2,n,ac.sampleRate);for(let c=0;c<2;c++){const d=ib.getChannelData(c);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3)}
- const cv=ac.createConvolver(),wg=ac.createGain();cv.buffer=ib;wg.gain.value=.3;master.connect(wg);wg.connect(cv);cv.connect(ac.destination);
- nbuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);const d=nbuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
- if(ac.state==="suspended")ac.resume();return ac}
-function tone(f,d,v=.05,ty="sine",dl=0,gl=0){if(!snd)return;const c=A();if(!c)return;const t=c.currentTime+dl,o=c.createOscillator(),g=c.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(gl)o.frequency.exponentialRampToValueAtTime(gl,t+d);
- g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+Math.min(.03,d/3));g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.05)}
-function nz(d,v,f,ty="bandpass",dl=0,att=.01){if(!snd)return;const c=A();if(!c)return;const t=c.currentTime+dl,s=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();s.buffer=nbuf;fl.type=ty;fl.frequency.value=f;fl.Q.value=.9;
- g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(fl);fl.connect(g);g.connect(master);s.start(t,Math.random());s.stop(t+d+.05)}
-const kiss=()=>{tone(280,.12,.04,"sine",0,400);nz(.025,.16,3400,"bandpass",.1);tone(1250,.08,.09,"sine",.1,380);nz(.05,.08,1300,"lowpass",.11);tone(1976,.4,.022,"sine",.2);tone(2637,.3,.012,"sine",.26)};
-const crunch=()=>{for(let i=0;i<4;i++)nz(.022,.2-.03*i,2200+Math.random()*2600,"bandpass",i*.04);tone(130,.09,.08,"sine",0,70)};
-const chew=n=>{for(let i=0;i<n;i++){const d=i*.26;nz(.13,.07,520+Math.random()*200,"lowpass",d);tone(230,.1,.03,"sine",d,150)}};
-const yum=()=>{tone(392,.14,.05,"triangle",0,350);tone(523,.22,.045,"triangle",.14,600);tone(659,.4,.035,"sine",.3)};
-const box=(f,d=0,v=.03)=>{tone(f,1.5,v,"sine",d);tone(f*2,.9,v*.3,"sine",d);tone(f*3,.5,v*.12,"sine",d)};
-const breath=()=>{nz(1.6,.05,620,"bandpass",0,1.2);nz(1.7,.04,400,"bandpass",1.7,.3);tone(98,3.2,.014)};
-const LULL=[[784,659,587,659],[784,784,784,0],[659,659,659,0],[784,988,988,0]];
-const SC=[523,587,659,784,880],MEL=[0,2,4,2,3,2,1,-1,0,2,4,3,4,2,1,-1],BASS=[131,196,220,175];
-const pluck=f=>{tone(f,.22,.05,"triangle");tone(f*2,.14,.015,"sine")};
-const beat=n=>{const bt=n>>1;if(n%2===0){tone(125,.2,.14,"sine",0,42);if(bt%2)nz(.1,.09,1900);tone(BASS[(bt>>1)%4],.5,.05,"triangle")}else nz(.04,.03,7500,"highpass");const m=MEL[n%16];if(m>=0)pluck(SC[m])};
-const pat=n=>{tone(230,.16,.06,"sine",0,150);tone(880,.6,.012,"sine",.02);if(n%4===0)tone(330,.7,.03,"triangle",.05,392)};
-let tm=[],lp=[];const later=(f,ms)=>{const id=setTimeout(f,ms);tm.push(id);return id},loop=(f,ms)=>{f(0);let n=0;lp.push(setInterval(()=>f(++n),ms))};
-const mid=()=>[300,G-90];
-
-
-  /* ---------- fx ---------- */
-function flyFx(sym,x1,y1,x2,y2,col="#f28db5",sz=22){const e=document.createElementNS("http://www.w3.org/2000/svg","text");e.textContent=sym;e.setAttribute("x",x1);e.setAttribute("y",y1);e.setAttribute("fill",col);e.setAttribute("font-size",sz);e.setAttribute("text-anchor","middle");e.style.transformBox="fill-box";e.style.transformOrigin="center";$B("fx").appendChild(e);if(reduceMotion){e.setAttribute("x",x2);e.setAttribute("y",y2);e.setAttribute("opacity",".8");return}const dx=x2-x1,dy=y2-y1;e.animate([{transform:"translate(0,0) scale(.55)",opacity:0},{opacity:1,offset:.18},{transform:`translate(${dx}px,${dy}px) scale(1.25)`,opacity:0}],{duration:1250,easing:"cubic-bezier(.2,.7,.25,1)"}).onfinish=()=>e.remove()}
-function fx(sym,x,y,col="#f4789f",sz=22){const e=document.createElementNS("http://www.w3.org/2000/svg","text");e.textContent=sym;e.setAttribute("x",x);e.setAttribute("y",y);e.setAttribute("fill",col);e.setAttribute("font-size",sz);e.setAttribute("text-anchor","middle");e.style.transformBox="fill-box";e.style.transformOrigin="center";$B("fx").appendChild(e);
- if(reduceMotion){e.setAttribute("opacity",".75");return}const dx=(Math.random()-.5)*50;e.animate([{transform:"translate(0,0) scale(.4)",opacity:0},{opacity:1,offset:.25},{transform:`translate(${dx}px,-70px) scale(1.15)`,opacity:0}],{duration:1900,easing:"ease-out"}).onfinish=()=>e.remove()}
-const burst=(x,y,n=5,sym="♥")=>{for(let i=0;i<n;i++)later(()=>fx(sym,x+(Math.random()-.5)*50,y,i%2?"#f4789f":"#d79ae8",16+Math.random()*14),i*130)};
-
-
-  /* ---------- actions ---------- */
-const TXT=(a,by)=>{const o=1-by,n=NAME[by],m=NAME[o];return{hug:`${n} hugs ${m} 🤗`,kiss:`${n} gives ${m} a sweet kiss 💋`,hands:`${n} and ${m} hold paws 🫶`,feed:`${n} shares a strawberry with ${m} 🍓`,sleep:`${n} and ${m} drift off peacefully 💤`,dance:`${n} and ${m} are dancing together 💃`,pet:`${n} gently pets ${m} 🐾`,tummy:`${n} gives ${m} gentle tummy tickles! 🫳`,flykiss:`${n} blows ${m} a flying kiss! 💋`,slap:`${n} gives ${m} a playful little slap! 🖐️`,idle:`${n} and ${m} are relaxing 🌸`}[a]};
-function start(a,by){tm.forEach(clearTimeout);lp.forEach(clearInterval);tm=[];lp=[];$B("fx").innerHTML="";
- cur=a;actor=by;t0=performance.now();rate=a==="dance"?13:a==="sleep"?4.5:7;berryS=1;
- const bears=$B("bears"),backArm=$B("tummyBackArm");if(a==="tummy"){bears.appendChild($B("s"+by));bears.appendChild(backArm);bears.appendChild($B("s"+(1-by)));}else{backArm.setAttribute("opacity","0");const ord=a==="flykiss"||a==="slap"||a==="feed"||a==="pet"||a==="kiss"?[1-by,by]:[0,1];ord.forEach(i=>bears.appendChild($B("s"+i)));}
- const scene=svg.closest(".couple-bears-scene");if(scene)scene.dataset.action=a;
- if(a==="hug"){tone(262,1.4,.04);tone(330,1.4,.035,"sine",.06);tone(392,1.5,.03,"sine",.12);later(()=>{tone(196,1,.06,"triangle");tone(523,.9,.02,"sine",.1);burst(300,G-170,5)},1250)}
- if(a==="kiss"){later(()=>{kiss();burst(300,G-170,6)},1350);later(()=>{nz(.03,.1,2500);tone(900,.06,.05,"sine",0,500)},2600)}
- if(a==="flykiss"){later(()=>{tone(740,.16,.04,"sine",0,980);tone(988,.22,.035,"sine",.12,1318);const from=ptH(by,0,-28),to=ptH(1-by,0,-34);flyFx("♡",from[0],from[1],to[0],to[1],"#ed79a5",27);later(()=>flyFx("💋",from[0],from[1]-4,to[0],to[1]-12,"#e98bad",20),180)},850)}
- if(a==="slap"){later(()=>{tone(210,.11,.07,"triangle",0,115);nz(.045,.08,1450,"bandpass",.015);const cheek=ptH(1-by,1-by===0?-32:32,-34);burst(cheek[0],cheek[1],5,"✦")},920)}
- if(a==="hands"){later(()=>{[1047,1319,1568,2093,1568].forEach((f,i)=>tone(f,.55,.025,"sine",i*.08));burst(300,G-70,5,"✦")},800)}
- if(a==="feed"){BITES.forEach((b,index)=>later(()=>{crunch();later(()=>chew(3),220);if(index===2)later(yum,500)},b*1000));later(()=>burst(CX[1-by]+S[1-by]*30,G-190,4),5600)}
- if(a==="sleep"){loop(n=>{breath();LULL[n%4].forEach((f,k)=>f&&box(f,k*.8));if(n%2===0)later(()=>fx("z",300+(Math.random()-.5)*60,G-100,"#9b86d6",20+Math.random()*10),500)},3400)}
- if(a==="dance"){loop(n=>{beat(n);if(n%4===0)fx("♪",300+(Math.random()-.5)*120,G-170,"#b08be0",22)},294)}
- if(a==="pet"){tone(300,.5,.03,"triangle");loop(n=>{pat(n);if(n%2==0){const h=ptH(1-by,0,-80);fx("♥",h[0],h[1]-20,"#f4789f",16)}},628)}
-  if(a==="tummy"){tone(660,.18,.035,"sine",0,820);tone(784,.2,.03,"sine",.22,988);loop(n=>{pat(n);if(n%2===0){const side=by===0?1:-1,hx=CX[1-by]+side*(63+Math.sin(n*1.8)*2),hy=G-38+Math.sin(n*2.4)*5;fx(n%4===0?"♡":"✦",hx,hy-10,"#f28db5",14+Math.random()*5)}},420)}
- if(a==="idle"){tone(392,.7,.025,"sine",0,330)}
- if(END[a])later(()=>{if(cur===a)start("idle",by)},END[a]*1000)}
-
-  /* ---------- render loop ---------- */
-const blink=[{n:1.5,u:0},{n:3,u:0}];let last=performance.now();
-const setT=(id,v)=>$B(id).setAttribute("transform",v);
-function drawArm(b,n,s,a1,a2){const f=fk(s,a1,a2),d=`M${f[0][0]} ${f[0][1]}Q${f[1][0]} ${f[1][1]} ${f[2][0]} ${f[2][1]}`,id=n+0+b;
- $B(id+"o").setAttribute("d",d);$B(id+"f").setAttribute("d",d);$B(id+"co").setAttribute("cx",f[2][0]);$B(id+"co").setAttribute("cy",f[2][1]);setT(id+"p",`translate(${f[2][0]} ${f[2][1]}) rotate(${f[3]})`);return f}
-function frame(now){if(!active||!svg.isConnected)return;const dt=Math.min(.05,(now-last)/1e3);last=now;const t=(now-t0)/1e3,ts=now/1e3,k=1-Math.exp(-dt*rate);
- sleepF+=((cur==="sleep"?1:0)-sleepF)*(1-Math.exp(-dt*2.5));
- const tg=[0,1].map(b=>{const o=Object.assign(idle(b,ts),ACT[cur](t,b));if(o.ik){const[a1,a2]=ik(...toL(b,o.ik[0],o.ik[1]));o.i1=a1;o.i2=a2}return o});
- for(let b=0;b<2;b++){const p=P[b],g=tg[b];for(const key of K){if(EXP[key])p[key]+=(g[key]-p[key])*(1-Math.exp(-dt*(key==="eye"?16:9)));else{const arm=key[0]==="i"||key[0]==="o",w=(arm?1.25:1)*rate*1.15,z=arm?.72:.78,vv=V[b];vv[key]=(vv[key]||0)+((g[key]-p[key])*w*w-2*z*w*(vv[key]||0))*dt;p[key]+=vv[key]*dt}}
- const br=reduceMotion?0:Math.sin(ts*(sleepF>.5?1.5:2.1)+b),bs=1+br*(.012+.02*sleepF),bl=blink[b];
- if(!reduceMotion&&ts>bl.n){bl.u=ts;bl.n=ts+2.5+Math.random()*3}const bf=!reduceMotion&&ts-bl.u<.14?.1:1;
- setT("s"+b,`translate(${CX[b]} ${G+p.y}) scale(${S[b]} 1)`);setT("p"+b,`translate(${p.x} 0) rotate(${p.rot} 0 -50)`);
- {const mv=reduceMotion?0:(cur==="dance"?1:Math.min(1,Math.abs(V[b].x||0)/22)),ph=ts*(cur==="dance"?1.7*Math.PI*2:13),ll=Math.max(0,Math.sin(ph))*mv,lr=Math.max(0,-Math.sin(ph))*mv,sp=sleepF*14;
- setT("lg"+b+"l",`translate(0 ${-ll*7}) rotate(${-ll*10-sp} -22 -22)`);setT("lg"+b+"r",`translate(0 ${-lr*7}) rotate(${lr*10+sp} 22 -22)`)}
- setT("bd"+b,`translate(0 -10) scale(1 ${bs}) translate(0 10)`);
- setT("h"+b,`translate(${p.hx} ${-70+p.hy-br*(.8+sleepF)}) rotate(${p.hr})`);
- drawArm(b,"o",-28,p.o1,p.o2);drawArm(b,"i",28,p.i1,p.i2);
- const cl=p.eye<.25,op=Math.max(.06,p.eye*bf);
- for(const e of["l","r"]){const x=e==="l"?-26:26;setT("e"+b+e,`translate(${x} -36)`);const ee=$B("ee"+b+e);ee.setAttribute("ry",5.4*op);ee.style.opacity=cl?0:1;
-  const ea=$B("ea"+b+e);ea.setAttribute("d",`M-5.5 ${p.eh>.5?2:-1}Q0 ${p.eh>.5?-5:6} 5.5 ${p.eh>.5?2:-1}`);ea.style.opacity=cl?1:0;$B("bl"+b+e).style.opacity=Math.min(1,p.blush)}
- const m=Math.max(0,p.mouth),w=6.5-3.5*p.pk,tp=6*(1-m*.9),bt=6+16*m;
- $B("mo"+b).setAttribute("d",`M${-w} 0Q0 ${tp} ${w} 0Q0 ${bt} ${-w} 0Z`);
- const sh=$B("sh"+b);sh.setAttribute("cx",CX[b]+S[b]*p.x);sh.setAttribute("rx",48-p.y*.7);sh.setAttribute("opacity",.16*(1-sleepF)*(1+p.y/60))}
- const backArm=$B("tummyBackArm");if(cur==="tummy"){const side=actor===0?1:-1,target=1-actor,startX=CX[actor]+S[actor]*(P[actor].x+28),startY=G+P[actor].y-76,endX=startX+side*42,endY=startY+8+Math.sin(t*9)*3.2,controlX=(startX+endX)/2,controlY=startY+5+Math.sin(t*4)*2;const path=`M${startX} ${startY} Q${controlX} ${controlY} ${endX} ${endY}`;const c=COL[actor];$B("tummyBackArmOutline").setAttribute("d",path);$B("tummyBackArmFill").setAttribute("d",path);$B("tummyBackArmOutline").setAttribute("stroke",c.st);$B("tummyBackArmFill").setAttribute("stroke",c.fur);$B("tummyBackPaw").setAttribute("transform",`translate(${endX} ${endY}) rotate(${side*8+Math.sin(t*9)*7})`);backArm.setAttribute("opacity",t>.35&&t<4.25?"1":"0")}else backArm.setAttribute("opacity","0");
- $B("pil").setAttribute("opacity",sleepF);$B("blk").setAttribute("opacity",sleepF);
- const bs=$B("berry");if(cur==="feed"&&t<5.3){const f=fk(28,P[actor].i1,P[actor].i2),h=f[2],rad=f[3]*R,wp=ptL(actor,h[0]-Math.sin(rad)*8,h[1]+Math.cos(rad)*8),sc=t<1.7?1:t<3?.66:t<4.2?.36:0;
-  berryS+=(sc-berryS)*(1-Math.exp(-dt*14));bs.setAttribute("transform",`translate(${wp[0]} ${wp[1]}) scale(${berryS*.9}) rotate(${-S[actor]*20})`);bs.setAttribute("opacity",berryS>.05?1:0)}else bs.setAttribute("opacity",0);
- rafId=requestAnimationFrame(frame)}
-rafId=requestAnimationFrame(frame);
-  function setSound(enabled) {
-    snd=!!enabled;
-    if(master&&ac&&ac.state!=="closed") {
-      try { master.gain.setTargetAtTime(snd ? .9 : 0,ac.currentTime,.04); } catch {}
-    }
-  }
-  function destroy() {
-    if(!active)return;
-    active=false;
-    cancelAnimationFrame(rafId);
-    tm.forEach(clearTimeout); lp.forEach(clearInterval);
-    tm=[]; lp=[];
-    if(ac&&ac.state!=="closed") void ac.close().catch(()=>{});
-  }
-  return {
-    play(action,by){if(active&&ACT[action])start(action,by===1?1:0)},
-    setSound,
-    destroy
-  };
-}
-
-function syncBearViewerRole() {
-  const scene = $('#coupleBearGame .couple-bears-scene');
-  if (scene) scene.dataset.viewerGender = me?.gender || '';
-}
-function triggerBearAction(action, options = {}) {
-  const scene = $('#coupleBearGame .couple-bears-scene');
-  if (!scene) return;
-  const messages = {
-    hug: 'A big, warm bear hug! ♡',
-    kiss: 'A tiny kiss, sealed with a heart. 💗',
-    hands: 'Together, paw in paw. ♡',
-    dance: 'Look at them dance! Two happy little bears. ✨',
-    pet: 'A gentle head pat. They love it! 🐾',
-    feed: 'Strawberries for two. Yum, yum! 🍓',
-    sleep: 'Shhh… the little bears are dreaming together. 🌙',
-    idle: 'Mommy and Daddy are relaxing together. 🌸'
-  };
-  scene.dataset.action = action;
-  bearPoseEngine?.play(action, bearActorIndex(options.gender || me?.gender));
-  const status = $('#coupleBearStatus');
-  if (status) status.textContent = messages[action] || 'Two little bears, one big love.';
-  document.querySelectorAll('#coupleBearGame [data-couple-action]').forEach(button => {
-    button.setAttribute('aria-pressed', String(button.dataset.coupleAction === action));
-  });
-  // Shared Bear Hugs points are awarded by the progression module
-  // only after an action is successfully delivered to the accepted partner.
-  updateBearLoveMeter();
-  if (!options.remote) publishBearAction(action);
-}
-document.addEventListener('click', event => {
-  const soundToggle = event.target.closest('#bearSoundToggle');
-  if (soundToggle) {
-    const next = localStorage.getItem(bearSoundStorageKey) === 'off' ? 'on' : 'off';
-    try { localStorage.setItem(bearSoundStorageKey, next); } catch {}
-    updateBearLoveMeter();
-    bearPoseEngine?.setSound(next === 'on');
-    return;
-  }
-  const actionButton = event.target.closest('#coupleBearGame [data-couple-action]');
-  if (!actionButton) return;
-  triggerBearAction(actionButton.dataset.coupleAction);
-});
-document.addEventListener('click', event => {
-  const bear = event.target.closest('#coupleBearGame .couple-bear, #coupleBearGame #bearPoseSvg');
-  if (!bear) return;
-  triggerBearAction('pet');
-});
-document.addEventListener('click', event => {
-  if (!event.target.closest('#coupleBearGame')) return;
-  updateBearLoveMeter();
-}, true);
-
-
-
 function syncChatComposerState(field = $('#chatInput')) {
   const send = $('#chatSend');
   const composer = $('#chatComposer');
@@ -7648,7 +7712,7 @@ sharedAudioElement?.addEventListener('playing', () => {
 // Restore the original PR #115 global boing feedback for every enabled button.
 document.addEventListener('click', event => {
   const button = event.target.closest?.('button, [role="button"]');
-  if (!button || button.closest('#nav, nav') || button.disabled) return;
+  if (!button || button.closest('#nav, nav, #coupleBearGame') || button.disabled) return;
   playCuteSound('boing');
 });
 
