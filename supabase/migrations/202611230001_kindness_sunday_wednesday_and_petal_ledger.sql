@@ -86,7 +86,7 @@ begin
  where extract(isodow from day_value) in (3,7)
  and (day_value::date>local_day or local_now::time<time '23:00');
  return jsonb_build_object('state',case when active_today then 'active' else 'waiting' end,
-  'show_poster',dow in (3,7),'bubble_count',coalesce(bubbles,0),'timezone',tz,
+  'show_poster',active_today,'bubble_count',coalesce(bubbles,0),'timezone',tz,
   'starts_at',((coalesce(next_day,local_day)::timestamp+time '23:00') at time zone tz),
   'days',jsonb_build_array('Sunday','Wednesday'));
 end;$f$;
