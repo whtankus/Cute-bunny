@@ -1979,10 +1979,8 @@ async function loadKindnessEventStatus() {
   const {data,error}=await sb.rpc('get_kindness_event_status');if(error)throw error;
   if(String(me?.id||'')!==userId)return null;
   kindnessEventStatus=data&&typeof data==='object'?data:null;kindnessEventStatusUserId=userId;
-  if(kindnessEventStatus?.show_poster){
-   const {data:garden,error:gardenError}=await sb.from('profile_garden_collections').select('petal_points').eq('user_id',userId).maybeSingle();
-   if(!gardenError&&String(me?.id||'')===userId&&garden)cloudPetalPoints=Math.max(0,Number(garden.petal_points)||0);
-  }
+  const {data:garden,error:gardenError}=await sb.from('profile_garden_collections').select('petal_points').eq('user_id',userId).maybeSingle();
+  if(!gardenError&&String(me?.id||'')===userId&&garden)cloudPetalPoints=Math.max(0,Number(garden.petal_points)||0);
   if(page==='streak')renderStreakPage();else if(page==='home')render();
   return kindnessEventStatus;
  }catch(error){console.warn('Kindness event status could not be loaded:',error?.message||error);return null;}
