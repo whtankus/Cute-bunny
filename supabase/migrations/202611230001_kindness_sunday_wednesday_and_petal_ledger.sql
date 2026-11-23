@@ -54,27 +54,34 @@ language plpgsql security definer set search_path=''
 as $f$
 declare
  uid uuid:=auth.uid(); tz text; local_now timestamp; local_day date; dow integer;
- active_today boolean; next_day date; bubbles integer:=0; previous_day date;
- previous_count integer; previous_claimed timestamptz;
+ active_today boolean; next_day date; bubbles integer:=0; credited_total bigint:=0;
 begin
  if uid is null then raise exception 'Authentication required'; end if;
  select coalesce(nullif(streak_timezone,''),'UTC') into tz from public.profiles where id=uid;
  tz:=coalesce(tz,'UTC'); local_now:=now() at time zone tz; local_day:=local_now::date;
  dow:=extract(isodow from local_now)::integer; active_today:=dow in (3,7) and local_now::time>=time '23:00';
 
- -- Settle the last completed session once, even if the user missed midnight.
- select d.event_date,d.bubble_count,d.claimed_at into previous_day,previous_count,previous_claimed
- from private.kindness_event_daily d
- where d.user_id=uid and d.event_date<local_day and extract(isodow from d.event_date) in (3,7)
- order by d.event_date desc limit 1 for update;
- if previous_day is not null and previous_count>0 and previous_claimed is null then
-  update private.kindness_event_daily set claimed_at=now()
-   where user_id=uid and event_date=previous_day and claimed_at is null;
-  if found then
-   insert into public.profile_garden_collections(user_id,petal_points,updated_at)
-   values(uid,previous_count,now())
-   on conflict(user_id) do update set petal_points=public.profile_garden_collections.petal_points+excluded.petal_points,updated_at=now();
-  end if;
+ -- Credit every completed, unclaimed Sunday/Wednesday session. This catches
+ -- up users who were offline for multiple event days, without double-crediting.
+ with completed_sessions as (
+  update private.kindness_event_daily
+  set claimed_at=now()
+  where user_id=uid
+    and event_date<local_day
+    and extract(isodow from event_date) in (3,7)
+    and bubble_count>0
+    and claimed_at is null
+  returning bubble_count
+ )
+ select coalesce(sum(bubble_count),0)::bigint into credited_total
+ from completed_sessions;
+
+ if credited_total>0 then
+  insert into public.profile_garden_collections(user_id,petal_points,updated_at)
+  values(uid,credited_total,now())
+  on conflict(user_id) do update
+   set petal_points=public.profile_garden_collections.petal_points+excluded.petal_points,
+       updated_at=now();
  end if;
 
  if active_today then
