@@ -1,4 +1,4 @@
-const CACHE_NAME = "cute-bunny-shell-v350";
+const CACHE_NAME = "cute-bunny-shell-v372";
 const APP_ASSETS = [
   "./",
   "./index.html",
