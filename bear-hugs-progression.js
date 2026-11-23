@@ -192,7 +192,10 @@ function updateUI() {
     careStrip.className = 'bear-care-strip';
     careStrip.setAttribute('aria-label', 'Shared Care Points and Bear Hugs level');
   }
-  if (scene) scene.insertAdjacentElement('beforebegin', careStrip);
+  const actions = $('.couple-bear-actions', root);
+  if (actions) actions.insertAdjacentElement('afterend', careStrip);
+  else if (scene) scene.insertAdjacentElement('afterend', careStrip);
+  else root.appendChild(careStrip);
   careStrip.innerHTML =
     '<div class="bear-care-strip-head">' +
       '<div class="bear-care-total"><span class="bear-care-mark" aria-hidden="true">✿</span><span><small>SHARED CARE POINTS</small><b>' + points.toLocaleString() + '</b></span></div>' +
@@ -500,9 +503,7 @@ function updatePartnerChip() {
   chip.setAttribute('aria-label', accepted ? 'Manage Bearfriend' : 'Choose Bearfriend');
   chip.title = accepted ? 'Manage Bearfriend' : 'Choose Bearfriend';
   const scene = $('.couple-bears-scene', root);
-  const careStrip = $('#bearCarePointsStrip', root);
-  const anchor = careStrip || scene;
-  if (anchor) anchor.insertAdjacentElement('beforebegin', chip);
+  if (scene) scene.insertAdjacentElement('beforebegin', chip);
   else root.appendChild(chip);
 }
 function updateConnectionStatus() {
