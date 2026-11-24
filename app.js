@@ -1025,7 +1025,7 @@ function readStreakHeartMilestones() {
 }
 function saveStreakHeartMilestones(count) {
   const earned = readStreakHeartMilestones();
-  [10, 100, 250, 500, 750, 1000].forEach(value => { if (count >= value) earned.add(value); });
+  [10, 100, 250, 500, 750, 1000, 1500, 2000].forEach(value => { if (count >= value) earned.add(value); });
   try { localStorage.setItem(streakStorageKey('heart-milestones'), JSON.stringify([...earned].sort((a,b) => a-b))); } catch {}
 }
 function readStreakDailyQuests(dateKey) {
@@ -1033,6 +1033,8 @@ function readStreakDailyQuests(dateKey) {
     const saved = JSON.parse(localStorage.getItem(streakStorageKey('daily-quests:' + dateKey)) || '{}');
     return {
       hearts: Array.isArray(saved.hearts) ? [...new Set(saved.hearts.map(String))] : [],
+      bearActions: Array.isArray(saved.bearActions) ? saved.bearActions.slice(-99).map(String).filter(action => ['hug','kiss','flykiss','hands','dance','pet','feed','sleep','tummy','idle'].includes(action)) : [],
+      bearActionIds: Array.isArray(saved.bearActionIds) ? saved.bearActionIds.slice(-120).map(String) : [],
       photo: saved.photo === true,
       photoCount: Math.max(saved.photo === true ? 1 : 0, Number(saved.photoCount) || 0),
       kissNote: saved.kissNote === true,
@@ -1044,7 +1046,7 @@ function readStreakDailyQuests(dateKey) {
       login: saved.login === true,
       badge: saved.badge === true
     };
-  } catch { return {hearts:[], photo:false, photoCount:0, kissNote:false, kissNotes:0, note:0, noteTexts:[], song:false, songCount:0, login:false, badge:false}; }
+  } catch { return {hearts:[], bearActions:[], bearActionIds:[], photo:false, photoCount:0, kissNote:false, kissNotes:0, note:0, noteTexts:[], song:false, songCount:0, login:false, badge:false}; }
 }
 function writeStreakDailyQuests(dateKey, state) {
   try { localStorage.setItem(streakStorageKey('daily-quests:' + dateKey), JSON.stringify(state)); } catch {}
@@ -1126,13 +1128,23 @@ function getDailyQuestRotation(dateKey) {
   const elapsedDays = Number.isFinite(startDate.getTime()) && Number.isFinite(currentDate.getTime())
     ? Math.max(0, Math.floor((currentDate - startDate) / 86400000)) : 0;
   const dayIndex = elapsedDays % 20;
-  const entries = [chatQuests[dayIndex], photoQuests[dayIndex], communityQuests[dayIndex]];
+  // Bear Hugs missions rotate into the community slot on five days of each
+  // 20-day cycle, keeping the daily set at three quests.
+  const bearHugQuests = {
+    3: ['A warm bear hug','Give your Bearfriend two hugs.','bear-action','heart','hug',2],
+    7: ['A kiss for your Bearfriend','Share two kisses with your Bearfriend.','bear-action','heart','kiss',2],
+    11: ['A little bear cuddle','Pet your Bearfriend three times.','bear-action','heart','pet',3],
+    15: ['Dance together','Share two dances with your Bearfriend.','bear-action','heart','dance',2],
+    19: ['Three caring moments','Share any three Bear Hugs actions together.','bear-action','heart',null,3]
+  };
+  const entries = [chatQuests[dayIndex], photoQuests[dayIndex], bearHugQuests[dayIndex] || communityQuests[dayIndex]];
 
   return entries.map((entry, slot) => {
     const [title, description, kind, art, match, target = 1] = entry;
     const id = 'day-' + (dayIndex + 1) + '-quest-' + (slot + 1);
     const progress = state => {
       if (kind === 'heart') return Math.min(target, state.hearts.length);
+      if (kind === 'bear-action') return Math.min(target, state.bearActions.filter(action => !match || action === match).length);
       if (kind === 'photo') return Math.min(target, state.photoCount);
       if (kind === 'song') return Math.min(target, state.songCount);
       if (kind === 'kiss-note') return Math.min(target, state.kissNotes);
@@ -1382,6 +1394,71 @@ function gardenIllustration(kind) {
     'divine-lotus':'<defs><radialGradient id="lotusAura"><stop stop-color="#f47da9" stop-opacity=".48"/><stop offset=".52" stop-color="#f47da9" stop-opacity=".28"/><stop offset=".82" stop-color="#f47da9" stop-opacity=".12"/><stop offset="1" stop-color="#f47da9" stop-opacity="0"/></radialGradient><linearGradient id="lotusOuter" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#fff0f6"/><stop offset=".3" stop-color="#ffb1ce"/><stop offset=".68" stop-color="#ed659b"/><stop offset="1" stop-color="#ad2e68"/></linearGradient><linearGradient id="lotusInnerPink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff3f9"/><stop offset=".42" stop-color="#f8a6ca"/><stop offset="1" stop-color="#d94f91"/></linearGradient><linearGradient id="lotusInnerBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4f0ff"/><stop offset=".42" stop-color="#b9b8f1"/><stop offset="1" stop-color="#777bc9"/></linearGradient><linearGradient id="lotusInnerPurple" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0fb"/><stop offset=".42" stop-color="#d8b1ee"/><stop offset="1" stop-color="#9869c4"/></linearGradient><linearGradient id="lotusLeaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c5e9b7"/><stop offset=".48" stop-color="#83bb8b"/><stop offset="1" stop-color="#477d65"/></linearGradient><radialGradient id="lotusSeed"><stop stop-color="#fff4c9"/><stop offset=".55" stop-color="#f5c873"/><stop offset="1" stop-color="#c9824f"/></radialGradient><filter id="lotusGlow" x="-95%" y="-85%" width="290%" height="270%"><feGaussianBlur in="SourceAlpha" stdDeviation="4.8" result="blur"/><feFlood flood-color="#ff6fa8" flood-opacity=".96" result="pink"/><feComposite in="pink" in2="blur" operator="in" result="pinkGlow"/><feMerge><feMergeNode in="pinkGlow"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lotusInnerPinkGlow" x="-100%" y="-90%" width="300%" height="280%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.8" result="blur"/><feFlood flood-color="#ff9ac7" flood-opacity=".95" result="light"/><feComposite in="light" in2="blur" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lotusInnerBlueGlow" x="-100%" y="-90%" width="300%" height="280%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.8" result="blur"/><feFlood flood-color="#aaaaff" flood-opacity=".98" result="light"/><feComposite in="light" in2="blur" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lotusInnerPurpleGlow" x="-100%" y="-90%" width="300%" height="280%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.8" result="blur"/><feFlood flood-color="#d4a0ff" flood-opacity=".98" result="light"/><feComposite in="light" in2="blur" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><ellipse cx="32" cy="28" rx="33" ry="31" fill="url(#lotusAura)"/><ellipse cx="32" cy="53" rx="27" ry="6" fill="#9bd3ae" opacity=".62"/><path d="M32 49C13 36 4 43 13 50c6 5 13 3 19-1Zm0 0c19-13 28-6 19 1-6 5-13 3-19-1Z" fill="url(#lotusLeaf)" stroke="#477d65" stroke-width="1.7"/><path d="M32 49c-8-7-17-7-21-2 8 1 14 3 21 2Zm0 0c8-7 17-7 21-2-8 1-14 3-21 2Z" fill="#b4dfa9" opacity=".9"/><g filter="url(#lotusGlow)"><g fill="url(#lotusOuter)" stroke="#a33368" stroke-width="1.15"><path d="M32 42C22 32 19 17 32 5c13 12 10 27 0 37Z"/><path d="M30 43C15 37 8 25 14 13c13 5 20 17 16 30Z"/><path d="M34 43c15-6 22-18 16-30-13 5-20 17-16 30Z"/><path d="M29 44C12 43 5 34 7 25c13 1 22 8 22 19Z"/><path d="M35 44c17-1 24-10 22-19-13 1-22 8-22 19Z"/></g></g><g filter="url(#lotusInnerGlow)"><path filter="url(#lotusInnerBlueGlow)" d="M32 42C24 32 24 19 32 11c8 8 8 21 0 31Z" fill="url(#lotusInnerBlue)" stroke="#7776bd" stroke-width="1.1"/><path filter="url(#lotusInnerPinkGlow)" d="M30 43C20 36 18 27 23 19c9 7 12 15 7 24Z" fill="url(#lotusInnerPink)" stroke="#c56c9c" stroke-width="1.05"/><path filter="url(#lotusInnerPurpleGlow)" d="M34 43c10-7 12-16 7-24-9 7-12 15-7 24Z" fill="url(#lotusInnerPurple)" stroke="#9a70c2" stroke-width="1.05"/></g><g fill="none" stroke="#fff7fc" stroke-linecap="round" opacity=".72"><path d="M32 15c4 7 4 15 1 22" stroke-width="1.1"/><path d="M24 23c4 5 6 10 5 15" stroke-width=".9"/><path d="M40 23c-4 5-6 10-5 15" stroke-width=".9"/></g><ellipse cx="32" cy="39" rx="7" ry="5" fill="url(#lotusSeed)" stroke="#b87543" stroke-width="1"/><g fill="#87502e"><circle cx="28" cy="38" r=".8"/><circle cx="32" cy="37" r=".8"/><circle cx="36" cy="38" r=".8"/><circle cx="30" cy="41" r=".8"/><circle cx="34" cy="41" r=".8"/></g><g fill="#fff7fc"><path d="m10 17 2-5 2 5 5 2-5 2-2 5-2-5-5-2Zm43 5 1.5-3.5L56 22l3.5 1.5L56 25l-1.5 3.5L53 25l-1.5-3.5L56 22Z"/><circle cx="49" cy="10" r="1.4"/></g>',
 
 
+    'moonlit-orchid':`<defs>
+<radialGradient id="moHalo"><stop stop-color="#fff" stop-opacity=".95"/><stop offset=".25" stop-color="#e7c6ff" stop-opacity=".7"/><stop offset="1" stop-color="#a66be8" stop-opacity="0"/></radialGradient>
+<linearGradient id="moPetal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".22" stop-color="#f2dfff"/><stop offset=".58" stop-color="#bb8df4"/><stop offset="1" stop-color="#7043b1"/></linearGradient>
+<linearGradient id="moGold"><stop stop-color="#fff6cb"/><stop offset=".45" stop-color="#f4cb72"/><stop offset="1" stop-color="#b97837"/></linearGradient>
+<linearGradient id="moMoon"><stop stop-color="#fff"/><stop offset=".55" stop-color="#fff0bd"/><stop offset="1" stop-color="#e9a6d5"/></linearGradient>
+<filter id="moGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3.8" result="b"/><feFlood flood-color="#c58cff" flood-opacity="1"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<circle cx="32" cy="31" r="31" fill="url(#moHalo)"/>
+<path d="M48 7A22 22 0 1 0 56 39 19 19 0 1 1 48 7Z" fill="url(#moMoon)" stroke="#d5a5df" stroke-width="1" filter="url(#moGlow)"/>
+<g class="mo-orchid-petals" fill="url(#moPetal)" stroke="#9163c3" stroke-width="1.1" filter="url(#moGlow)">
+<path d="M31 37C14 31 13 17 22 15c7-2 10 10 9 22Z"/>
+<path d="M31 37C14 31 13 17 22 15c7-2 10 10 9 22Z" transform="rotate(60 32 34)"/>
+<path d="M31 37C14 31 13 17 22 15c7-2 10 10 9 22Z" transform="rotate(120 32 34)"/>
+<path d="M31 37C14 31 13 17 22 15c7-2 10 10 9 22Z" transform="rotate(180 32 34)"/>
+<path d="M31 37C14 31 13 17 22 15c7-2 10 10 9 22Z" transform="rotate(240 32 34)"/>
+<path d="M31 37C14 31 13 17 22 15c7-2 10 10 9 22Z" transform="rotate(300 32 34)"/>
+</g>
+<g fill="none" stroke="#fff" stroke-width="1.2" opacity=".95"><path d="M32 35 22 20m10 15 12-14m-12 14 0-18m0 18-14 3m14-3 13 7"/></g>
+<circle cx="32" cy="34" r="8" fill="url(#moGold)" stroke="#b67b42" stroke-width="1.3"/>
+<path d="M32 28c-5 5-5 9 0 13 5-4 5-8 0-13Z" fill="#fff4c9" stroke="#fff" stroke-width=".8"/>
+<path d="M32 42c-10 8-15 3-16 12m16-9c10 8 15 3 16 12" fill="none" stroke="#82b58c" stroke-width="2" stroke-linecap="round"/>
+<g fill="#fff"><path d="m9 16 2-5 2 5 5 2-5 2-2 5-2-5-5-2Zm43 27 1.7-4 1.7 4 4 1.7-4 1.7-1.7 4-1.7-4-4-1.7Z"/><path d="m19 7 1.3-3 1.3 3 3 1.3-3 1.3-1.3 3-1.3-3-3-1.3Z"/><circle cx="12" cy="48" r="1.4"/><circle cx="52" cy="12" r="1.2"/></g>`,
+    'crystal-butterfly':`<defs>
+<radialGradient id="cbHalo"><stop stop-color="#eaffff" stop-opacity=".95"/><stop offset=".5" stop-color="#86e9f2" stop-opacity=".48"/><stop offset="1" stop-color="#8f9dff" stop-opacity="0"/></radialGradient>
+<linearGradient id="cbA" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".28" stop-color="#bffff5"/><stop offset=".68" stop-color="#56d4dc"/><stop offset="1" stop-color="#4380c5"/></linearGradient>
+<linearGradient id="cbB" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".4" stop-color="#e1caff"/><stop offset=".8" stop-color="#a58af0"/><stop offset="1" stop-color="#6959b9"/></linearGradient>
+<linearGradient id="cbBody" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#fff"/><stop offset=".5" stop-color="#f6d58a"/><stop offset="1" stop-color="#fff"/></linearGradient>
+<filter id="cbGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4" result="b"/><feFlood flood-color="#83ecff" flood-opacity="1"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<circle cx="32" cy="31" r="31" fill="url(#cbHalo)"/>
+<circle cx="32" cy="31" r="26" fill="none" stroke="#fff" stroke-width=".8" stroke-dasharray="1 3" opacity=".8"/>
+<g filter="url(#cbGlow)" stroke="#8ccbd9" stroke-width="1.1" stroke-linejoin="round">
+<g class="cb-left-wings">
+<path d="M29 29C22 5 6 4 5 18c-1 12 10 23 25 23-5-8-7-16-8-23 4 3 6 7 7 11Z" fill="url(#cbA)"/>
+<path d="M28 37C12 27 4 40 13 51c6 7 15 4 19-7-5-1-7-3-4-7Z" fill="url(#cbB)"/>
+</g>
+<g class="cb-right-wings">
+<path d="M35 29C42 5 58 4 59 18c1 12-10 23-25 23 5-8 7-16 8-23-4 3-6 7-7 11Z" fill="url(#cbB)"/>
+<path d="M36 37c16-10 24 3 15 14-6 7-15 4-19-7 5-1 7-3 4-7Z" fill="url(#cbA)"/>
+</g>
+</g>
+<g fill="none" stroke="#fff" stroke-width="1.25" stroke-linecap="round"><path d="M29 33 10 14m19 25L13 45m22-12 19-19M36 39l16 6M29 34 17 23m18 11 12-11"/><path d="M29 28 18 13m17 15 11-15" opacity=".7"/></g>
+<g fill="none" stroke="#fff" stroke-width=".8"><path d="M9 20q8-10 17 5m-12 9q8-5 14 4m27-18q-8-10-17 5m12 9q-8-5-14 4" opacity=".9"/></g>
+<path d="M30 25q-8-13-11-8m15 8q8-13 11-8" fill="none" stroke="#e9d7ff" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M32 24c-4 8-4 17 0 26 4-9 4-18 0-26Z" fill="url(#cbBody)" stroke="#a7c6d6" stroke-width="1.2"/>
+<path d="M32 29 27 35l5 7 5-7Z" fill="#fff" stroke="#69cbd8" stroke-width="1.1"/>
+<circle cx="32" cy="35" r="2.5" fill="#8deaf0" stroke="#fff" stroke-width="1"/>
+<g fill="#fff"><path d="m8 9 1.5-4L11 9l4 1.5-4 1.5-1.5 4L8 12l-4-1.5Zm47 33 1.5-4 1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5Z"/><circle cx="14" cy="52" r="1.5"/><circle cx="49" cy="9" r="1.3"/><circle cx="52" cy="25" r="1"/></g>`,
+    'sunfire-blossom':`<defs>
+<radialGradient id="sfHalo"><stop stop-color="#fff9d9" stop-opacity=".98"/><stop offset=".38" stop-color="#ffc76d" stop-opacity=".56"/><stop offset="1" stop-color="#f47b52" stop-opacity="0"/></radialGradient>
+<linearGradient id="sfFlame" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fffde8"/><stop offset=".3" stop-color="#ffe28a"/><stop offset=".7" stop-color="#ff9b50"/><stop offset="1" stop-color="#db4d68"/></linearGradient>
+<linearGradient id="sfGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff9d5"/><stop offset=".5" stop-color="#ffc85f"/><stop offset="1" stop-color="#c87834"/></linearGradient>
+<filter id="sfGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4.5" result="b"/><feFlood flood-color="#ffad53" flood-opacity="1"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<circle cx="32" cy="30" r="31" fill="url(#sfHalo)"/>
+<g class="sf-sun-rotor" filter="url(#sfGlow)" stroke="#d88743" stroke-width=".9">
+<path d="M32 3 37 17 49 8 45 23 61 25 47 34 57 47 41 43 39 60 31 46 21 59 22 43 6 47 17 34 3 25 19 23 15 8 27 17Z" fill="url(#sfFlame)" opacity=".95"/>
+</g>
+<g filter="url(#sfGlow)"><circle cx="32" cy="30" r="17" fill="url(#sfGold)" stroke="#fff0b0" stroke-width="1.5"/></g>
+<g fill="none" stroke="#fff9d8" stroke-width="1.2" opacity=".9"><path d="M32 8v8m0 28v9M10 30h8m28 0h8M16 14l6 6m20 20 6 6m0-32-6 6M22 40l-6 6"/><circle cx="32" cy="30" r="12" stroke-dasharray="2 2"/></g>
+<path d="M32 18c-8 9-7 18 0 25 7-7 8-16 0-25Z" fill="#fff6cf" stroke="#e5a34e" stroke-width="1.1"/>
+<path d="M32 24c-4 6-3 11 0 15 3-4 4-9 0-15Z" fill="#ffb55f"/>
+<path d="M23 45c-2 7-8 9-13 7 6 0 8-5 8-10m29 3c2 7 8 9 13 7-6 0-8-5-8-10" fill="none" stroke="#ef9855" stroke-width="2" stroke-linecap="round"/>
+<g fill="#fff"><path d="m8 15 1.6-4 1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6Zm43 26 1.5-3.8 1.5 3.8 3.8 1.5-3.8 1.5-1.5 3.8-1.5-3.8-3.8-1.5Z"/><circle cx="18" cy="7" r="1.5"/><circle cx="48" cy="12" r="1.4"/><circle cx="13" cy="48" r="1.2"/></g>`,
+
     'dreamwing-halo':`<defs>
 <radialGradient id="dwAura"><stop stop-color="#ffb5df" stop-opacity=".72"/><stop offset=".48" stop-color="#c9a4ff" stop-opacity=".34"/><stop offset="1" stop-color="#c9a4ff" stop-opacity="0"/></radialGradient>
 <linearGradient id="dwPink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffaff"/><stop offset=".3" stop-color="#ffd4ed"/><stop offset=".68" stop-color="#f18acb"/><stop offset="1" stop-color="#a653ad"/></linearGradient>
@@ -1446,6 +1523,9 @@ const GARDEN_COLLECTIBLES = [
   {id:'celestial-rose',name:'Celestial Rose',art:gardenIllustration('celestial-rose'),cost:350,type:'garden',rarity:'legendary'},
   {id:'divine-lotus',name:'Divine Lotus',art:gardenIllustration('divine-lotus'),cost:350,type:'garden',rarity:'legendary'},
   {id:'dreamwing-halo',name:'Dreamwing Halo',art:gardenIllustration('dreamwing-halo'),cost:400,type:'bunny',rarity:'legendary'},
+  {id:'moonlit-orchid',name:'Moonlit Orchid',art:gardenIllustration('moonlit-orchid'),cost:500,type:'garden',rarity:'legendary'},
+  {id:'crystal-butterfly',name:'Crystal Butterfly',art:gardenIllustration('crystal-butterfly'),cost:500,type:'garden',rarity:'legendary'},
+  {id:'sunfire-blossom',name:'Sunfire Blossom',art:gardenIllustration('sunfire-blossom'),cost:500,type:'garden',rarity:'legendary'},
 ];
 function updateGardenShopItem(id, collection) {
   const normalized = normalizeGardenCollection(collection);
@@ -1585,6 +1665,17 @@ function recordStreakDailyQuest(kind, value = '') {
   const dateKey = streakDateInTimeZone(timezone);
   const state = readStreakDailyQuests(dateKey);
   if (kind === 'heart' && value && !state.hearts.includes(String(value))) state.hearts.push(String(value));
+  if (kind === 'bear-action') {
+    const action = typeof value === 'object' ? String(value.action || '') : String(value || '');
+    const actionId = typeof value === 'object' ? String(value.actionId || '') : '';
+    if (['hug','kiss','flykiss','hands','dance','pet','feed','sleep','tummy','idle'].includes(action) &&
+        (!actionId || !state.bearActionIds.includes(actionId))) {
+      state.bearActions.push(action);
+      if (actionId) state.bearActionIds.push(actionId);
+      state.bearActions = state.bearActions.slice(-99);
+      state.bearActionIds = state.bearActionIds.slice(-120);
+    }
+  }
   if (kind === 'photo') { state.photo = true; state.photoCount = Math.min(99,state.photoCount + 1); }
   if (kind === 'kiss-note') { state.kissNote = true; state.kissNotes = Math.min(99,state.kissNotes + 1); if (value) state.noteTexts.push(String(value)); }
   if (kind === 'note') { state.note = Math.min(99,state.note + 1); if (value) state.noteTexts.push(String(value)); }
@@ -1601,6 +1692,13 @@ function recordStreakDailyQuest(kind, value = '') {
   if (newlyCompleted) toast('Daily Bloom earned! You completed today’s three quests ♡');
   if (page === 'streak') renderStreakPage();
 }
+window.addEventListener('cute-bunny:bear-action', event => {
+  const action = String(event?.detail?.action || '');
+  if (action) recordStreakDailyQuest('bear-action', {
+    action,
+    actionId: String(event?.detail?.actionId || '')
+  });
+});
 function streakDateKey(date) {
   return date.getUTCFullYear() + '-' + String(date.getUTCMonth() + 1).padStart(2, '0') + '-' + String(date.getUTCDate()).padStart(2, '0');
 }
@@ -1804,7 +1902,7 @@ function readStreakMilestones() {
 }
 function saveStreakMilestones(count) {
   const earned = readStreakMilestones();
-  [3, 7, 14, 30, 50, 100, 180, 365].forEach(value => { if (count >= value) earned.add(value); });
+  [3, 7, 14, 30, 50, 100].forEach(value => { if (count >= value) earned.add(value); });
   try { localStorage.setItem(streakStorageKey('milestones'), JSON.stringify([...earned].sort((a,b) => a-b))); } catch {}
 }
 function resetStreakPetalGame() {
@@ -1964,14 +2062,18 @@ function streakFriendsMarkup() {
 
 
 const STREAK_MILESTONE_ILLUSTRATIONS = [
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79V44" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M50 61C29 39 18 51 25 62c8 10 18 5 25-1Z" fill="#a9c49d"/><path d="M50 53C69 31 82 42 75 54c-7 9-17 5-25-1Z" fill="#789e79"/><path d="M50 44C39 29 43 17 50 11c9 9 11 21 0 33Z" fill="#9db98d"/><path d="M50 79H26M50 79h25" stroke="#c49a76" stroke-width="3" stroke-linecap="round"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79V44" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M49 64c-16-13-24-4-18 4 6 6 12 2 18-4Z" fill="#9db98d"/><g fill="#e8a2bc"><ellipse cx="50" cy="23" rx="8" ry="16"/><ellipse cx="50" cy="23" rx="8" ry="16" transform="rotate(60 50 23)"/><ellipse cx="50" cy="23" rx="8" ry="16" transform="rotate(120 50 23)"/></g><circle cx="50" cy="23" r="8" fill="#f4d17f"/><path d="M50 79H28h44" stroke="#c49a76" stroke-width="3" stroke-linecap="round"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M12 76c20-12 53-12 76 0" fill="#d9e6cd"/><path d="M21 76V48m0 13c-13-14-19-5-13 3 5 5 10 2 13-3Zm0-10c11-12 18-6 13 2-4 5-9 3-13-2Z" fill="#91ad83"/><path d="M49 76V38m0 24c-18-16-24-5-17 4 6 5 12 2 17-4Zm0-13c15-18 24-7 17 2-6 7-12 4-17-2Z" fill="#789d78"/><path d="M77 76V50m0 13c-12-12-18-4-12 3 5 4 9 2 12-3Z" fill="#a8bd8d"/><circle cx="21" cy="45" r="6" fill="#e7a4bd"/><circle cx="49" cy="34" r="7" fill="#d9b6e2"/><circle cx="77" cy="46" r="6" fill="#edc77d"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79V37" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M50 65C27 41 19 56 29 66c7 7 14 3 21-1Zm0-14c20-24 31-9 21 1-7 7-14 3-21-1Z" fill="#85a47d"/><g fill="#e7a2bd"><circle cx="50" cy="25" r="13"/><circle cx="37" cy="29" r="10"/><circle cx="63" cy="29" r="10"/><circle cx="50" cy="13" r="10"/></g><circle cx="50" cy="25" r="6" fill="#f4d17f"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 79 28 37m22 42 22-42M50 79V27" stroke="#7b9b75" stroke-width="3.5" stroke-linecap="round"/><path d="M39 58c-18-13-23-1-14 7 6 4 11 0 14-7Zm22 0c18-13 23-1 14 7-6 4-11 0-14-7Z" fill="#9db98d"/><g fill="#e9a7bf"><circle cx="28" cy="31" r="9"/><circle cx="22" cy="24" r="7"/><circle cx="34" cy="24" r="7"/></g><g fill="#d7b4e4"><circle cx="72" cy="31" r="9"/><circle cx="66" cy="24" r="7"/><circle cx="78" cy="24" r="7"/></g><g fill="#e4bd72"><circle cx="50" cy="20" r="10"/><circle cx="43" cy="13" r="7"/><circle cx="57" cy="13" r="7"/></g><circle cx="28" cy="31" r="3" fill="#f2d17d"/><circle cx="72" cy="31" r="3" fill="#f2d17d"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M10 76c18-20 62-20 80 0" fill="#dce8d1"/><path d="M25 76V42m0 15c-15-14-22-3-14 6 5 5 10 2 14-6Zm0-12c12-16 21-7 14 1-5 6-10 5-14-1Z" fill="#789c77"/><path d="M50 76V27m0 35c-21-20-30-6-19 4 7 6 14 2 19-4Zm0-17c18-20 29-8 18 2-7 6-13 4-18-2Z" fill="#8eae82"/><path d="M76 76V44m0 15c-15-14-21-4-14 4 5 5 10 2 14-4Z" fill="#a5bd91"/><g fill="#e8a1bb"><circle cx="25" cy="37" r="7"/><circle cx="50" cy="22" r="9"/><circle cx="76" cy="39" r="7"/></g><g fill="#f1d17f"><circle cx="25" cy="37" r="3"/><circle cx="50" cy="22" r="4"/><circle cx="76" cy="39" r="3"/></g></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 78V39" stroke="#789b76" stroke-width="4" stroke-linecap="round"/><path d="M50 62C26 43 20 57 30 67c7 6 14 1 20-5Zm0-12c19-24 31-9 21 1-7 7-14 3-21-1Z" fill="#789e79"/><g fill="#dcb7e7"><circle cx="50" cy="24" r="11"/><circle cx="37" cy="26" r="8"/><circle cx="63" cy="26" r="8"/><circle cx="50" cy="11" r="8"/></g><circle cx="50" cy="24" r="5" fill="#f4d17f"/><path d="M15 20 18 9l3 11 10 3-10 3-3 10-3-10-10-3Z" fill="#e8c77d"/><path d="m82 13 2-7 2 7 7 2-7 2-2 7-2-7-7-2Z" fill="#dcb7e7"/><circle cx="25" cy="66" r="3" fill="#edc77d"/><circle cx="80" cy="57" r="4" fill="#e7a2bd"/></svg>',
-    '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 80V40" stroke="#688b6c" stroke-width="5" stroke-linecap="round"/><path d="M50 67C22 48 17 63 29 73c8 6 15 1 21-6Zm0-14c23-25 37-8 24 4-8 7-16 2-24-4Z" fill="#83a47a"/><path d="M50 45C26 24 33 8 50 3c18 8 26 26 0 42Z" fill="#87a978"/><g fill="#e9a4bd"><circle cx="37" cy="22" r="8"/><circle cx="63" cy="24" r="9"/><circle cx="49" cy="11" r="9"/><circle cx="50" cy="34" r="9"/></g><g fill="#f1d17f"><circle cx="37" cy="22" r="3"/><circle cx="63" cy="24" r="3"/><circle cx="49" cy="11" r="3"/><circle cx="50" cy="34" r="3"/></g><path d="M20 80h60" stroke="#bd9a74" stroke-width="3" stroke-linecap="round"/></svg>'
+  // Day 3 — a new seedling pushing through the soil.
+  '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M15 77q35-10 70 0" fill="none" stroke="#c6a17b" stroke-width="4" stroke-linecap="round"/><path d="M50 75V43" stroke="#648f6a" stroke-width="4" stroke-linecap="round"/><path d="M50 53C29 32 18 47 29 57c7 6 14 2 21-4Z" fill="#a9c99a" stroke="#648f6a" stroke-width="1.5"/><path d="M50 45C68 26 81 39 72 49c-6 6-14 3-22-4Z" fill="#c2d9a7" stroke="#648f6a" stroke-width="1.5"/><path d="M50 42c-8-9-6-20 0-27 8 8 9 18 0 27Z" fill="#8fb47f"/><circle cx="50" cy="13" r="3" fill="#f2d17d"/></svg>',
+  // Day 7 — a single daisy in its first full bloom.
+  '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 78V39" stroke="#648f6a" stroke-width="4" stroke-linecap="round"/><path d="M49 64q-18-17-25-5 9 12 25 5Z" fill="#a8c995"/><g fill="#fff1d8" stroke="#e4cba6" stroke-width="1.2"><ellipse cx="50" cy="20" rx="7" ry="15"/><ellipse cx="50" cy="20" rx="7" ry="15" transform="rotate(45 50 20)"/><ellipse cx="50" cy="20" rx="7" ry="15" transform="rotate(90 50 20)"/><ellipse cx="50" cy="20" rx="7" ry="15" transform="rotate(135 50 20)"/></g><circle cx="50" cy="20" r="8" fill="#edc45f" stroke="#c9973e" stroke-width="1.5"/><path d="M25 79h50" stroke="#c6a17b" stroke-width="3" stroke-linecap="round"/></svg>',
+  // Day 14 — three different flowers forming a small garden.
+  '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M10 77q40-12 80 0" fill="#dce9ce"/><path d="M23 75V47m27 28V35m27 40V48" stroke="#71966f" stroke-width="3.5" stroke-linecap="round"/><path d="M23 62q-13-13-17-3 7 10 17 3m27-13q-16-15-21-3 9 10 21 3m27 14q13-13 18-3-8 10-18 3" fill="#a9c99a"/><g fill="#e9a6bd"><circle cx="23" cy="42" r="7"/><circle cx="17" cy="36" r="6"/><circle cx="29" cy="36" r="6"/></g><g fill="#c9b2e8"><circle cx="50" cy="29" r="9"/><circle cx="42" cy="23" r="7"/><circle cx="58" cy="23" r="7"/></g><g fill="#f2cf7c"><circle cx="77" cy="43" r="7"/><circle cx="71" cy="37" r="5"/><circle cx="83" cy="37" r="5"/></g><circle cx="23" cy="42" r="2.5" fill="#f7d77e"/><circle cx="50" cy="29" r="3" fill="#f4d47e"/><circle cx="77" cy="43" r="2.5" fill="#fff0c7"/></svg>',
+  // Day 30 — a sturdy growing plant with new leaves and buds.
+  '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 78V24" stroke="#648c68" stroke-width="4" stroke-linecap="round"/><path d="M50 61C27 38 16 54 29 65c8 6 15 1 21-4Zm0-17c22-24 34-8 22 3-8 6-15 2-22-3Z" fill="#91b681" stroke="#648c68" stroke-width="1.4"/><path d="M50 35C35 20 41 8 50 4c10 8 14 20 0 31Z" fill="#b5cf91" stroke="#648c68" stroke-width="1.4"/><circle cx="29" cy="30" r="5" fill="#e8a2bc"/><circle cx="72" cy="27" r="5" fill="#e8a2bc"/><path d="M18 79h64" stroke="#c6a17b" stroke-width="3" stroke-linecap="round"/></svg>',
+  // Day 50 — a distinctive tied bouquet of five flowers.
+  '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 78 28 39m22 39 22-39M50 78V32" stroke="#648c68" stroke-width="3.5" stroke-linecap="round"/><path d="m38 58-12-7m36 7 12-7" stroke="#91b681" stroke-width="4" stroke-linecap="round"/><g fill="#e99db8" stroke="#bd7895" stroke-width="1.2"><circle cx="28" cy="32" r="9"/><circle cx="21" cy="25" r="6"/><circle cx="35" cy="25" r="6"/></g><g fill="#c9b2e8" stroke="#9277ae" stroke-width="1.2"><circle cx="72" cy="32" r="9"/><circle cx="65" cy="25" r="6"/><circle cx="79" cy="25" r="6"/></g><g fill="#f0c96f" stroke="#c49a50" stroke-width="1.2"><circle cx="50" cy="21" r="10"/><circle cx="42" cy="14" r="6"/><circle cx="58" cy="14" r="6"/></g><circle cx="28" cy="32" r="3" fill="#f4d47e"/><circle cx="72" cy="32" r="3" fill="#f4d47e"/><circle cx="50" cy="21" r="4" fill="#fff0c7"/><path d="m39 63 11 8 11-8-4 15H43Z" fill="#e5adbf" stroke="#b87892" stroke-width="1.5"/><path d="M50 70v9" stroke="#b87892" stroke-width="1.5"/></svg>',
+  // Day 100 — a rare, layered lotus crowned by a golden halo.
+  '<svg viewBox="0 0 100 88" aria-hidden="true"><path d="M50 78V57" stroke="#648c68" stroke-width="4" stroke-linecap="round"/><path d="M50 72C31 58 20 66 27 75c8 4 16 1 23-3Zm0 0c19-14 30-6 23 3-8 4-16 1-23-3Z" fill="#a8c995"/><circle cx="50" cy="31" r="27" fill="none" stroke="#e6c36f" stroke-width="2.5" stroke-dasharray="2 4"/><g fill="#d9b9e9" stroke="#a58bb8" stroke-width="1.2"><path d="M50 49C26 38 26 19 39 15c7 5 10 15 11 34Z"/><path d="M50 49C74 38 74 19 61 15c-7 5-10 15-11 34Z"/></g><g fill="#f0a9c1" stroke="#bd7895" stroke-width="1.2"><path d="M50 48C16 44 15 27 25 23c12 2 20 12 25 25Z"/><path d="M50 48C84 44 85 27 75 23c-12 2-20 12-25 25Z"/><path d="M50 47C37 28 40 10 50 5c10 5 13 23 0 42Z"/></g><path d="M50 43c-8-8-6-17 0-21 6 4 8 13 0 21Z" fill="#fff0c7" stroke="#c49a50" stroke-width="1.2"/><circle cx="50" cy="40" r="4" fill="#e9c46e"/></svg>'
   ];
 
 async function loadKindnessEventStatus() {
@@ -2064,14 +2166,12 @@ function renderStreakPage() {
     count >= 7 ? 'Your garden is blooming' : count ? 'Your garden is growing' : 'Your first bloom is waiting';
 
   const milestones = [
-    {days:3, icon:'🌱', name:'Tiny sprout'},
-    {days:7, icon:'🌼', name:'First flower'},
-    {days:14, icon:'🌷', name:'Little garden'},
-    {days:30, icon:'🌸', name:'Growing plant'},
-    {days:50, icon:'💐', name:'Golden bouquet'},
-    {days:100, icon:'🌟', name:'Blooming garden'},
-    {days:180, icon:'🏵️', name:'Magical garden'},
-    {days:365, icon:'💮', name:'Eternal garden'}
+    {days:3, name:'Tiny sprout'},
+    {days:7, name:'First flower'},
+    {days:14, name:'Little garden'},
+    {days:30, name:'Growing plant'},
+    {days:50, name:'Golden bouquet'},
+    {days:100, name:'Everlasting lotus'}
   ];
   const earned = readStreakMilestones();
   const next = milestones.find(item => count < item.days) || null;
@@ -2089,14 +2189,17 @@ function renderStreakPage() {
     {hearts:250, name:'Blushing Bouquet', art:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="M22 30 36 55 50 30" fill="#d9e7ce" stroke="#91aa82" stroke-width="2"/><path d="M36 53V29M36 43 24 34M36 40l12-10" stroke="#91aa82" stroke-width="2.5" stroke-linecap="round"/><g fill="#f4c5d5" stroke="#c98da8" stroke-width="1.5"><circle cx="23" cy="20" r="7"/><circle cx="36" cy="13" r="7"/><circle cx="49" cy="20" r="7"/></g><g fill="#e6a1b9"><circle cx="23" cy="20" r="2.5"/><circle cx="36" cy="13" r="2.5"/><circle cx="49" cy="20" r="2.5"/></g><path d="m22 45 14 10 14-10" fill="none" stroke="#c98da8" stroke-width="3" stroke-linecap="round"/></svg>'},
     {hearts:500, name:'Golden Treasure', art:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="m36 8 7 8 12-1-2 12 8 9-10 7-3 12-12-4-12 4-3-12-10-7 8-9-2-12 12 1Z" fill="#f7e8b8" stroke="#c7a45f" stroke-width="2"/><path d="m36 19 12 11-12 17-12-17Z" fill="#e8a4ba" stroke="#bd7895" stroke-width="2"/><path d="m24 30 12 4 12-4M36 34v13" fill="none" stroke="#fff4e7" stroke-width="2"/><circle cx="36" cy="28" r="3" fill="#fff5d9"/></svg>'},
     {hearts:750, name:'Love Guardian', art:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="m13 27 6-14 12 8 5-12 5 12 12-8 6 14-9 24H22Z" fill="#e9dff4" stroke="#a58bb8" stroke-width="2" stroke-linejoin="round"/><path d="M25 31c0-7 10-8 11 0 2-8 12-7 12 0-1 7-12 15-12 15S26 38 25 31Z" fill="#d77e9e" stroke="#bd7895" stroke-width="1.4"/><circle cx="19" cy="17" r="2" fill="#d7b56e"/><circle cx="53" cy="17" r="2" fill="#d7b56e"/><path d="M18 48q-5 5-1 9m37-9q5 5 1 9" fill="none" stroke="#a58bb8" stroke-width="2" stroke-linecap="round"/></svg>'},
-    {hearts:1000, name:'Everlasting Love', art:'<svg viewBox="0 0 72 64" aria-hidden="true"><circle cx="36" cy="32" r="25" fill="#fff0e7" stroke="#d5a2b5" stroke-width="2"/><circle cx="36" cy="32" r="20" fill="none" stroke="#e6c1ce" stroke-width="1.5" stroke-dasharray="2 3"/><path d="M24 29c0-9 12-10 12 0 1-10 13-9 13 0-1 9-13 18-13 18S25 38 24 29Z" fill="#d77e9e" stroke="#bd7895" stroke-width="1.5"/><path d="m16 12 3 4 5 1-5 2-3 5-2-5-5-2 5-1Zm40-2 2 4 4 2-4 1-2 4-2-4-4-1 4-2Z" fill="#d6b66f"/><path d="M15 39q-5-5-7 0m49 0q5-5 7 0" fill="none" stroke="#91aa82" stroke-width="2" stroke-linecap="round"/></svg>'}
+    {hearts:1000, name:'Everlasting Love', art:'<svg viewBox="0 0 72 64" aria-hidden="true"><circle cx="36" cy="32" r="25" fill="#fff0e7" stroke="#d5a2b5" stroke-width="2"/><circle cx="36" cy="32" r="20" fill="none" stroke="#e6c1ce" stroke-width="1.5" stroke-dasharray="2 3"/><path d="M24 29c0-9 12-10 12 0 1-10 13-9 13 0-1 9-13 18-13 18S25 38 24 29Z" fill="#d77e9e" stroke="#bd7895" stroke-width="1.5"/><path d="m16 12 3 4 5 1-5 2-3 5-2-5-5-2 5-1Zm40-2 2 4 4 2-4 1-2 4-2-4-4-1 4-2Z" fill="#d6b66f"/><path d="M15 39q-5-5-7 0m49 0q5-5 7 0" fill="none" stroke="#91aa82" stroke-width="2" stroke-linecap="round"/></svg>'},
+    {hearts:1500, name:'Everlasting Rose', art:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="M36 55V39" stroke="#789a79" stroke-width="3" stroke-linecap="round"/><path d="M35 49q-12-12-19-5 7 11 19 7m2-5q11-12 19-5-6 11-19 7" fill="#b8d2a9" stroke="#789a79" stroke-width="1.5"/><g fill="#df789c" stroke="#a94e73" stroke-width="1.8"><path d="M36 8c-8-7-18 1-12 10-10 4-6 17 5 16 0 10 14 12 16 1 10 2 15-10 6-16 6-10-5-18-15-11z"/><path d="M25 22q2-11 12-7 10-3 12 7-2 12-13 13-11-2-11-13z" fill="#f4b5ca"/></g><path d="M29 22q4-7 11-2-2 7-7 8" fill="none" stroke="#fff1f5" stroke-width="2" stroke-linecap="round"/></svg>'},
+    {hearts:2000, name:'Heart of the Garden', art:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="M36 54V39" stroke="#789a79" stroke-width="3" stroke-linecap="round"/><path d="M35 49q-11-10-17-4 6 9 17 6m2-2q10-10 17-4-5 9-17 6" fill="#b8d2a9" stroke="#789a79" stroke-width="1.4"/><g fill="#d8c5ed" stroke="#9277ae" stroke-width="1.8"><path d="M36 6c-6-5-13 1-10 8-9 1-10 12-2 16-1 9 11 12 13 3 3 9 15 6 13-3 8-5 6-15-3-16-2-9-9-12-11-8z"/></g><path d="m18 15 4-9 10 7 4-11 5 11 10-7 3 10" fill="#edca79" stroke="#a98548" stroke-width="1.7" stroke-linejoin="round"/><circle cx="36" cy="25" r="8" fill="#fff0c8" stroke="#c49a55" stroke-width="1.8"/><path d="M31 26c0-5 5-5 5 0 1-5 6-5 6 0-1 4-6 7-6 7s-5-3-5-7z" fill="#d8799d"/></svg>'}
   ];
   const earnedHearts = readStreakHeartMilestones();
   const heartBadges = heartMilestones.map(item => {
     const unlocked = heartCount >= item.hearts;
     const percentage = unlocked ? 100 : Math.min(100, heartCount / item.hearts * 100);
     const status = unlocked ? 'Heart unlocked' : (item.hearts - heartCount) + ' hearts to go';
-    return '<article class="streak-milestone sg-milestone' + (unlocked ? ' is-earned' : ' is-locked') + '">' +
+    const specialClass = item.hearts === 1000 ? ' sg-special-heart sg-special-heart-1000' : item.hearts === 1500 ? ' sg-special-heart sg-special-heart-1500' : item.hearts === 2000 ? ' sg-special-heart sg-special-heart-2000' : '';
+    return '<article class="streak-milestone sg-milestone' + specialClass + (unlocked ? ' is-earned' : ' is-locked') + '">' +
       '<span class="sg-milestone-art sg-heart-milestone-art">' + item.art + '</span>' +
       '<span class="sg-milestone-copy"><small class="sg-milestone-day">' + item.hearts + ' HEARTS</small><b>' + item.name +
       '</b><em>' + status + '</em></span>' +
@@ -2138,7 +2241,8 @@ function renderStreakPage() {
     }).join('') + '</div></section>';
   const dailyQuestMarkup = '<div class="sg-daily-quest-list">' +
     dailyQuestItems.map(item => {
-      const action = item.kind === 'photo' ? 'gallery' : item.kind === 'song' ? 'music' :
+      const action = item.kind === 'bear-action' ? 'bear-hugs' :
+        item.kind === 'photo' ? 'gallery' : item.kind === 'song' ? 'music' :
         (item.kind === 'note' || item.kind === 'kiss-note') ? 'notes' :
         item.kind === 'heart' ? 'gallery' : 'streak';
       return '<article class="sg-daily-quest-card' + (item.done ? ' is-done' : '') + '" data-daily-quest-action="' + action + '" role="button" tabindex="0" aria-label="' + esc(item.title + '. ' + item.description + (item.done ? ' Completed.' : ' Open quest activity.')) + '">' +
@@ -2191,13 +2295,14 @@ function renderStreakPage() {
     '" aria-label="Remove ' + esc(goal.label) + '">×</button></div>'
   ).join('') || '<div class="streak-empty-goals">Your journal is ready for a little promise. ♡</div>';
 
-  const milestoneIllustrations = STREAK_MILESTONE_ILLUSTRATIONS;
+  const milestoneIllustrations = STREAK_MILESTONE_ILLUSTRATIONS.slice(0, 6);
   const badges = milestones.map((item, index) => {
     const unlocked = count >= item.days;
     const daysLeft = Math.max(0, item.days - count);
     const milestoneProgress = unlocked ? 100 : Math.min(100, Math.max(0, count / item.days * 100));
     const status = unlocked ? 'Bloom unlocked' : daysLeft === 1 ? '1 day to go' : daysLeft + ' days to go';
-    return '<article class="streak-milestone sg-milestone' + (unlocked ? ' is-earned' : ' is-locked') +
+    const specialClass = item.days === 50 ? ' sg-special-bloom sg-special-bloom-50' : item.days === 100 ? ' sg-special-bloom sg-special-bloom-100' : '';
+    return '<article class="streak-milestone sg-milestone' + specialClass + (unlocked ? ' is-earned' : ' is-locked') +
       '" aria-label="' + item.name + ', ' + item.days + ' days, ' + status + '">' +
       '<span class="sg-milestone-art">' + milestoneIllustrations[index] + '</span>' +
       '<span class="sg-milestone-copy"><small class="sg-milestone-day">' + item.days + '-DAY BLOOM</small><b>' + item.name +
@@ -2585,6 +2690,7 @@ function go(p, options = {}) {
 
   page = p;
   updateNotificationBadge();
+  if (p !== 'notes') void markNavNotificationsSeen(p);
   $('#crumb').textContent = ({ home: 'Home', gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends', streak: 'Streak Garden' })[p];
   document.querySelectorAll('#nav button[data-page]').forEach(b => {
     const isCurrentPage = b.dataset.page === p;
@@ -3067,7 +3173,7 @@ function renderNotesPage(options = {}) {
   });
 }
 
-/* Achievement Garden — milestones are derived from the signed-in user's real app activity. */
+/* Achievement Garden — earned blooms remain in the collection permanently. */
 function achievementGardenMarkup(items) {
   const stats = {
     memories: items.length,
@@ -3078,12 +3184,21 @@ function achievementGardenMarkup(items) {
     hearts: Math.max(0, Number(me?.heartCount) || 0)
   };
   const achievements = [
-    { id:'first-memory', icon:'📖', title:'First Little Memory', detail:'Save your first shared moment', value:stats.memories, goal:1, unit:'memory' },
-    { id:'photo-collector', icon:'🌷', title:'Photo Collector', detail:'Keep five photos in your garden', value:stats.photos, goal:5, unit:'photos' },
-    { id:'love-letter', icon:'💌', title:'Little Correspondent', detail:'Share five notes together', value:stats.notes, goal:5, unit:'notes' },
-    { id:'playlist-curator', icon:'🎶', title:'Playlist Curator', detail:'Add three songs to your playlist', value:stats.songs, goal:3, unit:'songs' },
-    { id:'week-of-wonder', icon:'🌼', title:'Week of Wonder', detail:'Reach a seven-day login streak', value:stats.streak, goal:7, unit:'days' },
-    { id:'heart-keeper', icon:'💗', title:'Heart Keeper', detail:'Collect one hundred hearts on your memories', value:stats.hearts, goal:100, unit:'hearts' }
+    { id:'first-memory', title:'First Little Memory', detail:'Save your first shared moment', value:stats.memories, goal:1, unit:'memory', art:'memory', flower:'Forget-me-not' },
+    { id:'photo-collector', title:'Photo Collector', detail:'Keep five photos in your garden', value:stats.photos, goal:5, unit:'photos', art:'camera', flower:'Daisy' },
+    { id:'love-letter', title:'Little Correspondent', detail:'Share five notes together', value:stats.notes, goal:5, unit:'notes', art:'letter', flower:'Rose' },
+    { id:'playlist-curator', title:'Playlist Curator', detail:'Add three songs to your playlist', value:stats.songs, goal:3, unit:'songs', art:'music', flower:'Bluebell' },
+    { id:'flower-day-3', title:'Tiny Sprout', detail:'Reach a three-day login streak', value:stats.streak, goal:3, unit:'days', art:'flower3', flower:'Seedling' },
+    { id:'flower-day-7', title:'First Bloom', detail:'Reach a seven-day login streak', value:stats.streak, goal:7, unit:'days', art:'flower7', flower:'Daisy' },
+    { id:'flower-day-14', title:'Little Garden', detail:'Reach a fourteen-day login streak', value:stats.streak, goal:14, unit:'days', art:'flower14', flower:'Mixed garden' },
+    { id:'flower-day-30', title:'Growing Together', detail:'Reach a thirty-day login streak', value:stats.streak, goal:30, unit:'days', art:'flower30', flower:'Blooming plant' },
+    { id:'flower-day-50', title:'Golden Bouquet', detail:'Reach a fifty-day login streak', value:stats.streak, goal:50, unit:'days', art:'flower50', flower:'Golden bouquet' },
+    { id:'flower-day-100', title:'Everlasting Garden', detail:'Reach a one-hundred-day login streak', value:stats.streak, goal:100, unit:'days', art:'flower100', flower:'Lotus' },
+    { id:'heart-keeper', title:'Heart Keeper', detail:'Collect one hundred hearts on your memories', value:stats.hearts, goal:100, unit:'hearts', art:'heart', flower:'Pink Camellia' },
+    { id:'heart-bloom-500', title:'Halfway to a Thousand', detail:'Collect 500 lifetime hearts', value:stats.hearts, goal:500, unit:'hearts', art:'five', flower:'Cosmos' },
+    { id:'heart-bloom-1000', title:'Thousand Heart Garden', detail:'Collect 1,000 lifetime hearts', value:stats.hearts, goal:1000, unit:'hearts', art:'thousand', flower:'Peony' },
+    { id:'heart-bloom-1500', title:'Everlasting Rose', detail:'Collect 1,500 lifetime hearts', value:stats.hearts, goal:1500, unit:'hearts', art:'rose', flower:'Everlasting Rose' },
+    { id:'heart-bloom-2000', title:'Heart of the Garden', detail:'Collect 2,000 lifetime hearts', value:stats.hearts, goal:2000, unit:'hearts', art:'crown', flower:'Crowned Lotus' }
   ];
   const key = 'cuteBunnyAchievements:' + String(me?.id || me?.username || 'guest');
   let saved = {};
@@ -3099,24 +3214,41 @@ function achievementGardenMarkup(items) {
     try { localStorage.setItem(key, JSON.stringify(saved)); } catch {}
   }
   const earnedCount = achievements.filter(item => !!saved[item.id]).length;
-  const remaining = achievements.filter(item => !saved[item.id]);
-  if (!remaining.length) return '';
+  const artwork = {
+    memory: '<path d="M12 7.5 24 4l12 3.5v29L24 40l-12-3.5z" fill="#f7e7cc" stroke="#b78a69" stroke-width="1.6"/><path d="M17 14h14M17 19h14M17 24h9" stroke="#b78a69" stroke-width="1.7" stroke-linecap="round"/><path d="M24 31c-5-3-6-8-2-9 2-.5 3 1 2 2 1-1.5 3-2.5 5-1 3 3-1 6-5 8z" fill="#df8baa"/>',
+    camera: '<rect x="7" y="13" width="34" height="25" rx="6" fill="#e5edf5" stroke="#7995ad" stroke-width="1.7"/><path d="m14 13 3-5h13l4 5" fill="#d5e3ef" stroke="#7995ad" stroke-width="1.7"/><circle cx="24" cy="25" r="8" fill="#fff7e8" stroke="#7995ad" stroke-width="2"/><circle cx="24" cy="25" r="4" fill="#d69fba"/><circle cx="36" cy="18" r="1.8" fill="#d69fba"/>',
+    letter: '<path d="M7 13q0-3 4-3h26q4 0 4 3v23q0 3-4 3H11q-4 0-4-3z" fill="#fff0f2" stroke="#c9859e" stroke-width="1.7"/><path d="m9 14 15 12 15-12" fill="none" stroke="#c9859e" stroke-width="2"/><path d="M24 28c-6-4-7-9-3-10 2-.6 3 1 3 2 1-2 4-3 6-1 3 3-1 7-6 9z" fill="#d97899"/>',
+    music: '<path d="M28 8v23a6 6 0 1 1-4-5.7V14l17-4v17a6 6 0 1 1-4-5.7V8z" fill="#dcd7f4" stroke="#8d80b9" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 16q-5 8 0 16M14 19q-3 5 0 10" fill="none" stroke="#c18daf" stroke-width="2" stroke-linecap="round"/>',
+    sunrise: '<circle cx="24" cy="25" r="15" fill="#ffe6ae" opacity=".7"/><path d="M8 31h32M12 31a12 12 0 0 1 24 0" fill="none" stroke="#d69a59" stroke-width="2.2" stroke-linecap="round"/><path d="M24 7v6M9 14l4 4M39 14l-4 4M5 27h6M37 27h6" stroke="#d69a59" stroke-width="2" stroke-linecap="round"/><path d="m18 29 6-5 6 5" fill="none" stroke="#9da982" stroke-width="2"/>',
+    flower3: '<path d="M24 43V26" stroke="#648f6a" stroke-width="3" stroke-linecap="round"/><path d="M24 33Q11 20 7 29Q13 39 24 35Z" fill="#a9c99a"/><path d="M24 27Q36 14 41 23Q35 33 24 29Z" fill="#c2d9a7"/><path d="M24 25Q17 14 24 5Q32 15 24 25Z" fill="#8fb47f"/><path d="M8 44h32" stroke="#c6a17b" stroke-width="2.5" stroke-linecap="round"/>',
+    flower7: '<path d="M24 43V26" stroke="#648f6a" stroke-width="3" stroke-linecap="round"/><g fill="#fff1d8" stroke="#e4cba6" stroke-width="1"><ellipse cx="24" cy="14" rx="4" ry="10"/><ellipse cx="24" cy="14" rx="4" ry="10" transform="rotate(45 24 14)"/><ellipse cx="24" cy="14" rx="4" ry="10" transform="rotate(90 24 14)"/><ellipse cx="24" cy="14" rx="4" ry="10" transform="rotate(135 24 14)"/></g><circle cx="24" cy="14" r="5" fill="#edc45f" stroke="#c9973e" stroke-width="1.2"/><path d="M24 37q-11-11-16-3 7 9 16 3Z" fill="#a8c995"/>',
+    flower14: '<path d="M10 43V27m14 16V18m14 25V27" stroke="#71966f" stroke-width="2.6" stroke-linecap="round"/><g fill="#e9a6bd"><circle cx="10" cy="23" r="5"/><circle cx="6" cy="19" r="4"/><circle cx="14" cy="19" r="4"/></g><g fill="#c9b2e8"><circle cx="24" cy="14" r="6"/><circle cx="18" cy="10" r="4.5"/><circle cx="30" cy="10" r="4.5"/></g><g fill="#f2cf7c"><circle cx="38" cy="23" r="5"/><circle cx="34" cy="19" r="4"/><circle cx="42" cy="19" r="4"/></g><path d="M5 44q19-6 38 0" fill="none" stroke="#b6c99e" stroke-width="2"/>',
+    flower30: '<path d="M24 44V11" stroke="#648c68" stroke-width="3.2" stroke-linecap="round"/><path d="M24 34Q7 18 5 29Q12 40 24 34Zm0-10Q40 7 44 19Q37 29 24 24Z" fill="#91b681" stroke="#648c68" stroke-width="1"/><path d="M24 16Q13 5 24 2Q35 7 24 16Z" fill="#b5cf91"/><circle cx="8" cy="14" r="3" fill="#e8a2bc"/><circle cx="40" cy="8" r="3" fill="#e8a2bc"/>',
+    flower50: '<path d="M24 44 10 23m14 21 14-21M24 44V18" stroke="#648c68" stroke-width="2.8" stroke-linecap="round"/><g fill="#e99db8" stroke="#bd7895" stroke-width="1"><circle cx="10" cy="20" r="6"/><circle cx="6" cy="15" r="4"/><circle cx="14" cy="15" r="4"/></g><g fill="#c9b2e8" stroke="#9277ae" stroke-width="1"><circle cx="38" cy="20" r="6"/><circle cx="34" cy="15" r="4"/><circle cx="42" cy="15" r="4"/></g><g fill="#f0c96f" stroke="#c49a50" stroke-width="1"><circle cx="24" cy="13" r="7"/><circle cx="18" cy="8" r="4"/><circle cx="30" cy="8" r="4"/></g><path d="m17 31 7 5 7-5-3 12h-8Z" fill="#e5adbf" stroke="#b87892" stroke-width="1"/>',
+    flower100: '<circle cx="24" cy="21" r="19" fill="none" stroke="#e6c36f" stroke-width="1.8" stroke-dasharray="2 3"/><path d="M24 44V34" stroke="#648c68" stroke-width="3" stroke-linecap="round"/><path d="M24 40Q12 31 7 39Q15 45 24 41Zm0 0q12-9 17-1-8 6-17 2Z" fill="#a8c995"/><g fill="#d9b9e9" stroke="#a58bb8" stroke-width="1"><path d="M24 32Q7 25 12 13Q22 14 24 32Z"/><path d="M24 32Q41 25 36 13Q26 14 24 32Z"/></g><g fill="#f0a9c1" stroke="#bd7895" stroke-width="1"><path d="M24 31Q2 29 5 18Q17 14 24 31Z"/><path d="M24 31Q46 29 43 18Q31 14 24 31Z"/><path d="M24 30Q15 11 24 4Q33 11 24 30Z"/></g><circle cx="24" cy="26" r="3" fill="#e9c46e"/>',
+    heart: '<path d="M24 39S7 29 7 18c0-8 10-12 17-3 7-9 17-5 17 3 0 11-17 21-17 21z" fill="#e98eaa" stroke="#bd6688" stroke-width="1.8"/><path d="M15 17q2-5 7-3" fill="none" stroke="#fff3f5" stroke-width="2.4" stroke-linecap="round"/>',
+    five: '<path d="M24 5 29 17 42 18 32 27 35 40 24 33 13 40 16 27 6 18 19 17z" fill="#e9bad0" stroke="#b87d9b" stroke-width="1.8"/><text x="24" y="27" text-anchor="middle" font-size="10" font-weight="900" fill="#86516e">500</text>',
+    thousand: '<path d="M24 5c-11 0-18 9-18 19 0 10 8 18 18 18s18-8 18-18C42 14 35 5 24 5z" fill="#edc6d4" stroke="#b97897" stroke-width="1.8"/><path d="M24 10c-7 0-12 6-12 13 0 7 5 12 12 12s12-5 12-12c0-7-5-13-12-13z" fill="#fff0d2" stroke="#cf9c78"/><text x="24" y="27" text-anchor="middle" font-size="9" font-weight="900" fill="#8b5870">1K</text>',
+    rose: '<path d="M24 42V27" stroke="#789a79" stroke-width="2.5" stroke-linecap="round"/><path d="M23 37q-11-11-16-4 5 8 16 5M25 34q10-12 15-5-4 8-15 7" fill="#b9d2ad" stroke="#789a79" stroke-width="1.2"/><g fill="#d9799a" stroke="#a64d70" stroke-width="1.2"><path d="M24 7c-7-5-14 1-10 8-8 2-6 12 2 12-1 8 10 10 12 3 8 3 14-6 7-11 5-7-3-15-11-11z"/><path d="M17 17q7-9 14 0-1 10-8 10-8-2-6-10z" fill="#f4b5c9"/></g><path d="M21 17q3-5 7-1-1 6-5 6" fill="none" stroke="#a64d70" stroke-width="1.5"/>',
+    crown: '<path d="M24 42V26" stroke="#789a79" stroke-width="2.5"/><path d="M23 36q-9-10-14-4 5 7 14 5" fill="#b9d2ad"/><g fill="#d8c5ed" stroke="#9277ae" stroke-width="1.3"><path d="M24 5c-5-4-10 1-8 6-7 0-8 9-2 12-1 7 9 10 10 4 2 6 12 3 10-4 6-3 5-12-2-12-1-7-6-10-8-6z"/><circle cx="24" cy="20" r="8" fill="#f7e6b2" stroke="#c09a56"/></g><path d="m14 12 2-7 7 6 1-9 4 9 7-6 1 8" fill="#edca79" stroke="#a98548" stroke-width="1.6" stroke-linejoin="round"/>'
+  };
   return `
     <section class="achievement-garden" aria-labelledby="achievementGardenTitle">
       <div class="achievement-garden-heading">
-        <div><small>A FEW LITTLE GOALS</small><h3 id="achievementGardenTitle">Growing together <span aria-hidden="true">✿</span></h3><p>Small moments, lovely milestones.</p></div>
-        <div class="achievement-count"><strong>${earnedCount}/${achievements.length}</strong><span>unlocked</span></div>
+        <div><small>YOUR LITTLE FLOWER COLLECTION</small><h3 id="achievementGardenTitle">Milestones in bloom <span aria-hidden="true">✿</span></h3><p>Every little thing you grow stays in your garden.</p></div>
+        <div class="achievement-count"><strong>${earnedCount}/${achievements.length}</strong><span>blooms earned</span></div>
       </div>
       <div class="achievement-grid">
-        ${remaining.map(item => {
+        ${achievements.map(item => {
+          const earned = !!saved[item.id];
           const progress = Math.min(100, Math.round((item.value / item.goal) * 100));
           const amount = Math.min(item.value, item.goal);
-          const art = item.id === 'first-memory' ? 'note' : item.id === 'photo-collector' ? 'photo' : item.id === 'love-letter' ? 'kissNote' : item.id === 'playlist-curator' ? 'song' : item.id === 'week-of-wonder' ? 'bloom-7' : 'hearts';
-          return `<article class="achievement-card">
-            <div class="achievement-medallion achievement-art" aria-hidden="true">${gardenIllustration(art)}</div>
+          return `<article class="achievement-card ${earned ? 'is-earned' : 'is-growing'}" data-achievement="${item.id}">
+            <div class="achievement-medallion achievement-art achievement-art-${item.art}" aria-hidden="true"><svg viewBox="0 0 48 48" focusable="false">${artwork[item.art]}</svg></div>
             <div class="achievement-copy"><strong>${esc(item.title)}</strong><p>${esc(item.detail)}</p>
               <div class="achievement-progress" role="progressbar" aria-label="${esc(item.title)} progress" aria-valuemin="0" aria-valuemax="${item.goal}" aria-valuenow="${amount}"><span style="width:${progress}%"></span></div>
-              <small>${amount} / ${item.goal} ${esc(item.unit)}</small>
+              <small>${earned ? '✿ Collected · ' + item.goal.toLocaleString() : amount.toLocaleString() + ' / ' + item.goal.toLocaleString()} ${esc(item.unit)}</small>
+              ${earned ? '<span class="achievement-earned-stamp" aria-label="Unlocked">✦</span>' : ''}
             </div>
           </article>`;
         }).join('')}
@@ -3379,16 +3511,13 @@ function showFriendProfile(user) {
     }
     const streak = Math.max(0, Number(user.login_streak) || 0);
     const heartTotal = Math.max(0, Number(user.heartCount) || 0);
-  const flowerArt = (petal, center, leaf) => '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 27Q14 35 13 44M24 30Q34 34 37 42" fill="none" stroke="'+leaf+'" stroke-width="2.8" stroke-linecap="round"/><path d="M19 37Q9 29 7 35Q11 43 20 40M29 36Q38 28 42 34Q39 42 30 40" fill="'+leaf+'" stroke="'+leaf+'" stroke-width="1"/><g fill="'+petal+'" stroke="#fff9f5" stroke-width="1.2"><ellipse cx="24" cy="12" rx="5" ry="9"/><ellipse cx="24" cy="12" rx="5" ry="9" transform="rotate(60 24 24)"/><ellipse cx="24" cy="12" rx="5" ry="9" transform="rotate(120 24 24)"/><ellipse cx="24" cy="12" rx="5" ry="9" transform="rotate(180 24 24)"/><ellipse cx="24" cy="12" rx="5" ry="9" transform="rotate(240 24 24)"/><ellipse cx="24" cy="12" rx="5" ry="9" transform="rotate(300 24 24)"/></g><circle cx="24" cy="24" r="5.2" fill="'+center+'" stroke="#fff8e8" stroke-width="1.4"/><circle cx="22.4" cy="22.2" r="1.3" fill="#fff" opacity=".8"/></svg>';
   const flowerMilestones = [
-    {goal:3, icon:flowerArt('#b7d7a8','#f4d77c','#789b75'), title:'Tiny sprout'},
-    {goal:7, icon:flowerArt('#f7d2a0','#e8ae55','#789b75'), title:'First flower'},
-    {goal:14, icon:flowerArt('#e9a9c5','#f6d77f','#789b75'), title:'Little garden'},
-    {goal:30, icon:flowerArt('#e9a2bb','#f5d17a','#789b75'), title:'Growing plant'},
-    {goal:50, icon:flowerArt('#d9c0ef','#f5d17a','#789b75'), title:'Golden bouquet'},
-    {goal:100, icon:flowerArt('#f3b7c7','#e9bd67','#789b75'), title:'Blooming garden'},
-    {goal:180, icon:flowerArt('#c5b4e8','#f6d88c','#789b75'), title:'Magical garden'},
-    {goal:365, icon:flowerArt('#fff0c1','#e4ad57','#789b75'), title:'Eternal garden'}
+    {goal:3, title:'Tiny Sprout'},
+    {goal:7, title:'First Bloom'},
+    {goal:14, title:'Little Garden'},
+    {goal:30, title:'Growing Together'},
+    {goal:50, title:'Golden Bouquet'},
+    {goal:100, title:'Everlasting Garden'}
   ];
     const heartMilestones = [
     {goal:10, title:'Little Keepsake', icon:'<svg viewBox="0 0 72 64" aria-hidden="true"><path d="M13 25 36 13l23 12v27H13Z" fill="#f5d9e4" stroke="#c98da8" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 24h52v8H10z" fill="#e8b9cb" stroke="#c98da8" stroke-width="2"/><path d="M29 23c0-8 14-8 14 0-1 5-7 8-7 8s-6-3-7-8Z" fill="#d77e9e"/><path d="M36 32v20" stroke="#c98da8" stroke-width="2"/><path d="m23 18 5-5m16 5 5-5" stroke="#fff8f4" stroke-width="2" stroke-linecap="round"/></svg>'},
@@ -4820,6 +4949,7 @@ function startRealtime() {
           notificationRows = rows;
           notificationLoaded = true;
           updateNotificationBadge();
+          if (['gallery', 'music', 'friends'].includes(page)) void markNavNotificationsSeen(page);
           const added = rows.find(row => String(row.id) === String(inserted?.id));
           if (added) void showPhoneNotification(added);
           if (!$('#notificationGate').classList.contains('hidden')) renderNotifications();
@@ -5458,6 +5588,39 @@ function updateNotificationBadge() {
   const badge = $('#notificationBadge'), count = notificationRows.filter(n => !n.read_at && !(page === 'notes' && n.kind === 'note' && !/\bliked your note\b/i.test(String(n.message || '')))).length;
   badge.textContent = count > 9 ? '9+' : String(count);
   badge.classList.toggle('hidden', count === 0);
+  updateNavNewDots();
+}
+
+function updateNavNewDots() {
+  const pageKinds = { gallery: ['photo'], music: ['song'], notes: ['note'], friends: ['buddy'] };
+  const pageLabels = { gallery: 'Photos', music: 'Music', notes: 'Notes', friends: 'Friends' };
+  document.querySelectorAll('#nav button[data-page]').forEach(button => {
+    const targetPage = button.dataset.page;
+    const kinds = pageKinds[targetPage] || [];
+    const isCurrentTab = targetPage === page;
+    const hasNew = !isCurrentTab && notificationRows.some(row => !row.read_at && kinds.includes(String(row.kind || '').toLowerCase()));
+    button.querySelector('.nav-new-dot')?.classList.toggle('is-visible', hasNew);
+    if (hasNew) button.setAttribute('aria-label', (pageLabels[targetPage] || targetPage) + ', new activity');
+    else button.removeAttribute('aria-label');
+  });
+}
+
+async function markNavNotificationsSeen(targetPage) {
+  const pageKinds = { gallery: ['photo'], music: ['song'], friends: ['buddy'] };
+  const kinds = pageKinds[targetPage];
+  if (!kinds?.length || !me) return;
+  const rows = notificationRows.filter(row => !row.read_at && kinds.includes(String(row.kind || '').toLowerCase()));
+  if (!rows.length) return;
+  const readAt = new Date().toISOString();
+  rows.forEach(row => { row.read_at = readAt; });
+  updateNotificationBadge();
+  try {
+    await api('/notifications/read', { method: 'PUT', body: JSON.stringify({ ids: rows.map(row => String(row.id)) }) });
+  } catch (error) {
+    rows.forEach(row => { if (row.read_at === readAt) row.read_at = null; });
+    updateNotificationBadge();
+    console.warn('Navigation activity could not be marked as seen:', error?.message || error);
+  }
 }
 
 function notificationGroupLabel(value) {
@@ -5955,7 +6118,7 @@ const tt=Math.atan2(-(sx+dx-best.ex),sy+dy-best.ey);let a2=(tt-best.a)/R;a2=((a2
 const fk=(s,a1,a2)=>{const t1=a1*R,t2=(a1+a2)*R,ex=s-L1*Math.sin(t1),ey=-76+L1*Math.cos(t1);return[[s,-76],[ex,ey],[ex-L2*Math.sin(t2),ey+L2*Math.cos(t2)],t2/R]};
 
 const V=[{},{}],EXP={eye:1,eh:1,mouth:1,pk:1,blush:1};let cur="idle",actor=0,role=0,t0=performance.now(),sleepF=0,berryS=1,rate=7;
-const idle=(b,t)=>{const w=Math.sin(t*1.2+b*1.7);return{x:0,y:0,rot:w*1.2,hr:Math.sin(t*.8+b*2.3)*3+2,hx:0,hy:0,eye:1,eh:1,mouth:0,pk:0,blush:.3,i1:-12+w*2,i2:-6,o1:12-w*2,o2:6}};
+const idle=(b,t)=>{const w=Math.sin(t*1.2+b*1.7),curious=Math.max(0,Math.sin(t*.19+b*2.4)),stretch=Math.max(0,Math.sin(t*.075+b*3.1));return{x:Math.sin(t*.32+b*1.8)*1.4,y:-stretch*1.2,rot:w*1.35+curious*(b?-.8:.8),hr:Math.sin(t*.8+b*2.3)*3.2+2+curious*(b?-2.2:2.2),hx:0,hy:0,eye:1,eh:1,mouth:0,pk:0,blush:.3,i1:-12+w*2-stretch*3,i2:-6,o1:12-w*2+stretch*3,o2:6}};
 const BITES=[1.4,2.8,4.0];
 const ACT={
 idle:()=>({}),
@@ -5976,9 +6139,11 @@ pet:(t,b)=>{const r=1-actor,sw=Math.sin(t*5);
  :{x:64,hr:14+sw*2,hx:16,hy:Math.abs(sw)*1.8,eye:.1,blush:1,mouth:.25}},
 feed:(t,b)=>{const a=actor,r=1-a,open=(t>1.1&&t<1.7)||(t>2.65&&t<3)||(t>3.85&&t<4.2),chew=(t>1.7&&t<2.65)||(t>3&&t<3.85)||(t>4.2&&t<5.2);
  if(b===a){const k=t<.9?40:open?14:chew?34:t<5.2?34:44,M=ptH(r,0,-22);return{x:64,hr:-6,hx:-16,mouth:.25,blush:.6,ik:[M[0]-S[a]*k,M[1]+2]}}
- return{x:64,hr:open?12:chew?7:4,hx:open?8:chew?3:0,mouth:open?.9:chew?.2+.2*Math.abs(Math.sin(t*14)):t>5.2?.05:0,eye:chew?.12:1,blush:chew||t>5.2?.9:.5}}
+ return{x:64,hr:open?12:chew?7:4,hx:open?8:chew?3:0,mouth:open?.9:chew?.2+.2*Math.abs(Math.sin(t*14)):t>5.2?.05:0,eye:chew?.12:1,blush:chew||t>5.2?.9:.5}},
+peekaboo:(t,b)=>{const reveal=t<.8?0:t<1.25?1:Math.max(0,1-(t-1.25)*.45);if(b===actor)return{x:42,y:-2,rot:-2,hr:10+reveal*7,eye:t<1.1?0:1,mouth:.18+reveal*.28,blush:.75,o1:58-reveal*20,o2:20,i1:-34,i2:-12};return{x:38,y:-Math.max(0,Math.sin(t*3))*2,hr:-5,eye:t<.8?.12:1,mouth:.22,blush:.85}},
+bump:(t,b)=>{const hit=t>.72&&t<1.05,pulse=hit?Math.sin((t-.72)*Math.PI/.33):0;return{x:42+(hit?pulse*3:0),y:hit?-Math.abs(pulse)*3:0,rot:b===actor?2+pulse*3:-2-pulse*3,hr:b===actor?8-pulse*5:-8+pulse*5,eye:hit?.2:1,mouth:.22,blush:.8}}
 };
-const END={kiss:3.8,flykiss:3.6,slap:2.8,feed:6.8,tummy:4.6};
+const END={kiss:3.8,flykiss:3.6,slap:2.8,feed:6.8,tummy:4.6,peekaboo:3.1,bump:2.4};
 
 
   /* ---------- audio ---------- */
@@ -6149,7 +6314,9 @@ function triggerBearAction(action, options = {}) {
     pet: 'A gentle head pat. They love it! 🐾',
     feed: 'Strawberries for two. Yum, yum! 🍓',
     sleep: 'Shhh… the little bears are dreaming together. 🌙',
-    idle: 'Our little bears are relaxing together. 🌸'
+    idle: 'Our little bears are relaxing together. 🌸',
+    peekaboo: 'Peekaboo! A little surprise for each other. ♡',
+    bump: 'A tiny, gentle bear head bump. ♡'
   };
   scene.dataset.action = action;
   bearPoseEngine?.play(action, bearActorIndex(options.gender || me?.gender));
@@ -6903,6 +7070,12 @@ document.addEventListener('click', async e => {
       }
     } else if (destination === 'streak') {
       openStreakGarden();
+    } else if (destination === 'bear-hugs') {
+      go('home');
+      requestAnimationFrame(() => {
+        const bearGame = $('#coupleBearGame');
+        bearGame?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      });
     }
     return;
   }
