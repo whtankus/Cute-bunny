@@ -5185,3 +5185,158 @@ body[data-mode="dark"] #content .bear-name{background:rgba(54,43,58,.9);color:#e
 @media(prefers-reduced-motion:reduce){
   #content .bear-pose-scene #bearPoseSvg{scroll-behavior:auto}
 }
+
+/* Three new 400-petal legendary garden treasures. Keep the same premium card
+   proportions and collect controls as the existing legendary shop pieces. */
+#content .sg-collectible-card.item-moonlit-orchid,
+#content .sg-collectible-card.item-crystal-butterfly,
+#content .sg-collectible-card.item-sunfire-blossom{
+  border:1px solid rgba(225,145,177,.9);
+  background:linear-gradient(150deg,#fffafd 0%,#fff3f7 48%,#f7efff 100%);
+  box-shadow:0 10px 32px rgba(205,91,139,.2),0 0 25px rgba(245,165,199,.22),inset 0 1px 0 #fff;
+}
+#content .sg-collectible-card.item-moonlit-orchid .sg-collectible-art,
+#content .sg-collectible-card.item-crystal-butterfly .sg-collectible-art,
+#content .sg-collectible-card.item-sunfire-blossom .sg-collectible-art{
+  box-sizing:border-box;width:88px;height:88px;min-width:88px;min-height:88px;flex:0 0 88px;
+  margin:4px auto 5px;border:1px solid rgba(255,255,255,.98);border-radius:28px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.88),0 0 27px rgba(238,128,174,.48),0 0 48px rgba(210,145,204,.24),inset 0 0 22px rgba(255,255,255,.98);
+}
+#content .sg-collectible-card.item-moonlit-orchid .sg-collectible-art{background:radial-gradient(circle at 50% 45%,#fff 0 8%,rgba(225,207,255,.96) 30%,rgba(166,132,220,.58) 61%,rgba(255,250,253,.94) 80%);box-shadow:0 0 0 1px rgba(255,255,255,.88),0 0 29px rgba(165,126,224,.55),0 0 50px rgba(198,158,238,.3),inset 0 0 22px #fff}
+#content .sg-collectible-card.item-crystal-butterfly .sg-collectible-art{background:radial-gradient(circle at 50% 45%,#fff 0 8%,rgba(210,250,248,.96) 30%,rgba(119,203,218,.58) 61%,rgba(249,255,255,.94) 80%);box-shadow:0 0 0 1px rgba(255,255,255,.88),0 0 29px rgba(104,204,215,.5),0 0 50px rgba(151,186,235,.3),inset 0 0 22px #fff}
+#content .sg-collectible-card.item-sunfire-blossom .sg-collectible-art{background:radial-gradient(circle at 50% 45%,#fff 0 8%,rgba(255,239,194,.96) 30%,rgba(246,169,104,.58) 61%,rgba(255,252,244,.94) 80%);box-shadow:0 0 0 1px rgba(255,255,255,.88),0 0 29px rgba(244,170,91,.5),0 0 50px rgba(235,131,100,.28),inset 0 0 22px #fff}
+#content .sg-collectible-card.item-moonlit-orchid .sg-collectible-art svg,
+#content .sg-collectible-card.item-crystal-butterfly .sg-collectible-art svg,
+#content .sg-collectible-card.item-sunfire-blossom .sg-collectible-art svg{
+  display:block;width:78px;height:78px;max-width:78px;max-height:78px;overflow:visible;
+  filter:drop-shadow(0 3px 4px rgba(107,75,111,.2)) drop-shadow(0 0 10px rgba(242,143,190,.62));
+  animation:legendary-bloom-float 4.8s ease-in-out infinite;
+}
+#content .sg-collectible-card.item-moonlit-orchid>button,
+#content .sg-collectible-card.item-crystal-butterfly>button,
+#content .sg-collectible-card.item-sunfire-blossom>button{
+  box-sizing:border-box;width:100%;height:40px;min-height:40px;max-height:40px;flex:0 0 40px;
+  margin-top:auto;padding:0 8px;border-radius:12px;background:linear-gradient(180deg,#fff0f6,#f5d9e8);
+  color:#8b3e67;border:1px solid rgba(213,132,169,.5);box-shadow:0 3px 0 #d8a4bd;
+  font-size:.74rem;line-height:1;white-space:nowrap;
+}
+#content .sg-collectible-card.item-moonlit-orchid.is-equipped,
+#content .sg-collectible-card.item-crystal-butterfly.is-equipped,
+#content .sg-collectible-card.item-sunfire-blossom.is-equipped{
+  border-color:#d783a9;box-shadow:0 0 0 2px rgba(220,123,165,.22),0 11px 32px rgba(205,91,139,.24);
+}
+@media(prefers-reduced-motion:reduce){
+  #content .sg-collectible-card.item-moonlit-orchid .sg-collectible-art svg,
+  #content .sg-collectible-card.item-crystal-butterfly .sg-collectible-art svg,
+  #content .sg-collectible-card.item-sunfire-blossom .sg-collectible-art svg{animation:none}
+}
+
+/* Legendary V2: make each new treasure feel as luminous as Dreamwing Halo. */
+#content .sg-collectible-card.item-moonlit-orchid,
+#content .sg-collectible-card.item-crystal-butterfly,
+#content .sg-collectible-card.item-sunfire-blossom{
+  position:relative;isolation:isolate;overflow:hidden;
+  border:1px solid rgba(255,255,255,.98);
+  box-shadow:0 0 0 1px rgba(222,167,240,.58),0 0 24px var(--legendary-glow),0 0 48px var(--legendary-aura),0 12px 34px rgba(110,72,128,.18),inset 0 1px 0 #fff;
+  animation:legendary-card-pulse 4.4s ease-in-out infinite;
+}
+#content .sg-collectible-card.item-moonlit-orchid{--legendary-glow:rgba(190,132,255,.62);--legendary-aura:rgba(190,132,255,.3);background:radial-gradient(ellipse at 50% 4%,rgba(221,190,255,.72),transparent 56%),linear-gradient(150deg,#fffaff,#f2eaff 54%,#fff7fc)}
+#content .sg-collectible-card.item-crystal-butterfly{--legendary-glow:rgba(91,224,239,.62);--legendary-aura:rgba(125,177,255,.3);background:radial-gradient(ellipse at 50% 4%,rgba(169,249,250,.78),transparent 56%),linear-gradient(150deg,#f8ffff,#e9fbff 54%,#f7f2ff)}
+#content .sg-collectible-card.item-sunfire-blossom{--legendary-glow:rgba(255,178,75,.68);--legendary-aura:rgba(255,119,83,.34);background:radial-gradient(ellipse at 50% 4%,rgba(255,219,135,.8),transparent 56%),linear-gradient(150deg,#fffdf4,#fff0d8 54%,#fff4ed)}
+#content .sg-collectible-card.item-moonlit-orchid::before,
+#content .sg-collectible-card.item-crystal-butterfly::before,
+#content .sg-collectible-card.item-sunfire-blossom::before{
+  content:"";position:absolute;inset:-70% -40%;z-index:-1;pointer-events:none;
+  background:linear-gradient(110deg,transparent 38%,rgba(255,255,255,.7) 48%,rgba(255,255,255,.1) 53%,transparent 62%);
+  transform:translateX(-65%) rotate(12deg);animation:legendary-card-shine 5.2s ease-in-out infinite;
+}
+#content .sg-collectible-card.item-moonlit-orchid .sg-collectible-art,
+#content .sg-collectible-card.item-crystal-butterfly .sg-collectible-art,
+#content .sg-collectible-card.item-sunfire-blossom .sg-collectible-art{
+  width:96px;height:96px;min-width:96px;min-height:96px;flex:0 0 96px;
+  margin:1px auto 7px;border-radius:32px;border:1px solid rgba(255,255,255,.98);
+  background:radial-gradient(circle at 50% 45%,#fff 0 7%,rgba(255,255,255,.84) 28%,var(--legendary-aura) 64%,transparent 82%);
+  box-shadow:0 0 0 1px rgba(255,255,255,.9),0 0 24px var(--legendary-glow),0 0 48px var(--legendary-aura),inset 0 0 22px #fff;
+  animation:legendary-art-pulse 3.6s ease-in-out infinite;
+}
+#content .sg-collectible-card.item-moonlit-orchid .sg-collectible-art svg,
+#content .sg-collectible-card.item-crystal-butterfly .sg-collectible-art svg,
+#content .sg-collectible-card.item-sunfire-blossom .sg-collectible-art svg{
+  display:block;width:88px;height:88px;max-width:88px;max-height:88px;overflow:visible;
+  filter:drop-shadow(0 3px 4px rgba(90,65,115,.24)) drop-shadow(0 0 10px var(--legendary-glow)) drop-shadow(0 0 18px var(--legendary-aura));
+  animation:legendary-bloom-float 3.8s ease-in-out infinite;
+}
+#content .sg-collectible-card.item-moonlit-orchid>b,
+#content .sg-collectible-card.item-crystal-butterfly>b,
+#content .sg-collectible-card.item-sunfire-blossom>b{
+  color:#704e83;text-shadow:0 0 12px rgba(255,255,255,.95);
+}
+#content .sg-collectible-card.item-moonlit-orchid>button,
+#content .sg-collectible-card.item-crystal-butterfly>button,
+#content .sg-collectible-card.item-sunfire-blossom>button{
+  width:100%;height:40px;min-height:40px;max-height:40px;flex:0 0 40px;margin-top:auto;
+  border-radius:12px;background:linear-gradient(180deg,#fff,#f4e4ff);
+  color:#704e83;border:1px solid rgba(186,139,211,.7);
+  box-shadow:0 3px 0 rgba(177,133,201,.65),0 0 14px var(--legendary-aura);
+}
+#content .sg-collectible-card.item-crystal-butterfly>button{background:linear-gradient(180deg,#fff,#ddf8fa);color:#397d89;border-color:rgba(104,190,204,.65);box-shadow:0 3px 0 rgba(104,190,204,.55),0 0 14px var(--legendary-aura)}
+#content .sg-collectible-card.item-sunfire-blossom>button{background:linear-gradient(180deg,#fffdf2,#ffe7bc);color:#98602f;border-color:rgba(222,165,88,.65);box-shadow:0 3px 0 rgba(204,145,66,.55),0 0 14px var(--legendary-aura)}
+#content .sg-collectible-card.item-moonlit-orchid.is-equipped,
+#content .sg-collectible-card.item-crystal-butterfly.is-equipped,
+#content .sg-collectible-card.item-sunfire-blossom.is-equipped{
+  border-color:#fff;box-shadow:0 0 0 2px var(--legendary-glow),0 0 30px var(--legendary-glow),0 0 60px var(--legendary-aura),0 12px 34px rgba(110,72,128,.2);
+}
+@keyframes legendary-card-pulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.035)}}
+@keyframes legendary-art-pulse{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.9),0 0 20px var(--legendary-glow),0 0 40px var(--legendary-aura),inset 0 0 22px #fff}50%{box-shadow:0 0 0 2px #fff,0 0 34px var(--legendary-glow),0 0 58px var(--legendary-aura),inset 0 0 28px #fff}}
+@keyframes legendary-card-shine{0%,52%{transform:translateX(-75%) rotate(12deg);opacity:0}68%{opacity:.9}100%{transform:translateX(75%) rotate(12deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){
+ #content .sg-collectible-card.item-moonlit-orchid,
+ #content .sg-collectible-card.item-crystal-butterfly,
+ #content .sg-collectible-card.item-sunfire-blossom,
+ #content .sg-collectible-card.item-moonlit-orchid::before,
+ #content .sg-collectible-card.item-crystal-butterfly::before,
+ #content .sg-collectible-card.item-sunfire-blossom::before,
+ #content .sg-collectible-card.item-moonlit-orchid .sg-collectible-art,
+ #content .sg-collectible-card.item-crystal-butterfly .sg-collectible-art,
+ #content .sg-collectible-card.item-sunfire-blossom .sg-collectible-art,
+ #content .sg-collectible-card.item-moonlit-orchid .sg-collectible-art svg,
+ #content .sg-collectible-card.item-crystal-butterfly .sg-collectible-art svg,
+ #content .sg-collectible-card.item-sunfire-blossom .sg-collectible-art svg{animation:none}
+}
+
+
+/* Living motion for the three legendary garden treasures.
+   These SVG classes live inside the catalogue art, so the same animations
+   render in the shop and in both own/friend profile collections. */
+.mo-orchid-petals{
+  transform-box:view-box;
+  transform-origin:32px 34px;
+  animation:mo-orchid-turn 18s linear infinite;
+}
+.cb-left-wings,.cb-right-wings{
+  transform-box:view-box;
+  animation:cb-butterfly-flap 1.35s ease-in-out infinite alternate;
+}
+.cb-left-wings{transform-origin:29px 33px}
+.cb-right-wings{transform-origin:35px 33px}
+.sf-sun-rotor{
+  transform-box:view-box;
+  transform-origin:32px 30px;
+  animation:sf-sun-turn 24s linear infinite;
+}
+@keyframes mo-orchid-turn{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@keyframes cb-butterfly-flap{
+  0%{transform:scaleX(1) rotate(0deg);filter:brightness(1)}
+  48%{transform:scaleX(.28) rotate(7deg);filter:brightness(1.28)}
+  100%{transform:scaleX(1) rotate(0deg);filter:brightness(1.08)}
+}
+@keyframes sf-sun-turn{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@media(prefers-reduced-motion:reduce){
+  .mo-orchid-petals,.cb-left-wings,.cb-right-wings,.sf-sun-rotor{animation:none!important}
+}
