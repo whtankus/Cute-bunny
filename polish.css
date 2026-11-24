@@ -5369,3 +5369,45 @@ body[data-mode="dark"] .streak-garden-page .sg-quest-keyword-hint{
 }
 body[data-mode="dark"] .streak-garden-page .sg-quest-keyword-hint>span{color:#e4b9d2}
 body[data-mode="dark"] .streak-garden-page .sg-quest-keyword-hint>b{color:#f8e6f1}
+
+/* Little Garden Shop — uniform badge artwork only; card layout stays unchanged. */
+#content .sg-collectible-card .sg-collectible-art,
+#content .sg-collectible-card.item-celestial-rose .sg-collectible-art,
+#content .sg-collectible-card.item-divine-lotus .sg-collectible-art,
+#content .sg-collectible-card.item-dreamwing-halo .sg-collectible-art,
+#content .sg-collectible-card.item-moon-goddess-tiara .sg-collectible-art{
+  box-sizing:border-box;
+  width:76px;
+  height:76px;
+  min-width:76px;
+  min-height:76px;
+  max-width:76px;
+  max-height:76px;
+  flex:0 0 76px;
+}
+#content .sg-collectible-card .sg-collectible-art svg,
+#content .sg-collectible-card.item-celestial-rose .sg-collectible-art svg,
+#content .sg-collectible-card.item-divine-lotus .sg-collectible-art svg,
+#content .sg-collectible-card.item-dreamwing-halo .sg-collectible-art svg,
+#content .sg-collectible-card.item-moon-goddess-tiara .sg-collectible-art svg{
+  width:66px;
+  height:66px;
+  max-width:66px;
+  max-height:66px;
+}
+@media(max-width:380px){
+  #content .sg-collectible-card .sg-collectible-art,
+  #content .sg-collectible-card.item-celestial-rose .sg-collectible-art,
+  #content .sg-collectible-card.item-divine-lotus .sg-collectible-art,
+  #content .sg-collectible-card.item-dreamwing-halo .sg-collectible-art,
+  #content .sg-collectible-card.item-moon-goddess-tiara .sg-collectible-art{
+    width:60px;height:60px;min-width:60px;min-height:60px;max-width:60px;max-height:60px;flex-basis:60px;
+  }
+  #content .sg-collectible-card .sg-collectible-art svg,
+  #content .sg-collectible-card.item-celestial-rose .sg-collectible-art svg,
+  #content .sg-collectible-card.item-divine-lotus .sg-collectible-art svg,
+  #content .sg-collectible-card.item-dreamwing-halo .sg-collectible-art svg,
+  #content .sg-collectible-card.item-moon-goddess-tiara .sg-collectible-art svg{
+    width:54px;height:54px;max-width:54px;max-height:54px;
+  }
+}
