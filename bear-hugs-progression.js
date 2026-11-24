@@ -154,7 +154,8 @@ function loadEquippedRewards(pairKey = sharedProgressPairKey) {
     equippedRewardIds = Array.isArray(saved) ? saved.filter(id => REWARDS.some(reward => reward.id === id)) : [];
   } catch { equippedRewardIds = []; }
 }
-function saveEquippedRewards(partnerId, pairKey, rewardIds) {
+let equipmentSaveInFlight = false;
+async function saveEquippedRewards(partnerId, pairKey, rewardIds) {
   const client = getSupabase();
   if (!pairKey || !partnerId || !client || !isAcceptedPartner(partnerId)) return false;
   const { data, error } = await client.rpc('set_bear_hug_equipment', {
