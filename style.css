@@ -13273,7 +13273,7 @@ body[data-mode="dark"] .streak-garden-page .sg-game-compact .sg-petal-card:focus
 }
 
 
-/* Achievement Garden — a compact, soft scrapbook collection. */
+/* Achievement Garden — illustrated keepsake flowers with a permanent earned state. */
 .achievement-garden{margin:22px 0 26px;padding:19px;border:1px solid #ecd8e2;border-radius:23px;background:linear-gradient(135deg,#fffaf8 0%,#fff2f6 55%,#f8f2fb 100%);box-shadow:0 9px 24px #9b718512}
 .achievement-garden-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
 .achievement-garden-heading small{color:#a7778e;font-size:.62rem;font-weight:800;letter-spacing:.13em}
@@ -13286,17 +13286,19 @@ body[data-mode="dark"] .streak-garden-page .sg-game-compact .sg-petal-card:focus
 .achievement-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .achievement-card{position:relative;display:flex;align-items:flex-start;gap:10px;min-width:0;padding:12px 11px;border:1px solid #efdee6;border-radius:17px;background:#fffdfb;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 .achievement-card.is-earned{border-color:#e5c2d2;background:linear-gradient(145deg,#fffdfb,#fff2f6);box-shadow:inset 0 0 0 1px #f8e6ed}
-.achievement-medallion{display:grid;place-items:center;flex:0 0 37px;width:37px;height:37px;border-radius:13px;background:linear-gradient(145deg,#f9e4ec,#f1d9ed);font-size:1.2rem;filter:saturate(.72);opacity:.7}
-.achievement-card.is-earned .achievement-medallion{background:linear-gradient(145deg,#f9dce8,#e9c7df);filter:none;opacity:1}
-.achievement-copy{min-width:0;flex:1}
+.achievement-card.is-earned:hover{transform:translateY(-2px);box-shadow:0 7px 18px #b77e981c,inset 0 0 0 1px #f8e6ed}
+.achievement-medallion{display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;border:1px solid #ead2de;border-radius:16px;background:linear-gradient(145deg,#f9e4ec,#f1d9ed);filter:saturate(.72);opacity:.66}
+.achievement-medallion svg{display:block;width:39px;height:39px;overflow:visible}
+.achievement-card.is-earned .achievement-medallion{background:linear-gradient(145deg,#fff0d8,#f6d9e7 55%,#e9d9f6);border-color:#e5bfd2;filter:none;opacity:1;box-shadow:0 3px 10px #cc98ae24}
+.achievement-copy{position:relative;min-width:0;flex:1;padding-right:4px}
 .achievement-copy strong{display:block;padding-right:12px;color:#75586e;font-size:.75rem;line-height:1.3}
 .achievement-copy p{min-height:2em;margin:3px 0 8px;color:#a08b9a;font-size:.64rem;line-height:1.4}
 .achievement-progress{height:5px;overflow:hidden;border-radius:99px;background:#f2e8ed}
-.achievement-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#e7a9c2,#c6a8d9);transition:width .35s ease}
-.achievement-copy>small{display:block;margin-top:5px;color:#a17d91;font-size:.59rem;font-weight:700}
-.achievement-card.is-earned .achievement-copy>small{color:#a66d89}
-.achievement-status{position:absolute;top:10px;right:10px;color:#c4aebd;font-size:.78rem}
-.achievement-card.is-earned .achievement-status{color:#bd7e9c}
+.achievement-progress span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e7a9c2,#c6a8d9);transition:width .35s ease}
+.achievement-card.is-earned .achievement-progress span{background:linear-gradient(90deg,#d68eaa,#b89acb,#9fbea0)}
+.achievement-copy>small{display:block;margin-top:5px;color:#a17d91;font-size:.59rem;font-weight:800}
+.achievement-earned-stamp{position:absolute;right:1px;top:0;color:#c18aa4;font-size:.85rem;text-shadow:0 1px 4px #f0c6d8}
+.achievement-card.is-growing .achievement-medallion{filter:grayscale(.18);opacity:.62}
 body[data-mode="dark"] .achievement-garden{border-color:#574555;background:linear-gradient(135deg,#352d38,#40313e 55%,#352f40);box-shadow:0 9px 24px #0002}
 body[data-mode="dark"] .achievement-garden-heading h3,body[data-mode="dark"] .achievement-copy strong{color:#f0dce8}
 body[data-mode="dark"] .achievement-garden-heading p,body[data-mode="dark"] .achievement-copy p{color:#c0aaba}
@@ -14775,3 +14777,207 @@ body[data-mode="dark"].notes-page-active.notes-header-hidden .app > header {
 /* Give the new tummy-scratch action enough room on narrow screens. */
 #coupleBearGame .couple-bear-actions{grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
 #coupleBearGame [data-couple-action="tummy"] span{display:inline-block;transform:rotate(-18deg)}
+
+
+/* Small glowing indicators for unseen activity in main navigation */
+.app #nav button{position:relative}
+.app #nav .nav-new-dot{position:absolute;top:5px;right:10px;width:8px;height:8px;border-radius:50%;background:#f0445e;box-shadow:0 0 0 2px rgba(253,248,241,.96),0 0 8px 2px rgba(240,68,94,.58);opacity:0;transform:scale(.55);pointer-events:none;transition:opacity .18s ease,transform .18s ease}
+.app #nav .nav-new-dot.is-visible{opacity:1;transform:scale(1);animation:nav-new-dot-glow 2s ease-in-out infinite}
+@keyframes nav-new-dot-glow{0%,100%{box-shadow:0 0 0 2px rgba(253,248,241,.96),0 0 6px 1px rgba(240,68,94,.42)}50%{box-shadow:0 0 0 2px rgba(253,248,241,.96),0 0 11px 3px rgba(240,68,94,.72)}}
+@media(prefers-reduced-motion:reduce){.app #nav .nav-new-dot.is-visible{animation:none}}
+
+
+/* Navigation dock refinement: compact tactile buttons with reliably anchored dots. */
+.app #nav{
+  isolation:isolate;
+  gap:9px;
+  padding:9px 14px max(11px,env(safe-area-inset-bottom));
+}
+.app #nav button{
+  position:relative!important;
+  isolation:isolate;
+  overflow:visible!important;
+  flex:0 1 108px;
+  min-width:0;
+  min-height:50px;
+  padding:7px 10px;
+  gap:3px;
+  border:1px solid #ecd9e2;
+  border-radius:16px;
+  background:linear-gradient(180deg,#fffefa 0%,#fbf0f4 100%);
+  box-shadow:0 3px 0 #e4ced9,0 5px 11px #88637a10;
+  color:#806b82;
+  transform:none;
+}
+.app #nav button.active{
+  border-color:#e5c3d2;
+  background:linear-gradient(180deg,#f9e5ed 0%,#f0d5e1 100%);
+  color:#784d68;
+  box-shadow:0 3px 0 #d5afc1,0 5px 12px #9c668014;
+}
+.app #nav button i{font-size:1.12rem;line-height:1.05}
+.app #nav button>span:not(.nav-new-dot){font-size:.69rem;line-height:1.1}
+.app #nav button:hover{transform:translateY(-1px)}
+.app #nav button:active{transform:translateY(2px);box-shadow:0 1px 0 #d5afc1}
+.app #nav button .nav-new-dot{
+  position:absolute!important;
+  display:block!important;
+  top:5px!important;
+  right:6px!important;
+  left:auto!important;
+  bottom:auto!important;
+  z-index:4;
+  width:8px!important;
+  height:8px!important;
+  min-width:8px!important;
+  min-height:8px!important;
+  margin:0!important;
+  padding:0!important;
+  flex:0 0 8px!important;
+  border:1.5px solid #fffaf6;
+  border-radius:50%!important;
+  background:#f0445e!important;
+  box-shadow:0 0 0 1px rgba(240,68,94,.12),0 0 8px 2px rgba(240,68,94,.5);
+  opacity:0;
+  transform:scale(.55);
+  pointer-events:none;
+  transition:opacity .18s ease,transform .18s ease;
+}
+.app #nav button .nav-new-dot.is-visible{
+  opacity:1;
+  transform:scale(1);
+  animation:nav-new-dot-glow 2s ease-in-out infinite;
+}
+@keyframes nav-new-dot-glow{
+  0%,100%{box-shadow:0 0 0 1px rgba(240,68,94,.12),0 0 6px 1px rgba(240,68,94,.4)}
+  50%{box-shadow:0 0 0 2px rgba(240,68,94,.12),0 0 11px 3px rgba(240,68,94,.68)}
+}
+@media(max-width:520px){
+  .app #nav{gap:6px;padding:8px 10px max(11px,env(safe-area-inset-bottom))}
+  .app #nav button{flex:1 1 0;max-width:78px;min-width:0;min-height:49px;padding:6px 4px;border-radius:15px}
+  .app #nav button i{font-size:1.08rem}
+  .app #nav button>span:not(.nav-new-dot){font-size:.66rem}
+  .app #nav button .nav-new-dot{top:4px!important;right:5px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .app #nav button .nav-new-dot.is-visible{animation:none}
+  .app #nav button{transition:none}
+}
+
+
+/* Achievement Garden: make the two new heart-tier blooms unmistakable. */
+.achievement-art-rose svg{filter:drop-shadow(0 2px 2px rgba(155,65,99,.18))}
+.achievement-art-rose svg path:first-child{stroke-width:2.8}
+.achievement-art-rose svg g{filter:drop-shadow(0 1px 2px rgba(151,67,96,.2))}
+.achievement-art-crown svg{filter:drop-shadow(0 2px 3px rgba(126,91,159,.2))}
+.achievement-art-crown svg g{filter:drop-shadow(0 1px 2px rgba(126,91,159,.2))}
+.achievement-card[data-achievement="heart-bloom-1500"] .achievement-medallion{background:linear-gradient(145deg,#ffe5e9,#f5b8c9 58%,#f7e4d4);border-color:#e6a2b7}
+.achievement-card[data-achievement="heart-bloom-2000"] .achievement-medallion{background:linear-gradient(145deg,#f0e5ff,#d9c5ef 58%,#fff0ce);border-color:#c6a9df}
+.achievement-card.is-growing[data-achievement^="heart-bloom-"] .achievement-medallion{opacity:.86;filter:saturate(.9)}
+.achievement-card.is-earned[data-achievement^="heart-bloom-"] .achievement-medallion{box-shadow:0 0 0 2px rgba(255,255,255,.75),0 4px 13px rgba(186,105,142,.22)}
+
+
+/* Profile achievement artwork: custom flower SVGs and the two high-tier heart badges. */
+.friend-profile-milestone-svg svg{width:36px!important;height:36px!important;overflow:visible!important}
+.friend-profile-milestone-badge:has(.friend-profile-milestone-svg){background:linear-gradient(145deg,#fffdf9,#fbedf3)!important}
+.friend-profile-milestone-badge:has(.friend-profile-milestone-svg) .friend-profile-milestone-svg{filter:drop-shadow(0 2px 2px rgba(132,82,112,.16))}
+
+
+/* Signature milestone finishes: rare blooms and heart achievements */
+.sg-milestone.sg-special-bloom,
+.sg-milestone.sg-special-heart{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:1px solid var(--special-border,#e7c77e);
+  background:
+    radial-gradient(ellipse at 50% 0%,var(--special-halo,rgba(255,225,151,.35)),transparent 68%),
+    linear-gradient(145deg,var(--special-bg1,#fffdf4),var(--special-bg2,#fff5f7));
+  box-shadow:0 5px 16px var(--special-shadow,rgba(192,145,74,.16)),inset 0 1px 0 rgba(255,255,255,.9);
+  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+}
+.sg-milestone.sg-special-bloom:before,
+.sg-milestone.sg-special-heart:before{
+  content:"✦  ✧  ✦";
+  position:absolute;
+  z-index:2;
+  top:7px;
+  right:9px;
+  color:var(--special-spark,#d5aa4c);
+  font-size:10px;
+  letter-spacing:5px;
+  text-shadow:0 0 8px currentColor;
+  animation:sg-special-twinkle 2.8s ease-in-out infinite;
+  pointer-events:none;
+}
+.sg-milestone.sg-special-bloom:after,
+.sg-milestone.sg-special-heart:after{
+  content:"";
+  position:absolute;
+  z-index:1;
+  inset:-45% auto -45% -65%;
+  width:38%;
+  transform:rotate(22deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.56),transparent);
+  animation:sg-special-shimmer 5.2s ease-in-out infinite;
+  pointer-events:none;
+}
+.sg-milestone.sg-special-bloom .sg-milestone-art,
+.sg-milestone.sg-special-heart .sg-milestone-art{
+  position:relative;
+  z-index:3;
+  width:58px;
+  height:58px;
+  border:1px solid var(--special-art-border,#e6c77d);
+  background:radial-gradient(circle,#fff 0%,var(--special-art-bg,#fff1c8) 62%,transparent 100%);
+  box-shadow:0 0 0 4px var(--special-ring,rgba(237,203,125,.18)),0 0 20px var(--special-glow,rgba(235,194,102,.42));
+  animation:sg-special-float 3.6s ease-in-out infinite;
+}
+.sg-milestone.sg-special-bloom .sg-milestone-art svg,
+.sg-milestone.sg-special-heart .sg-milestone-art svg{
+  width:53px;
+  height:49px;
+  filter:drop-shadow(0 2px 5px var(--special-svg-glow,rgba(201,151,83,.48)));
+}
+.sg-milestone.sg-special-bloom .sg-milestone-copy,
+.sg-milestone.sg-special-heart .sg-milestone-copy,
+.sg-milestone.sg-special-bloom .sg-milestone-progress,
+.sg-milestone.sg-special-heart .sg-milestone-progress,
+.sg-milestone.sg-special-bloom .sg-milestone-progress-copy,
+.sg-milestone.sg-special-heart .sg-milestone-progress-copy{position:relative;z-index:3}
+.sg-milestone.sg-special-bloom .sg-milestone-day,
+.sg-milestone.sg-special-heart .sg-milestone-day{color:var(--special-label,#a77b35)}
+.sg-milestone.sg-special-bloom .sg-milestone-copy b,
+.sg-milestone.sg-special-heart .sg-milestone-copy b{color:var(--special-title,#76513d)}
+.sg-milestone.sg-special-bloom.is-earned,
+.sg-milestone.sg-special-heart.is-earned{
+  border-color:var(--special-earned-border,#d8ad4e);
+  box-shadow:0 0 0 1px var(--special-ring,rgba(237,203,125,.2)),0 7px 22px var(--special-shadow,rgba(192,145,74,.25)),inset 0 1px 0 rgba(255,255,255,.95);
+}
+.sg-milestone.sg-special-bloom.is-earned .sg-milestone-art,
+.sg-milestone.sg-special-heart.is-earned .sg-milestone-art{
+  box-shadow:0 0 0 5px var(--special-ring,rgba(237,203,125,.22)),0 0 27px var(--special-glow,rgba(235,194,102,.65));
+}
+.sg-milestone.sg-special-bloom-50{--special-border:#dfbd70;--special-earned-border:#c99a3f;--special-bg1:#fffdf0;--special-bg2:#fff5e3;--special-halo:rgba(255,209,103,.42);--special-art-bg:#fff0b9;--special-art-border:#e8c76c;--special-ring:rgba(232,187,84,.2);--special-glow:rgba(232,187,84,.55);--special-shadow:rgba(180,130,47,.2);--special-spark:#c99b35;--special-label:#a47b32;--special-title:#76572d;--special-svg-glow:rgba(221,168,65,.55)}
+.sg-milestone.sg-special-bloom-100{--special-border:#c9a5df;--special-earned-border:#a77ac6;--special-bg1:#fffaff;--special-bg2:#f6edff;--special-halo:rgba(205,163,239,.42);--special-art-bg:#f0dcff;--special-art-border:#c5a1df;--special-ring:rgba(192,151,229,.22);--special-glow:rgba(190,145,230,.58);--special-shadow:rgba(142,103,181,.2);--special-spark:#a87bca;--special-label:#9368b2;--special-title:#684b83;--special-svg-glow:rgba(178,132,218,.62)}
+.sg-milestone.sg-special-heart-1000{--special-border:#e8b4c8;--special-earned-border:#d57e9f;--special-bg1:#fffafd;--special-bg2:#fff0f5;--special-halo:rgba(245,167,195,.42);--special-art-bg:#ffe0eb;--special-art-border:#e7a4bd;--special-ring:rgba(232,153,185,.22);--special-glow:rgba(225,126,166,.55);--special-shadow:rgba(188,105,145,.2);--special-spark:#d67b9d;--special-label:#b46c89;--special-title:#844e69;--special-svg-glow:rgba(214,119,157,.62)}
+.sg-milestone.sg-special-heart-1500{--special-border:#e6a0ae;--special-earned-border:#cb627e;--special-bg1:#fffafa;--special-bg2:#fff0f0;--special-halo:rgba(247,142,163,.44);--special-art-bg:#ffdbe2;--special-art-border:#df879b;--special-ring:rgba(231,121,146,.24);--special-glow:rgba(227,101,132,.62);--special-shadow:rgba(187,79,108,.22);--special-spark:#d65d7d;--special-label:#b34f70;--special-title:#85394f;--special-svg-glow:rgba(211,82,116,.68)}
+.sg-milestone.sg-special-heart-2000{--special-border:#c6a5df;--special-earned-border:#a17ac5;--special-bg1:#fffaff;--special-bg2:#f5efff;--special-halo:rgba(196,161,239,.46);--special-art-bg:#eadbff;--special-art-border:#b99bdc;--special-ring:rgba(178,143,224,.25);--special-glow:rgba(166,126,222,.62);--special-shadow:rgba(129,94,179,.22);--special-spark:#a783d1;--special-label:#8d6bb4;--special-title:#61497e;--special-svg-glow:rgba(155,117,209,.7)}
+@keyframes sg-special-twinkle{0%,100%{opacity:.48;transform:scale(.88)}50%{opacity:1;transform:scale(1.12)}}
+@keyframes sg-special-shimmer{0%,68%,100%{left:-65%;opacity:0}76%{opacity:.9}90%{left:130%;opacity:0}}
+@keyframes sg-special-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){
+ .sg-milestone.sg-special-bloom:before,.sg-milestone.sg-special-heart:before,
+ .sg-milestone.sg-special-bloom:after,.sg-milestone.sg-special-heart:after,
+ .sg-milestone.sg-special-bloom .sg-milestone-art,.sg-milestone.sg-special-heart .sg-milestone-art{animation:none}
+}
+body[data-mode="dark"] .sg-milestone.sg-special-bloom,
+body[data-mode="dark"] .sg-milestone.sg-special-heart{
+ background:radial-gradient(ellipse at 50% 0%,var(--special-halo,rgba(255,225,151,.2)),transparent 68%),linear-gradient(145deg,#453c4b,#3a3442);
+ border-color:color-mix(in srgb,var(--special-border) 72%,#fff 10%);
+ box-shadow:0 5px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07)
+}
+body[data-mode="dark"] .sg-milestone.sg-special-bloom .sg-milestone-art,
+body[data-mode="dark"] .sg-milestone.sg-special-heart .sg-milestone-art{background:radial-gradient(circle,#66536b 0%,#493d50 68%,transparent 100%)}
+body[data-mode="dark"] .sg-milestone.sg-special-bloom .sg-milestone-copy b,
+body[data-mode="dark"] .sg-milestone.sg-special-heart .sg-milestone-copy b{color:#fff0fa}
