@@ -41,7 +41,8 @@ let peerTopic = '';
 let peerReady = false;
 let peerPromise = null;
 let peerGeneration = 0;
-let pendingRemoteAction = null;
+let pendingRemoteActions = [];
+let pendingActionAcks = new Map();
 let pendingAction = null;
 let bearFriendSearchResults = [];
 let bearFriendSearchSequence = 0;
@@ -67,24 +68,32 @@ async function loadSharedProgress() {
   if (!user?.id || !selectedFriendId || !client || !isAcceptedPartner(selectedFriendId)) {
     sharedPoints = 0;
     lastSharedAction = '';
+    equippedRewardIds = [];
     sharedProgressPairKey = '';
     sharedProgressInitialized = false;
     updateUI();
     return;
   }
-  const [low, high] = [String(user.id), String(selectedFriendId)].sort();
+  const requestedPartnerId = String(selectedFriendId);
+  const [low, high] = [String(user.id), requestedPartnerId].sort();
   const pairKey = low + ':' + high;
   if (pairKey !== sharedProgressPairKey) {
     sharedProgressPairKey = pairKey;
     sharedPoints = 0;
     lastSharedAction = '';
+    equippedRewardIds = [];
     sharedProgressInitialized = false;
+    updateUI();
   }
   const { data, error } = await client.from('bear_partner_progress')
-    .select('love_points,last_action')
+    .select('love_points,last_action,equipped_reward_ids')
     .eq('partner_low', low)
     .eq('partner_high', high)
     .maybeSingle();
+  // Realtime refreshes and partner switches can overlap. Ignore stale responses
+  // rather than allowing an older pair's points or equipment to replace the current pair.
+  if (sharedProgressPairKey !== pairKey || String(selectedFriendId) !== requestedPartnerId ||
+      String(getMe()?.id || '') !== String(user.id)) return;
   if (error) {
     console.warn('Shared Bear Hugs progress could not load:', error.message || error);
     setStatus('Your shared Love Meter could not load. Please try again. ♡');
@@ -93,20 +102,35 @@ async function loadSharedProgress() {
   const previousPoints = sharedPoints;
   sharedPoints = Math.max(0, Number(data?.love_points) || 0);
   lastSharedAction = String(data?.last_action || '');
-  loadEquippedRewards(pairKey);
+  equippedRewardIds = Array.isArray(data?.equipped_reward_ids)
+    ? data.equipped_reward_ids.filter(id => REWARDS.some(reward => reward.id === id))
+    : [];
   if (sharedProgressInitialized) announceSharedLevelUp(previousPoints, sharedPoints);
   sharedProgressInitialized = true;
   updateUI();
 }
-async function recordSharedAction(action, partnerId = selectedFriendId) {
+function createBearActionId() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
+    const random = Math.floor(Math.random() * 16);
+    return (char === 'x' ? random : (random & 3) | 8).toString(16);
+  });
+}
+async function recordSharedAction(action, partnerId = selectedFriendId, actionId = createBearActionId()) {
   const user = getMe(), client = getSupabase();
   if (!user?.id || !partnerId || !client || !isAcceptedPartner(partnerId)) return false;
-  const { data, error } = await client.rpc('record_bear_hug_action', { p_partner_id: partnerId, p_action: action });
+  const pairKey = [String(user.id), String(partnerId)].sort().join(':');
+  const { data, error } = await client.rpc('record_bear_hug_action', {
+    p_partner_id: partnerId,
+    p_action: action,
+    p_action_id: actionId
+  });
   if (error) {
     console.warn('Shared Bear Hugs points could not be saved:', error.message || error);
     setStatus('Your bear moment was sent, but its Love Meter points could not be saved. ♡');
     return false;
   }
+  if (sharedProgressPairKey !== pairKey || String(selectedFriendId) !== String(partnerId)) return true;
   const previousPoints = sharedPoints;
   sharedPoints = Math.max(0, Number(data) || 0);
   lastSharedAction = action;
@@ -130,9 +154,23 @@ function loadEquippedRewards(pairKey = sharedProgressPairKey) {
     equippedRewardIds = Array.isArray(saved) ? saved.filter(id => REWARDS.some(reward => reward.id === id)) : [];
   } catch { equippedRewardIds = []; }
 }
-function saveEquippedRewards() {
-  if (!sharedProgressPairKey) return;
-  try { localStorage.setItem(EQUIPPED_KEY_PREFIX + sharedProgressPairKey, JSON.stringify(equippedRewardIds)); } catch {}
+function saveEquippedRewards(partnerId, pairKey, rewardIds) {
+  const client = getSupabase();
+  if (!pairKey || !partnerId || !client || !isAcceptedPartner(partnerId)) return false;
+  const { data, error } = await client.rpc('set_bear_hug_equipment', {
+    p_partner_id: partnerId,
+    p_reward_ids: rewardIds
+  });
+  // A response for a previous partner must never overwrite the active partner's UI.
+  if (sharedProgressPairKey !== pairKey || String(selectedFriendId) !== String(partnerId)) return false;
+  if (error) {
+    console.warn('Shared Bear Hugs equipment could not be saved:', error.message || error);
+    setStatus('Your reward could not sync to your Bearfriend. Please try again. ♡');
+    return false;
+  }
+  equippedRewardIds = Array.isArray(data) ? data : rewardIds;
+  updateUI();
+  return true;
 }
 function equipReward(id) {
   const reward = REWARDS.find(item => item.id === id);
@@ -542,7 +580,14 @@ function ensureOwnChannel() {
       resolve(value);
     };
     const channel = client.channel(topic, { config: { broadcast: { self: false, ack: true } } })
-      .on('broadcast', { event: 'bear-action' }, ({ payload }) => receiveAction(payload));
+      .on('broadcast', { event: 'bear-action' }, ({ payload }) => receiveAction(payload))
+      .on('broadcast', { event: 'bear-action-ack' }, ({ payload }) => {
+        const pending = pendingActionAcks.get(String(payload?.actionId || ''));
+        if (!pending || String(payload?.fromUserId || '') !== pending.partnerId) return;
+        clearTimeout(pending.timer);
+        pendingActionAcks.delete(String(payload.actionId));
+        pending.resolve(true);
+      });
     ownChannel = channel;
     channel.subscribe(status => {
       if (channel !== ownChannel) return;
@@ -634,7 +679,7 @@ async function chooseFriend(id) {
     runLocalAction(action);
   }
 }
-async function sendAction(action, partnerId = selectedFriendId) {
+async function sendAction(action, partnerId = selectedFriendId, actionId = createBearActionId()) {
   const friend = getFriends().find(item => String(item?.id) === String(partnerId)) || partnerProfileFromRows(partnerId);
   const user = getMe();
   const client = getSupabase();
@@ -650,20 +695,40 @@ async function sendAction(action, partnerId = selectedFriendId) {
   }
   const payload = {
     action,
+    actionId,
     userId: String(user.id),
     toUserId: String(partnerId),
     gender: user.gender || null,
     sentAt: Date.now()
   };
+  let resolveAcknowledgement;
+  const acknowledgement = new Promise(resolve => { resolveAcknowledgement = resolve; });
+  const ackTimer = setTimeout(() => {
+    pendingActionAcks.delete(payload.actionId);
+    resolveAcknowledgement(false);
+  }, 3500);
+  pendingActionAcks.set(payload.actionId, { partnerId: String(partnerId), resolve: resolveAcknowledgement, timer: ackTimer });
   try {
     const result = await peerChannel.send({ type: 'broadcast', event: 'bear-action', payload });
     if (result !== 'ok') {
+      clearTimeout(ackTimer);
+      pendingActionAcks.delete(payload.actionId);
+      resolveAcknowledgement(false);
       console.warn('Bear Hugs action was not delivered:', result);
       setStatus('That little moment could not reach your friend. Please try again. ♡');
       return false;
     }
+    const acknowledged = await acknowledgement;
+    if (acknowledged) {
+      setStatus('Your Bearfriend received the little moment. ♡');
+    } else {
+      setStatus('Your little moment was sent, but your Bearfriend has not confirmed receiving it yet. ♡');
+    }
     return true;
   } catch (error) {
+    clearTimeout(ackTimer);
+    pendingActionAcks.delete(payload.actionId);
+    resolveAcknowledgement(false);
     console.warn('Bear Hugs action send failed:', error?.message || error);
     setStatus('That little moment could not reach your friend. Please try again. ♡');
     return false;
@@ -681,7 +746,8 @@ function applyRemoteAction(action, payload) {
   } else {
     // The sender records shared points once through the database RPC.
     // Never award a second copy on the receiving browser.
-    pendingRemoteAction = { action, payload };
+    if (pendingRemoteActions.length >= 20) pendingRemoteActions.shift();
+    pendingRemoteActions.push({ action, payload });
   }
 }
 function receiveAction(payload) {
@@ -697,18 +763,41 @@ function receiveAction(payload) {
   updatePartnerChip();
   void ensurePeerChannel(selectedFriendId);
   applyRemoteAction(String(payload.action), payload);
+  if (payload.actionId) void sendActionAcknowledgement(payload);
 }
 function flushPendingRemoteAction() {
-  if (!pendingRemoteAction || !$('#coupleBearGame') || typeof originalTrigger !== 'function') return;
-  const pending = pendingRemoteAction;
-  pendingRemoteAction = null;
+  if (!pendingRemoteActions.length || !$('#coupleBearGame') || typeof originalTrigger !== 'function') return;
+  const pending = pendingRemoteActions.shift();
   const scene = $('.couple-bears-scene');
   if (scene) scene.dataset.action = pending.action;
   if (typeof bearPoseEngine !== 'undefined') bearPoseEngine?.play(pending.action, String(pending.payload.gender || '').toLowerCase() === 'female' ? 1 : 0);
+  else originalTrigger(pending.action, { remote: true, gender: pending.payload.gender, queued: true });
   const sender = getFriends().find(friend => String(friend?.id) === String(pending.payload.userId));
   setStatus((sender?.display_name || sender?.displayName || sender?.username || 'Your friend') +
     ' chose ' + (pending.action === 'hands' ? 'to hold paws' : pending.action) + '. ♡');
   updateUI();
+  if (pendingRemoteActions.length) setTimeout(flushPendingRemoteAction, 1200);
+}
+async function sendActionAcknowledgement(actionPayload) {
+  const senderId = String(actionPayload?.userId || '');
+  const user = getMe();
+  if (!senderId || !user?.id || !actionPayload?.actionId) return;
+  const connected = await ensurePeerChannel(senderId);
+  if (!connected || !peerChannel || peerTopic !== 'cute-bunny-bear-actions-' + senderId) return;
+  try {
+    await peerChannel.send({
+      type: 'broadcast',
+      event: 'bear-action-ack',
+      payload: {
+        actionId: String(actionPayload.actionId),
+        fromUserId: String(user.id),
+        toUserId: senderId,
+        receivedAt: Date.now()
+      }
+    });
+  } catch (error) {
+    console.warn('Bear Hugs acknowledgement could not be sent:', error?.message || error);
+  }
 }
 async function runLocalAction(action) {
   if (!ACTIONS.has(action) || actionInFlight) return;
@@ -725,9 +814,10 @@ async function runLocalAction(action) {
     return;
   }
   const partnerId = selectedFriendId;
+  const actionId = createBearActionId();
   try {
-    const delivered = await sendAction(action, partnerId);
-    if (delivered) await recordSharedAction(action, partnerId);
+    const delivered = await sendAction(action, partnerId, actionId);
+    if (delivered) await recordSharedAction(action, partnerId, actionId);
   } finally {
     actionInFlight = false;
   }
