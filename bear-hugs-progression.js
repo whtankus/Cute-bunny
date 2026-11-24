@@ -6,11 +6,11 @@ const LOVE_KEY = 'cuteBunnyBearLove:v1';
 const EQUIPPED_KEY_PREFIX = 'cuteBunnyBearEquippedRewards:v1:';
 const ACTIONS = new Set(['hug', 'kiss', 'flykiss', 'slap', 'hands', 'dance', 'pet', 'feed', 'sleep', 'tummy', 'idle']);
 const REWARDS = [
-  { id: 'sunset-meadow', level: 2, slot: 'background', previewClass: 'preview-forest', name: 'Cloverlight Meadow', icon: '🍀', kind: 'Scene background', detail: 'A soft sage meadow with little clover lights and warm morning glow', rarity: 'Rare' },
-  { id: 'strawberry-hat', level: 5, slot: 'headwear', previewClass: 'preview-caps', name: 'Berry Bonnet Pair', icon: '🍓', kind: 'Wearable headwear', detail: 'Tiny berry-pink caps attached to each bear’s head, so they move with every pose', rarity: 'Rare' },
-  { id: 'honey-bear', level: 8, slot: 'skin', previewClass: 'preview-honey', name: 'Honey Butter Bears', icon: '🍯', kind: 'Bear appearance', detail: 'A gentle golden fur tint that keeps every original movement and expression', rarity: 'Epic' },
-  { id: 'starry-set', level: 11, slot: 'background', previewClass: 'preview-starry', name: 'Moonlit Cloud Garden', icon: '🌙', kind: 'Scene background', detail: 'A quiet lavender night garden with soft moonlight and tiny stars', rarity: 'Legendary' },
-  { id: 'starlight-crowns', level: 14, slot: 'headwear', previewClass: 'preview-crowns', name: 'Little Starlight Crowns', icon: '👑', kind: 'Wearable headwear', detail: 'Matching gold crowns that follow the bears as they hug, dance and play', rarity: 'Legendary' }
+  { id: 'sunset-meadow', unlockPoints: 100, slot: 'background', previewClass: 'preview-forest', name: 'Cloverlight Meadow', icon: '🍀', kind: 'Scene background', detail: 'A soft sage meadow with little clover lights and warm morning glow', rarity: 'Rare' },
+  { id: 'strawberry-hat', unlockPoints: 350, slot: 'headwear', previewClass: 'preview-caps', name: 'Berry Bonnet Pair', icon: '🍓', kind: 'Wearable headwear', detail: 'Tiny berry-pink caps attached to each bear’s head, so they move with every pose', rarity: 'Rare' },
+  { id: 'honey-bear', unlockPoints: 1250, slot: 'skin', previewClass: 'preview-honey', name: 'Honey Butter Bears', icon: '🍯', kind: 'Bear appearance', detail: 'A gentle golden fur tint that keeps every original movement and expression', rarity: 'Epic' },
+  { id: 'starry-set', unlockPoints: 2150, slot: 'background', previewClass: 'preview-starry', name: 'Moonlit Cloud Garden', icon: '🌙', kind: 'Scene background', detail: 'A quiet lavender night garden with soft moonlight and tiny stars', rarity: 'Legendary' },
+  { id: 'starlight-crowns', unlockPoints: 3050, slot: 'headwear', previewClass: 'preview-crowns', name: 'Little Starlight Crowns', icon: '👑', kind: 'Wearable headwear', detail: 'Matching gold crowns that follow the bears as they hug, dance and play', rarity: 'Legendary' }
 ];
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -25,7 +25,6 @@ let selectedFriendId = localStorage.getItem(SELECTED_KEY) || '';
 let sharedPoints = 0;
 let lastSharedAction = '';
 let equippedRewardIds = [];
-let actionInFlight = false;
 let sharedProgressPairKey = '';
 let sharedProgressInitialized = false;
 let progressChannel = null;
@@ -49,15 +48,18 @@ let bearFriendSearchSequence = 0;
 let requestChannel = null;
 let requestTopic = '';
 let requestRefreshTimer = null;
+let bearIdleActionTimer = null;
+let lastAutonomousBearAction = '';
+let lastBearActivityAt = Date.now();
+let bearsAreAsleep = false;
+let bearAtmosphereTimer = null;
+let bearMoments = [];
 
 function getPoints() {
   return Math.max(0, Number(sharedPoints) || 0);
 }
 function announceSharedLevelUp(previousPoints, nextPoints) {
-  const previousLevel = getLevel(previousPoints).level;
-  const nextLevel = getLevel(nextPoints).level;
-  if (nextLevel <= previousLevel) return;
-  const unlocked = REWARDS.filter(reward => reward.level > previousLevel && reward.level <= nextLevel);
+  const unlocked = REWARDS.filter(reward => previousPoints < reward.unlockPoints && nextPoints >= reward.unlockPoints);
   if (!unlocked.length) return;
   const names = unlocked.map(reward => reward.name).join(', ');
   if (typeof toast === 'function') toast('New Bear Hugs reward unlocked: ' + names + ' ♡');
@@ -85,11 +87,23 @@ async function loadSharedProgress() {
     sharedProgressInitialized = false;
     updateUI();
   }
-  const { data, error } = await client.from('bear_partner_progress')
+  let { data, error } = await client.from('bear_partner_progress')
     .select('love_points,last_action,equipped_reward_ids')
     .eq('partner_low', low)
     .eq('partner_high', high)
     .maybeSingle();
+  // Keep the Love Meter readable on databases where the equipment migration
+  // has not been applied yet. Reward writes still require the shared RPC.
+  if (error && (error.code === '42703' || /equipped_reward_ids.*(does not exist|not found)|column .*equipped_reward_ids/i.test(error.message || ''))) {
+    const fallback = await client.from('bear_partner_progress')
+      .select('love_points,last_action')
+      .eq('partner_low', low)
+      .eq('partner_high', high)
+      .maybeSingle();
+    data = fallback.data;
+    error = fallback.error;
+    // The local equipment cache is restored only after the stale-pair guard below.
+  }
   // Realtime refreshes and partner switches can overlap. Ignore stale responses
   // rather than allowing an older pair's points or equipment to replace the current pair.
   if (sharedProgressPairKey !== pairKey || String(selectedFriendId) !== requestedPartnerId ||
@@ -100,11 +114,14 @@ async function loadSharedProgress() {
     return;
   }
   const previousPoints = sharedPoints;
-  sharedPoints = Math.max(0, Number(data?.love_points) || 0);
+  sharedPoints = Math.max(sharedPoints, Number(data?.love_points) || 0);
   lastSharedAction = String(data?.last_action || '');
-  equippedRewardIds = Array.isArray(data?.equipped_reward_ids)
-    ? data.equipped_reward_ids.filter(id => REWARDS.some(reward => reward.id === id))
-    : [];
+  if (Array.isArray(data?.equipped_reward_ids)) {
+    equippedRewardIds = data.equipped_reward_ids.filter(id => REWARDS.some(reward => reward.id === id));
+  } else {
+    loadEquippedRewards(pairKey);
+  }
+  try { localStorage.setItem(EQUIPPED_KEY_PREFIX + pairKey, JSON.stringify(equippedRewardIds)); } catch {}
   if (sharedProgressInitialized) announceSharedLevelUp(previousPoints, sharedPoints);
   sharedProgressInitialized = true;
   updateUI();
@@ -132,21 +149,15 @@ async function recordSharedAction(action, partnerId = selectedFriendId, actionId
   }
   if (sharedProgressPairKey !== pairKey || String(selectedFriendId) !== String(partnerId)) return true;
   const previousPoints = sharedPoints;
-  sharedPoints = Math.max(0, Number(data) || 0);
+  sharedPoints = Math.max(sharedPoints, Number(data) || 0);
   lastSharedAction = action;
   if (sharedProgressInitialized) announceSharedLevelUp(previousPoints, sharedPoints);
   sharedProgressInitialized = true;
   updateUI();
   return true;
 }
-function getLevel(points) {
-  if (points < 100) return { level: 1, previous: 0, next: 100 };
-  if (points < 150) return { level: 2, previous: 100, next: 150 };
-  if (points < 200) return { level: 3, previous: 150, next: 200 };
-  if (points < 350) return { level: 4, previous: 200, next: 350 };
-  const level = 5 + Math.floor((points - 350) / 300);
-  const previous = 350 + (level - 5) * 300;
-  return { level, previous, next: previous + 300 };
+function getNextReward(points) {
+  return REWARDS.find(reward => points < reward.unlockPoints) || null;
 }
 function loadEquippedRewards(pairKey = sharedProgressPairKey) {
   try {
@@ -158,25 +169,38 @@ let equipmentSaveInFlight = false;
 async function saveEquippedRewards(partnerId, pairKey, rewardIds) {
   const client = getSupabase();
   if (!pairKey || !partnerId || !client || !isAcceptedPartner(partnerId)) return false;
-  const { data, error } = await client.rpc('set_bear_hug_equipment', {
-    p_partner_id: partnerId,
-    p_reward_ids: rewardIds
-  });
+  let result;
+  try {
+    result = await client.rpc('set_bear_hug_equipment', {
+      p_partner_id: partnerId,
+      p_reward_ids: rewardIds
+    });
+  } catch (error) {
+    console.warn('Shared Bear Hugs equipment request failed:', error?.message || error);
+    if (sharedProgressPairKey === pairKey && String(selectedFriendId) === String(partnerId)) {
+      setStatus('Reward syncing is unavailable. Check your connection and Bear Hugs database updates. ♡');
+    }
+    return false;
+  }
+  const { data, error } = result || {};
   // A response for a previous partner must never overwrite the active partner's UI.
   if (sharedProgressPairKey !== pairKey || String(selectedFriendId) !== String(partnerId)) return false;
   if (error) {
     console.warn('Shared Bear Hugs equipment could not be saved:', error.message || error);
-    setStatus('Your reward could not sync to your Bearfriend. Please try again. ♡');
+    setStatus(/function .*set_bear_hug_equipment.*(does not exist|not found)|schema cache/i.test(error.message || '')
+      ? 'Reward syncing needs the latest Bear Hugs database migration. ♡'
+      : 'Your reward could not sync to your Bearfriend. Please try again. ♡');
     return false;
   }
-  equippedRewardIds = Array.isArray(data) ? data : rewardIds;
+  equippedRewardIds = Array.isArray(data) ? data.filter(id => REWARDS.some(reward => reward.id === id)) : rewardIds;
+  try { localStorage.setItem(EQUIPPED_KEY_PREFIX + pairKey, JSON.stringify(equippedRewardIds)); } catch {}
   updateUI();
   return true;
 }
 async function equipReward(id) {
   if (equipmentSaveInFlight) return;
   const reward = REWARDS.find(item => item.id === id);
-  if (!reward || getLevel(getPoints()).level < reward.level) return;
+  if (!reward || getPoints() < reward.unlockPoints) return;
   const partnerId = String(selectedFriendId || '');
   const pairKey = sharedProgressPairKey;
   if (!partnerId || !pairKey || !isAcceptedPartner(partnerId)) return;
@@ -227,24 +251,71 @@ function ensureBearAccessoryLayers() {
   });
 }
 
+function ensureLivingScene(scene) {
+  if (!scene) return;
+  const hour = new Date().getHours();
+  const atmosphere = hour < 6 || hour >= 20 ? 'night' : hour < 11 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+  ['morning', 'afternoon', 'evening', 'night'].forEach(name => scene.classList.toggle('bear-time-' + name, name === atmosphere));
+  let ambience = scene.querySelector('.bear-living-atmosphere');
+  if (!ambience) {
+    ambience = document.createElement('div');
+    ambience.className = 'bear-living-atmosphere';
+    ambience.setAttribute('aria-hidden', 'true');
+    ambience.innerHTML = '<span class="bear-living-petal petal-one">✿</span><span class="bear-living-petal petal-two">✧</span><span class="bear-living-petal petal-three">♡</span><span class="bear-living-glow"></span>';
+    scene.appendChild(ambience);
+  }
+
+}
+function getBearMomentsKey() {
+  return 'cuteBunnyBearMoments:v1:' + (sharedProgressPairKey || 'unpaired');
+}
+function loadBearMoments() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(getBearMomentsKey()) || '[]');
+    bearMoments = Array.isArray(saved) ? saved.slice(0, 20) : [];
+  } catch { bearMoments = []; }
+}
+function saveBearMoments() {
+  try { localStorage.setItem(getBearMomentsKey(), JSON.stringify(bearMoments.slice(0, 20))); } catch {}
+}
+function renderBearMoments() {
+  if (!bearMoments.length) return '<section class="bear-moments"><div><b>Our little memories</b><small>Delivered moments saved on this device</small></div><p>Your first little memory will appear here. ♡</p></section>';
+  const labels = {hug:'A warm hug',kiss:'A sweet kiss',flykiss:'A flying kiss',hands:'Holding paws',dance:'A little dance',pet:'A gentle pat',feed:'Strawberry time',sleep:'A sleepy moment',tummy:'Tummy tickles',peekaboo:'Peekaboo',bump:'A tiny head bump',slap:'Playful surprise',idle:'A quiet moment'};
+  return '<section class="bear-moments"><div><b>Our little memories</b><small>Recent moments saved on this device</small></div><div class="bear-moments-list">' + bearMoments.slice(0,6).map(moment => '<article><span>' + esc(labels[moment.action] || 'A little moment') + '</span><button type="button" data-bear-moment-favorite="' + esc(moment.actionId) + '" aria-pressed="' + (moment.favorite ? 'true' : 'false') + '" aria-label="' + (moment.favorite ? 'Remove favorite memory' : 'Favorite memory') + '">' + (moment.favorite ? '♥' : '♡') + '</button></article>').join('') + '</div></section>';
+}
+function recordBearMoment(event) {
+  const detail = event?.detail || {};
+  const action = String(detail.action || '');
+  const actionId = String(detail.actionId || '');
+  if (!action || !actionId || !selectedFriendId || !isAcceptedPartner(selectedFriendId)) return;
+  if (bearMoments.some(moment => moment.actionId === actionId)) return;
+  bearMoments.unshift({ action, actionId, at: Date.now(), favorite: false });
+  bearMoments = bearMoments.slice(0, 20);
+  saveBearMoments();
+  updateUI();
+}
 function updateUI() {
   const root = $('#coupleBearGame');
   if (!root) return;
-  const points = getPoints(), level = getLevel(points);
-  const percent = Math.max(0, Math.min(100, ((points - level.previous) / (level.next - level.previous)) * 100));
-  const pointsIntoLevel = Math.max(0, points - level.previous);
-  const pointsForLevel = level.next - level.previous;
-  const pointsRemaining = Math.max(0, level.next - points);
-  const nextReward = REWARDS.find(reward => level.level < reward.level);
-  const newlyUnlocked = REWARDS.filter(reward => level.level >= reward.level);
+  const points = getPoints();
+  const nextReward = getNextReward(points);
+  const unlockedCount = REWARDS.filter(reward => points >= reward.unlockPoints).length;
+  const pointsToNext = nextReward ? nextReward.unlockPoints - points : 0;
+  const previousReward = nextReward
+    ? [...REWARDS].reverse().find(reward => reward.unlockPoints < nextReward.unlockPoints && points >= reward.unlockPoints) || null
+    : REWARDS[REWARDS.length - 1];
+  const progressStart = previousReward ? previousReward.unlockPoints : 0;
+  const progressSpan = nextReward ? nextReward.unlockPoints - progressStart : 1;
+  const progressPercent = nextReward
+    ? Math.max(0, Math.min(100, ((points - progressStart) / progressSpan) * 100))
+    : 100;
   const scene = $('.couple-bears-scene', root);
-
   let careStrip = $('#bearCarePointsStrip', root);
   if (!careStrip) {
     careStrip = document.createElement('section');
     careStrip.id = 'bearCarePointsStrip';
     careStrip.className = 'bear-care-strip';
-    careStrip.setAttribute('aria-label', 'Shared Care Points and Bear Hugs level');
+    careStrip.setAttribute('aria-label', 'Shared Care Points and Bear Hugs Level 1');
   }
   const actions = $('.couple-bear-actions', root);
   if (actions) actions.insertAdjacentElement('afterend', careStrip);
@@ -253,10 +324,13 @@ function updateUI() {
   careStrip.innerHTML =
     '<div class="bear-care-strip-head">' +
       '<div class="bear-care-total"><span class="bear-care-mark" aria-hidden="true">✿</span><span><small>SHARED CARE POINTS</small><b>' + points.toLocaleString() + '</b></span></div>' +
-      '<span class="bear-care-level"><small>BEAR LEVEL</small><b>' + level.level + '</b></span>' +
+      '<span class="bear-care-level"><small>BEAR LEVEL</small><b>1</b></span>' +
     '</div>' +
-    '<div class="bear-care-track" role="progressbar" aria-label="Care Points progress to Bear Hugs Level ' + (level.level + 1) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(percent) + '"><span style="width:' + percent + '%"></span></div>' +
-    '<div class="bear-care-foot"><span>' + pointsIntoLevel.toLocaleString() + ' / ' + pointsForLevel.toLocaleString() + ' toward Level ' + (level.level + 1) + '</span><b>' + pointsRemaining.toLocaleString() + ' to go</b></div>';
+    '<div class="bear-care-track" role="progressbar" aria-label="' + (nextReward ? 'Progress to ' + esc(nextReward.name) : 'All keepsakes unlocked') + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(progressPercent) + '"><span style="width:' + progressPercent + '%"></span></div>' +
+    '<div class="bear-care-foot"><span><b class="bear-care-progress-label">' + points.toLocaleString() + ' Care Points</b></span><b>' + (nextReward ? pointsToNext.toLocaleString() + ' to next treasure' : 'All treasures collected') + '</b></div>' +
+    '<div class="bear-care-milestone"><span>✧</span>' + (nextReward
+      ? 'Next keepsake: <b>' + esc(nextReward.name) + '</b> · ' + nextReward.unlockPoints.toLocaleString() + ' Care Points'
+      : '<b>Every keepsake is unlocked!</b> Your little bear world is complete') + '</div>';
 
   let panel = $('#bearProgressionPanel', root);
   if (!panel) {
@@ -270,30 +344,49 @@ function updateUI() {
   if (!panel.dataset.rewardHandler) {
     panel.dataset.rewardHandler = 'true';
     panel.addEventListener('click', event => {
+      const favorite = event.target.closest('[data-bear-moment-favorite]');
+      if (favorite) {
+        const moment = bearMoments.find(item => item.actionId === favorite.dataset.bearMomentFavorite);
+        if (moment) { moment.favorite = !moment.favorite; saveBearMoments(); updateUI(); }
+        return;
+      }
       const button = event.target.closest('[data-bear-equip]');
-      if (button) equipReward(button.dataset.bearEquip);
+      if (!button || button.disabled) return;
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      void equipReward(button.dataset.bearEquip).finally(() => {
+        if (button.isConnected) {
+          button.disabled = false;
+          button.removeAttribute('aria-busy');
+        }
+      });
     });
   }
 
-  const rewardCards = REWARDS.map(reward => {
-    const unlocked = level.level >= reward.level;
+  const rewardCards = REWARDS.map((reward, index) => {
+    const unlocked = points >= reward.unlockPoints;
     const applied = equippedRewardIds.includes(reward.id);
-    const progressLabel = unlocked ? (applied ? 'Equipped in your world' : 'Ready to use') : (reward.level - level.level) + ' level' + (reward.level - level.level === 1 ? '' : 's') + ' away';
+    const progressLabel = unlocked
+      ? (applied ? 'Currently in your bear world' : 'Unlocked · ready to use')
+      : (reward.unlockPoints - points).toLocaleString() + ' Care Points to unlock';
     return '<article class="bear-reward ' + (unlocked ? 'is-unlocked' : 'is-locked') + (applied ? ' is-applied' : '') + (nextReward?.id === reward.id ? ' is-next' : '') + '">' +
       '<div class="bear-reward-preview ' + reward.previewClass + '" aria-hidden="true"><span>' + reward.icon + '</span><i>✦</i><small>🐻　✿　🐻</small></div>' +
-      '<div class="bear-reward-copy"><span class="bear-reward-kicker">' + reward.rarity + ' · LEVEL ' + reward.level + '</span><b>' + reward.name + '</b><small>' + reward.detail + '</small></div>' +
+      '<div class="bear-reward-copy"><span class="bear-reward-kicker">' + reward.rarity + ' · TREASURE ' + (index + 1) + '</span><b>' + reward.name + '</b><small>' + reward.detail + '</small></div>' +
       '<div class="bear-reward-bottom"><span class="bear-reward-state">' + progressLabel + '</span>' +
-      (unlocked ? '<button type="button" class="bear-reward-apply" data-bear-equip="' + reward.id + '" aria-pressed="' + applied + '">' + (applied ? 'Unequip' : 'Use reward') + '</button>' : '<span class="bear-reward-lock">🔒 ' + reward.kind + '</span>') +
+      (unlocked ? '<button type="button" class="bear-reward-apply" data-bear-equip="' + reward.id + '" aria-pressed="' + applied + '">' + (applied ? 'Unequip' : 'Use reward') + '</button>' : '<span class="bear-reward-lock">🔒 ' + reward.unlockPoints.toLocaleString() + ' Care Points</span>') +
       '</div></article>';
   }).join('');
 
   const rewardSummary = nextReward
-    ? '<div class="bear-next-reward"><div class="bear-next-reward-art ' + nextReward.previewClass + '">' + nextReward.icon + '</div><div><small>NEXT LITTLE TREASURE · LEVEL ' + nextReward.level + '</small><b>' + nextReward.name + '</b><span>' + Math.max(0, nextReward.level - level.level) + ' level' + (nextReward.level - level.level === 1 ? '' : 's') + ' away · keep sharing little moments</span></div></div>'
+    ? '<div class="bear-next-reward"><div class="bear-next-reward-art ' + nextReward.previewClass + '">' + nextReward.icon + '</div><div><small>NEXT LITTLE TREASURE</small><b>' + nextReward.name + '</b><span>' + pointsToNext.toLocaleString() + ' more Care Points to unlock · keep sharing little moments</span></div></div>'
     : '<div class="bear-next-reward bear-all-unlocked"><div class="bear-next-reward-art preview-starry">✧</div><div><small>YOUR WORLD IS COMPLETE</small><b>Every treasure is yours!</b><span>Keep collecting sweet moments together.</span></div></div>';
 
+  const progressPips = REWARDS.map(reward =>
+    '<span class="bear-reward-pip ' + (points >= reward.unlockPoints ? 'is-filled' : '') + '" aria-hidden="true"></span>'
+  ).join('');
   panel.innerHTML = rewardSummary +
-    '<section class="bear-rewards"><div class="bear-rewards-heading"><div><b>Little treasures</b><small>' + newlyUnlocked.length + ' of ' + REWARDS.length + ' keepsakes unlocked · choose a background, bear look or headwear</small></div><span class="bear-reward-count">' + newlyUnlocked.length + '/' + REWARDS.length + '</span></div><div class="bear-rewards-list">' +
-    rewardCards + '</div></section>';
+    '<section class="bear-rewards"><div class="bear-rewards-heading"><div><b>Little treasures</b><small>' + unlockedCount + ' of ' + REWARDS.length + ' unlocked · collect them with Care Points</small><div class="bear-reward-progress-pips" role="img" aria-label="' + unlockedCount + ' of ' + REWARDS.length + ' treasures unlocked">' + progressPips + '</div></div><span class="bear-reward-count"><b>' + unlockedCount + '</b><small>OF ' + REWARDS.length + '</small></span></div><div class="bear-rewards-list">' +
+    rewardCards + '</div></section>' + renderBearMoments();
 
   if (scene) {
     scene.classList.toggle('bear-reward-sunset', equippedRewardIds.includes('sunset-meadow'));
@@ -303,6 +396,8 @@ function updateUI() {
     scene.classList.toggle('bear-reward-crowns', equippedRewardIds.includes('starlight-crowns'));
   }
   ensureBearAccessoryLayers();
+  ensureLivingScene(scene);
+  if (sharedProgressPairKey) loadBearMoments();
   updatePartnerChip();
 }
 
@@ -414,6 +509,8 @@ async function removeBearfriend() {
   }
   partnerRequests = partnerRequests.filter(row => String(row.id) !== String(request.id));
   selectedFriendId = '';
+  lastBearActivityAt = Date.now();
+  bearsAreAsleep = false;
   try { localStorage.removeItem(SELECTED_KEY); } catch {}
   peerGeneration++;
   closeChannel(peerChannel);
@@ -681,6 +778,8 @@ async function chooseFriend(id) {
     return;
   }
   selectedFriendId = String(friend.id);
+  lastBearActivityAt = Date.now();
+  bearsAreAsleep = false;
   try { localStorage.setItem(SELECTED_KEY, selectedFriendId); } catch {}
   $('#bearFriendPicker')?.classList.add('hidden');
   updatePartnerChip();
@@ -689,6 +788,7 @@ async function chooseFriend(id) {
   if (results.every(Boolean)) updateConnectionStatus();
   else setStatus('Your partner is selected, but the live connection is still reconnecting. Try an action again shortly. ♡');
   await loadSharedProgress();
+  scheduleBearIdleAction();
   if (pendingAction) {
     const action = pendingAction;
     pendingAction = null;
@@ -740,7 +840,7 @@ async function sendAction(action, partnerId = selectedFriendId, actionId = creat
     } else {
       setStatus('Your little moment was sent, but your Bearfriend has not confirmed receiving it yet. ♡');
     }
-    return true;
+    return acknowledged;
   } catch (error) {
     clearTimeout(ackTimer);
     pendingActionAcks.delete(payload.actionId);
@@ -752,9 +852,15 @@ async function sendAction(action, partnerId = selectedFriendId, actionId = creat
 }
 function applyRemoteAction(action, payload) {
   if (!ACTIONS.has(action)) return;
+  noteBearActivity();
   const root = $('#coupleBearGame');
   if (root && typeof originalTrigger === 'function') {
     originalTrigger(action, { remote: true, gender: payload.gender });
+    if (action === 'sleep') bearsAreAsleep = true;
+    lastSharedAction = action;
+    window.dispatchEvent(new CustomEvent('cute-bunny:bear-action', {
+      detail: { action, actionId: String(payload.actionId || '') }
+    }));
     updateUI();
     const sender = getFriends().find(friend => String(friend?.id) === String(payload.userId));
     setStatus((sender?.display_name || sender?.displayName || sender?.username || 'Your friend') +
@@ -781,19 +887,6 @@ function receiveAction(payload) {
   applyRemoteAction(String(payload.action), payload);
   if (payload.actionId) void sendActionAcknowledgement(payload);
 }
-function flushPendingRemoteAction() {
-  if (!pendingRemoteActions.length || !$('#coupleBearGame') || typeof originalTrigger !== 'function') return;
-  const pending = pendingRemoteActions.shift();
-  const scene = $('.couple-bears-scene');
-  if (scene) scene.dataset.action = pending.action;
-  if (typeof bearPoseEngine !== 'undefined') bearPoseEngine?.play(pending.action, String(pending.payload.gender || '').toLowerCase() === 'female' ? 1 : 0);
-  else originalTrigger(pending.action, { remote: true, gender: pending.payload.gender, queued: true });
-  const sender = getFriends().find(friend => String(friend?.id) === String(pending.payload.userId));
-  setStatus((sender?.display_name || sender?.displayName || sender?.username || 'Your friend') +
-    ' chose ' + (pending.action === 'hands' ? 'to hold paws' : pending.action) + '. ♡');
-  updateUI();
-  if (pendingRemoteActions.length) setTimeout(flushPendingRemoteAction, 1200);
-}
 async function sendActionAcknowledgement(actionPayload) {
   const senderId = String(actionPayload?.userId || '');
   const user = getMe();
@@ -815,28 +908,58 @@ async function sendActionAcknowledgement(actionPayload) {
     console.warn('Bear Hugs acknowledgement could not be sent:', error?.message || error);
   }
 }
+function flushPendingRemoteAction() {
+  if (!pendingRemoteActions.length || !$('#coupleBearGame') || typeof originalTrigger !== 'function') return;
+  const pending = pendingRemoteActions.shift();
+  const scene = $('.couple-bears-scene');
+  if (scene) scene.dataset.action = pending.action;
+  originalTrigger(pending.action, { remote: true, gender: pending.payload.gender, queued: true });
+  if (pending.action === 'sleep') bearsAreAsleep = true;
+  lastSharedAction = pending.action;
+  window.dispatchEvent(new CustomEvent('cute-bunny:bear-action', {
+    detail: { action: pending.action, actionId: String(pending.payload.actionId || '') }
+  }));
+  const sender = getFriends().find(friend => String(friend?.id) === String(pending.payload.userId));
+  setStatus((sender?.display_name || sender?.displayName || sender?.username || 'Your friend') +
+    ' chose ' + (pending.action === 'hands' ? 'to hold paws' : pending.action) + '. ♡');
+  updateUI();
+  if (pendingRemoteActions.length) setTimeout(flushPendingRemoteAction, 1200);
+}
 async function runLocalAction(action) {
-  if (!ACTIONS.has(action) || actionInFlight) return;
+  if (!ACTIONS.has(action)) return;
+  noteBearActivity();
   if (!selectedFriendId || !getSelectedFriend() || !isAcceptedPartner(selectedFriendId)) {
     openPicker(action);
     return;
   }
-  if (typeof originalTrigger === 'function') {
-    actionInFlight = true;
-    originalTrigger(action, { remote: true, gender: getMe()?.gender });
-    updateUI();
-  } else {
+  if (typeof originalTrigger !== 'function') {
     setStatus('The bear animation is still loading. Please try again in a moment. ♡');
     return;
   }
-  const partnerId = selectedFriendId;
+
+  // Play immediately and keep every action button available. Network delivery,
+  // acknowledgement, and Care Point recording happen independently in the
+  // background so a slow connection never blocks the next interaction.
+  const partnerId = String(selectedFriendId);
   const actionId = createBearActionId();
-  try {
-    const delivered = await sendAction(action, partnerId, actionId);
-    if (delivered) await recordSharedAction(action, partnerId, actionId);
-  } finally {
-    actionInFlight = false;
-  }
+  originalTrigger(action, { remote: true, gender: getMe()?.gender });
+  if (action === 'sleep') bearsAreAsleep = true;
+  updateUI();
+  setStatus('A little moment for your Bearfriend… ♡');
+
+  void (async () => {
+    try {
+      const delivered = await sendAction(action, partnerId, actionId);
+      if (!delivered) return;
+      await recordSharedAction(action, partnerId, actionId);
+      // Count only actions confirmed as delivered; action IDs keep retries
+      // and concurrent sends from awarding duplicate quest credit.
+      window.dispatchEvent(new CustomEvent('cute-bunny:bear-action', { detail: { action, actionId } }));
+    } catch (error) {
+      console.warn('Bear Hugs action could not be completed:', error?.message || error);
+      setStatus('Your bears enjoyed the moment, but it could not reach your Bearfriend. ♡');
+    }
+  })();
 }
 function ensureProgressChannel() {
   const client = getSupabase(), user = getMe();
@@ -910,10 +1033,46 @@ function closeBearHugsRealtime() {
   peerGeneration++;
 }
 
+function scheduleBearIdleAction(delay = 25000) {
+  if (bearIdleActionTimer) clearTimeout(bearIdleActionTimer);
+  bearIdleActionTimer = null;
+  const root = $('#coupleBearGame');
+  if (!root || document.hidden || !selectedFriendId || !isAcceptedPartner(selectedFriendId)) return;
+  bearIdleActionTimer = setTimeout(() => {
+    bearIdleActionTimer = null;
+    runAutonomousBearAction();
+  }, Math.max(1000, delay));
+}
+function runAutonomousBearAction() {
+  const root = $('#coupleBearGame');
+  if (!root || document.hidden || !selectedFriendId || !isAcceptedPartner(selectedFriendId) || bearsAreAsleep) return;
+  if (typeof originalTrigger !== 'function') {
+    scheduleBearIdleAction(1500);
+    return;
+  }
+  const idleFor = Date.now() - lastBearActivityAt;
+  const choices = idleFor >= 120000 ? ['sleep'] : ['hug', 'kiss', 'flykiss', 'hands', 'dance', 'pet', 'tummy', 'feed', 'peekaboo', 'bump'];
+  const available = choices.filter(action => action !== lastAutonomousBearAction);
+  const action = available[Math.floor(Math.random() * available.length)] || 'pet';
+  lastAutonomousBearAction = action;
+  // Autonomous moments are purely visual: do not broadcast them, award points,
+  // or count them toward daily missions.
+  originalTrigger(action, { remote: true, gender: getMe()?.gender, autonomous: true });
+  if (action === 'sleep') { bearsAreAsleep = true; return; }
+  scheduleBearIdleAction(25000);
+}
+function noteBearActivity() {
+  lastBearActivityAt = Date.now();
+  bearsAreAsleep = false;
+  scheduleBearIdleAction(25000);
+}
+
 function install() {
   if (window.__cuteBunnyBearHugsFixed) return;
   window.__cuteBunnyBearHugsFixed = true;
   ensurePicker();
+  window.addEventListener('cute-bunny:bear-action', recordBearMoment);
+  if (!bearAtmosphereTimer) bearAtmosphereTimer = setInterval(() => ensureLivingScene($('.couple-bears-scene')), 15 * 60 * 1000);
 
   // Delegate from document because the app replaces #content on every render.
   document.addEventListener('click', event => {
@@ -926,11 +1085,24 @@ function install() {
     event.stopPropagation();
     event.stopImmediatePropagation();
     const action = actionButton ? actionButton.dataset.coupleAction : 'pet';
-    if (!selectedFriendId || !getSelectedFriend() || !isAcceptedPartner(selectedFriendId)) {
+    void (async () => {
+      // The saved Bearfriend ID is restored synchronously, while the accepted
+      // relationship/profile rows load asynchronously. Wait for that check
+      // before deciding to show the chooser.
+      if (selectedFriendId && !partnerRequestsLoaded) {
+        const loaded = await loadPartnerRequests();
+        if (!loaded) {
+          setStatus('Checking your saved Bearfriend connection. Please try again in a moment. ♡');
+          return;
+        }
+      }
+      if (selectedFriendId && getSelectedFriend() && isAcceptedPartner(selectedFriendId)) {
+        updatePartnerChip();
+        runLocalAction(action);
+        return;
+      }
       void openPicker(action);
-      return;
-    }
-    runLocalAction(action);
+    })();
   }, true);
 
   if (typeof window.startBearRealtime === 'function') window.startBearRealtime = startBearHugsRealtime;
@@ -951,6 +1123,7 @@ function install() {
       updatePartnerChip();
       updateUI();
       flushPendingRemoteAction();
+      scheduleBearIdleAction();
       // The Bearfriend chooser is intentionally opened by the first bear interaction,
       // not by an automatic page-load popup. This keeps the experience predictable.
     }
@@ -962,6 +1135,7 @@ function install() {
     if (event.key === SELECTED_KEY) {
       selectedFriendId = localStorage.getItem(SELECTED_KEY) || '';
       updatePartnerChip();
+      scheduleBearIdleAction();
     }
   });
   window.addEventListener('focus', () => {
@@ -971,7 +1145,18 @@ function install() {
     startBearHugsRealtime();
   });
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) startBearHugsRealtime();
+    if (!document.hidden) {
+      startBearHugsRealtime();
+      scheduleBearIdleAction();
+    } else if (bearIdleActionTimer) {
+      clearTimeout(bearIdleActionTimer);
+      bearIdleActionTimer = null;
+    }
+  });
+  ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(eventName => {
+    document.addEventListener(eventName, event => {
+      if (event.target?.closest?.('#coupleBearGame')) noteBearActivity();
+    }, { capture: true, passive: eventName !== 'keydown' });
   });
 
   startBearHugsRealtime();
@@ -986,6 +1171,7 @@ function install() {
       updatePartnerChip();
       startBearHugsRealtime();
       void loadSharedProgress();
+      scheduleBearIdleAction();
     }
   });
 }
