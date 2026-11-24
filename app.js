@@ -1052,8 +1052,8 @@ function writeStreakDailyQuests(dateKey, state) {
   try { localStorage.setItem(streakStorageKey('daily-quests:' + dateKey), JSON.stringify(state)); } catch {}
 }
 function normalizeDailyQuestText(value) {
-  return String(value || '').toLocaleLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
-    .replace(/[^\\p{L}\\p{N}♡❤]+/gu, ' ').trim().replace(/\\s+/g, ' ');
+  return String(value || '').toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}♡❤]+/gu, ' ').trim().replace(/\s+/g, ' ');
 }
 function dailyQuestTextMatches(text, match) {
   const message = normalizeDailyQuestText(text);
