@@ -173,9 +173,14 @@ async function saveEquippedRewards(partnerId, pairKey, rewardIds) {
   updateUI();
   return true;
 }
-function equipReward(id) {
+async function equipReward(id) {
+  if (equipmentSaveInFlight) return;
   const reward = REWARDS.find(item => item.id === id);
   if (!reward || getLevel(getPoints()).level < reward.level) return;
+  const partnerId = String(selectedFriendId || '');
+  const pairKey = sharedProgressPairKey;
+  if (!partnerId || !pairKey || !isAcceptedPartner(partnerId)) return;
+  const previous = [...equippedRewardIds];
   const active = equippedRewardIds.includes(id);
   if (active) equippedRewardIds = equippedRewardIds.filter(item => item !== id);
   else {
@@ -186,8 +191,18 @@ function equipReward(id) {
     }
     equippedRewardIds = [...equippedRewardIds, id];
   }
-  saveEquippedRewards();
+  const requestedRewards = [...equippedRewardIds];
+  equipmentSaveInFlight = true;
   updateUI();
+  try {
+    const saved = await saveEquippedRewards(partnerId, pairKey, requestedRewards);
+    if (!saved && sharedProgressPairKey === pairKey && String(selectedFriendId) === partnerId) {
+      equippedRewardIds = previous;
+      updateUI();
+    }
+  } finally {
+    equipmentSaveInFlight = false;
+  }
 }
 
 function ensureBearAccessoryLayers() {
