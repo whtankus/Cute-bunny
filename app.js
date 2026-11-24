@@ -1051,6 +1051,44 @@ function readStreakDailyQuests(dateKey) {
 function writeStreakDailyQuests(dateKey, state) {
   try { localStorage.setItem(streakStorageKey('daily-quests:' + dateKey), JSON.stringify(state)); } catch {}
 }
+function normalizeDailyQuestText(value) {
+  return String(value || '').toLocaleLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+    .replace(/[^\\p{L}\\p{N}♡❤]+/gu, ' ').trim().replace(/\\s+/g, ' ');
+}
+function dailyQuestTextMatches(text, match) {
+  const message = normalizeDailyQuestText(text);
+  if (!message) return false;
+  const keywords = Array.isArray(match) ? match : [match];
+  const aliases = {
+    hello: ['hello','hi','hey'],
+    happy: ['happy','happiness','glad','joy','cheerful'],
+    thank: ['thank','thanks','thankful','thank you','appreciate','appreciation'],
+    dream: ['dream','dreams','wish','wishes'],
+    beautiful: ['beautiful','beauty','lovely','pretty','gorgeous'],
+    morning: ['morning','good morning'],
+    night: ['night','good night','tonight'],
+    kind: ['kind','kindness','caring','thoughtful'],
+    win: ['win','wins','won','victory','achievement'],
+    appreciate: ['appreciate','appreciation','grateful','thankful'],
+    song: ['song','songs','music','melody'],
+    remember: ['remember','memory','memories'],
+    proud: ['proud','believe','encourage','you can do it'],
+    '♡': ['♡','❤','love'],
+    hope: ['hope','hopeful','wish','wishes'],
+    day: ['day','today'],
+    smile: ['smile','smiling','smiled','happy'],
+    love: ['love','lovely','adore','caring']
+  };
+  return keywords.some(keyword => {
+    const candidates = aliases[String(keyword).toLowerCase()] || [String(keyword)];
+    return candidates.some(candidate => {
+      const normalized = normalizeDailyQuestText(candidate);
+      if (!normalized) return false;
+      return (' ' + message + ' ').includes(' ' + normalized + ' ');
+    });
+  });
+}
+
 function getDailyQuestRotation(dateKey) {
   // A shared 20-day journey: one fresh chat quest, one photo quest,
   // and one community quest each day. Each category has 20 unique entries.
@@ -1059,7 +1097,7 @@ function getDailyQuestRotation(dateKey) {
     ['A happy thought','Share a message with the word “happy”.','note','note','happy'],
     ['A little thank-you','Send someone a thank-you message.','note','note','thank'],
     ['Dream big','Tell someone about a dream or wish.','note','note','dream'],
-    ['Something beautiful','Share a thought using the word “beautiful”.','note','note','beautiful'],
+    ['A colourful thought','Share a message with any colour word.','note','note',['red','blue','green','yellow','pink','purple','orange','black','white','brown','grey','gray']],
     ['Morning sunshine','Send a good-morning message.','note','note','morning'],
     ['Moonlight wishes','Send a good-night message.','note','note','night'],
     ['Kind words','Send a message with the word “kind”.','note','note','kind'],
@@ -1149,7 +1187,7 @@ function getDailyQuestRotation(dateKey) {
       if (kind === 'song') return Math.min(target, state.songCount);
       if (kind === 'kiss-note') return Math.min(target, state.kissNotes);
       if (kind === 'login') return state.login ? 1 : 0;
-      if (kind === 'note' && match) return Math.min(target, state.noteTexts.filter(text => text.toLowerCase().includes(match)).length);
+      if (kind === 'note' && match) return Math.min(target, state.noteTexts.filter(text => dailyQuestTextMatches(text, match)).length);
       return Math.min(target, state.note);
     };
     return {id,title,description,target,art,kind,match,progress,done:state => progress(state) >= target};
@@ -2249,7 +2287,7 @@ function renderStreakPage() {
         '<span class="sg-daily-quest-icon">' + gardenIllustration(item.art || item.kind || item.id) + '</span>' +
         '<div class="sg-daily-quest-copy"><div class="sg-daily-quest-title-row"><b>' + item.title + '</b>' +
         '<span class="sg-daily-quest-status' + (item.done ? ' is-done' : '') + '">' + (item.done ? 'Done ✓' : item.progress + ' / ' + item.target) + '</span></div>' +
-        '<p>' + item.description + '</p><div class="sg-daily-quest-progress"><span style="width:' + (item.progress / item.target * 100) + '%"></span></div></div></article>';
+        '<p>' + item.description + '</p>' + (item.kind === 'note' && item.match ? '<div class="sg-quest-keyword-hint"><span>USE IN YOUR MESSAGE</span><b>' + (Array.isArray(item.match) ? item.match.join(' · ') : item.match) + '</b></div>' : '') + '<div class="sg-daily-quest-progress"><span style="width:' + (item.progress / item.target * 100) + '%"></span></div></div></article>';
     }).join('') +
     '</div><div class="sg-daily-quest-footer"><span>' + completedQuests + ' / 3 quests complete</span>' +
     (dailyQuestState.badge ? '<b class="sg-daily-bloom-badge">✿ Daily Bloom earned</b>' : '<small>Complete today’s 3 quests to earn your Daily Bloom</small>') + '</div>';
