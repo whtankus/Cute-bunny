@@ -14,8 +14,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=notes-inline-edit-fast2-20261120">
-  <link rel="stylesheet" href="polish.css?v=bear-hugs-natural-poses-20261123">
+  <link rel="stylesheet" href="style.css?v=milestone-shine-20261124">
+  <link rel="stylesheet" href="polish.css?v=legendary-living-motion-20261124">
   <link rel="stylesheet" href="header-statusbar-blend.css?v=20261120-1">
   <link rel="stylesheet" href="button-interactions.css?v=nav-3d-depth-20261118">
   <link rel="stylesheet" href="swipe-gestures.css?v=20261121-2">
@@ -121,11 +121,11 @@
 
 
     <nav id="nav" aria-label="Main navigation">
-      <button type="button" class="active" data-page="home" aria-current="page"><i aria-hidden="true"><svg><use href="#cb-icon-home"/></svg></i><span>Home</span></button>
-      <button type="button" data-page="gallery"><i aria-hidden="true"><svg><use href="#cb-icon-photo"/></svg></i><span>Photos</span></button>
-      <button type="button" data-page="notes"><i aria-hidden="true"><svg><use href="#cb-icon-note"/></svg></i><span>Notes</span></button>
-      <button type="button" data-page="music"><i aria-hidden="true"><svg><use href="#cb-icon-music"/></svg></i><span>Music</span></button>
-      <button type="button" data-page="friends"><i aria-hidden="true"><svg><use href="#cb-icon-friends"/></svg></i><span>Friends</span></button>
+      <button type="button" class="active" data-page="home" aria-current="page"><i aria-hidden="true"><svg><use href="#cb-icon-home"/></svg></i><span>Home</span><span class="nav-new-dot" aria-hidden="true"></span></button>
+      <button type="button" data-page="gallery"><i aria-hidden="true"><svg><use href="#cb-icon-photo"/></svg></i><span>Photos</span><span class="nav-new-dot" aria-hidden="true"></span></button>
+      <button type="button" data-page="notes"><i aria-hidden="true"><svg><use href="#cb-icon-note"/></svg></i><span>Notes</span><span class="nav-new-dot" aria-hidden="true"></span></button>
+      <button type="button" data-page="music"><i aria-hidden="true"><svg><use href="#cb-icon-music"/></svg></i><span>Music</span><span class="nav-new-dot" aria-hidden="true"></span></button>
+      <button type="button" data-page="friends"><i aria-hidden="true"><svg><use href="#cb-icon-friends"/></svg></i><span>Friends</span><span class="nav-new-dot" aria-hidden="true"></span></button>
     </nav>
   </div>
 
@@ -326,9 +326,9 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=18"></script>
-  <link rel="stylesheet" href="bear-hugs-progression.css?v=bearfriend-cute-20261124-1">
-  <script src="bear-hugs-progression.js?v=bear-hugs-merged-20261124-9" defer></script>
+  <script src="app.js?v=32"></script>
+  <link rel="stylesheet" href="bear-hugs-progression.css?v=bear-hugs-living-world-20261124-3">
+  <script src="bear-hugs-progression.js?v=bear-hugs-living-world-20261124-3" defer></script>
   <script src="swipe-gestures.js?v=20261121-2" defer></script>
   <script>
 (() => {
@@ -360,7 +360,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=199", {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=201", {
             scope: "./",
             updateViaCache: "none"
           });
