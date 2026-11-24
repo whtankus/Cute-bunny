@@ -837,8 +837,6 @@ async function sendAction(action, partnerId = selectedFriendId, actionId = creat
     const acknowledged = await acknowledgement;
     if (acknowledged) {
       setStatus('Your Bearfriend received the little moment. ♡');
-    } else {
-      setStatus('Your little moment was sent, but your Bearfriend has not confirmed receiving it yet. ♡');
     }
     return acknowledged;
   } catch (error) {
