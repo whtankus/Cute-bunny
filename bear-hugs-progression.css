@@ -447,3 +447,198 @@
  .bear-friend-picker-card{width:100%;padding:17px 13px 12px}
  .bear-friend-picker-card>p{font-size:.7rem}
 }
+
+
+/* Bear Hugs progression polish: clear milestones, tactile reward cards, safe feedback. */
+#coupleBearGame .bear-care-strip{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+#coupleBearGame .bear-care-strip:before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:150px;height:150px;
+  right:-70px;top:-95px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(229,190,239,.22),transparent 68%);
+  pointer-events:none;
+}
+#coupleBearGame .bear-care-track>span{position:relative;display:block;min-width:0}
+#coupleBearGame .bear-care-track>span:after{
+  content:"";
+  position:absolute;inset:0;
+  border-radius:inherit;
+  background:linear-gradient(110deg,transparent 15%,rgba(255,255,255,.42) 48%,transparent 78%);
+  background-size:220% 100%;
+  animation:bearCareShimmer 3.8s ease-in-out infinite;
+}
+@keyframes bearCareShimmer{0%,35%{background-position:120% 0}75%,100%{background-position:-120% 0}}
+#coupleBearGame .bear-care-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap}
+#coupleBearGame .bear-care-progress-label{padding:0!important;background:none!important;color:var(--cb-text)!important;font-size:inherit}
+#coupleBearGame .bear-care-milestone{
+  display:flex;align-items:center;gap:6px;
+  margin-top:9px;padding:8px 10px;
+  border:1px solid rgba(218,181,210,.42);
+  border-radius:12px;
+  background:rgba(255,255,255,.48);
+  color:var(--cb-text-soft);
+  font-size:.66rem;line-height:1.35;
+}
+#coupleBearGame .bear-care-milestone>span{color:#b786bd;font-size:.9rem}
+#coupleBearGame .bear-care-milestone b{color:var(--cb-accent-strong)}
+#coupleBearGame .bear-progression-panel .bear-next-reward{
+  position:relative;overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--cb-accent) 24%,var(--cb-border));
+  border-radius:17px;
+  background:linear-gradient(115deg,rgba(255,245,250,.92),rgba(244,239,255,.88));
+  box-shadow:0 5px 15px rgba(140,94,127,.07);
+}
+#coupleBearGame .bear-rewards-heading{justify-content:space-between}
+#coupleBearGame .bear-reward-count{
+  display:grid;place-items:center;flex:0 0 38px;height:38px;
+  border:1px solid rgba(213,166,195,.45);border-radius:50%;
+  background:rgba(255,255,255,.72);color:var(--cb-accent-strong);
+  font-size:.68rem;font-weight:950;
+}
+#coupleBearGame .bear-rewards-list{align-items:stretch;gap:10px}
+#coupleBearGame .bear-reward{
+  display:grid;grid-template-columns:62px minmax(0,1fr);
+  align-items:start;gap:8px;
+  min-height:132px;padding:10px;
+  border-radius:16px;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+#coupleBearGame .bear-reward.is-unlocked{background:linear-gradient(145deg,rgba(255,246,250,.94),rgba(255,255,255,.68))}
+#coupleBearGame .bear-reward.is-next{border-color:color-mix(in srgb,#c58fbd 58%,var(--cb-border));box-shadow:0 0 0 2px rgba(197,143,189,.12)}
+#coupleBearGame .bear-reward-preview{
+  display:grid;place-items:center;position:relative;
+  grid-row:1 / span 2;width:62px;height:66px;
+  overflow:hidden;border-radius:13px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65);
+}
+#coupleBearGame .bear-reward-preview>span{font-size:1.65rem;filter:drop-shadow(0 3px 3px rgba(75,50,70,.14))}
+#coupleBearGame .bear-reward-preview>i{position:absolute;right:6px;top:4px;color:rgba(255,255,255,.85);font-size:.75rem}
+#coupleBearGame .bear-reward-preview>small{position:absolute;bottom:4px;font-size:.48rem;white-space:nowrap;opacity:.8}
+#coupleBearGame .bear-reward-copy{gap:4px}
+#coupleBearGame .bear-reward-copy b{font-size:.73rem;line-height:1.25}
+#coupleBearGame .bear-reward-copy small{font-size:.61rem;line-height:1.35}
+#coupleBearGame .bear-reward-kicker{color:var(--cb-accent-strong);font-size:.53rem;font-weight:950;letter-spacing:.06em}
+#coupleBearGame .bear-reward-bottom{
+  grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;
+  gap:7px;min-width:0;padding-top:7px;border-top:1px solid rgba(210,183,202,.35);
+}
+#coupleBearGame .bear-reward-state{font-size:.59rem;line-height:1.25;color:var(--cb-text-soft)}
+#coupleBearGame .bear-reward-apply{
+  min-height:31px;padding:6px 12px;
+  border:1px solid color-mix(in srgb,var(--cb-accent) 38%,var(--cb-border));
+  border-radius:999px;background:rgba(255,255,255,.9);
+  color:var(--cb-accent-strong);font-size:.63rem;font-weight:900;
+  white-space:nowrap;cursor:pointer;
+  transition:transform .15s ease,background .15s ease,box-shadow .15s ease;
+}
+#coupleBearGame .bear-reward-apply:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 10px rgba(160,103,140,.13)}
+#coupleBearGame .bear-reward-apply:active:not(:disabled){transform:scale(.97)}
+#coupleBearGame .bear-reward-apply:disabled{opacity:.58;cursor:wait}
+#coupleBearGame .bear-reward.is-applied .bear-reward-apply{background:var(--cb-accent);border-color:var(--cb-accent);color:#fff}
+#coupleBearGame .bear-reward.is-locked{filter:saturate(.78)}
+#coupleBearGame .bear-reward-lock{grid-column:1 / -1;font-size:.59rem;color:var(--cb-text-soft)}
+@media(max-width:520px){
+  #coupleBearGame .bear-rewards-list{grid-template-columns:1fr}
+  #coupleBearGame .bear-reward{grid-template-columns:68px minmax(0,1fr);min-height:112px}
+  #coupleBearGame .bear-reward-preview{width:68px;height:70px}
+}
+@media(prefers-reduced-motion:reduce){
+  #coupleBearGame .bear-care-track>span:after{animation:none}
+  #coupleBearGame .bear-reward,#coupleBearGame .bear-reward-apply{transition:none}
+}
+
+
+/* Single Bear Level + a clearer keepsake collection meter. */
+#coupleBearGame .bear-care-level{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 12px;border-radius:999px;
+  background:linear-gradient(135deg,rgba(255,255,255,.88),rgba(250,239,250,.82));
+}
+#coupleBearGame .bear-care-level small{font-size:.56rem;letter-spacing:.08em}
+#coupleBearGame .bear-care-level b{
+  display:grid;place-items:center;width:25px;height:25px;
+  border-radius:50%;background:linear-gradient(145deg,#f4d7e8,#dfd2f2);
+  color:#805d83;font-size:.82rem;box-shadow:inset 0 1px 2px rgba(255,255,255,.9);
+}
+#coupleBearGame .bear-rewards-heading{align-items:center;gap:12px}
+#coupleBearGame .bear-rewards-heading>div{min-width:0;flex:1}
+#coupleBearGame .bear-rewards-heading>div>b{display:block;font-size:.9rem}
+#coupleBearGame .bear-rewards-heading>div>small{display:block;margin-top:3px;line-height:1.35}
+#coupleBearGame .bear-reward-progress-pips{
+  display:flex;gap:5px;align-items:center;margin-top:9px;
+}
+#coupleBearGame .bear-reward-pip{
+  display:block;flex:1;max-width:38px;height:5px;
+  border-radius:999px;background:rgba(198,174,194,.3);
+  box-shadow:inset 0 1px 1px rgba(110,80,100,.08);
+  transition:background .25s ease,transform .25s ease;
+}
+#coupleBearGame .bear-reward-pip.is-filled{
+  background:linear-gradient(90deg,#eaa9c7,#c5a7e6);
+  box-shadow:0 1px 5px rgba(190,127,176,.2);
+}
+#coupleBearGame .bear-reward-count{
+  flex:0 0 54px;width:54px;height:54px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  border-radius:16px;
+  background:linear-gradient(145deg,#fff8fc,#f1eafa);
+  border:1px solid rgba(213,166,195,.45);
+  box-shadow:0 3px 10px rgba(140,94,127,.07);
+}
+#coupleBearGame .bear-reward-count b{font-size:1.05rem;line-height:1;color:#986c9a}
+#coupleBearGame .bear-reward-count small{font-size:.48rem;font-weight:950;letter-spacing:.09em;color:var(--cb-text-soft)}
+@media(max-width:420px){
+  #coupleBearGame .bear-reward-count{flex-basis:48px;width:48px;height:48px;border-radius:14px}
+  #coupleBearGame .bear-reward-progress-pips{gap:4px}
+}
+
+
+/* Clear feedback while a shared bear action awaits the partner acknowledgement. */
+#coupleBearGame.is-sending .bear-action-button {
+  cursor: wait;
+  opacity: .62;
+  transform: none;
+}
+#coupleBearGame .bear-action-button:disabled {
+  cursor: wait;
+  pointer-events: none;
+}
+#coupleBearGame .bear-action-button[aria-busy="true"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cb-accent) 35%, transparent);
+}
+@media(prefers-reduced-motion:reduce) {
+  #coupleBearGame.is-sending .bear-action-button { transition: none; }
+}
+
+/* Living Bear Hugs scene: lightweight ambience and direct object interactions. */
+#coupleBearGame .couple-bears-scene{position:relative;isolation:isolate;overflow:hidden}
+#coupleBearGame #bearPoseSvg{position:relative;z-index:2}
+#coupleBearGame .bear-living-atmosphere{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
+#coupleBearGame .bear-living-glow{position:absolute;width:42%;height:60%;left:29%;top:12%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.26),transparent 72%);filter:blur(8px)}
+#coupleBearGame .bear-living-petal{position:absolute;bottom:-14%;font-size:clamp(13px,2vw,20px);opacity:0;animation:bearPetalFloat 13s ease-in-out infinite;color:#fff7d9;text-shadow:0 2px 8px rgba(180,110,150,.25)}
+#coupleBearGame .petal-one{left:16%;animation-delay:-2s}
+#coupleBearGame .petal-two{left:72%;animation-delay:-8s;font-size:14px}
+#coupleBearGame .petal-three{left:48%;animation-delay:-5s}
+@keyframes bearPetalFloat{0%{transform:translate3d(0,0,0) rotate(-15deg);opacity:0}15%{opacity:.72}80%{opacity:.55}100%{transform:translate3d(34px,-125%,0) rotate(45deg);opacity:0}}
+#coupleBearGame .bear-time-morning .bear-living-glow{background:radial-gradient(ellipse,rgba(255,238,184,.42),transparent 72%)}
+#coupleBearGame .bear-time-afternoon .bear-living-glow{background:radial-gradient(ellipse,rgba(255,255,255,.32),transparent 72%)}
+#coupleBearGame .bear-time-evening .bear-living-glow{background:radial-gradient(ellipse,rgba(255,177,157,.4),transparent 72%)}
+#coupleBearGame .bear-time-night .bear-living-glow{background:radial-gradient(ellipse,rgba(190,177,255,.38),transparent 72%)}
+#coupleBearGame .bear-time-night{filter:saturate(.92)}
+#coupleBearGame .bear-time-night .bear-living-petal{color:#e9e4ff;text-shadow:0 0 8px rgba(219,207,255,.8)}
+#coupleBearGame .bear-moments{margin-top:13px;padding:12px 13px;border:1px solid var(--cb-border);border-radius:17px;background:color-mix(in srgb,var(--cb-card) 88%,#fff 12%)}
+#coupleBearGame .bear-moments>div:first-child{display:grid;gap:3px}
+#coupleBearGame .bear-moments>div:first-child b{font-size:.82rem;color:var(--cb-text)}
+#coupleBearGame .bear-moments>div:first-child small{font-size:.64rem;color:var(--cb-text-soft)}
+#coupleBearGame .bear-moments>p{margin:9px 0 0;font-size:.7rem;color:var(--cb-text-soft)}
+#coupleBearGame .bear-moments-list{display:grid;gap:6px;margin-top:9px}
+#coupleBearGame .bear-moments-list article{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;border-radius:11px;background:rgba(255,255,255,.48);font-size:.7rem;color:var(--cb-text)}
+#coupleBearGame .bear-moments-list button{width:29px;height:29px;border:0;border-radius:50%;background:#fff0f5;color:#bd7898;font-size:1rem;cursor:pointer}
+@media(prefers-reduced-motion:reduce){#coupleBearGame .bear-living-petal{animation:none;opacity:.25;bottom:20%}}
