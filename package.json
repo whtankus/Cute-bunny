@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build-preview.js",
-    "check": "node --check app.js && node --check sw.js && node --check swipe-gestures.js && node --check scripts/build-preview.js && node --check scripts/android-updater-entry.js && node --check scripts/ota-manifest.js",
+    "check": "node --check app.js && node --check bear-hugs-progression.js && node --check sw.js && node --check swipe-gestures.js && node --check scripts/build-preview.js && node --check scripts/android-updater-entry.js && node --check scripts/ota-manifest.js",
     "android:sync": "npm run build && cap sync android",
     "android:open": "cap open android",
     "test": "node --test tests/source-smoke.test.js tests/build-smoke.test.js tests/ota-manifest.test.js"
