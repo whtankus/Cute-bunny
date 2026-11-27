@@ -61,7 +61,7 @@ test('core DOM helpers expose query and HTML escaping without changing text cont
 
 test("feature modules are loaded before app.js", () => {
  const html = read("index.html");
- const appIndex = html.search(/src="app\\.js(?:\\?[^"]*)?"/);
+ const appIndex = html.search(/src="app\.js(?:\?[^"]*)?"/);
  for (const feature of ["home","photos","notes","music","friends","notifications","profile","streak"]) {
   const script = new RegExp(`src="src/features/${feature}/${feature}\\.js(?:\\?[^"]*)?"`);
   const match = html.match(script);
@@ -107,9 +107,9 @@ test("base and polish feature styles preserve their cascade layers", () => {
  const html = read("index.html");
  const build = read("scripts/build-preview.js");
  const worker = read("sw.js");
- const styleIndex = html.search(/style\\.css(?:\\?[^"]*)?/);
+ const styleIndex = html.search(/style\.css(?:\?[^"]*)?/);
  const tokensIndex = html.indexOf("src/styles/tokens.css");
- const polishIndex = html.search(/polish\\.css(?:\\?[^"]*)?/);
+ const polishIndex = html.search(/polish\.css(?:\?[^"]*)?/);
  for (const feature of ["home","photos","notes","music","friends","notifications","profile","streak"]) {
   const base = "src/styles/features/base-" + feature + ".css";
   const polish = "src/styles/features/" + feature + ".css";
