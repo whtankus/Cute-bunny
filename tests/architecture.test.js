@@ -61,11 +61,12 @@ test('core DOM helpers expose query and HTML escaping without changing text cont
 
 test("feature modules are loaded before app.js", () => {
  const html = read("index.html");
- const appIndex = html.indexOf("src=\"app.js?v=36\"");
+ const appIndex = html.search(/src="app\\.js(?:\\?[^"]*)?"/);
  for (const feature of ["home","photos","notes","music","friends","notifications","profile","streak"]) {
-  const script = "src=\"src/features/" + feature + "/" + feature + ".js\"";
-  assert.ok(html.indexOf(script) >= 0, feature + " module exists in HTML");
-  assert.ok(html.indexOf(script) < appIndex, feature + " loads before app.js");
+  const script = new RegExp(`src="src/features/${feature}/${feature}\\.js(?:\\?[^"]*)?"`);
+  const match = html.match(script);
+  assert.ok(match, feature + " module exists in HTML");
+  assert.ok(html.indexOf(match[0]) < appIndex, feature + " loads before app.js");
   assert.match(read("src/features/" + feature + "/" + feature + ".js"), /^\/\* .* feature functions/);
  }
 });
@@ -106,9 +107,9 @@ test("base and polish feature styles preserve their cascade layers", () => {
  const html = read("index.html");
  const build = read("scripts/build-preview.js");
  const worker = read("sw.js");
- const styleIndex = html.indexOf("style.css?v=milestone-shine-20261124");
+ const styleIndex = html.search(/style\\.css(?:\\?[^"]*)?/);
  const tokensIndex = html.indexOf("src/styles/tokens.css");
- const polishIndex = html.indexOf("polish.css?v=badge-size-uniform-20261124");
+ const polishIndex = html.search(/polish\\.css(?:\\?[^"]*)?/);
  for (const feature of ["home","photos","notes","music","friends","notifications","profile","streak"]) {
   const base = "src/styles/features/base-" + feature + ".css";
   const polish = "src/styles/features/" + feature + ".css";
