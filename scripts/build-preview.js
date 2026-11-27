@@ -10,11 +10,44 @@ fs.mkdirSync(output, { recursive: true });
 const assets = [
   'index.html',
   'app.js',
+  'src/core/dom.js',
+  'src/services/supabase-client.js',
+  'src/services/media-optimizer.js',
+  'src/services/api.js',
+  'src/features/notes/chat-events.js',
+  'src/features/home/home.js',
+  'src/features/photos/photos.js',
+  'src/features/notes/notes.js',
+  'src/features/music/music.js',
+  'src/features/friends/friends.js',
+  'src/features/notifications/notifications.js',
+  'src/features/profile/profile.js',
+  'src/features/streak/streak.js',
+  'src/styles/tokens.css',
+  'src/styles/features/base-home.css',
+  'src/styles/features/base-photos.css',
+  'src/styles/features/base-notes.css',
+  'src/styles/features/base-music.css',
+  'src/styles/features/base-friends.css',
+  'src/styles/features/base-notifications.css',
+  'src/styles/features/base-profile.css',
+  'src/styles/features/base-streak.css',
+  'src/styles/features/home.css',
+  'src/styles/features/photos.css',
+  'src/styles/features/notes.css',
+  'src/styles/features/music.css',
+  'src/styles/features/friends.css',
+  'src/styles/features/notifications.css',
+  'src/styles/features/profile.css',
+  'src/styles/features/streak.css',
   'style.css',
   'polish.css',
   'button-interactions.css',
   'swipe-gestures.css',
   'swipe-gestures.js',
+  'header-statusbar-blend.css',
+  'bear-hugs-progression.css',
+  'bear-hugs-progression.js',
   'sw.js',
   'manifest.webmanifest',
   'bunny-app-icon-192.png',
@@ -25,7 +58,9 @@ const assets = [
 for (const asset of assets) {
   const source = path.join(root, asset);
   if (!fs.existsSync(source)) throw new Error('Missing required preview asset: ' + asset);
-  fs.copyFileSync(source, path.join(output, asset));
+  const destination = path.join(output, asset);
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.copyFileSync(source, destination);
 }
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';

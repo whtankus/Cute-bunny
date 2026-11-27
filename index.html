@@ -15,7 +15,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=milestone-shine-20261124">
-  <link rel="stylesheet" href="polish.css?v=badge-size-uniform-20261124">
+  <link rel="stylesheet" href="src/styles/features/base-home.css">
+  <link rel="stylesheet" href="src/styles/features/base-photos.css">
+  <link rel="stylesheet" href="src/styles/features/base-notes.css">
+  <link rel="stylesheet" href="src/styles/features/base-music.css">
+  <link rel="stylesheet" href="src/styles/features/base-friends.css">
+  <link rel="stylesheet" href="src/styles/features/base-notifications.css">
+  <link rel="stylesheet" href="src/styles/features/base-profile.css">
+  <link rel="stylesheet" href="src/styles/features/base-streak.css">
+  <link rel="stylesheet" href="src/styles/tokens.css">
+  <link rel="stylesheet" href="polish.css?v=seasonal-home-20261127">
+  <link rel="stylesheet" href="src/styles/features/home.css?v=seasonal-home-20261127">
+  <link rel="stylesheet" href="src/styles/features/photos.css">
+  <link rel="stylesheet" href="src/styles/features/notes.css">
+  <link rel="stylesheet" href="src/styles/features/music.css">
+  <link rel="stylesheet" href="src/styles/features/friends.css">
+  <link rel="stylesheet" href="src/styles/features/notifications.css">
+  <link rel="stylesheet" href="src/styles/features/profile.css">
+  <link rel="stylesheet" href="src/styles/features/streak.css?v=living-garden-20261127">
   <link rel="stylesheet" href="header-statusbar-blend.css?v=20261120-1">
   <link rel="stylesheet" href="button-interactions.css?v=nav-3d-depth-20261118">
   <link rel="stylesheet" href="swipe-gestures.css?v=20261121-2">
@@ -326,9 +343,22 @@
   <input id="picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm" multiple hidden>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="app.js?v=32"></script>
-  <link rel="stylesheet" href="bear-hugs-progression.css?v=bear-hugs-living-world-20261124-3">
-  <script src="bear-hugs-progression.js?v=bear-hugs-living-world-20261124-3" defer></script>
+  <script src="src/core/dom.js"></script>
+  <script src="src/services/supabase-client.js"></script>
+  <script src="src/services/media-optimizer.js"></script>
+  <script src="src/services/api.js"></script>
+  <script src="src/features/home/home.js?v=seasonal-home-20261127"></script>
+  <script src="src/features/photos/photos.js"></script>
+  <script src="src/features/notes/notes.js"></script>
+  <script src="src/features/music/music.js"></script>
+  <script src="src/features/friends/friends.js"></script>
+  <script src="src/features/notifications/notifications.js"></script>
+  <script src="src/features/profile/profile.js"></script>
+  <script src="src/features/streak/streak.js?v=living-garden-20261127"></script>
+  <script src="app.js?v=42"></script>
+  <script src="src/features/notes/chat-events.js"></script>
+  <link rel="stylesheet" href="bear-hugs-progression.css?v=bearfriend-name-only-20261127">
+  <script src="bear-hugs-progression.js?v=bearfriend-name-only-20261127" defer></script>
   <script src="swipe-gestures.js?v=20261121-2" defer></script>
   <script>
 (() => {

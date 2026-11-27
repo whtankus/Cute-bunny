@@ -1,0 +1,100 @@
+/* Base home styles extracted from style.css; loaded before tokens and polish overrides. */
+.welcome {
+min-height:100svh;display:grid;place-items:center;position:relative;overflow:hidden;padding:24px;background:linear-gradient(180deg,#f5edff 0%,#fff4eb 72%,#e7d8c9 72.2%,#d6c4ba 100%)
+}
+
+.welcome:before {
+content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,#fff0d777,transparent 44%)
+}
+
+.welcome-card {
+position:relative;z-index:1;width:min(420px,100%);text-align:center;padding:24px 28px 30px;border:1px solid #fff9;border-radius:180px 180px 34px 34px;background:linear-gradient(160deg,#fffaf4ed,#fff4f4ed);box-shadow:0 24px 60px #7d60751e, inset 0 0 0 7px #fff8
+}
+
+.welcome h1 {
+font:700 clamp(2.5rem,10vw,3.7rem) Quicksand;margin:8px 0;color:#70546d
+}
+
+.welcome h1 span {
+color:#d892ad
+}
+
+.welcome-card small {
+display:block;margin-top:19px;color:#b098aa;font-family:Caveat,cursive;font-size:1.2rem
+}
+
+@media(max-width:390px) {
+.welcome-card {
+padding:20px 20px 25px
+}
+}
+
+.welcome-card {
+border:2px dashed #e9ccd8;outline:2px solid #fff;outline-offset:-8px
+}
+
+.welcome-card:after {
+content:'♡';position:absolute;right:23px;top:45%;font:2rem Caveat;color:#d897ad;transform:rotate(15deg)
+}
+
+.welcome:after {
+content:'✿  ·  ✧  ·  ♡';position:absolute;bottom:7%;left:8%;font:1.6rem Caveat;color:#fff9;letter-spacing:10px
+}
+
+.welcome-signin {
+display:block;margin:0 auto 4px
+}
+
+body[data-mode="dark"] .welcome {
+background:linear-gradient(180deg,#2e243c 0%,#2a2233 72%,#211b2a 100%)!important
+}
+
+body[data-mode="dark"] .welcome-card {
+background:linear-gradient(160deg,#3b3042ef,#30273aef)!important;border-color:#6b5269!important;box-shadow:0 24px 60px #09070c55,inset 0 0 0 7px #ffffff08!important
+}
+
+.home-feature-heading {
+display:flex;align-items:center;justify-content:space-between;gap:12px;margin:25px 2px 12px;color:#a17b91
+}
+
+.home-feature-heading>span {
+font:900 .68rem Nunito,sans-serif;letter-spacing:1.6px
+}
+
+.home-feature-heading>small {
+font:700 .72rem Quicksand,sans-serif
+}
+
+.home-feature-stack {
+display:grid;gap:13px;margin-bottom:28px
+}
+
+.home-feature-card {
+position:relative;display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:150px;padding:20px 21px;border:1px solid #f0dce5;border-radius:27px;overflow:hidden;isolation:isolate;cursor:pointer;box-shadow:0 8px 22px #77546d0b;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;touch-action:manipulation
+}
+
+.home-feature-card:hover {
+transform:translateY(-3px);box-shadow:0 13px 27px #77546d16
+}
+
+.home-feature-card:active {
+transform:scale(.985)
+}
+
+.home-feature-card:hover .feature-link b {
+transform:translate(3px,-2px)
+}
+
+@media(max-width:430px) {
+.home-feature-card {
+min-height:139px;padding:17px 15px;border-radius:23px;gap:8px
+}
+}
+
+.home-feature-card:focus-visible {
+outline:3px solid #d99bb9;outline-offset:3px
+}
+
+.home-feature-heading,.home-feature-stack {
+display:none!important
+}

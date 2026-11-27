@@ -27,6 +27,10 @@ test('production build emits a complete app bundle with generated public config'
     for (const asset of [
       'index.html',
       'app.js',
+      'src/core/dom.js',
+      'src/services/supabase-client.js',
+      'src/services/media-optimizer.js',
+      'src/styles/tokens.css',
       'style.css',
       'polish.css',
       'sw.js',

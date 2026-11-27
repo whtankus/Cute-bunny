@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build-preview.js",
-    "check": "node --check app.js && node --check bear-hugs-progression.js && node --check sw.js && node --check swipe-gestures.js && node --check scripts/build-preview.js && node --check scripts/android-updater-entry.js && node --check scripts/ota-manifest.js",
+    "check": "node --check app.js && node --check src/features/home/home.js && node --check src/features/photos/photos.js && node --check src/features/notes/notes.js && node --check src/features/music/music.js && node --check src/features/friends/friends.js && node --check src/features/notifications/notifications.js && node --check src/features/profile/profile.js && node --check src/features/streak/streak.js && node --check src/core/dom.js && node --check src/services/supabase-client.js && node --check src/services/media-optimizer.js && node --check src/services/api.js && node --check src/features/notes/chat-events.js && node --check bear-hugs-progression.js && node --check sw.js && node --check swipe-gestures.js && node --check scripts/build-preview.js && node --check scripts/android-updater-entry.js && node --check scripts/ota-manifest.js && node scripts/check-project-structure.js",
     "android:sync": "npm run build && cap sync android",
     "android:open": "cap open android",
-    "test": "node --test tests/source-smoke.test.js tests/build-smoke.test.js tests/ota-manifest.test.js"
+    "test": "node --test tests/source-smoke.test.js tests/build-smoke.test.js tests/ota-manifest.test.js tests/architecture.test.js"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
