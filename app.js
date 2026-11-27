@@ -2703,7 +2703,7 @@ document.addEventListener('click', e => {
   }
 
   // Dismiss message actions popup if clicking outside
-  if (!e.target.closest('.chat-actions-popup') && !e.target.closest('.chat-bubble')) {
+  if (!e.target.closest('.chat-actions-popup, .chat-bubble, .chat-message-photo')) {
     hideMessageActions();
   }
 
