@@ -25,7 +25,7 @@ test('Bear Hugs restores saved partners and keeps reward progression wired', () 
   assert.match(bear, /bear-care-milestone/);
   assert.match(styles, /bear-reward-apply:disabled/);
   assert.match(styles, /bear-visual-cap/);
-  assert.match(html, /bear-hugs-progression\\.js(?:\\?[^\"']*)?/);
+  assert.match(html, /bear-hugs-progression\.js(?:\?[^"']*)?/);
 });
 
 test('Bear Hugs uses one fixed level and Care Point-based treasure collection', () => {
