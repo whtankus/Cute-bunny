@@ -54,6 +54,7 @@ let lastBearActivityAt = Date.now();
 let bearsAreAsleep = false;
 let bearAtmosphereTimer = null;
 let bearMoments = [];
+let bearRewardFilter = 'all';
 
 function getPoints() {
   return Math.max(0, Number(sharedPoints) || 0);
@@ -261,7 +262,7 @@ function ensureLivingScene(scene) {
     ambience = document.createElement('div');
     ambience.className = 'bear-living-atmosphere';
     ambience.setAttribute('aria-hidden', 'true');
-    ambience.innerHTML = '<span class="bear-living-petal petal-one">✿</span><span class="bear-living-petal petal-two">✧</span><span class="bear-living-petal petal-three">♡</span><span class="bear-living-glow"></span>';
+    ambience.innerHTML = '<span class="bear-living-petal petal-one">✿</span><span class="bear-living-petal petal-two">✧</span><span class="bear-living-petal petal-three">♡</span><span class="bear-living-sparkle sparkle-one">✦</span><span class="bear-living-sparkle sparkle-two">✧</span><span class="bear-living-sparkle sparkle-three">✦</span><span class="bear-living-glow"></span>';
     scene.appendChild(ambience);
   }
 
@@ -329,7 +330,7 @@ function updateUI() {
     '<div class="bear-care-track" role="progressbar" aria-label="' + (nextReward ? 'Progress to ' + esc(nextReward.name) : 'All keepsakes unlocked') + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(progressPercent) + '"><span style="width:' + progressPercent + '%"></span></div>' +
     '<div class="bear-care-foot"><span><b class="bear-care-progress-label">' + points.toLocaleString() + ' Care Points</b></span><b>' + (nextReward ? pointsToNext.toLocaleString() + ' to next treasure' : 'All treasures collected') + '</b></div>' +
     '<div class="bear-care-milestone"><span>✧</span>' + (nextReward
-      ? 'Next keepsake: <b>' + esc(nextReward.name) + '</b> · ' + nextReward.unlockPoints.toLocaleString() + ' Care Points'
+      ? 'Next: <b>' + esc(nextReward.name) + '</b> · ' + pointsToNext.toLocaleString() + ' points left'
       : '<b>Every keepsake is unlocked!</b> Your little bear world is complete') + '</div>';
 
   let panel = $('#bearProgressionPanel', root);
@@ -344,6 +345,8 @@ function updateUI() {
   if (!panel.dataset.rewardHandler) {
     panel.dataset.rewardHandler = 'true';
     panel.addEventListener('click', event => {
+      const filter = event.target.closest('[data-bear-reward-filter]');
+      if (filter) { bearRewardFilter = filter.dataset.bearRewardFilter || 'all'; updateUI(); return; }
       const favorite = event.target.closest('[data-bear-moment-favorite]');
       if (favorite) {
         const moment = bearMoments.find(item => item.actionId === favorite.dataset.bearMomentFavorite);
@@ -366,27 +369,26 @@ function updateUI() {
   const rewardCards = REWARDS.map((reward, index) => {
     const unlocked = points >= reward.unlockPoints;
     const applied = equippedRewardIds.includes(reward.id);
-    const progressLabel = unlocked
-      ? (applied ? 'Currently in your bear world' : 'Unlocked · ready to use')
-      : (reward.unlockPoints - points).toLocaleString() + ' Care Points to unlock';
-    return '<article class="bear-reward ' + (unlocked ? 'is-unlocked' : 'is-locked') + (applied ? ' is-applied' : '') + (nextReward?.id === reward.id ? ' is-next' : '') + '">' +
+    const visible = bearRewardFilter === 'all' || (bearRewardFilter === 'unlocked' && unlocked) || (bearRewardFilter === 'locked' && !unlocked);
+    return '<article class="bear-reward ' + (unlocked ? 'is-unlocked' : 'is-locked') + (applied ? ' is-applied' : '') + (nextReward?.id === reward.id ? ' is-next' : '') + '" ' + (visible ? '' : 'hidden') + '>' +
       '<div class="bear-reward-preview ' + reward.previewClass + '" aria-hidden="true"><span>' + reward.icon + '</span><i>✦</i><small>🐻　✿　🐻</small></div>' +
-      '<div class="bear-reward-copy"><span class="bear-reward-kicker">' + reward.rarity + ' · TREASURE ' + (index + 1) + '</span><b>' + reward.name + '</b><small>' + reward.detail + '</small></div>' +
-      '<div class="bear-reward-bottom"><span class="bear-reward-state">' + progressLabel + '</span>' +
-      (unlocked ? '<button type="button" class="bear-reward-apply" data-bear-equip="' + reward.id + '" aria-pressed="' + applied + '">' + (applied ? 'Unequip' : 'Use reward') + '</button>' : '<span class="bear-reward-lock">🔒 ' + reward.unlockPoints.toLocaleString() + ' Care Points</span>') +
+      '<div class="bear-reward-copy"><span class="bear-reward-kicker">' + reward.rarity + ' · ' + reward.kind + '</span><b>' + reward.name + '</b><small>' + (unlocked ? (applied ? 'In your shared world' : 'Ready to add to your world') : reward.unlockPoints.toLocaleString() + ' Care Points') + '</small></div>' +
+      '<div class="bear-reward-bottom">' +
+      (unlocked ? '<button type="button" class="bear-reward-apply" data-bear-equip="' + reward.id + '" aria-pressed="' + applied + '">' + (applied ? '✓ Equipped' : 'Equip') + '</button>' : '<span class="bear-reward-lock">🔒 Locked</span><span class="bear-reward-cost">' + reward.unlockPoints.toLocaleString() + ' pts</span>') +
       '</div></article>';
   }).join('');
 
   const rewardSummary = nextReward
-    ? '<div class="bear-next-reward"><div class="bear-next-reward-art ' + nextReward.previewClass + '">' + nextReward.icon + '</div><div><small>NEXT LITTLE TREASURE</small><b>' + nextReward.name + '</b><span>' + pointsToNext.toLocaleString() + ' more Care Points to unlock · keep sharing little moments</span></div></div>'
-    : '<div class="bear-next-reward bear-all-unlocked"><div class="bear-next-reward-art preview-starry">✧</div><div><small>YOUR WORLD IS COMPLETE</small><b>Every treasure is yours!</b><span>Keep collecting sweet moments together.</span></div></div>';
+    ? '<div class="bear-next-reward"><div class="bear-next-reward-art ' + nextReward.previewClass + '">' + nextReward.icon + '</div><div><small>UP NEXT</small><b>' + nextReward.name + '</b><span>' + pointsToNext.toLocaleString() + ' points left</span></div><div class="bear-next-progress">' + unlockedCount + '/' + REWARDS.length + '</div></div>'
+    : '<div class="bear-next-reward bear-all-unlocked"><div class="bear-next-reward-art preview-starry">✧</div><div><small>COLLECTION COMPLETE</small><b>Every treasure unlocked</b><span>Your shared world is glowing</span></div><div class="bear-next-progress">5/5</div></div>';
 
   const progressPips = REWARDS.map(reward =>
     '<span class="bear-reward-pip ' + (points >= reward.unlockPoints ? 'is-filled' : '') + '" aria-hidden="true"></span>'
   ).join('');
   panel.innerHTML = rewardSummary +
-    '<section class="bear-rewards"><div class="bear-rewards-heading"><div><b>Little treasures</b><small>' + unlockedCount + ' of ' + REWARDS.length + ' unlocked · collect them with Care Points</small><div class="bear-reward-progress-pips" role="img" aria-label="' + unlockedCount + ' of ' + REWARDS.length + ' treasures unlocked">' + progressPips + '</div></div><span class="bear-reward-count"><b>' + unlockedCount + '</b><small>OF ' + REWARDS.length + '</small></span></div><div class="bear-rewards-list">' +
-    rewardCards + '</div></section>' + renderBearMoments();
+    '<section class="bear-rewards"><div class="bear-rewards-heading"><div><b>Your keepsakes</b><small>' + unlockedCount + ' / ' + REWARDS.length + ' collected</small><div class="bear-reward-progress-pips" role="img" aria-label="' + unlockedCount + ' of ' + REWARDS.length + ' treasures unlocked">' + progressPips + '</div></div><span class="bear-reward-count"><b>' + unlockedCount + '</b><small>UNLOCKED</small></span></div><div class="bear-reward-filters" role="group" aria-label="Filter keepsakes">' +
+    ['all','unlocked','locked'].map(filter => '<button type="button" data-bear-reward-filter="' + filter + '" class="' + (bearRewardFilter === filter ? 'is-active' : '') + '" aria-pressed="' + (bearRewardFilter === filter) + '">' + (filter === 'all' ? 'All' : filter === 'unlocked' ? 'Unlocked' : 'Locked') + '</button>').join('') +
+    '</div><div class="bear-rewards-list">' + rewardCards + '</div></section>' + renderBearMoments();
 
   if (scene) {
     scene.classList.toggle('bear-reward-sunset', equippedRewardIds.includes('sunset-meadow'));
@@ -1071,6 +1073,22 @@ function install() {
   ensurePicker();
   window.addEventListener('cute-bunny:bear-action', recordBearMoment);
   if (!bearAtmosphereTimer) bearAtmosphereTimer = setInterval(() => ensureLivingScene($('.couple-bears-scene')), 15 * 60 * 1000);
+
+  // A subtle pointer-following glow makes the bear scene feel responsive on desktop.
+  document.addEventListener('pointermove', event => {
+    if (event.pointerType !== 'mouse') return;
+    const scene = event.target.closest?.('#coupleBearGame .couple-bears-scene');
+    if (!scene) return;
+    const rect = scene.getBoundingClientRect();
+    scene.style.setProperty('--bear-pointer-x', ((event.clientX - rect.left) / Math.max(1, rect.width) * 100).toFixed(1) + '%');
+    scene.style.setProperty('--bear-pointer-y', ((event.clientY - rect.top) / Math.max(1, rect.height) * 100).toFixed(1) + '%');
+    scene.classList.add('has-bear-pointer');
+  }, { passive: true });
+  document.addEventListener('pointerout', event => {
+    const scene = event.target.closest?.('#coupleBearGame .couple-bears-scene');
+    if (!scene || scene.contains(event.relatedTarget)) return;
+    scene.classList.remove('has-bear-pointer');
+  }, { passive: true });
 
   // Delegate from document because the app replaces #content on every render.
   document.addEventListener('click', event => {

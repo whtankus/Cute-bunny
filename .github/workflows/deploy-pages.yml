@@ -27,39 +27,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Check JavaScript syntax
-        run: |
-          node --check app.js
-          node --check sw.js
-          node --check swipe-gestures.js
-          node --check bear-hugs-progression.js
-          node --check scripts/build-preview.js
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Prepare website
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build complete website
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY || secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        run: |
-          mkdir -p _site
-          cp index.html app.js style.css polish.css button-interactions.css swipe-gestures.css swipe-gestures.js bear-hugs-progression.css bear-hugs-progression.js manifest.webmanifest sw.js bunny-app-icon-192.png bunny-app-icon-512.png apple-touch-icon.png _site/
-          python3 - <<'PY'
-          import json, os, pathlib
-          url = os.environ.get('SUPABASE_URL', '').strip()
-          key = os.environ.get('SUPABASE_PUBLISHABLE_KEY', '').strip()
-          if not url or not key:
-              raise SystemExit('Add SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in repository Actions secrets.')
-          config = 'window.CUTE_BUNNY_CONFIG = ' + json.dumps({'supabaseUrl': url, 'supabaseAnonKey': key}) + ';\n'
-          pathlib.Path('_site/supabase-config.js').write_text(config, encoding='utf-8')
-          pathlib.Path('_site/.nojekyll').touch()
-          PY
+        run: npm run build
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           name: github-pages-${{ github.run_attempt }}
-          path: _site
+          path: dist
       # Pages artifact metadata can briefly lag behind the upload API.
       - name: Wait for Pages artifact metadata
         run: sleep 10

@@ -1,0 +1,361 @@
+/* Feature-scoped styles extracted from polish.css. */
+.streak-garden-page .sg-daily-quest-card {
+
+  grid-template-columns:32px minmax(0,1fr)!important;
+  gap:10px!important;
+
+}
+
+.streak-garden-page .sg-daily-quest-icon {
+
+  width:30px!important;height:30px!important;
+  border-radius:10px!important;
+
+}
+
+.streak-garden-page .sg-daily-quest-icon svg {
+
+  width:25px!important;height:25px!important;
+
+}
+
+.streak-garden-page .sg-weekly-tier {
+
+  grid-template-columns:34px minmax(0,1fr) minmax(72px,auto)!important;
+  gap:9px!important;
+
+}
+
+.streak-garden-page .sg-weekly-art {
+
+  width:34px!important;height:34px!important;
+  border-radius:11px!important;
+
+}
+
+.streak-garden-page .sg-weekly-art svg {
+
+  width:30px!important;height:30px!important;
+
+}
+
+@media(max-width:380px) {
+.streak-garden-page .sg-weekly-tier {
+
+    grid-template-columns:30px minmax(0,1fr) 68px!important;
+    gap:7px!important;
+  
+}
+}
+
+@media(max-width:380px) {
+.streak-garden-page .sg-weekly-art {
+
+    width:30px!important;height:30px!important;
+  
+}
+}
+
+@media(max-width:380px) {
+.streak-garden-page .sg-weekly-art svg {
+
+    width:26px!important;height:26px!important;
+  
+}
+}
+
+.streak-garden-page .sg-daily-quest-list .sg-daily-quest-card {
+
+  border-radius:24px!important;
+  overflow:hidden;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:border-radius .2s ease,transform .18s ease,box-shadow .18s ease,background .18s ease;
+
+}
+
+.streak-garden-page .sg-daily-quest-list .sg-daily-quest-card:focus-visible {
+
+  outline:2px solid #bd86a3;
+  outline-offset:3px;
+
+}
+
+@media(hover:hover) {
+.streak-garden-page .sg-daily-quest-list .sg-daily-quest-card:hover {
+
+    border-radius:24px!important;
+    box-shadow:0 7px 20px rgba(151,105,129,.13);
+    transform:translateY(-1px);
+  
+}
+}
+
+.streak-garden-page .sg-daily-quest-list .sg-daily-quest-card:active {
+
+  transform:scale(.992);
+
+}
+
+.streak-garden-page {
+gap:20px!important;padding-bottom:24px!important
+}
+
+.streak-garden-page .sg-page-heading {
+align-items:center!important;margin:0 2px 2px!important
+}
+
+.streak-garden-page .sg-page-heading h2 {
+font-size:clamp(1.55rem,4vw,2rem)!important;letter-spacing:-.035em!important
+}
+
+.streak-garden-page .sg-hero-paper {
+
+  grid-template-columns:minmax(0,1fr) minmax(0,.9fr)!important;min-height:270px!important;
+  border-radius:26px!important;box-shadow:0 10px 28px rgba(107,77,93,.08)!important;
+
+}
+
+.streak-garden-page .sg-hero-copy {
+padding:clamp(18px,3vw,28px)!important
+}
+
+.streak-garden-page .sg-hero-scene {
+min-width:0!important;display:grid!important;place-items:center!important
+}
+
+.streak-garden-page .sg-week-section,
+.streak-garden-page .sg-daily-quests-section,
+.streak-garden-page .sg-hearts-section,
+.streak-garden-page .sg-calendar-section {
+
+  border:1px solid var(--cb-border)!important;border-radius:22px!important;
+  box-shadow:0 7px 22px rgba(94,67,88,.055)!important;
+
+}
+
+.streak-garden-page .sg-week-section {
+padding:17px!important
+}
+
+.streak-garden-page .sg-week-row {
+gap:clamp(2px,1vw,8px)!important
+}
+
+.streak-garden-page .sg-week-day {
+min-width:0!important;padding:8px 2px!important;border-radius:15px!important
+}
+
+.streak-garden-page .sg-week-flower {
+width:clamp(30px,5vw,38px)!important;height:clamp(30px,5vw,38px)!important
+}
+
+.streak-garden-page .sg-garden-switcher {
+
+  position:sticky;top:8px;z-index:4;gap:7px!important;padding:6px!important;
+  border-radius:19px!important;background:rgba(255,250,248,.92)!important;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:0 8px 22px rgba(94,67,88,.09)!important;
+
+}
+
+.streak-garden-page .sg-garden-switch {
+min-height:54px!important;gap:7px!important;border-radius:14px!important
+}
+
+.streak-garden-page .sg-garden-switch.is-active {
+box-shadow:0 3px 10px rgba(169,95,128,.12)!important
+}
+
+.streak-garden-page .sg-daily-quests-section {
+padding:clamp(14px,2.5vw,20px)!important
+}
+
+.streak-garden-page .sg-daily-quest-list {
+gap:11px!important
+}
+
+.streak-garden-page .sg-daily-quest-card {
+grid-template-columns:44px minmax(0,1fr)!important;gap:12px!important;padding:13px!important
+}
+
+.streak-garden-page .sg-daily-quest-card p {
+font-size:.78rem!important;line-height:1.48!important
+}
+
+.streak-garden-page .sg-daily-quest-card .sg-daily-quest-title-row {
+flex-wrap:wrap!important
+}
+
+.streak-garden-page .sg-daily-quest-status {
+flex:none!important
+}
+
+.streak-garden-page .sg-section-heading {
+gap:10px!important
+}
+
+.streak-garden-page .sg-section-heading h3 {
+line-height:1.25!important
+}
+
+.streak-garden-page .sg-calendar-grid {
+gap:5px!important
+}
+
+body[data-mode="dark"] .streak-garden-page .sg-garden-switcher {
+background:rgba(48,41,54,.94)!important;border-color:#514354!important
+}
+
+body[data-mode="dark"] .streak-garden-page .sg-week-section,
+body[data-mode="dark"] .streak-garden-page .sg-daily-quests-section,
+body[data-mode="dark"] .streak-garden-page .sg-hearts-section,
+body[data-mode="dark"] .streak-garden-page .sg-calendar-section {
+border-color:#514354!important
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-hero-paper {
+grid-template-columns:minmax(0,1fr)!important;min-height:0!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-hero-copy {
+padding:20px 20px 8px!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-hero-scene {
+min-height:190px!important;padding:0 10px 12px!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-garden-switcher {
+top:4px!important;gap:4px!important;padding:5px!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-garden-switch {
+min-height:54px!important;flex-direction:column!important;gap:4px!important;padding:7px 3px!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-garden-switch .sg-switch-label b {
+font-size:.68rem!important;white-space:normal!important;text-align:center!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-week-section {
+padding:12px 8px!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-week-day .sg-week-name {
+font-size:.58rem!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-week-day .sg-week-date {
+font-size:.63rem!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-daily-quest-card {
+grid-template-columns:38px minmax(0,1fr)!important;padding:11px!important;gap:10px!important
+}
+}
+
+@media(max-width:600px) {
+.streak-garden-page .sg-daily-quest-icon {
+width:36px!important;height:36px!important
+}
+}
+
+@media(max-width:360px) {
+.streak-garden-page .sg-garden-switch .sg-switch-label b {
+font-size:.62rem!important
+}
+}
+
+@media(max-width:360px) {
+.streak-garden-page .sg-week-row {
+gap:0!important
+}
+}
+
+.streak-garden-page .sg-quest-keyword-hint {
+
+  display:flex;flex-wrap:wrap;align-items:center;gap:5px 7px;
+  margin:7px 0 8px;padding:7px 9px;
+  border:1px solid rgba(205,145,174,.28);border-radius:10px;
+  background:linear-gradient(110deg,rgba(255,239,246,.88),rgba(244,239,255,.82));
+
+}
+
+.streak-garden-page .sg-quest-keyword-hint>span {
+
+  flex:0 0 100%;color:#a16b88;font-size:.56rem;font-weight:900;
+  letter-spacing:.075em;line-height:1.2;
+
+}
+
+.streak-garden-page .sg-quest-keyword-hint>b {
+
+  color:#754761;font-size:.68rem;font-weight:900;line-height:1.45;
+  overflow-wrap:anywhere;
+
+}
+
+.streak-garden-page .sg-daily-quest-card.is-done .sg-quest-keyword-hint {
+
+  border-color:rgba(123,166,126,.35);
+  background:linear-gradient(110deg,rgba(233,248,232,.9),rgba(242,248,239,.9));
+
+}
+
+.streak-garden-page .sg-daily-quest-card.is-done .sg-quest-keyword-hint>span,
+.streak-garden-page .sg-daily-quest-card.is-done .sg-quest-keyword-hint>b {
+color:#527d59
+}
+
+body[data-mode="dark"] .streak-garden-page .sg-quest-keyword-hint {
+
+  border-color:rgba(201,151,190,.32);
+  background:linear-gradient(110deg,rgba(91,55,79,.56),rgba(68,57,91,.56));
+
+}
+
+body[data-mode="dark"] .streak-garden-page .sg-quest-keyword-hint>span {
+color:#e4b9d2
+}
+
+body[data-mode="dark"] .streak-garden-page .sg-quest-keyword-hint>b {
+color:#f8e6f1
+}
+
+
+/* Living streak garden: growth stages follow the user's consecutive-day count. */
+.streak-garden-page .sg-garden-art{isolation:isolate;transition:filter .35s ease,transform .35s ease}
+.streak-garden-page .sg-garden-art:after{content:"";position:absolute;z-index:2;inset:5% 8% 8%;pointer-events:none;border-radius:50%;opacity:0;transition:opacity .5s ease;background:radial-gradient(ellipse at 50% 65%,rgba(255,231,174,.2),transparent 68%)}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-sprout:after{opacity:.3}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-bloom:after{opacity:.48}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-lush:after{opacity:.68}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-full:after{opacity:.9;background:radial-gradient(ellipse at 50% 65%,rgba(255,222,150,.3),transparent 68%)}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-sprout .sg-garden-svg{filter:saturate(1.05)}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-bloom .sg-garden-svg{filter:saturate(1.14) brightness(1.02)}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-lush .sg-garden-svg{filter:saturate(1.22) brightness(1.035)}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-full .sg-garden-svg{filter:saturate(1.3) brightness(1.05) drop-shadow(0 5px 12px rgba(197,139,164,.18))}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-bloom:before,.streak-garden-page .sg-garden-art.sg-bloom-stage-lush:before,.streak-garden-page .sg-garden-art.sg-bloom-stage-full:before{content:"✿";position:absolute;z-index:3;top:9%;right:12%;color:#e8b3c7;text-shadow:0 2px 8px #fff8;font-size:clamp(15px,2.5vw,23px);pointer-events:none;animation:sg-garden-firefly 3.4s ease-in-out infinite}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-lush:before{content:"✿ · ✧"}
+.streak-garden-page .sg-garden-art.sg-bloom-stage-full:before{content:"✿ ✧ ✿";color:#e9c477}
+@keyframes sg-garden-firefly{50%{transform:translate3d(-5px,-8px,0) rotate(12deg);opacity:.55}}
+@media(prefers-reduced-motion:reduce){.streak-garden-page .sg-garden-art:before{animation:none}}
