@@ -1199,10 +1199,12 @@ function closeMemoryActions() {
 function showMessageActions(id, bubbleElement, photoTarget = false) {
   hideMessageActions();
   const memory = feed.find(m => String(m.id) === String(id));
-  if (!memory || !bubbleElement) return;
+  if ((!memory && !photoTarget) || !bubbleElement) return;
 
   activeMessageActionsId = String(id);
-  const ownsMessage = String(memory.author?.id || memory.owner_id || '') === String(me?.id || '');
+  const ownsMessage = memory
+    ? String(memory.author?.id || memory.owner_id || '') === String(me?.id || '')
+    : !!bubbleElement.closest('.chat-message.is-mine');
   const popup = document.createElement('div');
   popup.className = 'chat-actions-popup' + (photoTarget ? ' is-photo-actions' : '');
   popup.setAttribute('role', 'toolbar');
@@ -2703,7 +2705,7 @@ document.addEventListener('click', e => {
   }
 
   // Dismiss message actions popup if clicking outside
-  if (!e.target.closest('.chat-actions-popup, .chat-bubble, .chat-message-photo')) {
+  if (!e.target.closest('.chat-actions-popup, .chat-bubble, .chat-message, .chat-message-photo, .chat-message-photos')) {
     hideMessageActions();
   }
 
