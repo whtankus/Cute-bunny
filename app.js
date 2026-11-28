@@ -2628,7 +2628,8 @@ function triggerBearAction(action, options = {}) {
     bump: 'A tiny, gentle bear head bump. ♡'
   };
   scene.dataset.action = action;
-  bearPoseEngine?.play(action, bearActorIndex(options.gender || me?.gender));
+  if (window.BearfriendHome?.runLocalAction) window.BearfriendHome.runLocalAction(action, bearActorIndex(options.gender || me?.gender));
+  else bearPoseEngine?.play(action, bearActorIndex(options.gender || me?.gender));
   const status = $('#coupleBearStatus');
   if (status) status.textContent = messages[action] || 'Two little bears, one big love.';
   document.querySelectorAll('#coupleBearGame [data-couple-action]').forEach(button => {
@@ -3823,9 +3824,13 @@ document.addEventListener('input', event => {
   if (field.value.trim()) startNotesTyping();
   else stopNotesTyping();
   field.style.height = 'auto';
-  const nextHeight = Math.min(Math.max(field.scrollHeight, 50), 116);
+  const contentHeight = Math.ceil(field.scrollHeight);
+  const nextHeight = Math.min(Math.max(contentHeight, 50), 116);
   field.style.height = nextHeight + 'px';
-  field.style.overflowY = field.scrollHeight > 116 ? 'auto' : 'hidden';
+  // Keep the textarea's lower edge anchored; added height grows upward.
+  // Never translate the field: that would move its bottom edge and shift the bar.
+  field.style.removeProperty('transform');
+  field.style.overflowY = contentHeight > 116 ? 'auto' : 'hidden';
   syncChatComposerState(field);
   syncNotesKeyboardLayout();
 });

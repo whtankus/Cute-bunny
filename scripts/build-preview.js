@@ -10,6 +10,11 @@ fs.mkdirSync(output, { recursive: true });
 const assets = [
   'index.html',
   'app.js',
+  'bear-pose-engine.js',
+  'bearfriend-home.js',
+  'bearfriend-home-view.js',
+  'bearfriend-home.css',
+  'bearfriend-home-controls.css',
   'src/core/dom.js',
   'src/services/supabase-client.js',
   'src/services/media-optimizer.js',
