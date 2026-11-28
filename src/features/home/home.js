@@ -63,28 +63,11 @@ function renderHomePage(c, visibleFeed, notes, pics, songs) {
       <section class="couple-bear-game" id="coupleBearGame" aria-labelledby="coupleBearTitle">
         <div class="couple-bear-heading">
           <span class="couple-bear-sparkle" aria-hidden="true">✦</span>
-          <div><small>A LITTLE PLAYTIME</small><h3 id="coupleBearTitle">Bearfriend</h3><p>Choose how our little bears show their love.</p></div>
+          <div><small>A LITTLE PLAYTIME</small><h3 id="coupleBearTitle">Bearfriend</h3><p>Explore your little home, play with the bears, and care for the garden.</p></div>
           <span class="couple-bear-sparkle" aria-hidden="true">♡</span>
         </div>
-        <div class="couple-bears-scene bear-pose-scene" data-action="idle" data-viewer-gender="${esc(me?.gender || '')}" aria-label="Two little bears, one brown and one white">
-          <svg id="bearPoseSvg" viewBox="90 120 420 270" role="img" aria-label="Two animated bears showing affection through movement">
-            <title>Two Little Bears</title>
-          </svg>
-        </div>
+        <div id="bearfriendHomeMount" aria-label="Interactive Bearfriend home"></div>
         <p class="couple-bear-status" id="coupleBearStatus" aria-live="polite">Two little bears, one big love.</p>
-        <div class="couple-bear-actions" role="group" aria-label="Choose a bear action">
-          <button type="button" class="bear-action-button" data-couple-action="hug" aria-pressed="false"><span aria-hidden="true">🫂</span><b>Hug</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="kiss" aria-pressed="false"><span aria-hidden="true">💋</span><b>Kiss</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="flykiss" aria-pressed="false"><span aria-hidden="true">😘</span><b>Flying kiss</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="slap" aria-pressed="false"><span aria-hidden="true">🖐️</span><b>Playful slap</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="hands" aria-pressed="false"><span aria-hidden="true">🤝</span><b>Hold hands</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="dance" aria-pressed="false"><span aria-hidden="true">💃</span><b>Dance</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="pet" aria-pressed="false"><span aria-hidden="true">🐾</span><b>Pet</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="tummy" aria-pressed="false"><span aria-hidden="true">🫳</span><b>Scratch tummy</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="feed" aria-pressed="false"><span aria-hidden="true">🍓</span><b>Feed</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="sleep" aria-pressed="false"><span aria-hidden="true">🌙</span><b>Sleep</b></button>
-          <button type="button" class="bear-action-button" data-couple-action="idle" aria-pressed="false"><span aria-hidden="true">🌸</span><b>Relax</b></button>
-        </div>
         <div class="couple-bear-footer">
           <div class="bear-love-meter" role="group" aria-label="Little love meter">
             <div class="bear-love-meter-copy"><span>Little love meter</span><b id="bearLoveCount">0 hugs of happiness</b></div>
@@ -93,5 +76,7 @@ function renderHomePage(c, visibleFeed, notes, pics, songs) {
         </div>
       </section>
     `;
-    initBearPoseEngine();
+    const bearfriendMount = c.querySelector('#bearfriendHomeMount');
+    if (window.BearfriendHomeView && bearfriendMount) window.BearfriendHomeView.render(bearfriendMount);
+    else initBearPoseEngine();
 }

@@ -1,0 +1,326 @@
+/* bearfriend-home.css — styles for the Bearfriend home frame only (scene, bears, bunny, rooms, weather, effects).
+   Everything is scoped under .bfh-scene and keyframes are prefixed bfh- so it can't clash with the app's CSS. */
+
+.bfh-scene {
+  --bfh-line: #f0c9a6;
+}
+
+@media (prefers-color-scheme:dark) {
+  :root:not([data-theme="light"]) .bfh-scene {
+    --bfh-line: #5b4036;
+  }
+}
+
+:root[data-theme="dark"] .bfh-scene {
+  --bfh-line: #5b4036;
+}
+
+.bfh-scene {
+  position: relative;
+  aspect-ratio: 420/270;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--bfh-line,#f0c9a6);
+}
+
+.bfh-scene>* {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.bfh-scene #bsvg,
+.bfh-scene #fg,
+.bfh-scene #wx,
+.bfh-scene #tint,
+.bfh-scene #pops {
+  pointer-events: none;
+}
+
+.bfh-scene #tint {
+  transition: background 1.2s;
+}
+
+.bfh-scene .pop {
+  position: absolute;
+  inset: auto;
+  width: auto;
+  height: auto;
+  transform: translate(-50%,-50%);
+  font-size: 15px;
+  font-weight: 800;
+  color: #d9588a;
+  white-space: nowrap;
+  animation: bfh-rise 1.5s ease-out forwards;
+  text-shadow: 0 1px 3px #fff;
+}
+
+@keyframes bfh-rise {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -46px;
+  }
+}
+
+.bfh-scene #bun {
+  cursor: grab;
+}
+
+.bfh-scene #fg {
+  touch-action: none;
+}
+
+.bfh-scene #fg #bun {
+  pointer-events: auto;
+}
+
+.bfh-scene .walk .bb {
+  animation: bfh-wk .32s ease-in-out infinite;
+}
+
+@keyframes bfh-wk {
+  50% {
+    transform: translateY(-4px) scale(1.02,.98);
+  }
+}
+
+.bfh-scene .hop.walk .bb {
+  animation: bfh-hop .65s ease-out;
+}
+
+.bfh-scene .bb {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: bfh-br 3.2s ease-in-out infinite;
+}
+
+@keyframes bfh-br {
+  50% {
+    transform: scale(1.03,.97);
+  }
+}
+
+.bfh-scene .hop .bb {
+  animation: bfh-hop .65s ease-out;
+}
+
+@keyframes bfh-hop {
+  30% {
+    transform: translateY(-18px) scale(.95,1.06);
+  }
+  62% {
+    transform: translateY(0) scale(1.07,.93);
+  }
+}
+
+.bfh-scene .ears {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: bfh-tw 5s infinite;
+}
+
+@keyframes bfh-tw {
+  0%,88%,100% {
+    transform: rotate(0);
+  }
+  92% {
+    transform: rotate(-9deg);
+  }
+  96% {
+    transform: rotate(6deg);
+  }
+}
+
+.bfh-scene .zz {
+  opacity: 0;
+}
+
+.bfh-scene .sl .zz {
+  animation: bfh-zz 2.6s infinite;
+}
+
+@keyframes bfh-zz {
+  0% {
+    opacity: 0;
+    translate: 0 4px;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 4px -12px;
+  }
+}
+
+.bfh-scene .cl {
+  animation: bfh-dr 40s linear infinite alternate;
+}
+
+@keyframes bfh-dr {
+  to {
+    translate: 26px 0;
+  }
+}
+
+.bfh-scene .sw {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: bfh-sw 3.4s ease-in-out infinite;
+}
+
+@keyframes bfh-sw {
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+.bfh-scene .plot {
+  cursor: pointer;
+}
+
+.bfh-scene #bsvg #bears {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.bfh-scene .nib .bb {
+  animation: bfh-nib .28s ease-in-out infinite;
+}
+
+@keyframes bfh-nib {
+  50% {
+    transform: scale(1.05,.95) translateY(1px);
+  }
+}
+
+.bfh-scene .gbob {
+  animation: bfh-gb 2s ease-in-out infinite;
+}
+
+@keyframes bfh-gb {
+  50% {
+    translate: 0 -3px;
+  }
+}
+
+.bfh-scene {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.bfh-scene #bun {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.bfh-scene .purr .bb {
+  animation: bfh-purr .18s ease-in-out infinite;
+}
+
+@keyframes bfh-purr {
+  50% {
+    transform: scale(1.04,.96);
+  }
+}
+
+.bfh-scene .wob {
+  animation: bfh-wob .5s;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+@keyframes bfh-wob {
+  25% {
+    transform: rotate(-9deg) scale(1.08);
+  }
+  60% {
+    transform: rotate(7deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+.bfh-scene .obj[data-o=mobile] .ig {
+  transform-origin: 50% 0;
+}
+
+.bfh-scene .obj {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bfh-scene .twk {
+  animation: bfh-twk 2.4s ease-in-out infinite;
+}
+
+@keyframes bfh-twk {
+  50% {
+    opacity: .35;
+  }
+}
+
+.bfh-scene .fl {
+  animation: bfh-fly 11s ease-in-out infinite;
+}
+
+@keyframes bfh-fly {
+  0% {
+    translate: 0 0;
+  }
+  20% {
+    translate: 50px -26px;
+  }
+  45% {
+    translate: 110px 6px;
+  }
+  70% {
+    translate: 40px 30px;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+
+.bfh-scene .wg {
+  animation: bfh-flap .22s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+@keyframes bfh-flap {
+  50% {
+    transform: scaleX(.45);
+  }
+}
+
+.bfh-scene .stm {
+  animation: bfh-stm 2.8s ease-in-out infinite;
+}
+
+@keyframes bfh-stm {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  40% {
+    opacity: .7;
+  }
+  100% {
+    opacity: 0;
+    translate: 4px -18px;
+  }
+}
+/* Explicit SVG hit targets for Bearfriend props and garden plots. */
+.bfh-scene #bg{pointer-events:auto;touch-action:manipulation}
+.bfh-scene #bg .obj,.bfh-scene #bg .plot,.bfh-scene #bg #gift{pointer-events:all;cursor:pointer;touch-action:manipulation}
+.bfh-scene #bg .obj>rect[fill="transparent"],.bfh-scene #bg .plot ellipse[fill="transparent"]{pointer-events:all}
